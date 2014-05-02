@@ -51,8 +51,8 @@ def create_model(filename, timesteps):
     m.sit = Set(initialize=m.site.index.levels[0])
     m.com = Set(initialize=m.commodity.index.levels[1])
     m.com_type = Set(initialize=m.commodity.index.levels[2])
-    m.pro = Set(initialize=m.process.index.levels[0])
-    m.sto = Set(initialize=m.storage.index.levels[0])
+    m.pro = Set(initialize=m.process.index.levels[1])
+    m.sto = Set(initialize=m.storage.index.levels[1])
     m.cost_type = Set(initialize=['Inv', 'Fix', 'Var', 'Fuel'])
 
     # sets of existing tuples:
@@ -66,9 +66,9 @@ def create_model(filename, timesteps):
     
     # subsets of commodities by type
     # for shorter equations that apply to only one commodity type
-    m.com_supim = Set(within=m.com, initialize=(c[0] for c in m.com_tuples if c[1] == 'SupIm'))
-    m.com_stock = Set(within=m.com, initialize=(c[0] for c in m.com_tuples if c[1] == 'Stock'))
-    m.com_demand = Set(within=m.com, initialize=(c[0] for c in m.com_tuples if c[1] == 'Demand'))
+    m.com_supim = Set(within=m.com, initialize=(c[1] for c in m.com_tuples if c[2] == 'SupIm'))
+    m.com_stock = Set(within=m.com, initialize=(c[1] for c in m.com_tuples if c[2] == 'Stock'))
+    m.com_demand = Set(within=m.com, initialize=(c[1] for c in m.com_tuples if c[2] == 'Demand'))
     
     # Parameters
     # ==========
@@ -96,8 +96,11 @@ def create_model(filename, timesteps):
     m.cap_sto_p_new = Var(m.sto_tuples, within=NonNegativeReals)
     m.co2_pro_out = Var(m.tm, m.pro_tuples, within=NonNegativeReals)
     m.costs = Var(m.cost_type, within=NonNegativeReals)
+    m.e_co_stock = Var(m.tm, m.co_tuple, within=NonNegativeReals)
     m.e_pro_in = Var(m.tm, m.pro_tuples, within=NonNegativeReals)
     m.e_pro_out = Var(m.tm, m.pro_tuples, within=NonNegativeReals)
+    m.e_tra_in = Var(m.tm, m.sto_tuples, within=NonNegativeReals)
+    m.e_tra_out = Var(m.tm, m.sto_tuples, within=NonNegativeReals)
     m.e_sto_in = Var(m.tm, m.sto_tuples, within=NonNegativeReals)
     m.e_sto_out = Var(m.tm, m.sto_tuples, within=NonNegativeReals)
     m.e_sto_con = Var(m.t, m.sto_tuples, within=NonNegativeReals)
@@ -112,40 +115,44 @@ def create_model(filename, timesteps):
     # topics
     #  - commodity
     #  - process
+    #  - transmission
     #  - storage
     #  - emissions
     #  - costs
     
     # commodity
-    def res_demand_rule(m, tm, com, com_type):
+    def res_demand_rule(m, tm, sit, com, com_type):
         if co not in m.com_demand:
             return Constraint.Skip
         else:
-            provided_energy = - commodity_balance(m, tm, com)
+            provided_energy = - commodity_balance(m, tm, sit, com)
             return provided_energy >= \
                    m.demand.loc[tm][com] * \
                    m.commodity.loc[com, com_type]['peak']
     
-    def res_stock_hour_rule(m, tm, com, com_type):
+    def def_e_co_stock_rule(m, tm, com, com_type):
         if com not in m.com_stock:
             return Constraint.Skip
         else:
-            # calculate total consumption of commodity co in timestep tm
-            total_consumption = commodity_balance(m, tm, com)                
-            return total_consumption <= m.commodity.loc[com, com_type]['maxperhour']
+            return m.e_co_stock[tm, com, com_type] == \
+                   commodity_balance(m, tm, com)
+    
+    def res_stock_hour_rule(m, tm, com, com_type):
+        if com not in m.com_stock:
+            return Constraint.Skip
+        else:           
+            return m.e_co_stock[tm, com, com_type] <= \
+                   m.commodity.loc[com, com_type]['maxperhour']
         
-
     def res_stock_total_rule(m, com, com_type):
         if com not in m.com_stock:
             return Constraint.Skip
         else:
-            # calculate total consumption of commodity co
+            # calculate total consumption of commodity com
             total_consumption = 0
             for tm in m.tm:
-                total_consumption += commodity_balance(m, tm, com)                
-             
+                total_consumption += m.e_co_stock[tm, com, com_type] * m.weight                
             return total_consumption <= m.commodity.loc[com, com_type]['max']
-
             
     # process
     def def_process_capacity_rule(m, tm, pro, coin, cout):
@@ -178,6 +185,12 @@ def create_model(filename, timesteps):
         return (m.process.loc[pro, coin, cout]['cap-lo'],
                 m.cap_pro[pro, coin, cout],
                 m.process.loc[pro, coin, cout]['cap-up'])
+    
+    # transmission
+    def def_transmission_output_rule(m, tm, sin, sout, com):
+        return m.e_tra_out[tm, sin, sout, com] == \
+               m.e_tra_in[tm, sin, sout, com] * \
+               m.transmission.loc[sin, sout, com]['eff']
     
     # storage
     def def_storage_state_rule(m, t, sto, com):
@@ -249,6 +262,8 @@ def create_model(filename, timesteps):
             
           - Fixed costs for process power, storage power and storage
             capacity.
+            
+          - Variables costs for usage ofr processes,  
         """
         if cost_type == 'Inv':
             return m.costs['Inv'] == \
@@ -286,10 +301,9 @@ def create_model(filename, timesteps):
             
         elif cost_type == 'Fuel':
             return m.costs['Fuel'] == \
-                sum(m.e_pro_in[p] * m.commodity[c]['price'] * m.weight 
-                    for p in m.pro_tuples 
-                    for c in m.com_tuples 
-                    if c[1] == p[1])
+                sum(m.e_co_stock[(tm,) + ] * m.commodity[c]['price'] * m.weight
+                    for tm in m.tm for c in m.com_tuples 
+                    if c[0] in m.com_stock)
             
         else:
             raise NotImplementedError("Unknown cost type!")
@@ -305,6 +319,7 @@ def create_model(filename, timesteps):
     
     # commodity
     m.res_demand = Constraint(m.tm, m.com_tuples)
+    m.def_e_co_stock = Constraint(m.tm, m.com_tuples)
     m.res_stock_hour = Constraint(m.tm, m.com_tuples)
     m.res_stock_total = Constraint(m.com_tuples)
     
@@ -356,13 +371,13 @@ def annuity_factor(n, i):
     return (1+i)**n * i / ((1+i)**n - 1)
 
 
-def commodity_balance(m, tm, com):
+def commodity_balance(m, tm, sit, com):
     """ calculate commodity balance at given timestep.
     
     For a given commodity co and timestep tm, calculate the balance of
-    consumed (to process/storage, counts positive) and provided (from
-    process/storage, counts negative) energy. Used as helper function 
-    in create_model for constraints on demand and stock commodities.
+    consumed (to process/storage/transmission, counts positive) and provided 
+    (from process/storage/transmission, counts negative) energy. Used as helper 
+    function in create_model for constraints on demand and stock commodities.
     
     Args:
         m: the model object
@@ -375,16 +390,24 @@ def commodity_balance(m, tm, com):
     """
     balance = 0
     for p in m.pro_tuples:
-        if p[1] == com:
+        if p[0] == sit and p[1] == com:
             # usage as input for process increases balance
             balance += m.e_pro_in[(tm,)+p]
-        if p[2] == com:
+        if p[0] == sit and p[2] == com:
             # output from processes decreases balance
             balance -= m.e_pro_out[(tm,)+p]
     for s in m.sto_tuples:
         # usage as input for storage increases consumption
         # output from storage decreases consumption
-        if s[1] == com:
+        if s[0] == sit and s[1] == com:
             balance += m.e_sto_in[(tm,)+s]
-            balance -= m.e_sto_out[(tm,)+s]
+            balance -= m.e_sto_out[(tm,)+s]            
+    for t in m.tra_tuples:
+        # exports increase balance
+        if t[0] == sit and t[2] == com:
+            balance += m.e_tra_in[(tm,)+t]
+        # imports decrease balance
+        if t[1] == sit and t[2] == com:
+            balance -= m.e_tra_out[(tm,)+t]
     return balance
+

@@ -1,6 +1,26 @@
-from datetime import datetime
 import coopr.pyomo as pyomo
 import pandas as pd
+from datetime import datetime
+from random import random
+
+COLOURS = {
+    'Biomass': (0, 122, 55),
+    'Coal': (100, 100, 100),
+    'Diesel': (116, 66, 65),
+    'Gas': (237, 227, 0),
+    'Elec': (0, 101, 189),
+    'Heat': (230, 112, 36),
+    'Hydro': (198, 188, 240),
+    'Import': (128, 128, 200),
+    'Lignite': (116, 66, 65),
+    'Oil': (116, 66, 65),
+    'Overproduction': (190, 0, 99),
+    'Slack': (163, 74, 130),
+    'Solar': (243, 174, 0),
+    'Storage': (60, 36, 154),
+    'Wind': (122, 179, 225),
+    'Stock': (222, 222, 222)
+}
 
 
 def create_model(filename, timesteps):
@@ -28,25 +48,25 @@ def create_model(filename, timesteps):
         index_col=['Sit'])
     m.commodity = xls.parse(
         'Commodity',
-        index_col=['Sit', 'Co', 'Type'])
+        index_col=['Sit', 'Com', 'Type'])
     m.process = xls.parse(
         'Process',
         index_col=['Sit', 'Pro', 'CoIn', 'CoOut'])
     m.transmission = xls.parse(
         'Transmission',
-        index_col=['SitIn', 'SitOut', 'Co'])
+        index_col=['SitIn', 'SitOut', 'Tra', 'Com'])
     m.storage = xls.parse(
         'Storage',
-        index_col=['Sit', 'Sto', 'Tra', 'Co'])
+        index_col=['Sit', 'Sto', 'Com'])
     m.demand = xls.parse('Demand', index_col=['t'])
     m.supim = xls.parse('SupIm', index_col=['t'])
 
     # derive annuity factor for process and storage
-    m.process['annuity_factor'] = annuity_factor(
+    m.process['annuity-factor'] = annuity_factor(
         m.process['depreciation'], m.process['wacc'])
-    m.transmission['annuity_factor'] = annuity_factor(
+    m.transmission['annuity-factor'] = annuity_factor(
         m.transmission['depreciation'], m.transmission['wacc'])
-    m.storage['annuity_factor'] = annuity_factor(
+    m.storage['annuity-factor'] = annuity_factor(
         m.storage['depreciation'], m.storage['wacc'])
 
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -67,7 +87,7 @@ def create_model(filename, timesteps):
         within=m.t, initialize=m.settings['timesteps'][1:],
         doc='Set of modelled timesteps')
     m.sit = pyomo.Set(
-        initialize=m.site.index.levels[0],
+        initialize=m.site.index,
         doc='Set of sites')
     m.com = pyomo.Set(
         initialize=m.commodity.index.levels[1],
@@ -89,15 +109,15 @@ def create_model(filename, timesteps):
         doc='Set of cost types (hard-coded)')
 
     # sets of existing tuples:
-    # co_tuples = [('DE', 'Coal', 'Stock'), ('MA', 'Wind', 'SupIm'), ...]
+    # com_tuples = [('DE', 'Coal', 'Stock'), ('MA', 'Wind', 'SupIm'), ...]
     # pro_tuples = [('DE', 'pp', 'Coal', 'Elec'), ('NO', 'wt', 'Wind', 'Elec')]
     # sto_tuples = [('DE', 'bat', 'Elec'), ('NO', 'pst', 'Elec')...]
-    m.co_tuples = pyomo.Set(within=m.sit*m.com*m.com_type,
-                            initialize=m.commodity.index)
+    m.com_tuples = pyomo.Set(within=m.sit*m.com*m.com_type,
+                             initialize=m.commodity.index)
     m.pro_tuples = pyomo.Set(within=m.sit*m.pro*m.com*m.com,
                              initialize=m.process.index)
     m.tra_tuples = pyomo.Set(within=m.sit*m.sit*m.tra*m.com,
-                             initialize=m.transport.index)
+                             initialize=m.transmission.index)
     m.sto_tuples = pyomo.Set(within=m.sit*m.sto*m.com,
                              initialize=m.storage.index)
 
@@ -174,7 +194,7 @@ def create_model(filename, timesteps):
         within=pyomo.NonNegativeReals,
         doc='Costs by type (EUR/a)')
     m.e_co_stock = pyomo.Var(
-        m.tm, m.co_tuple,
+        m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
         doc='Use of stock commodity source (MW) per timestep')
     m.e_pro_in = pyomo.Var(
@@ -186,11 +206,11 @@ def create_model(filename, timesteps):
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
     m.e_tra_in = pyomo.Var(
-        m.tm, m.sto_tuples,
+        m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow into transmission line (MW) per timestep')
     m.e_tra_out = pyomo.Var(
-        m.tm, m.sto_tuples,
+        m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of transmission line (MW) per timestep')
     m.e_sto_in = pyomo.Var(
@@ -228,8 +248,7 @@ def create_model(filename, timesteps):
         else:
             provided_energy = - commodity_balance(m, tm, sit, com)
             return (provided_energy >=
-                    m.demand.loc[tm][sit, com] *
-                    m.commodity.loc[sit, com, com_type]['peak'])
+                    m.demand.loc[tm][sit, com])
 
     def def_e_co_stock_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
@@ -312,7 +331,7 @@ def create_model(filename, timesteps):
                 m.transmission.loc[sin, sout, tra, com]['cap-up'])
 
     def res_transmission_symmetry_rule(m, sin, sout, tra, com):
-        return m.cap_tra[sin, sout, com] == m.cap_tra[sout, sin, tra, com]
+        return m.cap_tra[sin, sout, tra, com] == m.cap_tra[sout, sin, tra, com]
 
     # storage
     def def_storage_state_rule(m, t, sit, sto, com):
@@ -405,7 +424,7 @@ def create_model(filename, timesteps):
                     m.storage.loc[s]['annuity-factor'] +
                     m.cap_sto_c_new[s] *
                     m.storage.loc[s]['inv-cost-c'] *
-                    m.storage.loc[s]['annuity_factor']
+                    m.storage.loc[s]['annuity-factor']
                     for s in m.sto_tuples)
 
         elif cost_type == 'Fix':
@@ -437,10 +456,10 @@ def create_model(filename, timesteps):
         elif cost_type == 'Fuel':
             return m.costs['Fuel'] == sum(
                 m.e_co_stock[(tm,) + c] *
-                m.commodity[c]['price'] *
+                m.commodity.loc[c]['price'] *
                 m.weight
                 for tm in m.tm for c in m.com_tuples
-                if c[0] in m.com_stock)
+                if c[1] in m.com_stock)
 
         else:
             raise NotImplementedError("Unknown cost type!")
@@ -473,7 +492,7 @@ def create_model(filename, timesteps):
 
     # process
     m.def_process_capacity = pyomo.Constraint(
-        m.tm, m.pro_tuples,
+        m.pro_tuples,
         doc='total process capacity = inst-cap + new capacity')
     m.def_process_output = pyomo.Constraint(
         m.tm, m.pro_tuples,
@@ -566,7 +585,7 @@ def annuity_factor(n, i):
     Returns:
         Value of the expression
             (1+i)**n * i / ((1+i)**n - 1)
-            
+
     Example:
         >>> round(annuity_factor(20, 0.07), 5)
         0.09439
@@ -594,18 +613,12 @@ def commodity_balance(m, tm, sit, com):
     """
     balance = 0
     for p in m.pro_tuples:
-        if p[0] == sit and p[1] == com:
+        if p[0] == sit and p[2] == com:
             # usage as input for process increases balance
             balance += m.e_pro_in[(tm,)+p]
-        if p[0] == sit and p[2] == com:
+        if p[0] == sit and p[3] == com:
             # output from processes decreases balance
             balance -= m.e_pro_out[(tm,)+p]
-    for s in m.sto_tuples:
-        # usage as input for storage increases consumption
-        # output from storage decreases consumption
-        if s[0] == sit and s[1] == com:
-            balance += m.e_sto_in[(tm,)+s]
-            balance -= m.e_sto_out[(tm,)+s]
     for t in m.tra_tuples:
         # exports increase balance
         if t[0] == sit and t[3] == com:
@@ -613,6 +626,12 @@ def commodity_balance(m, tm, sit, com):
         # imports decrease balance
         if t[1] == sit and t[3] == com:
             balance -= m.e_tra_out[(tm,)+t]
+    for s in m.sto_tuples:
+        # usage as input for storage increases consumption
+        # output from storage decreases consumption
+        if s[0] == sit and s[2] == com:
+            balance += m.e_sto_in[(tm,)+s]
+            balance -= m.e_sto_out[(tm,)+s]
     return balance
 
 
@@ -634,3 +653,555 @@ def split_columns(columns, sep='.'):
     """
     column_tuples = [tuple(col.split('.')) for col in columns]
     return pd.MultiIndex.from_tuples(column_tuples)
+
+
+def get_entity(instance, name):
+    """ Return a DataFrame for an entity in model instance.
+
+    Args:
+        instance: a Pyomo ConcreteModel instance
+        name: name of a Set, Param, Var, Constraint or Objective
+
+    Returns:
+        a single-columned Pandas DataFrame with domain as index
+    """
+
+    # retrieve entity, its type and its onset names
+    entity = instance.__getattribute__(name)
+    entity_type = get_entity_type(entity)
+    labels = get_onset_names(entity)
+
+    # extract values
+    if entity_type == 'set':
+        # Pyomo sets don't have values, only elements
+        results = pd.DataFrame([(v, 1) for v in entity.value])
+
+        # for unconstrained sets, the column label is identical to their index
+        # hence, make index equal to entity name and append underscore to name
+        # (=the later column title) to preserve identical index names for both
+        # unconstrained supersets
+        if not labels:
+            labels = [name]
+            name = name+'_'
+
+    elif entity_type == 'parameter':
+        if entity.dim() > 1:
+            results = pd.DataFrame([v[0]+(v[1],) for v in entity.iteritems()])
+        else:
+            results = pd.DataFrame(entity.iteritems())
+    else:
+        # create DataFrame
+        if entity._ndim > 1:
+            # concatenate index tuples with value if entity has
+            # multidimensional indices v[0]
+            results = pd.DataFrame(
+                [v[0]+(v[1].value,) for v in entity.iteritems()])
+        else:
+            # otherwise, create tuple from scalar index v[0]
+            results = pd.DataFrame(
+                [(v[0], v[1].value) for v in entity.iteritems()])
+
+    # check for duplicate onset names and append one to several "_" to make
+    # them unique
+    if len(set(labels)) != len(labels):
+        for k, label in enumerate(labels):
+            if label in labels[:k]:
+                labels[k] = labels[k] + "_"
+
+    # name columns according to labels + entity name
+    results.columns = labels + [name]
+    results.set_index(labels, inplace=True)
+
+    return results
+
+
+def get_entities(instance, names):
+    """ Return one DataFrame with entities in columns and a common index.
+
+    Works only on entities that share a common domain (set or set_tuple), which
+    is used as index of the returned DataFrame.
+
+    Args:
+        instance: a Pyomo ConcreteModel instance
+        names: list of entity names (as returned by list_entities)
+
+    Returns:
+        a Pandas DataFrame with entities as columns and domains as index
+    """
+
+    df = pd.DataFrame()
+    for name in names:
+        other = get_entity(instance, name)
+
+        if df.empty:
+            df = other
+        else:
+            index_names_before = df.index.names
+
+            df = df.join(other, how='outer')
+
+            if index_names_before != df.index.names:
+                df.index.names = index_names_before
+
+    return df
+
+
+def list_entities(instance, entity_type=None):
+    """ Return list of sets, params, variables, constraints or objectives
+
+    Args:
+        instance: a Pyomo ConcreteModel object
+        type: (optional) "set", "par", "var", "con" or "obj"
+
+    Returns:
+        list of tuples with (entity name, [list onset names]) of given type.
+        if no type is given, returns a dict of lists for each type
+
+    Example:
+        >>> list_entities(instance, 'var')
+        [('EprOut', ['time', 'process', 'commodity', 'commodity']), ...
+         ('EprIn',  ['time', 'process', 'commodity', 'commodity'])]
+    """
+    if not entity_type:
+        result = {}
+        for entity_type in ['set', 'parameter', 'variable',
+                            'constraint', 'objective']:
+            result[entity_type] = list_entities(instance, entity_type)
+        return result
+
+    iter_entities = instance.__dict__.iteritems()
+
+    if entity_type in ["set", "sets"]:
+        return sorted(
+            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
+            if '.sets.' in str(type(y)) and not y.virtual)
+
+    elif entity_type in ["par", "param", "params", "parameter", "parameters"]:
+        return sorted(
+            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
+            if '.param.' in str(type(y)))
+
+    elif entity_type in ["var", "vars", "variable", "variables"]:
+        return sorted(
+            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
+            if '.var.' in str(type(y)))
+
+    elif entity_type in ["con", "constraint", "constraints"]:
+        return sorted(
+            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
+            if '.constraint.' in str(type(y)))
+
+    elif entity_type in ["obj", "objective", "objectives"]:
+        return sorted(
+            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
+            if '.objective.' in str(type(y)))
+
+    else:
+        return ValueError("Unknown parameter entity_type")
+
+
+def get_entity_type(entity):
+    type_str = str(type(entity))
+    if '.sets.' in type_str:
+        return 'set'
+    elif '.param.' in type_str:
+        return 'parameter'
+    elif '.var.' in type_str:
+        return 'variable'
+    elif '.constraint.' in type_str:
+        return 'constraint'
+    elif '.objective.' in type_str:
+        return 'objective'
+    else:
+        return 'unknown'
+
+
+def get_onset_names(entity):
+    # get column titles for entities from domain set names
+    entity_type = get_entity_type(entity)
+
+    labels = []
+
+    if entity_type == 'set':
+        if entity.dimen > 1 and entity.domain:
+            # N-dimensional set tuples
+            for domain_set in entity.domain.set_tuple:
+                labels.append(domain_set.name)
+        elif entity.domain:
+            # 1D subset; simply add superset name
+            labels.append(entity.domain.name)
+        else:
+            # no domain, so no labels needed
+            pass
+
+    elif entity_type == 'parameter':
+        if entity.dim() > 0 and entity._index:
+            labels = get_onset_names(entity._index)
+        else:
+            # zero dimensions, so no onset labels
+            pass
+
+    elif entity_type in ['variable', 'constraint', 'objective']:
+        if entity._index_set:
+            for domain_set in entity._index_set:
+                if domain_set.dimen == 1:
+                    labels.append(domain_set.name)
+                else:
+                    labels.extend(the_set.name for the_set in
+                                  domain_set.domain.set_tuple)
+        else:
+            if entity._ndim > 0:
+                if entity._index.dimen == 1:
+                    labels.append(entity._index.name)
+                else:
+                    labels.extend(the_set.name for the_set in
+                                  entity._index.domain.set_tuple)
+            else:
+                # 0-dimensional thing, so no labels needed
+                pass
+    else:
+        raise ValueError("Function get_entity_type returned unknown entity "
+                         "type '{}'!".format(entity_type))
+
+    return labels
+
+
+def get_constants(instance):
+    """Return summary DataFrames for important variables
+
+    Usage:
+        costs, cpro, csto, co2 = get_constants(instance)
+
+    Args:
+        instance: a picus model instance
+
+    Returns:
+        costs, cpro, csto, co2)
+    """
+    costs = get_entity(instance, 'costs')
+    cpro = get_entities(instance, ['cap_pro', 'cap_pro_new'])
+    ctra = get_entities(instance, ['cap_tra', 'cap_tra_new'])
+    csto = get_entities(instance, ['cap_sto_c', 'cap_sto_c_new',
+                                   'cap_sto_p', 'cap_sto_p_new'])
+
+    # co2 timeseries
+    co2 = get_entity(instance, 'co2_pro_out')
+    co2 = co2.unstack(0).sum(1)  # sum co2 emissions over timesteps
+
+    # better labels
+    cpro.columns = ['Total', 'New']
+    ctra.columns = ['Total', 'New']
+    csto.columns = ['C Total', 'C New', 'P Total', 'P New']
+    co2.name = 'CO2'
+
+    # better index names
+    cpro.index.names = ['sit', 'pro', 'coin', 'cout']
+    ctra.index.names = ['sitin', 'sitout', 'tra', 'com']
+
+    return costs, cpro, ctra, csto, co2
+
+
+def get_timeseries(instance, com, sit, timesteps=None):
+    """Return DataFrames of all timeseries referring to given commodity
+
+    Usage:
+        created, consumed, storage = get_timeseries(instance, co)
+
+    Args:
+        instance: a picus model instance
+        co: a commodity
+        timesteps: optional list of timesteps, defaults to modelled timesteps
+
+    Returns:
+        created: timeseries of commodity creation, including stock source
+        consumed: timeseries of commodity consumption, including demand
+        storage: timeseries of commodity storage (level, stored, retrieved)
+    """
+    if timesteps is None:
+        # default to all simulated timesteps
+        timesteps = sorted(get_entity(instance, 'tm').index)
+
+    # DEMAND
+    # default to zeros if commodity has no demand, get timeseries
+    if com not in instance.com_demand:
+        demand = pd.Series(0, index=timesteps)
+    else:
+        demand = instance.demand.loc[timesteps][sit, com]
+    demand.name = 'Demand'
+
+    # STOCK
+    eco = get_entity(instance, 'e_co_stock')['e_co_stock'].unstack()
+    try:
+        stock = eco.loc[timesteps][sit, com]
+    except KeyError:
+        stock = pd.Series(0, index=timesteps)
+    stock.name = 'Stock'
+
+    # PROCESS
+    # group process energies by input/output commodity
+    # select all entries of created and consumed desired commodity co
+    # and slice to the desired timesteps
+    epro = get_entities(instance, ['e_pro_in', 'e_pro_out'])
+    epro.index.names = ['tm', 'sit', 'pro', 'coin', 'cout']
+    epro = epro.groupby(level=['tm', 'sit', 'coin', 'cout']).sum()
+    epro = epro.xs(sit, level='sit')
+    try:
+        created = epro.xs(com, level='cout')['e_pro_out'].unstack()
+        created = created.loc[timesteps]
+    except KeyError:
+        created = pd.DataFrame(index=timesteps)
+
+    try:
+        consumed = epro.xs(com, level='coin')['e_pro_in'].unstack()
+        consumed = consumed.loc[timesteps]
+    except KeyError:
+        consumed = pd.DataFrame(index=timesteps)
+
+    # remove Slack if zero, keep else
+    if 'Slack' in created.columns and not created['Slack'].any():
+        created.pop('Slack')
+
+    # TRANSMISSION
+    etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])
+    etra.index.names = ['tm', 'sitin', 'sitout', 'tra', 'com']
+    etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
+    etra = etra.xs(com, level='com')
+
+    imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack()
+    exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack()
+
+    # STORAGE
+    # group storage energies by commodity
+    # select all entries with desired commodity co
+    esto = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
+    esto = esto.groupby(level=['t', 'sit', 'com']).sum()
+    esto = esto.xs(sit, level='sit')
+    try:
+        stored = esto.xs(com, level='com')
+        stored = stored.loc[timesteps]
+        stored.columns = ['Level', 'Stored', 'Retrieved']
+    except KeyError:
+        stored = pd.DataFrame(0, index=timesteps,
+                              columns=['Level', 'Stored', 'Retrieved'])
+
+    # show stock as created
+    created = created.join(stock)
+
+    # show demand as consumed
+    consumed = consumed.join(demand)
+
+    return created, consumed, stored, imported, exported
+
+
+def report(instance, filename, commodities, sites):
+    """Write result summary to a spreadsheet file
+
+    Args:
+        instance: a picus model instance
+        filename: Excel spreadsheet filename, will be overwritten if exists
+        commodities: list of commodities for which to create timeseries sheets
+
+    Returns:
+        Nothing
+    """
+    # get the data
+    costs, cpro, ctra, csto, co2 = get_constants(instance)
+
+    # write to Excel
+    writer = pd.ExcelWriter(filename)
+
+    # write to excel
+    costs.to_excel(writer, 'Costs')
+    co2.to_frame('CO2').to_excel(writer, 'CO2')
+    cpro.to_excel(writer, 'Process caps')
+    ctra.to_excel(writer, 'Transmission caps')
+    csto.to_excel(writer, 'Storage caps')
+    energies = []
+    timeseries = {}
+
+    # timeseries
+    for co in commodities:
+        for sit in sites:
+            created, consumed, stored, imported, exported = get_timeseries(
+                instance, co, sit)
+
+            overprod = pd.DataFrame(
+                columns=['Overproduction'],
+                data=created.sum(axis=1) - consumed.sum(axis=1) +
+                imported.sum(axis=1) - exported.sum(axis=1) +
+                stored['Retrieved'] - stored['Stored'])
+
+            tableau = pd.concat(
+                [created, consumed, stored, imported, exported, overprod],
+                axis=1,
+                keys=['Created', 'Consumed', 'Storage',
+                      'Import from', 'Export to', 'Balance'])
+            timeseries[(co, sit)] = tableau.copy()
+
+            # timeseries sums
+            sums = pd.concat([created.sum(),
+                              consumed.sum(),
+                              stored.sum().drop('Level'),
+                              imported.sum(),
+                              exported.sum(),
+                              overprod.sum()], axis=0,
+                             keys=['Created', 'Consumed', 'Storage',
+                             'Import', 'Export', 'Balance'])
+            energies.append(sums.to_frame("{}.{}".format(co, sit)))
+
+    # concatenate the timeseries sums
+    energy = pd.concat(energies, axis=1).fillna(0)
+    energy.to_excel(writer, 'Energy sums')
+
+    for co in commodities:
+        for sit in sites:
+            sheet_name = "{}.{} timeseries".format(co, sit)
+            timeseries[(co, sit)].to_excel(writer, sheet_name)
+
+    writer.save()
+
+
+def plot(instance, com, sit, timesteps=None):
+    """Stacked timeseries of commodity balance
+
+    Creates a stackplot of the energy balance of a given commodity, together
+    with stored energy in a second subplot.
+
+    Args:
+        instance: a picus model instance
+        co: (output) commodity to plot
+        site: site to plot
+        timesteps: optional list of modelled timesteps to plot
+                   (e.g. range(1,197)), defaults to set instance.tm
+
+    Returns:
+        fig: figure handle
+    """
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import matplotlib.gridspec as mpl_gs
+
+    if timesteps is None:
+        # default to all simulated timesteps
+        timesteps = sorted(get_entity(instance, 'tm').index)
+
+    # FIGURE
+    fig = plt.figure(figsize=(16, 8))
+    gs = mpl_gs.GridSpec(2, 1, height_ratios=[2, 1])
+
+    created, consumed, stored, imported, exported = get_timeseries(
+        instance, com, sit, timesteps)
+
+    # move retrieved/stored storage timeseries to created/consumed and
+    # rename storage columns back to 'storage' for color mapping
+    created = created.join(stored['Retrieved'])
+    consumed = consumed.join(stored['Stored'])
+    created.rename(columns={'Retrieved': 'Storage'}, inplace=True)
+    consumed.rename(columns={'Stored': 'Storage'}, inplace=True)
+
+    # only keep storage content in storage timeseries
+    stored = stored['Level']
+
+    # move demand to its own plot
+    demand = consumed.pop('Demand')
+
+    # remove all columns from created which are all-zeros in both created and
+    # consumed (except the last one, to prevent a completely empty frame)
+    for col in created.columns:
+        if not created[col].any() and len(created.columns) > 1:
+            if col not in consumed.columns or not consumed[col].any():
+                created.pop(col)
+
+    # PLOT CREATED
+    ax0 = plt.subplot(gs[0])
+    sp0 = ax0.stackplot(created.index, created.as_matrix().T, linewidth=0.15)
+
+    # Unfortunately, stackplot does not support multi-colored legends itself.
+    # Therefore, a so-called proxy artist - invisible objects that have the
+    # correct color for the legend entry - must be created. Here, Rectangle
+    # objects of size (0,0) are used. The technique is explained at
+    # http://stackoverflow.com/a/22984060/2375855
+    proxy_artists = []
+    for k, commodity in enumerate(created.columns):
+        this_color = to_color(commodity)
+
+        sp0[k].set_facecolor(this_color)
+        sp0[k].set_edgecolor((.5, .5, .5))
+
+        proxy_artists.append(mpl.patches.Rectangle((0, 0), 0, 0,
+                                                   facecolor=this_color))
+
+    # label
+    ax0.set_title('Energy balance of {} in {}'.format(com, sit))
+    ax0.set_ylabel('Power (MW)')
+
+    # legend
+    lg = ax0.legend(reversed(proxy_artists),
+                    reversed(tuple(created.columns)),
+                    frameon=False,
+                    ncol=created.shape[1])
+    plt.setp(lg.get_patches(), edgecolor=(.5, .5, .5), linewidth=0.15)
+    plt.setp(ax0.get_xticklabels(), visible=False)
+
+    # PLOT CONSUMED
+    sp00 = ax0.stackplot(consumed.index, -consumed.as_matrix().T,
+                         linewidth=0.15)
+
+    # color
+    for k, commodity in enumerate(consumed.columns):
+        this_color = to_color(commodity)
+
+        sp00[k].set_facecolor(this_color)
+        sp00[k].set_edgecolor((.5, .5, .5))
+
+    # PLOT DEMAND
+    ax0.plot(demand.index, demand.values, linewidth=1.2, color=(.1, .1, .1))
+
+    # PLOT STORAGE
+    ax1 = plt.subplot(gs[1], sharex=ax0)
+    sp1 = ax1.stackplot(stored.index, stored.values, linewidth=0.15)
+
+    # color
+    sp1[0].set_facecolor(to_color('Storage'))
+    sp1[0].set_edgecolor((.5, .5, .5))
+
+    # labels
+    ax1.set_title('Energy storage content of {} in {}'.format(com, sit))
+    ax1.set_xlabel('Time in year (h)')
+    ax1.set_ylabel('Energy (MWh)')
+
+    # make xtick distance duration-dependent
+    if len(timesteps) > 26*168:
+        steps_between_ticks = 168*4
+    elif len(timesteps) > 3*168:
+        steps_between_ticks = 168
+    elif len(timesteps) > 2 * 24:
+        steps_between_ticks = 24
+    elif len(timesteps) > 24:
+        steps_between_ticks = 6
+    else:
+        steps_between_ticks = 3
+    xticks = timesteps[::steps_between_ticks]
+
+    # set limits and ticks for both axes
+    for ax in [ax0, ax1]:
+        # ax.set_axis_bgcolor((0, 0, 0, 0))
+        plt.setp(ax.spines.values(), color=(.5, .5, .5))
+        ax.set_xlim((timesteps[0], timesteps[-1]))
+        ax.set_xticks(xticks)
+        ax.xaxis.grid(True, 'major', color=(.5, .5, .5))
+        ax.yaxis.grid(True, 'major', color=(.5, .5, .5))
+        ax.xaxis.set_ticks_position('none')
+        ax.yaxis.set_ticks_position('none')
+    return fig
+
+
+def to_color(obj=None):
+    if obj is None:
+        obj = random()
+    try:
+        color = tuple(rgb/255.0 for rgb in COLOURS[obj])
+    except KeyError:
+        # random deterministic color
+        color = "#{:06x}".format(abs(hash(obj)))[:7]
+    return color

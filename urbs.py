@@ -43,12 +43,12 @@ def create_model(filename, timesteps):
     m.supim = xls.parse('SupIm', index_col=['t'])
 
     # derive annuity factor for process and storage
-    m.process['annuity_factor'] = \
-        annuity_factor(m.process['depreciation'], m.process['wacc'])
-    m.transmission['annuity_factor'] = \
-        annuity_factor(m.transmission['depreciation'], m.transmission['wacc'])
-    m.storage['annuity_factor'] = \
-        annuity_factor(m.storage['depreciation'], m.storage['wacc'])
+    m.process['annuity_factor'] = annuity_factor(
+        m.process['depreciation'], m.process['wacc'])
+    m.transmission['annuity_factor'] = annuity_factor(
+        m.transmission['depreciation'], m.transmission['wacc'])
+    m.storage['annuity_factor'] = annuity_factor(
+        m.storage['depreciation'], m.storage['wacc'])
 
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
     # column index ('DE', 'Elec')
@@ -97,7 +97,7 @@ def create_model(filename, timesteps):
 
     # Parameters
     # ==========
-    # for model entities (commodity, process, transmission, storage) no Pyomo 
+    # for model entities (commodity, process, transmission, storage) no Pyomo
     # parames are needed, just use the DataFrames m.commodity, m.process,
     # m.storage and m.transmission directly.
     # Syntax: m.{name} = Param({domain}, initialize={values})
@@ -209,62 +209,64 @@ def create_model(filename, timesteps):
             return Constraint.Skip
         else:
             provided_energy = - commodity_balance(m, tm, sit, com)
-            return provided_energy >= \
-                m.demand.loc[tm][sit, com] * \
-                m.commodity.loc[sit, com, com_type]['peak']
+            return (provided_energy >=
+                    m.demand.loc[tm][sit, com] *
+                    m.commodity.loc[sit, com, com_type]['peak'])
 
     def def_e_co_stock_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
             return Constraint.Skip
         else:
-            return m.e_co_stock[tm, sit, com, com_type] == \
-                commodity_balance(m, tm, sit, com)
+            return (m.e_co_stock[tm, sit, com, com_type] ==
+                    commodity_balance(m, tm, sit, com))
 
     def res_stock_hour_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
             return Constraint.Skip
         else:
-            return m.e_co_stock[tm, sit, com, com_type] <= \
-                m.commodity.loc[sit, com, com_type]['maxperhour']
+            return (m.e_co_stock[tm, sit, com, com_type] <=
+                    m.commodity.loc[sit, com, com_type]['maxperhour'])
 
     def res_stock_total_rule(m, sit, com, com_type):
         if com not in m.com_stock:
             return Constraint.Skip
         else:
             # calculate total consumption of commodity com
-            sum_consume = 0
+            total_consumption = 0
             for tm in m.tm:
-                sum_consume += m.e_co_stock[tm, sit, com, com_type]
-            sum_consume *= m.weight
-            return sum_consume <= m.commodity.loc[sit, com, com_type]['max']
+                total_consumption += m.e_co_stock[tm, sit, com, com_type]
+            total_consumption *= m.weight
+            return (total_consumption <=
+                    m.commodity.loc[sit, com, com_type]['max'])
 
     # process
     def def_process_capacity_rule(m, sit, pro, coin, cout):
-        return m.cap_pro[sit, pro, coin, cout] == \
-            m.cap_pro_new[sit, pro, coin, cout] + \
-            m.process.loc[sit, pro, coin, cout]['inst-cap']
+        return (m.cap_pro[sit, pro, coin, cout] ==
+                m.cap_pro_new[sit, pro, coin, cout] +
+                m.process.loc[sit, pro, coin, cout]['inst-cap'])
 
     def def_process_output_rule(m, tm, sit, pro, coin, cout):
-        return m.e_pro_out[tm, sit, pro, coin, cout] == \
-            m.e_pro_in[tm, sit, pro, coin, cout] * \
-            m.process.loc[sit, pro, coin, cout]['eff']
+        return (m.e_pro_out[tm, sit, pro, coin, cout] ==
+                m.e_pro_in[tm, sit, pro, coin, cout] *
+                m.process.loc[sit, pro, coin, cout]['eff'])
 
     def def_intermittent_supply_rule(m, tm, sit, pro, coin, cout):
         if coin in m.com_supim:
-            return m.e_pro_in[tm, sit, pro, coin, cout] == \
-                m.cap_pro[sit, pro, coin, cout] * m.supim.loc[tm][sit, coin]
+            return (m.e_pro_in[tm, sit, pro, coin, cout] ==
+                    m.cap_pro[sit, pro, coin, cout] *
+                    m.supim.loc[tm][sit, coin])
         else:
             return Constraint.Skip
 
     def def_co2_emissions_rule(m, tm, sit, pro, coin, cout):
-        return m.co2_pro_out[tm, sit, pro, coin, cout] == \
-            m.e_pro_in[tm, sit, pro, coin, cout] * \
-            m.process.loc[sit, pro, coin, cout]['co2'] * \
-            m.weight
+        return (m.co2_pro_out[tm, sit, pro, coin, cout] ==
+                m.e_pro_in[tm, sit, pro, coin, cout] *
+                m.process.loc[sit, pro, coin, cout]['co2'] *
+                m.weight)
 
     def res_process_output_by_capacity_rule(m, tm, sit, pro, coin, cout):
-        return m.e_pro_out[tm, sit, pro, coin, cout] <= \
-            m.cap_pro[sit, pro, coin, cout]
+        return (m.e_pro_out[tm, sit, pro, coin, cout] <=
+                m.cap_pro[sit, pro, coin, cout])
 
     def res_process_capacity_rule(m, sit, pro, coin, cout):
         return (m.process.loc[sit, pro, coin, cout]['cap-lo'],
@@ -273,24 +275,24 @@ def create_model(filename, timesteps):
 
     # transmission
     def def_transmission_capacity_rule(m, sin, sout, com):
-        return m.cap_tra[sin, sout, com] ==
-            m.cap_tra_new[sin, sout, com] + \
-            m.transmission.loc[sin, sout, com]['inst-cap']
-    
+        return (m.cap_tra[sin, sout, com] ==
+                m.cap_tra_new[sin, sout, com] +
+                m.transmission.loc[sin, sout, com]['inst-cap'])
+
     def def_transmission_output_rule(m, tm, sin, sout, com):
-        return m.e_tra_out[tm, sin, sout, com] == \
-            m.e_tra_in[tm, sin, sout, com] * \
-            m.transmission.loc[sin, sout, com]['eff']
-    
+        return (m.e_tra_out[tm, sin, sout, com] ==
+                m.e_tra_in[tm, sin, sout, com] *
+                m.transmission.loc[sin, sout, com]['eff'])
+
     def res_transmission_input_by_capacity_rule(m, tm, sin, sout, com):
-        return m.e_tra_in[tm, sin, sout, com] >=
-            m.cap_tra[sin, sout, com]
+        return (m.e_tra_in[tm, sin, sout, com] >=
+                m.cap_tra[sin, sout, com])
 
     def res_transmission_capacity_rule(m, sin, sout, com):
         return (m.transmission.loc[sin, sout, com]['cap-lo'],
                 m.cap_tra[sin, sout, com],
                 m.transmission.loc[sin, sout, com]['cap-up'])
-        
+
     def res_transmission_symmetry_rule(m, sin, sout, com):
         return m.cap_tra[sin, sout, com] == m.cap_tra[sout, sin, com]
 
@@ -440,7 +442,7 @@ def create_model(filename, timesteps):
     m.def_co2_emissions = pyomo.Constraint(m.tm, m.pro_tuples)
     m.res_process_output_by_capacity = pyomo.Constraint(m.tm, m.pro_tuples)
     m.res_process_capacity = pyomo.Constraint(m.pro_tuples)
-    
+
     # transmission
     m.def_transmission_capacity = pyomo.Constraint(m.tra_tuples)
     m.def_transmission_output = pyomo.Constraint(m.tm, m.tra_tuples)

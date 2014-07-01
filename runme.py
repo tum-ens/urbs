@@ -4,7 +4,8 @@ import urbs
 from coopr.opt.base import SolverFactory
 
 filename = 'data-example.xlsx'
-timesteps = np.arange(0, 24+1)
+(offset, length) = (4000, 15*24)
+timesteps = np.arange(offset, offset+length+1)
 
 model = urbs.create_model(filename, timesteps)
 prob = model.create()
@@ -21,4 +22,7 @@ prob.load(result)
 urbs.report(prob, 'report.xlsx', ['Elec'], ['DE', 'MA', 'NO'])
 
 # create timeseries plot
-urbs.plot(prob, 'Elec', 'DE')
+for sit in ['DE', 'MA', 'NO']:
+    fig = urbs.plot(prob, 'Elec', sit)
+    fig.savefig('plot-{}.png'.format(sit), bbox_inches='tight') 
+

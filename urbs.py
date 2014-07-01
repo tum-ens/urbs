@@ -2,6 +2,7 @@ import coopr.pyomo as pyomo
 import pandas as pd
 from datetime import datetime
 from random import random
+import pdb
 
 COLOURS = {
     'Biomass': (0, 122, 55),
@@ -19,7 +20,8 @@ COLOURS = {
     'Solar': (243, 174, 0),
     'Storage': (60, 36, 154),
     'Wind': (122, 179, 225),
-    'Stock': (222, 222, 222)
+    'Stock': (222, 222, 222),
+    'Decoration': (128, 128, 128)
 }
 
 
@@ -82,9 +84,12 @@ def create_model(filename, timesteps):
     #       values: set values, a list or array of element tuples
     m.t = pyomo.Set(
         initialize=m.settings['timesteps'],
+        ordered=True,
         doc='Set of timesteps')
     m.tm = pyomo.Set(
-        within=m.t, initialize=m.settings['timesteps'][1:],
+        within=m.t,
+        initialize=m.settings['timesteps'][1:],
+        ordered=True,
         doc='Set of modelled timesteps')
     m.sit = pyomo.Set(
         initialize=m.site.index,
@@ -322,7 +327,7 @@ def create_model(filename, timesteps):
                 m.transmission.loc[sin, sout, tra, com]['eff'])
 
     def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
-        return (m.e_tra_in[tm, sin, sout, tra, com] >=
+        return (m.e_tra_in[tm, sin, sout, tra, com] <=
                 m.cap_tra[sin, sout, tra, com])
 
     def res_transmission_capacity_rule(m, sin, sout, tra, com):
@@ -376,7 +381,7 @@ def create_model(filename, timesteps):
             return (m.e_sto_con[t, sit, sto, com] ==
                     m.cap_sto_c[sit, sto, com] *
                     m.storage.loc[sit, sto, com]['init'])
-        elif t == m.t[-1]:  # last timestep
+        elif t == m.t[len(m.t)]:  # last timestep
             return (m.e_sto_con[t, sit, sto, com] >=
                     m.cap_sto_c[sit, sto, com] *
                     m.storage.loc[sit, sto, com]['init'])
@@ -1101,6 +1106,10 @@ def plot(instance, com, sit, timesteps=None):
 
     # only keep storage content in storage timeseries
     stored = stored['Level']
+    
+    # add imported/exported timeseries
+    created = created.join(imported)
+    consumed = consumed.join(exported)
 
     # move demand to its own plot
     demand = consumed.pop('Demand')
@@ -1123,13 +1132,13 @@ def plot(instance, com, sit, timesteps=None):
     # http://stackoverflow.com/a/22984060/2375855
     proxy_artists = []
     for k, commodity in enumerate(created.columns):
-        this_color = to_color(commodity)
+        commodity_color = to_color(commodity)
 
-        sp0[k].set_facecolor(this_color)
-        sp0[k].set_edgecolor((.5, .5, .5))
+        sp0[k].set_facecolor(commodity_color)
+        sp0[k].set_edgecolor(to_color('Decoration'))
 
-        proxy_artists.append(mpl.patches.Rectangle((0, 0), 0, 0,
-                                                   facecolor=this_color))
+        proxy_artists.append(mpl.patches.Rectangle(
+            (0, 0), 0, 0, facecolor=commodity_color))
 
     # label
     ax0.set_title('Energy balance of {} in {}'.format(com, sit))
@@ -1140,7 +1149,8 @@ def plot(instance, com, sit, timesteps=None):
                     reversed(tuple(created.columns)),
                     frameon=False,
                     ncol=created.shape[1])
-    plt.setp(lg.get_patches(), edgecolor=(.5, .5, .5), linewidth=0.15)
+    plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'), 
+             linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)
 
     # PLOT CONSUMED
@@ -1149,13 +1159,14 @@ def plot(instance, com, sit, timesteps=None):
 
     # color
     for k, commodity in enumerate(consumed.columns):
-        this_color = to_color(commodity)
+        commodity_color = to_color(commodity)
 
-        sp00[k].set_facecolor(this_color)
+        sp00[k].set_facecolor(commodity_color)
         sp00[k].set_edgecolor((.5, .5, .5))
 
     # PLOT DEMAND
-    ax0.plot(demand.index, demand.values, linewidth=1.2, color=(.1, .1, .1))
+    ax0.plot(demand.index, demand.values, linewidth=1.2, 
+             color=to_color('Demand'))
 
     # PLOT STORAGE
     ax1 = plt.subplot(gs[1], sharex=ax0)
@@ -1163,7 +1174,7 @@ def plot(instance, com, sit, timesteps=None):
 
     # color
     sp1[0].set_facecolor(to_color('Storage'))
-    sp1[0].set_edgecolor((.5, .5, .5))
+    sp1[0].set_edgecolor(to_color('Decoration'))
 
     # labels
     ax1.set_title('Energy storage content of {} in {}'.format(com, sit))
@@ -1186,11 +1197,11 @@ def plot(instance, com, sit, timesteps=None):
     # set limits and ticks for both axes
     for ax in [ax0, ax1]:
         # ax.set_axis_bgcolor((0, 0, 0, 0))
-        plt.setp(ax.spines.values(), color=(.5, .5, .5))
+        plt.setp(ax.spines.values(), color=to_color('Decoration'))
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)
-        ax.xaxis.grid(True, 'major', color=(.5, .5, .5))
-        ax.yaxis.grid(True, 'major', color=(.5, .5, .5))
+        ax.xaxis.grid(True, 'major', color=to_color('Decoration'))
+        ax.yaxis.grid(True, 'major', color=to_color('Decoration'))
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
     return fig

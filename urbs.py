@@ -1,8 +1,8 @@
 import coopr.pyomo as pyomo
 import pandas as pd
 from datetime import datetime
+from operator import itemgetter
 from random import random
-import pdb
 
 COLOURS = {
     'Biomass': (0, 122, 55),
@@ -26,7 +26,56 @@ COLOURS = {
 }
 
 
-def create_model(filename, timesteps):
+def read_input(filename):
+    xls = pd.ExcelFile(filename)
+    site = xls.parse(
+        'Site',
+        index_col=['Sit'])
+    commodity = xls.parse(
+        'Commodity',
+        index_col=['Sit', 'Com', 'Type'])
+    process = xls.parse(
+        'Process',
+        index_col=['Sit', 'Pro', 'CoIn', 'CoOut'])
+    transmission = xls.parse(
+        'Transmission',
+        index_col=['SitIn', 'SitOut', 'Tra', 'Com'])
+    storage = xls.parse(
+        'Storage',
+        index_col=['Sit', 'Sto', 'Com'])
+    demand = xls.parse(
+        'Demand', 
+        index_col=['t'])
+    supim = xls.parse(
+        'SupIm', 
+        index_col=['t'])
+    
+    # prepare input data
+    # split columns by dots '.', so that 'DE.Elec' becomes the two-level
+    # column index ('DE', 'Elec')
+    demand.columns = split_columns(demand.columns, '.')
+    supim.columns = split_columns(supim.columns, '.')
+    
+    # derive annuity factor from WACC and depreciation periods
+    process['annuity-factor'] = annuity_factor(
+        process['depreciation'], process['wacc'])
+    transmission['annuity-factor'] = annuity_factor(
+        transmission['depreciation'], transmission['wacc'])
+    storage['annuity-factor'] = annuity_factor(
+        storage['depreciation'], storage['wacc'])
+    
+    return {
+        'site': site,
+        'commodity': commodity,
+        'process': process,
+        'transmission': transmission,
+        'storage': storage,
+        'demand': demand,
+        'supim': supim
+    }
+    
+
+def create_model(data, timesteps):
     """ Create pyomo ConcreteModel URBS object
     """
     m = pyomo.ConcreteModel()
@@ -45,37 +94,11 @@ def create_model(filename, timesteps):
     #
     #     m.process.loc[sit, pro, coin, cout][attribute]
     #
-    xls = pd.ExcelFile(filename)
-    m.site = xls.parse(
-        'Site',
-        index_col=['Sit'])
-    m.commodity = xls.parse(
-        'Commodity',
-        index_col=['Sit', 'Com', 'Type'])
-    m.process = xls.parse(
-        'Process',
-        index_col=['Sit', 'Pro', 'CoIn', 'CoOut'])
-    m.transmission = xls.parse(
-        'Transmission',
-        index_col=['SitIn', 'SitOut', 'Tra', 'Com'])
-    m.storage = xls.parse(
-        'Storage',
-        index_col=['Sit', 'Sto', 'Com'])
-    m.demand = xls.parse('Demand', index_col=['t'])
-    m.supim = xls.parse('SupIm', index_col=['t'])
-
-    # derive annuity factor for process and storage
-    m.process['annuity-factor'] = annuity_factor(
-        m.process['depreciation'], m.process['wacc'])
-    m.transmission['annuity-factor'] = annuity_factor(
-        m.transmission['depreciation'], m.transmission['wacc'])
-    m.storage['annuity-factor'] = annuity_factor(
-        m.storage['depreciation'], m.storage['wacc'])
-
-    # split columns by dots '.', so that 'DE.Elec' becomes the two-level
-    # column index ('DE', 'Elec')
-    m.demand.columns = split_columns(m.demand.columns, '.')
-    m.supim.columns = split_columns(m.supim.columns, '.')
+    get_inputs = itemgetter(
+        "site", "commodity", "process", "transmission", "storage", 
+        "demand", "supim")
+    (m.site, m.commodity, m.process, m.transmission, m.storage, 
+        m.demand, m.supim) = get_inputs(data)  
 
     # Sets
     # ====
@@ -1152,7 +1175,7 @@ def plot(instance, com, sit, timesteps=None):
                     frameon=False,
                     ncol=created.shape[1],
                     loc='upper center',
-                    bbox_to_anchor=(0.5, 0))
+                    bbox_to_anchor=(0.5, -0.02))
     plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'), 
              linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)

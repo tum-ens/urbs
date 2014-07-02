@@ -7,6 +7,7 @@ import pdb
 COLOURS = {
     'Biomass': (0, 122, 55),
     'Coal': (100, 100, 100),
+    'Demand': (25, 25, 25),
     'Diesel': (116, 66, 65),
     'Gas': (237, 227, 0),
     'Elec': (0, 101, 189),
@@ -878,7 +879,7 @@ def get_constants(instance):
         costs, cpro, csto, co2 = get_constants(instance)
 
     Args:
-        instance: a picus model instance
+        instance: a urbs model instance
 
     Returns:
         costs, cpro, csto, co2)
@@ -913,7 +914,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
         created, consumed, storage = get_timeseries(instance, co)
 
     Args:
-        instance: a picus model instance
+        instance: a urbs model instance
         co: a commodity
         timesteps: optional list of timesteps, defaults to modelled timesteps
 
@@ -935,9 +936,10 @@ def get_timeseries(instance, com, sit, timesteps=None):
     demand.name = 'Demand'
 
     # STOCK
-    eco = get_entity(instance, 'e_co_stock')['e_co_stock'].unstack()
+    eco = get_entity(instance, 'e_co_stock')['e_co_stock'].unstack()['Stock']
+    eco = eco.xs(sit, level='sit').unstack().fillna(0)
     try:
-        stock = eco.loc[timesteps][sit, com]
+        stock = eco.loc[timesteps][com]
     except KeyError:
         stock = pd.Series(0, index=timesteps)
     stock.name = 'Stock'
@@ -1002,7 +1004,7 @@ def report(instance, filename, commodities, sites):
     """Write result summary to a spreadsheet file
 
     Args:
-        instance: a picus model instance
+        instance: a urbs model instance
         filename: Excel spreadsheet filename, will be overwritten if exists
         commodities: list of commodities for which to create timeseries sheets
 
@@ -1073,7 +1075,7 @@ def plot(instance, com, sit, timesteps=None):
     with stored energy in a second subplot.
 
     Args:
-        instance: a picus model instance
+        instance: a urbs model instance
         co: (output) commodity to plot
         site: site to plot
         timesteps: optional list of modelled timesteps to plot
@@ -1145,10 +1147,12 @@ def plot(instance, com, sit, timesteps=None):
     ax0.set_ylabel('Power (MW)')
 
     # legend
-    lg = ax0.legend(reversed(proxy_artists),
-                    reversed(tuple(created.columns)),
+    lg = ax0.legend(proxy_artists,
+                    tuple(created.columns),
                     frameon=False,
-                    ncol=created.shape[1])
+                    ncol=created.shape[1],
+                    loc='upper center',
+                    bbox_to_anchor=(0.5, 0))
     plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'), 
              linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)
@@ -1177,7 +1181,6 @@ def plot(instance, com, sit, timesteps=None):
     sp1[0].set_edgecolor(to_color('Decoration'))
 
     # labels
-    ax1.set_title('Energy storage content of {} in {}'.format(com, sit))
     ax1.set_xlabel('Time in year (h)')
     ax1.set_ylabel('Energy (MWh)')
 
@@ -1203,7 +1206,7 @@ def plot(instance, com, sit, timesteps=None):
         ax.xaxis.grid(True, 'major', color=to_color('Decoration'))
         ax.yaxis.grid(True, 'major', color=to_color('Decoration'))
         ax.xaxis.set_ticks_position('none')
-        ax.yaxis.set_ticks_position('none')
+        ax.yaxis.set_ticks_position('none')        
     return fig
 
 

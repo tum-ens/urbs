@@ -120,19 +120,19 @@ def create_model(data, timesteps):
         initialize=m.site.index,
         doc='Set of sites')
     m.com = pyomo.Set(
-        initialize=m.commodity.index.levels[1],
+        initialize=m.commodity.index.get_level_values('Com').unique(),
         doc='Set of commodities')
     m.com_type = pyomo.Set(
-        initialize=m.commodity.index.levels[2],
+        initialize=m.commodity.index.get_level_values('Type').unique(),
         doc='Set of commodity types')
     m.pro = pyomo.Set(
         initialize=m.process.index.levels[1],
         doc='Set of conversion processes')
     m.tra = pyomo.Set(
-        initialize=m.transmission.index.levels[2],
+        initialize=m.transmission.index.get_level_values('Tra').unique(),
         doc='Set of tranmission technologies')
     m.sto = pyomo.Set(
-        initialize=m.storage.index.levels[1],
+        initialize=m.storage.index.get_level_values('Sto').unique(),
         doc='Set of storage technologies')
     m.cost_type = pyomo.Set(
         initialize=['Inv', 'Fix', 'Var', 'Fuel'],
@@ -155,13 +155,13 @@ def create_model(data, timesteps):
     # for equations that apply to only one commodity type
     m.com_supim = pyomo.Set(
         within=m.com,
-        initialize=(c[1] for c in m.com_tuples if c[2] == 'SupIm'))
+        initialize=set(c[1] for c in m.com_tuples if c[2] == 'SupIm'))
     m.com_stock = pyomo.Set(
         within=m.com,
-        initialize=(c[1] for c in m.com_tuples if c[2] == 'Stock'))
+        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Stock'))
     m.com_demand = pyomo.Set(
         within=m.com,
-        initialize=(c[1] for c in m.com_tuples if c[2] == 'Demand'))
+        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Demand'))
 
     # Parameters
     # ==========
@@ -721,7 +721,7 @@ def get_entity(instance, name):
             results = pd.DataFrame(entity.iteritems())
     else:
         # create DataFrame
-        if entity._ndim > 1:
+        if entity.dim() > 1:
             # concatenate index tuples with value if entity has
             # multidimensional indices v[0]
             results = pd.DataFrame(
@@ -732,11 +732,10 @@ def get_entity(instance, name):
                 [(v[0], v[1].value) for v in entity.iteritems()])
 
     # check for duplicate onset names and append one to several "_" to make
-    # them unique
-    if len(set(labels)) != len(labels):
-        for k, label in enumerate(labels):
-            if label in labels[:k]:
-                labels[k] = labels[k] + "_"
+    # them unique, e.g. ['sit', 'sit', 'com'] becomes ['sit', 'sit_', 'com']
+    for k, label in enumerate(labels):
+        if label in labels[:k]:
+            labels[k] = labels[k] + "_"
 
     # name columns according to labels + entity name
     results.columns = labels + [name]
@@ -849,46 +848,37 @@ def get_entity_type(entity):
 def get_onset_names(entity):
     # get column titles for entities from domain set names
     entity_type = get_entity_type(entity)
-
     labels = []
 
     if entity_type == 'set':
-        if entity.dimen > 1 and entity.domain:
-            # N-dimensional set tuples
-            for domain_set in entity.domain.set_tuple:
-                labels.append(domain_set.name)
-        elif entity.domain:
-            # 1D subset; simply add superset name
-            labels.append(entity.domain.name)
+        if entity.dimen > 1:
+            # N-dimensional set tuples, possibly with nested set tuples within
+            if entity.domain:
+                domains = entity.domain.set_tuple
+            else:
+                domains = entity.set_tuple
+                
+            for domain_set in domains:
+                labels.extend(get_onset_names(domain_set))
+                
+        elif entity.dimen == 1:
+            if entity.domain:
+                # 1D subset; add domain name
+                labels.append(entity.domain.name)
+            else:
+                # unrestricted set; add entity name
+                labels.append(entity.name)
         else:
             # no domain, so no labels needed
             pass
 
-    elif entity_type == 'parameter':
+    elif entity_type in ['parameter', 'variable', 'constraint', 'objective']:
         if entity.dim() > 0 and entity._index:
             labels = get_onset_names(entity._index)
         else:
             # zero dimensions, so no onset labels
             pass
 
-    elif entity_type in ['variable', 'constraint', 'objective']:
-        if entity._index_set:
-            for domain_set in entity._index_set:
-                if domain_set.dimen == 1:
-                    labels.append(domain_set.name)
-                else:
-                    labels.extend(the_set.name for the_set in
-                                  domain_set.domain.set_tuple)
-        else:
-            if entity._ndim > 0:
-                if entity._index.dimen == 1:
-                    labels.append(entity._index.name)
-                else:
-                    labels.extend(the_set.name for the_set in
-                                  entity._index.domain.set_tuple)
-            else:
-                # 0-dimensional thing, so no labels needed
-                pass
     else:
         raise ValueError("Function get_entity_type returned unknown entity "
                          "type '{}'!".format(entity_type))
@@ -1178,7 +1168,7 @@ def plot(instance, com, sit, timesteps=None):
                     frameon=False,
                     ncol=created.shape[1],
                     loc='upper center',
-                    bbox_to_anchor=(0.5, -0.02))
+                    bbox_to_anchor=(0.5, -0.01))
     plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'), 
              linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)
@@ -1230,8 +1220,8 @@ def plot(instance, com, sit, timesteps=None):
         plt.setp(ax.spines.values(), color=to_color('Decoration'))
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)
-        ax.xaxis.grid(True, 'major', color=to_color('Decoration'))
-        ax.yaxis.grid(True, 'major', color=to_color('Decoration'))
+        ax.xaxis.grid(True, 'major', color=to_color('Decoration'), linestyle='dotted')
+        ax.yaxis.grid(True, 'major', color=to_color('Decoration'), linestyle='dotted')
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')        
     return fig

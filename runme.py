@@ -21,11 +21,6 @@ optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
 result = optim.solve(prob, tee=True)
 prob.load(result)
 
-# read results (only for interactive use)
-(costs, cpro, ctra, csto, co2) = urbs.get_constants(prob)
-(created, consumed, stored, 
- imported, exported) = urbs.get_timeseries(prob, 'Elec', 'DE')
-
 # write report to spreadsheet
 urbs.report(prob, 'report.xlsx', ['Elec'], ['DE', 'MA', 'NO'])
 

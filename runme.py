@@ -11,8 +11,15 @@ timesteps = np.arange(offset, offset+length+1)
 # prepare input data
 data = urbs.read_input(filename)
 
-# modify here to create scenarios, e.g.
-data['commodity']['price'] *= 2
+# modify data here to create scenarios
+
+# EXAMPLE 1 - change stock commodity prices
+co = data['commodity']
+co.sortlevel(inplace=True)  # lexsort to make indexing work
+stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
+co.loc[stock_commodities_only, 'price'] *= 1.0
+# EXAMPLE 2 - change CO2 limit
+co.loc[('Global', 'CO2', 'Env'), 'max'] *= 0.05
 
 # create model, solve it, read results
 model = urbs.create_model(data, timesteps)
@@ -34,5 +41,7 @@ for country, colour in {
 # create timeseries plot for each demand (site, commodity) timeseries
 for sit, com in prob.demand.columns:                          
     fig = urbs.plot(prob, com, sit)
-    fig.savefig('plot-{}-{}.png'.format(com, sit), bbox_inches='tight') 
+    for ext in ['png', 'pdf']:
+        fig.savefig('plot-{}-{}.{}'.format(com, sit, ext), bbox_inches='tight')
 
+constants = urbs.get_constants(prob)

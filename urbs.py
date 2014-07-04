@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 from operator import itemgetter
 from random import random
+import pdb
 
 COLOURS = {
     'Biomass': (0, 122, 55),
@@ -1121,6 +1122,8 @@ def plot(instance, com, sit, timesteps=None):
 
     created, consumed, stored, imported, exported = get_timeseries(
         instance, com, sit, timesteps)
+    
+    costs, cpro, ctra, csto, co2 = get_constants(instance)
 
     # move retrieved/stored storage timeseries to created/consumed and
     # rename storage columns back to 'storage' for color mapping
@@ -1203,9 +1206,10 @@ def plot(instance, com, sit, timesteps=None):
     sp1[0].set_facecolor(to_color('Storage'))
     sp1[0].set_edgecolor(to_color('Decoration'))
 
-    # labels
+    # labels & y-limits
     ax1.set_xlabel('Time in year (h)')
     ax1.set_ylabel('Energy (MWh)')
+    ax1.set_ylim((0, csto.loc[sit, :, com]['C Total'].sum()))
 
     # make xtick distance duration-dependent
     if len(timesteps) > 26*168:

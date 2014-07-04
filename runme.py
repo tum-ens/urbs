@@ -36,8 +36,8 @@ for country, colour in {
         'NO': (200, 200, 220)}.iteritems():
    urbs.COLOURS[country] = colour 
 
-# create timeseries plot
-for sit in ['DE', 'MA', 'NO']:
-    fig = urbs.plot(prob, 'Elec', sit)
-    fig.savefig('plot-{}.png'.format(sit), bbox_inches='tight') 
+# create timeseries plot for each demand (site, commodity) timeseries
+for sit, com in prob.demand.columns:                          
+    fig = urbs.plot(prob, com, sit)
+    fig.savefig('plot-{}-{}.png'.format(com, sit), bbox_inches='tight') 
 

@@ -1,14 +1,18 @@
+import os
 import pandas as pd
 import urbs
 from coopr.opt.base import SolverFactory
 
 # INIT
 filename = 'data-example.xlsx'
-(offset, length) = (4000, 14*24)  # timestep selection
+(offset, length) = (4000, 5*24)  # timestep selection
 timesteps = range(offset, offset+length+1)
 
 
 # SCENARIOS
+def scenario_base(data):
+    # don't change data file
+    pass
 
 def scenario_stock_prices(data):
     # change stock commodity prices
@@ -35,6 +39,10 @@ def scenario_all_together(data):
 
 # select scenarios to be run
 scenarios = [
+    scenario_base,
+    scenario_stock_prices,
+    scenario_co2_limit,
+    scenario_north_process_caps,
     scenario_all_together]
 
 
@@ -56,7 +64,7 @@ for scenario in scenarios:
     # write report to spreadsheet
     urbs.report(
         prob, 
-        '{}.xlsx'.format(sce), 
+        os.path.join('results', '{}.xlsx').format(sce), 
         ['Elec'], ['South', 'Mid', 'North'])
     
     # add or change plot colours
@@ -76,5 +84,5 @@ for scenario in scenarios:
         ax0.set_title(new_title)
         for ext in ['png', 'pdf']:
             fig.savefig(
-                '{}-{}-{}.{}'.format(sce, com, sit, ext), 
+                os.path.join('results', '{}-{}-{}.{}').format(sce, com, sit, ext), 
                 bbox_inches='tight')

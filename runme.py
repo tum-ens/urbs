@@ -4,7 +4,7 @@ from coopr.opt.base import SolverFactory
 
 # INIT
 filename = 'data-example.xlsx'
-(offset, length) = (4000, 5*24)  # timestep selection
+(offset, length) = (4000, 14*24)  # timestep selection
 timesteps = range(offset, offset+length+1)
 
 
@@ -35,9 +35,7 @@ def scenario_all_together(data):
 
 # select scenarios to be run
 scenarios = [
-    scenario_stock_prices, 
-    scenario_co2_limit, 
-    scenario_north_process_caps]
+    scenario_all_together]
 
 
 # MAIN
@@ -72,6 +70,10 @@ for scenario in scenarios:
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in prob.demand.columns:                          
         fig = urbs.plot(prob, com, sit)
+        ax0 = fig.get_axes()[0]
+        new_title = ax0.get_title().replace('Energy balance of ',
+                                            '{}: '.format(sce))
+        ax0.set_title(new_title)
         for ext in ['png', 'pdf']:
             fig.savefig(
                 '{}-{}-{}.{}'.format(sce, com, sit, ext), 

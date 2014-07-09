@@ -1,3 +1,58 @@
+"""URBS: A linear optimisation model for distributed energy systems
+
+URBS minimises total cost for providing energy in form of desired commodities
+(usually electricity) to satisfy a given demand in form of timeseries. The
+model contains commodities (electricity, fossil fuels, renewable energy
+sources, greenhouse gases), processes that convert one commodity to another
+(while emitting greenhouse gases as a secondary output), transmission for
+transporting commodities between sites and storage for saving/retrieving 
+commodities.
+
+It operates on a time-discrete basis. The word "localized" means that
+all process and storage entities are connected to a single virtual node 
+without transmission losses. All physical quantities in URBS (except 
+for greenhouse gases) represent energy contents of commodities in the 
+unit MWh.
+
+Commodities can have one of four types:
+  - Stock: Buyable at any time for a given price. Supply can be limited
+    per timestep or for a whole year. Examples are coal, gas, uranium
+    or biomass.
+  - SupIm: Supply intermittent stands for fluctuating resources like
+    solar radiation and wind energy, which are available according to 
+    a timeseries of values, which could be derived from weather data.
+  - Demand: These commodities have a timeseries for the requirement
+    associated and must be provided by output from other process or 
+    from storage. Usually, there is only one demand commodity called 
+    electricity (abbreviated to Elec or ElecAC), but
+  - Env: The special commodity CO2 is of this type and represents the
+    amount (in tons) of greenhouse gas emissions from processes. Its
+    total amount can be limited, to investigate the effect of policies
+    on the.
+    
+Process entities are defined over the tuple
+
+>>> (site, process, input, output)
+
+and thus represent the conversion of energy stored in form of input
+commodity to the output commodity. For example, the process
+
+>>> (Iceland, turbine, geothermal, electricity)
+
+represents a geothermal power plant in Iceland.
+
+Storage entities are defined over the tuple
+    
+>>> (site, storage, stored commodity)
+
+representing the location and type of the storage entity, as well as the stored
+commodity. For example, the storage
+
+>>> (Norway, pump storage, electricity)
+
+represents pumped storage hydro plant in Norway that stores electricity.
+
+"""
 import coopr.pyomo as pyomo
 import pandas as pd
 from datetime import datetime
@@ -5,7 +60,7 @@ from operator import itemgetter
 from random import random
 import pdb
 
-COLOURS = {
+COLORS = {
     'Biomass': (0, 122, 55),
     'Coal': (100, 100, 100),
     'Demand': (25, 25, 25),
@@ -23,15 +78,11 @@ COLOURS = {
     'Storage': (60, 36, 154),
     'Wind': (122, 179, 225),
     'Stock': (222, 222, 222),
-    'Decoration': (128, 128, 128)
-}
+    'Decoration': (128, 128, 128)}
 
 
 def read_input(filename):
     xls = pd.ExcelFile(filename)
-    site = xls.parse(
-        'Site',
-        index_col=['Sit'])
     commodity = xls.parse(
         'Commodity',
         index_col=['Sit', 'Com', 'Type'])
@@ -65,15 +116,20 @@ def read_input(filename):
     storage['annuity-factor'] = annuity_factor(
         storage['depreciation'], storage['wacc'])
     
-    return {
-        'site': site,
+    data = {
         'commodity': commodity,
         'process': process,
         'transmission': transmission,
         'storage': storage,
         'demand': demand,
-        'supim': supim
-    }
+        'supim': supim}
+    
+    # sort nested indexes to make direct assignments work, cf
+    # http://pandas.pydata.org/pandas-docs/stable/indexing.html#the-need-for-sortedness-with-multiindex
+    for key in data:
+        if isinstance(data[key].index, pd.core.index.MultiIndex):
+            data[key].sortlevel(inplace=True)
+    return data
     
 
 def create_model(data, timesteps):
@@ -96,9 +152,9 @@ def create_model(data, timesteps):
     #     m.process.loc[sit, pro, coin, cout][attribute]
     #
     get_inputs = itemgetter(
-        "site", "commodity", "process", "transmission", "storage", 
+        "commodity", "process", "transmission", "storage", 
         "demand", "supim")
-    (m.site, m.commodity, m.process, m.transmission, m.storage, 
+    (m.commodity, m.process, m.transmission, m.storage, 
         m.demand, m.supim) = get_inputs(data)  
 
     # Sets
@@ -117,7 +173,7 @@ def create_model(data, timesteps):
         ordered=True,
         doc='Set of modelled timesteps')
     m.sit = pyomo.Set(
-        initialize=m.site.index,
+        initialize=m.commodity.index.get_level_values('Sit').unique(),
         doc='Set of sites')
     m.com = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Com').unique(),
@@ -126,7 +182,7 @@ def create_model(data, timesteps):
         initialize=m.commodity.index.get_level_values('Type').unique(),
         doc='Set of commodity types')
     m.pro = pyomo.Set(
-        initialize=m.process.index.levels[1],
+        initialize=m.process.index.get_level_values('Pro').unique(),
         doc='Set of conversion processes')
     m.tra = pyomo.Set(
         initialize=m.transmission.index.get_level_values('Tra').unique(),
@@ -1021,6 +1077,7 @@ def report(instance, filename, commodities, sites):
         instance: a urbs model instance
         filename: Excel spreadsheet filename, will be overwritten if exists
         commodities: list of commodities for which to create timeseries sheets
+        sites: list of sites
 
     Returns:
         Nothing
@@ -1083,17 +1140,17 @@ def report(instance, filename, commodities, sites):
 
 
 def plot(instance, com, sit, timesteps=None):
-    """Stacked timeseries of commodity balance
+    """Plot a stacked timeseries of commodity balance and storage.
 
     Creates a stackplot of the energy balance of a given commodity, together
     with stored energy in a second subplot.
 
     Args:
-        instance: a urbs model instance
-        co: (output) commodity to plot
-        site: site to plot
+        instance: urbs model instance
+        com: commodity name to plot
+        sit: site name to plot
         timesteps: optional list of modelled timesteps to plot
-                   (e.g. range(1,197)), defaults to set instance.tm
+            defaults to instance.tm
 
     Returns:
         fig: figure handle
@@ -1228,10 +1285,22 @@ def plot(instance, com, sit, timesteps=None):
 
 
 def to_color(obj=None):
+    """Assign a deterministic pseudo-random color to argument.
+    
+    If COLORS[obj] is set, return that. Otherwise, create a random color from
+    the hash(obj) representation string. For strings, this value depends only
+    on the string content, so that same strings always yield the same color.
+    
+    Args:
+        obj: any hashable object
+        
+    Returns:
+        a (r, g, b) color tuple if COLORS[obj] is set, otherwise a hexstring
+    """
     if obj is None:
         obj = random()
     try:
-        color = tuple(rgb/255.0 for rgb in COLOURS[obj])
+        color = tuple(rgb/255.0 for rgb in COLORS[obj])
     except KeyError:
         # random deterministic color
         color = "#{:06x}".format(abs(hash(obj)))[:7]

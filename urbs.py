@@ -82,25 +82,25 @@ COLORS = {
 
 
 def read_input(filename):
-    xls = pd.ExcelFile(filename)
-    commodity = xls.parse(
-        'Commodity',
-        index_col=['Sit', 'Com', 'Type'])
-    process = xls.parse(
-        'Process',
-        index_col=['Sit', 'Pro', 'CoIn', 'CoOut'])
-    transmission = xls.parse(
-        'Transmission',
-        index_col=['SitIn', 'SitOut', 'Tra', 'Com'])
-    storage = xls.parse(
-        'Storage',
-        index_col=['Sit', 'Sto', 'Com'])
-    demand = xls.parse(
-        'Demand', 
-        index_col=['t'])
-    supim = xls.parse(
-        'SupIm', 
-        index_col=['t'])
+    with pd.ExcelFile(filename) as xls:
+        commodity = xls.parse(
+            'Commodity',
+            index_col=['Sit', 'Com', 'Type'])
+        process = xls.parse(
+            'Process',
+            index_col=['Sit', 'Pro', 'CoIn', 'CoOut'])
+        transmission = xls.parse(
+            'Transmission',
+            index_col=['SitIn', 'SitOut', 'Tra', 'Com'])
+        storage = xls.parse(
+            'Storage',
+            index_col=['Sit', 'Sto', 'Com'])
+        demand = xls.parse(
+            'Demand', 
+            index_col=['t'])
+        supim = xls.parse(
+            'SupIm', 
+            index_col=['t'])
     
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -1063,57 +1063,55 @@ def report(instance, filename, commodities, sites):
     costs, cpro, ctra, csto, co2 = get_constants(instance)
 
     # write to Excel
-    writer = pd.ExcelWriter(filename)
-
-    # write to excel
-    costs.to_excel(writer, 'Costs')
-    co2.to_frame('CO2').to_excel(writer, 'CO2')
-    cpro.to_excel(writer, 'Process caps')
-    ctra.to_excel(writer, 'Transmission caps')
-    csto.to_excel(writer, 'Storage caps')
-    energies = []
-    timeseries = {}
-
-    # timeseries
-    for co in commodities:
-        for sit in sites:
-            created, consumed, stored, imported, exported = get_timeseries(
-                instance, co, sit)
-
-            overprod = pd.DataFrame(
-                columns=['Overproduction'],
-                data=created.sum(axis=1) - consumed.sum(axis=1) +
-                imported.sum(axis=1) - exported.sum(axis=1) +
-                stored['Retrieved'] - stored['Stored'])
-
-            tableau = pd.concat(
-                [created, consumed, stored, imported, exported, overprod],
-                axis=1,
-                keys=['Created', 'Consumed', 'Storage',
-                      'Import from', 'Export to', 'Balance'])
-            timeseries[(co, sit)] = tableau.copy()
-
-            # timeseries sums
-            sums = pd.concat([created.sum(),
-                              consumed.sum(),
-                              stored.sum().drop('Level'),
-                              imported.sum(),
-                              exported.sum(),
-                              overprod.sum()], axis=0,
-                             keys=['Created', 'Consumed', 'Storage',
-                             'Import', 'Export', 'Balance'])
-            energies.append(sums.to_frame("{}.{}".format(co, sit)))
-
-    # concatenate the timeseries sums
-    energy = pd.concat(energies, axis=1).fillna(0)
-    energy.to_excel(writer, 'Energy sums')
-
-    for co in commodities:
-        for sit in sites:
-            sheet_name = "{}.{} timeseries".format(co, sit)
-            timeseries[(co, sit)].to_excel(writer, sheet_name)
-
-    writer.save()
+    with pd.ExcelWriter(filename) as writer:
+    
+        # write to excel
+        costs.to_excel(writer, 'Costs')
+        co2.to_frame('CO2').to_excel(writer, 'CO2')
+        cpro.to_excel(writer, 'Process caps')
+        ctra.to_excel(writer, 'Transmission caps')
+        csto.to_excel(writer, 'Storage caps')
+        energies = []
+        timeseries = {}
+    
+        # timeseries
+        for co in commodities:
+            for sit in sites:
+                created, consumed, stored, imported, exported = get_timeseries(
+                    instance, co, sit)
+    
+                overprod = pd.DataFrame(
+                    columns=['Overproduction'],
+                    data=created.sum(axis=1) - consumed.sum(axis=1) +
+                    imported.sum(axis=1) - exported.sum(axis=1) +
+                    stored['Retrieved'] - stored['Stored'])
+    
+                tableau = pd.concat(
+                    [created, consumed, stored, imported, exported, overprod],
+                    axis=1,
+                    keys=['Created', 'Consumed', 'Storage',
+                          'Import from', 'Export to', 'Balance'])
+                timeseries[(co, sit)] = tableau.copy()
+    
+                # timeseries sums
+                sums = pd.concat([created.sum(),
+                                  consumed.sum(),
+                                  stored.sum().drop('Level'),
+                                  imported.sum(),
+                                  exported.sum(),
+                                  overprod.sum()], axis=0,
+                                 keys=['Created', 'Consumed', 'Storage',
+                                 'Import', 'Export', 'Balance'])
+                energies.append(sums.to_frame("{}.{}".format(co, sit)))
+    
+        # concatenate the timeseries sums
+        energy = pd.concat(energies, axis=1).fillna(0)
+        energy.to_excel(writer, 'Energy sums')
+    
+        for co in commodities:
+            for sit in sites:
+                sheet_name = "{}.{} timeseries".format(co, sit)
+                timeseries[(co, sit)].to_excel(writer, sheet_name)
 
 
 def plot(instance, com, sit, timesteps=None):

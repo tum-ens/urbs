@@ -754,11 +754,10 @@ def get_entity(instance, name):
 
     # retrieve entity, its type and its onset names
     entity = instance.__getattribute__(name)
-    entity_type = get_entity_type(entity)
     labels = get_onset_names(entity)
 
     # extract values
-    if entity_type == 'set':
+    if isinstance(entity, pyomo.Set):
         # Pyomo sets don't have values, only elements
         results = pd.DataFrame([(v, 1) for v in entity.value])
 
@@ -770,7 +769,7 @@ def get_entity(instance, name):
             labels = [name]
             name = name+'_'
 
-    elif entity_type == 'parameter':
+    elif isinstance(entity, pyomo.Param):
         if entity.dim() > 1:
             results = pd.DataFrame([v[0]+(v[1],) for v in entity.iteritems()])
         else:
@@ -831,82 +830,60 @@ def get_entities(instance, names):
     return df
 
 
-def list_entities(instance, entity_type=None):
+def list_entities(instance, entity_type):
     """ Return list of sets, params, variables, constraints or objectives
 
     Args:
         instance: a Pyomo ConcreteModel object
-        type: (optional) "set", "par", "var", "con" or "obj"
+        entity_type: "set", "par", "var", "con" or "obj"
 
     Returns:
-        list of tuples with (entity name, [list onset names]) of given type.
-        if no type is given, returns a dict of lists for each type
+        DataFrame of entities
 
     Example:
         >>> list_entities(instance, 'var')
-        [('EprOut', ['time', 'process', 'commodity', 'commodity']), ...
-         ('EprIn',  ['time', 'process', 'commodity', 'commodity'])]
+
     """
-    if not entity_type:
-        result = {}
-        for entity_type in ['set', 'parameter', 'variable',
-                            'constraint', 'objective']:
-            result[entity_type] = list_entities(instance, entity_type)
-        return result
 
     iter_entities = instance.__dict__.iteritems()
 
-    if entity_type in ["set", "sets"]:
-        return sorted(
+    if entity_type == 'set':
+        entities = sorted(
             (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if '.sets.' in str(type(y)) and not y.virtual)
+            if isinstance(y, pyomo.Set) and not y.virtual)
 
-    elif entity_type in ["par", "param", "params", "parameter", "parameters"]:
-        return sorted(
+    elif entity_type == 'par':
+        entities = sorted(
             (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if '.param.' in str(type(y)))
+            if isinstance(y, pyomo.Param))
 
-    elif entity_type in ["var", "vars", "variable", "variables"]:
-        return sorted(
+    elif entity_type == 'var':
+        entities = sorted(
             (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if '.var.' in str(type(y)))
+            if isinstance(y, pyomo.Var))
 
-    elif entity_type in ["con", "constraint", "constraints"]:
-        return sorted(
+    elif entity_type == 'con':
+        entities = sorted(
             (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if '.constraint.' in str(type(y)))
+            if isinstance(y, pyomo.Constraint))
 
-    elif entity_type in ["obj", "objective", "objectives"]:
-        return sorted(
+    elif entity_type == 'obj':
+        entities = sorted(
             (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if '.objective.' in str(type(y)))
+            if isinstance(y, pyomo.Objective))
 
     else:
-        return ValueError("Unknown parameter entity_type")
+        raise ValueError("Unknown parameter entity_type")
 
-
-def get_entity_type(entity):
-    type_str = str(type(entity))
-    if '.sets.' in type_str:
-        return 'set'
-    elif '.param.' in type_str:
-        return 'parameter'
-    elif '.var.' in type_str:
-        return 'variable'
-    elif '.constraint.' in type_str:
-        return 'constraint'
-    elif '.objective.' in type_str:
-        return 'objective'
-    else:
-        return 'unknown'
-
+    entities = pd.DataFrame(entities, columns=['Name','Description', 'Domain'])
+    entities.set_index('Name', inplace=True)
+    return entities
 
 def get_onset_names(entity):
     # get column titles for entities from domain set names
-    entity_type = get_entity_type(entity)
     labels = []
 
-    if entity_type == 'set':
+    if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
             # N-dimensional set tuples, possibly with nested set tuples within
             if entity.domain:
@@ -928,7 +905,8 @@ def get_onset_names(entity):
             # no domain, so no labels needed
             pass
 
-    elif entity_type in ['parameter', 'variable', 'constraint', 'objective']:
+    elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Constraint,
+        pyomo.Objective)):
         if entity.dim() > 0 and entity._index:
             labels = get_onset_names(entity._index)
         else:
@@ -936,8 +914,7 @@ def get_onset_names(entity):
             pass
 
     else:
-        raise ValueError("Function get_entity_type returned unknown entity "
-                         "type '{}'!".format(entity_type))
+        raise ValueError("Unknown entity type!")
 
     return labels
 

@@ -14,28 +14,33 @@ def scenario_base(data):
     # don't change data file
     pass
 
+
 def scenario_stock_prices(data):
     # change stock commodity prices
     co = data['commodity']
     stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
     co.loc[stock_commodities_only, 'price'] *= 1.0
-   
+
+
 def scenario_co2_limit(data):
     # change CO2 limit
     co = data['commodity']
     co.loc[('Global', 'CO2', 'Env'), 'max'] *= 0.05
-    
+
+
 def scenario_north_process_caps(data):
     # change maximum installable capacity
     pro = data['process']
     pro.loc[('North', 'turb', 'Hydro', 'Elec'), 'cap-up'] *= 0.5
     pro.loc[('North', 'pp', 'Biomass', 'Elec'), 'cap-up'] *= 0.25
-    
+
+
 def scenario_all_together(data):
     # combine all other scenarios
     scenario_stock_prices(data)
     scenario_co2_limit(data)
     scenario_north_process_caps(data)
+
 
 # select scenarios to be run
 scenarios = [
@@ -60,29 +65,29 @@ for scenario in scenarios:
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     result = optim.solve(prob, tee=True)
     prob.load(result)
-    
+
     # write report to spreadsheet
     urbs.report(
-        prob, 
-        os.path.join('results', '{}.xlsx').format(sce), 
+        prob,
+        os.path.join('results', '{}.xlsx').format(sce),
         ['Elec'], ['South', 'Mid', 'North'])
-    
+
     # add or change plot colours
     my_colors = {
-        'South': (230, 200, 200), 
+        'South': (230, 200, 200),
         'Mid': (200, 230, 200),
         'North': (200, 200, 230)}
     for country, color in my_colors.iteritems():
-        urbs.COLORS[country] = color 
-    
+        urbs.COLORS[country] = color
+
     # create timeseries plot for each demand (site, commodity) timeseries
-    for sit, com in prob.demand.columns:                          
+    for sit, com in prob.demand.columns:
         fig = urbs.plot(prob, com, sit)
         ax0 = fig.get_axes()[0]
         new_title = ax0.get_title().replace('Energy balance of ',
                                             '{}: '.format(sce))
         ax0.set_title(new_title)
         for ext in ['png', 'pdf']:
-            fig.savefig(
-                os.path.join('results', '{}-{}-{}.{}').format(sce, com, sit, ext), 
-                bbox_inches='tight')
+            fig_filename = os.path.join(
+                'results', '{}-{}-{}.{}').format(sce, com, sit, ext)
+            fig.savefig(fig_filename, bbox_inches='tight')

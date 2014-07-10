@@ -11,13 +11,13 @@ import urbs
 
 # create list of Excel files to write
 # derive list of scenario names for column labels/figure captions
-result_files = sorted(glob.glob(os.path.join('results','scenario_*.xlsx')))
+result_files = sorted(glob.glob(os.path.join('results', 'scenario_*.xlsx')))
 scenario_names = [os.path.basename(rf)
                   .replace('_', ' ')
-                  .replace('.xlsx','')
-                  .replace('scenario ','') 
+                  .replace('.xlsx', '')
+                  .replace('scenario ', '')
                   for rf in result_files]
-                  
+
 # find base scenario and bring to last position
 base_scenario = scenario_names.index('base')
 result_files.insert(0, result_files.pop(base_scenario))
@@ -32,15 +32,15 @@ for rf in result_files:
     with pd.ExcelFile(rf) as xls:
         cost = xls.parse('Costs', has_index_names=True)
         esum = xls.parse('Energy sums')
-        
+
         esum.reset_index(inplace=True)
         esum.fillna(method='ffill', inplace=True)
         esum.set_index(['level_0', 'level_1'], inplace=True)
-        
+
         costs.append(cost)
         esums.append(esum)
-    
-# merge everything into 
+
+# merge everything into
 costs = pd.concat(costs, axis=1, keys=scenario_names)
 esums = pd.concat(esums, axis=1, keys=scenario_names)
 
@@ -69,11 +69,11 @@ fig = plt.figure(figsize=(20, 8))
 gs = mpl_gs.GridSpec(1, 2, width_ratios=[2, 3])
 
 ax0 = plt.subplot(gs[0])
-bp0 = costs.plot(ax=ax0, kind='barh', stacked=True, zorder=1)
+bp0 = costs.plot(ax=ax0, kind='barh', stacked=True)
 
 ax1 = plt.subplot(gs[1])
 esums_colors = [urbs.to_color(commodity) for commodity in esums.columns]
-bp1 = esums.plot(ax=ax1, kind='barh', stacked=True, color=esums_colors, zorder=-5)
+bp1 = esums.plot(ax=ax1, kind='barh', stacked=True, color=esums_colors)
 
 # remove scenario names from second plot
 ax1.set_yticklabels('')
@@ -87,22 +87,25 @@ for bp in [bp0, bp1]:
 for ax in [ax0, ax1]:
     plt.setp(ax.spines.values(), color=urbs.to_color('Decoration'))
     ax.yaxis.grid(False)
-    ax.xaxis.grid(True, 'major', color=urbs.to_color('Decoration'), linestyle='dotted')
+    ax.xaxis.grid(True, 'major', color=urbs.to_color('Decoration'),
+                  linestyle='dotted')
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')
-    
+
     # legend
-    lg = ax.legend(frameon=False, loc='upper center', ncol=99, bbox_to_anchor=(0.5, 1.08))
-    plt.setp(lg.get_patches(), edgecolor=urbs.to_color('Decoration'), 
+    lg = ax.legend(frameon=False, loc='upper center',
+                   ncol=len(ax.legend().get_texts()),
+                   bbox_to_anchor=(0.5, 1.08))
+    plt.setp(lg.get_patches(), edgecolor=urbs.to_color('Decoration'),
              linewidth=0.15)
 
 ax0.set_xlabel('Total costs (1e9 EUR/a)')
 ax1.set_xlabel('Total energy produced (GWh)')
 
 for ext in ['png', 'pdf']:
-    fig.savefig('comp.{}'.format(ext), 
+    fig.savefig('comp.{}'.format(ext),
                 bbox_inches='tight')
-    
+
 # REPORT
 with pd.ExcelWriter('comp.xlsx') as writer:
     costs.to_excel(writer, 'Costs')

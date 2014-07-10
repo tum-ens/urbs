@@ -5,13 +5,13 @@ URBS minimises total cost for providing energy in form of desired commodities
 model contains commodities (electricity, fossil fuels, renewable energy
 sources, greenhouse gases), processes that convert one commodity to another
 (while emitting greenhouse gases as a secondary output), transmission for
-transporting commodities between sites and storage for saving/retrieving 
+transporting commodities between sites and storage for saving/retrieving
 commodities.
 
 It operates on a time-discrete basis. The word "localized" means that
-all process and storage entities are connected to a single virtual node 
-without transmission losses. All physical quantities in URBS (except 
-for greenhouse gases) represent energy contents of commodities in the 
+all process and storage entities are connected to a single virtual node
+without transmission losses. All physical quantities in URBS (except
+for greenhouse gases) represent energy contents of commodities in the
 unit MWh.
 
 Commodities can have one of four types:
@@ -19,17 +19,17 @@ Commodities can have one of four types:
     per timestep or for a whole year. Examples are coal, gas, uranium
     or biomass.
   - SupIm: Supply intermittent stands for fluctuating resources like
-    solar radiation and wind energy, which are available according to 
+    solar radiation and wind energy, which are available according to
     a timeseries of values, which could be derived from weather data.
   - Demand: These commodities have a timeseries for the requirement
-    associated and must be provided by output from other process or 
-    from storage. Usually, there is only one demand commodity called 
+    associated and must be provided by output from other process or
+    from storage. Usually, there is only one demand commodity called
     electricity (abbreviated to Elec or ElecAC), but
   - Env: The special commodity CO2 is of this type and represents the
     amount (in tons) of greenhouse gas emissions from processes. Its
     total amount can be limited, to investigate the effect of policies
     on the.
-    
+
 Process entities are defined over the tuple
 
 >>> (site, process, input, output)
@@ -42,7 +42,7 @@ commodity to the output commodity. For example, the process
 represents a geothermal power plant in Iceland.
 
 Storage entities are defined over the tuple
-    
+
 >>> (site, storage, stored commodity)
 
 representing the location and type of the storage entity, as well as the stored
@@ -96,18 +96,18 @@ def read_input(filename):
             'Storage',
             index_col=['Sit', 'Sto', 'Com'])
         demand = xls.parse(
-            'Demand', 
+            'Demand',
             index_col=['t'])
         supim = xls.parse(
-            'SupIm', 
+            'SupIm',
             index_col=['t'])
-    
+
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
     # column index ('DE', 'Elec')
     demand.columns = split_columns(demand.columns, '.')
     supim.columns = split_columns(supim.columns, '.')
-    
+
     # derive annuity factor from WACC and depreciation periods
     process['annuity-factor'] = annuity_factor(
         process['depreciation'], process['wacc'])
@@ -115,7 +115,7 @@ def read_input(filename):
         transmission['depreciation'], transmission['wacc'])
     storage['annuity-factor'] = annuity_factor(
         storage['depreciation'], storage['wacc'])
-    
+
     data = {
         'commodity': commodity,
         'process': process,
@@ -123,14 +123,14 @@ def read_input(filename):
         'storage': storage,
         'demand': demand,
         'supim': supim}
-    
+
     # sort nested indexes to make direct assignments work, cf
     # http://pandas.pydata.org/pandas-docs/stable/indexing.html#the-need-for-sortedness-with-multiindex
     for key in data:
         if isinstance(data[key].index, pd.core.index.MultiIndex):
             data[key].sortlevel(inplace=True)
     return data
-    
+
 
 def create_model(data, timesteps):
     """ Create pyomo ConcreteModel URBS object
@@ -152,10 +152,10 @@ def create_model(data, timesteps):
     #     m.process.loc[sit, pro, coin, cout][attribute]
     #
     get_inputs = itemgetter(
-        "commodity", "process", "transmission", "storage", 
+        "commodity", "process", "transmission", "storage",
         "demand", "supim")
-    (m.commodity, m.process, m.transmission, m.storage, 
-        m.demand, m.supim) = get_inputs(data)  
+    (m.commodity, m.process, m.transmission, m.storage,
+        m.demand, m.supim) = get_inputs(data)
 
     # Sets
     # ====
@@ -875,9 +875,11 @@ def list_entities(instance, entity_type):
     else:
         raise ValueError("Unknown parameter entity_type")
 
-    entities = pd.DataFrame(entities, columns=['Name','Description', 'Domain'])
+    entities = pd.DataFrame(entities,
+                            columns=['Name', 'Description', 'Domain'])
     entities.set_index('Name', inplace=True)
     return entities
+
 
 def get_onset_names(entity):
     # get column titles for entities from domain set names
@@ -890,10 +892,10 @@ def get_onset_names(entity):
                 domains = entity.domain.set_tuple
             else:
                 domains = entity.set_tuple
-                
+
             for domain_set in domains:
                 labels.extend(get_onset_names(domain_set))
-                
+
         elif entity.dimen == 1:
             if entity.domain:
                 # 1D subset; add domain name
@@ -906,7 +908,7 @@ def get_onset_names(entity):
             pass
 
     elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Constraint,
-        pyomo.Objective)):
+                    pyomo.Objective)):
         if entity.dim() > 0 and entity._index:
             labels = get_onset_names(entity._index)
         else:
@@ -1064,7 +1066,7 @@ def report(instance, filename, commodities, sites):
 
     # write to Excel
     with pd.ExcelWriter(filename) as writer:
-    
+
         # write to excel
         costs.to_excel(writer, 'Costs')
         co2.to_frame('CO2').to_excel(writer, 'CO2')
@@ -1073,26 +1075,26 @@ def report(instance, filename, commodities, sites):
         csto.to_excel(writer, 'Storage caps')
         energies = []
         timeseries = {}
-    
+
         # timeseries
         for co in commodities:
             for sit in sites:
                 created, consumed, stored, imported, exported = get_timeseries(
                     instance, co, sit)
-    
+
                 overprod = pd.DataFrame(
                     columns=['Overproduction'],
                     data=created.sum(axis=1) - consumed.sum(axis=1) +
                     imported.sum(axis=1) - exported.sum(axis=1) +
                     stored['Retrieved'] - stored['Stored'])
-    
+
                 tableau = pd.concat(
                     [created, consumed, stored, imported, exported, overprod],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage',
                           'Import from', 'Export to', 'Balance'])
                 timeseries[(co, sit)] = tableau.copy()
-    
+
                 # timeseries sums
                 sums = pd.concat([created.sum(),
                                   consumed.sum(),
@@ -1103,11 +1105,11 @@ def report(instance, filename, commodities, sites):
                                  keys=['Created', 'Consumed', 'Storage',
                                  'Import', 'Export', 'Balance'])
                 energies.append(sums.to_frame("{}.{}".format(co, sit)))
-    
+
         # concatenate the timeseries sums
         energy = pd.concat(energies, axis=1).fillna(0)
         energy.to_excel(writer, 'Energy sums')
-    
+
         for co in commodities:
             for sit in sites:
                 sheet_name = "{}.{} timeseries".format(co, sit)
@@ -1144,7 +1146,7 @@ def plot(instance, com, sit, timesteps=None):
 
     created, consumed, stored, imported, exported = get_timeseries(
         instance, com, sit, timesteps)
-    
+
     costs, cpro, ctra, csto, co2 = get_constants(instance)
 
     # move retrieved/stored storage timeseries to created/consumed and
@@ -1156,7 +1158,7 @@ def plot(instance, com, sit, timesteps=None):
 
     # only keep storage content in storage timeseries
     stored = stored['Level']
-    
+
     # add imported/exported timeseries
     created = created.join(imported)
     consumed = consumed.join(exported)
@@ -1201,7 +1203,7 @@ def plot(instance, com, sit, timesteps=None):
                     ncol=created.shape[1],
                     loc='upper center',
                     bbox_to_anchor=(0.5, -0.01))
-    plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'), 
+    plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
              linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)
 
@@ -1217,7 +1219,7 @@ def plot(instance, com, sit, timesteps=None):
         sp00[k].set_edgecolor((.5, .5, .5))
 
     # PLOT DEMAND
-    ax0.plot(demand.index, demand.values, linewidth=1.2, 
+    ax0.plot(demand.index, demand.values, linewidth=1.2,
              color=to_color('Demand'))
 
     # PLOT STORAGE
@@ -1252,23 +1254,25 @@ def plot(instance, com, sit, timesteps=None):
         plt.setp(ax.spines.values(), color=to_color('Decoration'))
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)
-        ax.xaxis.grid(True, 'major', color=to_color('Decoration'), linestyle='dotted')
-        ax.yaxis.grid(True, 'major', color=to_color('Decoration'), linestyle='dotted')
+        ax.xaxis.grid(True, 'major', color=to_color('Decoration'),
+                      linestyle='dotted')
+        ax.yaxis.grid(True, 'major', color=to_color('Decoration'),
+                      linestyle='dotted')
         ax.xaxis.set_ticks_position('none')
-        ax.yaxis.set_ticks_position('none')        
+        ax.yaxis.set_ticks_position('none')
     return fig
 
 
 def to_color(obj=None):
     """Assign a deterministic pseudo-random color to argument.
-    
+
     If COLORS[obj] is set, return that. Otherwise, create a random color from
     the hash(obj) representation string. For strings, this value depends only
     on the string content, so that same strings always yield the same color.
-    
+
     Args:
         obj: any hashable object
-        
+
     Returns:
         a (r, g, b) color tuple if COLORS[obj] is set, otherwise a hexstring
     """

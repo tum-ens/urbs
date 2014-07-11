@@ -8,11 +8,24 @@ sources, greenhouse gases), processes that convert one commodity to another
 transporting commodities between sites and storage for saving/retrieving
 commodities.
 
-It operates on a time-discrete basis. The word "localized" means that
-all process and storage entities are connected to a single virtual node
-without transmission losses. All physical quantities in URBS (except
-for greenhouse gases) represent energy contents of commodities in the
-unit MWh.
+Model entities
+==============
+
+    Commodity: (site, commodity, type)
+        e.g. (Norway, wind, SupIm) or (Iceland, electricity, Demand)
+
+    Process: (site, process, input, output)
+        e.g. (Iceland, turbine, geothermal, electricity)
+
+    Transmission: (site in, site out, transmission, commodity)
+        e.g. (Iceland, Norway, undersea cable, electricity)
+
+    Storage: (site, storage, stored commodity)
+        e.g. (Norway, pump storage, electricity)
+
+
+Commodity
+---------
 
 Commodities can have one of four types:
   - Stock: Buyable at any time for a given price. Supply can be limited
@@ -22,35 +35,37 @@ Commodities can have one of four types:
     solar radiation and wind energy, which are available according to
     a timeseries of values, which could be derived from weather data.
   - Demand: These commodities have a timeseries for the requirement
-    associated and must be provided by output from other process or
-    from storage. Usually, there is only one demand commodity called
-    electricity (abbreviated to Elec or ElecAC), but
+    associated and must be provided by output from other processes or
+    from storage.
   - Env: The special commodity CO2 is of this type and represents the
     amount (in tons) of greenhouse gas emissions from processes. Its
     total amount can be limited, to investigate the effect of policies
     on the.
 
-Process entities are defined over the tuple
+Stock commodities have three numeric attributes that represent their price,
+total annual and per timestep supply. Environmental commodities (i.e. CO2) have
+a maximum allowed quantity that may be created.
 
->>> (site, process, input, output)
+Process
+-------
 
-and thus represent the conversion of energy stored in form of input
-commodity to the output commodity. For example, the process
 
->>> (Iceland, turbine, geothermal, electricity)
 
-represents a geothermal power plant in Iceland.
+Transmission
+------------
 
-Storage entities are defined over the tuple
+Storage
+-------
 
->>> (site, storage, stored commodity)
+Timeseries
+==========
 
-representing the location and type of the storage entity, as well as the stored
-commodity. For example, the storage
+Demand
+------
 
->>> (Norway, pump storage, electricity)
+Intermittent Supply
+-------------------
 
-represents pumped storage hydro plant in Norway that stores electricity.
 
 """
 import coopr.pyomo as pyomo
@@ -58,7 +73,6 @@ import pandas as pd
 from datetime import datetime
 from operator import itemgetter
 from random import random
-import pdb
 
 COLORS = {
     'Biomass': (0, 122, 55),
@@ -81,7 +95,29 @@ COLORS = {
     'Decoration': (128, 128, 128)}
 
 
-def read_input(filename):
+def read_excel(filename):
+    """Read Excel input file and prepare URBS input dict.
+
+    Reads an Excel spreadsheet that adheres to the structure shown in
+    data-example.xlsx. Two preprocessing steps happen here:
+    1. Column titles in 'Demand' and 'SupIm' are split, so that
+    'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
+    2. The attribute 'annuity-factor' is derived here from the columns 'wacc'
+    and 'depreciation' for 'Process', 'Transmission' and 'Storage'.
+
+    Args:
+        filename: filename to an Excel spreadsheet with the required sheets
+            'Commodity', 'Process', 'Transmission', 'Storage', 'Demand' and
+            'SupIm'.
+
+    Returns:
+        a dict of 6 DataFrames
+        
+    Example:
+        >>> data = read_excel('data-example.xlsx')
+        >>> data['commodity'].loc[('Global', 'CO2', 'Env'), 'max']
+        150000000.0
+    """
     with pd.ExcelFile(filename) as xls:
         commodity = xls.parse(
             'Commodity',
@@ -133,7 +169,14 @@ def read_input(filename):
 
 
 def create_model(data, timesteps):
-    """ Create pyomo ConcreteModel URBS object
+    """Create a pyomo ConcreteModel URBS object from given input data.
+    
+    Args:
+        data: a dict of 6 DataFrames with the keys 'commodity', 'process',
+            'transmission', 'storage', 'demand' and 'supim'.
+            
+    Returns:
+        a pyomo ConcreteModel object
     """
     m = pyomo.ConcreteModel()
     m.name = 'URBS'
@@ -221,7 +264,7 @@ def create_model(data, timesteps):
 
     # Parameters
     # ==========
-    # for model entities (commodity, process, transmission, storage) no Pyomo
+    # for model entities (commodity, process, transmission, storage) no
     # parames are needed, just use the DataFrames m.commodity, m.process,
     # m.storage and m.transmission directly.
     # Syntax: m.{name} = Param({domain}, initialize={values})
@@ -239,6 +282,8 @@ def create_model(data, timesteps):
     #       domain: variable domain, consisting of one or multiple sets
     #       range: variable values, like Binary, Integer, NonNegativeReals
     #       docstring: a documentation string/short description
+    
+    # capacities
     m.cap_pro = pyomo.Var(
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
@@ -271,14 +316,20 @@ def create_model(data, timesteps):
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
+    
+    # emissions
     m.co2_pro_out = pyomo.Var(
         m.tm, m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='CO2 emissions from process (t) per timestep')
+    
+    # costs
     m.costs = pyomo.Var(
         m.cost_type,
         within=pyomo.NonNegativeReals,
         doc='Costs by type (EUR/a)')
+    
+    # timeseries
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
@@ -476,24 +527,21 @@ def create_model(data, timesteps):
 
     # costs
     def def_costs_rule(m, cost_type):
-        """ calculate total costs by cost type
+        """Calculate total costs by cost type.
 
-        This functions sums up process activity and capacity expansions
+        Sums up process activity and capacity expansions
         and sums them in the cost types that are specified in the set
         m.cost_type. To change or add cost types, add/change entries
         there and modify the if/elif cases in this function accordingly.
 
         Cost types are
-
           - Investment costs for process power, storage power and
             storage capacity. They are multiplied by the annuity
-            factors, which in turn are derived from the attributes
-            'depreciation' and 'wacc'.
-
+            factors.
           - Fixed costs for process power, storage power and storage
             capacity.
-
-          - Variables costs for usage ofr processes,
+          - Variables costs for usage of processes, storage and transmission.
+          
         """
         if cost_type == 'Inv':
             return m.costs['Inv'] == \
@@ -548,7 +596,7 @@ def create_model(data, timesteps):
                 if c[1] in m.com_stock)
 
         else:
-            raise NotImplementedError("Unknown cost type!")
+            raise NotImplementedError("Unknown cost type.")
 
     def obj_rule(m):
         return pyomo.summation(m.costs)
@@ -659,7 +707,7 @@ def create_model(data, timesteps):
 
 
 def annuity_factor(n, i):
-    """ return annuity factor
+    """Annuity factor formula.
 
     Evaluates the annuity factor formula for depreciation duration
     and interest rate. Works also well for equally sized numpy arrays
@@ -669,8 +717,7 @@ def annuity_factor(n, i):
         i: interest rate (percent, e.g. 0.06 means 6 %)
 
     Returns:
-        Value of the expression
-            (1+i)**n * i / ((1+i)**n - 1)
+        Value of the expression (1+i)**n * i / ((1+i)**n - 1)
 
     Example:
         >>> round(annuity_factor(20, 0.07), 5)
@@ -841,7 +888,13 @@ def list_entities(instance, entity_type):
         DataFrame of entities
 
     Example:
-        >>> list_entities(instance, 'var')
+        >>> data = read_excel('data-example.xlsx')
+        >>> model = create_model(data, range(1,25))
+        >>> list_entities(model, 'obj')  #doctest: +NORMALIZE_WHITESPACE
+                                         Description Domain
+        Name
+        obj   minimize(cost = sum of all cost types)     []
+        [1 rows x 2 columns]
 
     """
 
@@ -882,6 +935,13 @@ def list_entities(instance, entity_type):
 
 
 def get_onset_names(entity):
+    """
+        Example:
+            >>> data = read_excel('data-example.xlsx')
+            >>> model = create_model(data, range(1,25))
+            >>> get_onset_names(model.e_co_stock)
+            ['t', 'sit', 'com', 'com_type']
+    """
     # get column titles for entities from domain set names
     labels = []
 
@@ -925,13 +985,27 @@ def get_constants(instance):
     """Return summary DataFrames for important variables
 
     Usage:
-        costs, cpro, csto, co2 = get_constants(instance)
+        costs, cpro, ctra, csto, co2 = get_constants(instance)
 
     Args:
         instance: a urbs model instance
 
     Returns:
-        costs, cpro, csto, co2)
+        (costs, cpro, ctra, csto, co2) tuple
+        
+    Example:
+        >>> import coopr.environ
+        >>> from coopr.opt.base import SolverFactory
+        >>> data = read_excel('data-example.xlsx')
+        >>> model = create_model(data, range(1,25))
+        >>> prob = model.create()
+        >>> optim = SolverFactory('glpk')
+        >>> result = optim.solve(prob)
+        >>> prob.load(result)
+        True
+        >>> get_constants(prob)[-1].sum() <= prob.commodity.loc[
+        ...     ('Global', 'CO2', 'Env'), 'max']
+        True
     """
     costs = get_entity(instance, 'costs')
     cpro = get_entities(instance, ['cap_pro', 'cap_pro_new'])

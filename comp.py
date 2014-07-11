@@ -1,10 +1,8 @@
 import glob
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import matplotlib.gridspec as mpl_gs
 import os
 import pandas as pd
-import re
 import urbs
 
 # INIT

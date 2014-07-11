@@ -9,22 +9,22 @@ import urbs
 
 # INIT
 
-# create list of Excel files to write
+# create list of report files to compare
 # derive list of scenario names for column labels/figure captions
-result_files = sorted(glob.glob(os.path.join('results', 'scenario_*.xlsx')))
+result_files = sorted(glob.glob(os.path.join('results', '*.xlsx')))
 scenario_names = [os.path.basename(rf)
                   .replace('_', ' ')
                   .replace('.xlsx', '')
                   .replace('scenario ', '')
                   for rf in result_files]
 
-# find base scenario and bring to last position
+# find base scenario and put at first position
 base_scenario = scenario_names.index('base')
 result_files.insert(0, result_files.pop(base_scenario))
 scenario_names.insert(0, scenario_names.pop(base_scenario))
 
-costs = []
-esums = []
+costs = []  # total costs by type and scenario
+esums = []  # sum of energy produced by scenario
 
 # READ
 
@@ -33,6 +33,7 @@ for rf in result_files:
         cost = xls.parse('Costs', has_index_names=True)
         esum = xls.parse('Energy sums')
 
+        # repair broken MultiIndex in the first column
         esum.reset_index(inplace=True)
         esum.fillna(method='ffill', inplace=True)
         esum.set_index(['level_0', 'level_1'], inplace=True)
@@ -40,7 +41,7 @@ for rf in result_files:
         costs.append(cost)
         esums.append(esum)
 
-# merge everything into
+# merge everything into one DataFrame each
 costs = pd.concat(costs, axis=1, keys=scenario_names)
 esums = pd.concat(esums, axis=1, keys=scenario_names)
 
@@ -48,19 +49,22 @@ esums = pd.concat(esums, axis=1, keys=scenario_names)
 
 # drop redundant 'costs' column label
 # make index name nicer for plot
+# sort/transpose frame
+# convert EUR/a to 1e9 EUR/a
 costs.columns = costs.columns.droplevel(1)
 costs.index.name = 'Cost type'
 costs = costs.sort().transpose()
-costs = costs / 1e9  # convert EUR/a to 1e9 EUR/a
+costs = costs / 1e9
 
-# sum up created electricity over all locations, but keeping scenarios (lvl=0)
-# make index name nicer for plot
-# drop all commodities that are never used
+# sum up created energy over all locations, but keeping scenarios (level=0)
+# make index name 'Commodity' nicer for plot
+# drop all unused commodities and sort/transpose
+# convert MWh to GWh
 esums = esums.loc['Created'].sum(axis=1, level=0)
 esums.index.name = 'Commodity'
 used_commodities = (esums.sum(axis=1) > 0)
 esums = esums[used_commodities].sort().transpose()
-esums = esums / 1e3  # convert MWh to GWh
+esums = esums / 1e3
 
 
 # PLOT

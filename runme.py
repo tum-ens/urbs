@@ -56,7 +56,7 @@ scenarios = [
 for scenario in scenarios:
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = urbs.read_input(filename)
+    data = urbs.read_excel(filename)
     scenario(data)
 
     # create model, solve it, read results

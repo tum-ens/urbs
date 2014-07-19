@@ -47,10 +47,9 @@ Just use the package manager to get the packages mentioned in the Windows instal
   - **Coopr & Excel I/O** `sudo pip install coopr xlwt xlrd openpyxl==1.8.6`
 
 
-Get started
------------
+## Get started
 
-Once you have followed the steps under [[#Installation]] and have [Git](http://git-scm.com/) installed, execute the following:
+Once you have followed the steps under Installation and have [Git](http://git-scm.com/) installed, execute the following:
 
     git clone //nas.ads.mwn.de/tuei/ens/Methoden/Modelle/Pyomo/URPS.git urbs
     cd urbs
@@ -62,8 +61,7 @@ Less than a minute((YMMV, depending on your hardware)) later, inspect the folder
 
 and look at `comp.xlsx` and `comp.png` for a quick comparison.
 
-Next steps
-----------
+## Next steps
 
   - Read the source code of `runme.py` and `comp.py`. 
   - Quickly scan through `urbs.py`, read docstrings.

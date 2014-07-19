@@ -9,12 +9,14 @@ import urbs
 
 # create list of report files to compare
 # derive list of scenario names for column labels/figure captions
-result_files = sorted(glob.glob(os.path.join('results', '*.xlsx')))
+result_files = sorted(glob.glob(os.path.join('results', 'scenario_*.xlsx')))
 scenario_names = [os.path.basename(rf)
                   .replace('_', ' ')
                   .replace('.xlsx', '')
                   .replace('scenario ', '')
                   for rf in result_files]
+# output files basename (without file extension)
+output_filename = os.path.join('results', 'comp')
 
 # find base scenario and put at first position
 base_scenario = scenario_names.index('base')
@@ -105,10 +107,10 @@ ax0.set_xlabel('Total costs (1e9 EUR/a)')
 ax1.set_xlabel('Total energy produced (GWh)')
 
 for ext in ['png', 'pdf']:
-    fig.savefig('comp.{}'.format(ext),
+    fig.savefig('{}.{}'.format(output_filename, ext),
                 bbox_inches='tight')
 
 # REPORT
-with pd.ExcelWriter('comp.xlsx') as writer:
+with pd.ExcelWriter('{}.{}'.format(output_filename, 'xlsx')) as writer:
     costs.to_excel(writer, 'Costs')
     esums.to_excel(writer, 'Energy sums')

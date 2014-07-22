@@ -5,11 +5,10 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 ## Features
 
   * URBS is a linear programming model for multi-commodity energy systems with a focus on optimal storage sizing and use.
-  * It searches the minimum cost energy system to satisfy given demand timeseries for possibly multiple commodities (e.g. electricity).
+  * It finds the minimum cost energy system to satisfy given demand timeseries for possibly multiple commodities (e.g. electricity).
   * By default, operates on hourly-spaced timesteps (configurable).
-  * Thanks to [Pandas](https://pandas.pydata.org), complex data analysis become easy.
-  * The model itself is small (<50 kB source code) and includes reporting and plotting functionality.
-  * Obsessively documented code to make the model as moddable as possible.
+  * Thanks to [Pandas](https://pandas.pydata.org), complex data analysis is easy.
+  * The model itself is quite small (<50 kB source code) thanks to relying on the [Coopr](https://software.sandia.gov/trac/coopr)/[Pyomo](https://software.sandia.gov/trac/coopr/wiki/Pyomo) and includes reporting and plotting functionality.
 
 ## Screenshots
 
@@ -21,44 +20,44 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ### Windows
 
-Both 32 bit and 64 bit versions should work. For all packages, best take the latest release or release candidate version.
+For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work
 
-  1. **[Python 2.7](https://python.org/download)** Unfortunately, the Coopr package is not (yet) compatible with Python 3.
-  2. **[pip](https://pip.pypa.io/en/latest/installing.html)** The Python package manager. Facilitates installing many packages. Add `C:\Python27\Scripts` to system path ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx), so that the `pip` command is found.
-  3. **IPython**: `pip install ipython`, automatically installs the pyreadline dependency.
+  1. **[Python 2.7](https://python.org/download)**. Python 3 support is not possible yet, but planned once all used packages support it.
+  2. **[pip](https://pip.pypa.io/en/latest/installing.html)** .The Python package manager. Facilitates installing many packages. After installation, add `C:\Python27\Scripts` to system path ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available.
+  3. **IPython**: `pip install ipython`
   4. **SciPy stack:** These require binary installers.
       1. [Numpy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
       2. [SciPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
       3. [Matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). Now you can start `ipython --pylab` and have a MATLAB-style command line with plotting capabilities.
-  5. **[Pandas](https://pypi.python.org/pypi/pandas#downloads)** is the data workhorse in this model.
-  6. **[Coopr](https://software.sandia.gov/trac/coopr/downloader/)** at least version 3.5 or the VOTD installer.
-  7. **Solver** like [GLPK](http://winglpk.sourceforge.net/). Add the installation directory to the system path, so that the `glpsol` command is found. Other supported solvers are CPLEX and Gurobi (if available executables).
-  8. **Last dependencies** for Excel I/O: `pip install xlrd xlwt openpyxl==1.8.6` (Reason vor version: Pandas only [supports openpyxl < 2.0.0 as of 2014-07-19](https://github.com/pydata/pandas/blob/master/pandas/compat/openpyxl_compat.py))
+  5. **[Pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output.
+  6. **[Coopr](https://software.sandia.gov/trac/coopr/downloader/)**: minimum version 3.5 or the VOTD installer.
+  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). Add the installation directory to the system path, so that the `glpsol` command is availables. Other supported solvers are CPLEX and Gurobi (if their executables are available).
+  8. **Excel I/O** dependencies for Pandas: `pip install xlrd xlwt openpyxl==1.8.6` (Reason for version: Pandas only [supports openpyxl < 2.0.0 as of 2014-07-22](https://github.com/pydata/pandas/blob/master/pandas/compat/openpyxl_compat.py))
 
 ### Linux
 
-Just use the package manager to get the packages mentioned in the Windows installation. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names:
+Use the package manager to get all the packages listed in the Windows installation section. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names:
 
   - **Everything** except Coopr & Excel I/O `sudo apt-get install python python-pip python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose glpk-utils`
   - **Coopr & Excel I/O** `sudo pip install coopr xlwt xlrd openpyxl==1.8.6`
 
 ## Get started
 
-Once you have followed the steps under Installation and have [Git](http://git-scm.com/) installed, clone this repository:
+Once installation is complete, clone this repository and execute the run script:
 
     git clone https://github.com/tum-ens/urbs.git
     cd urbs
     python runme.py
 
-Less than a minute((YMMV, depending on your hardware)) later, inspect the folder `results` for plots and summaries for multiple optimised energy supply scenarios. To get a graphical and tabular summary over all scenarios, execute
+About a minute later, the folder `results` contains plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definition is contained in the run script. To get a graphical and tabular summary over all scenarios, execute
 
     python comp.py
 
-and look at `results/comp.xlsx` and `results/comp.png` for a quick comparison.
+and look at `results/comp.xlsx` and `results/comp.png` for a quick comparison. The script parses the summary spreadsheets for all scenarios.
 
 ## Next steps
 
   1. Read the source code of `runme.py` and `comp.py`. 
   2. Quickly scan through `urbs.py`, read docstrings.
-  3. Try adding scenarios in `runme.py` and see their effect on results.
+  3. Try adding/modifying scenarios in `runme.py` and see their effect on results.
   4. Fire up IPython (`ipython --pylab`) and run the scripts from there using the run command: `run runme` and `run comp`. Then use `whos` and inspect the workspace afterwards (`whos`). See what you can do (analyses, plotting) with the DataFrames. Take the `urbs.get_constants`, `urbs.get_timeseries` and `urbs.plot` functions as inspriation and the [Pandas docs](http://pandas.pydata.org/pandas-docs/stable/) as reference.

@@ -23,15 +23,15 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work
 
   1. **[Python 2.7](https://python.org/download)**. Python 3 support is not possible yet, but planned once all used packages support it.
-  2. **[pip](https://pip.pypa.io/en/latest/installing.html)** .The Python package manager. Facilitates installing many packages. After installation, add `C:\Python27\Scripts` to system path ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available.
-  3. **IPython**: `pip install ipython`
-  4. **SciPy stack:** These require binary installers.
+  2. **[pip](https://pip.pypa.io/en/latest/installing.html)** .The Python package manager. Facilitates installing many packages. After installation, add `C:\Python27\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
+  3. **IPython**: execute `pip install ipython` in a command prompt.
+  4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/) 
       1. [Numpy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
       2. [SciPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
       3. [Matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). Now you can start `ipython --pylab` and have a MATLAB-style command line with plotting capabilities.
   5. **[Pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output.
   6. **[Coopr](https://software.sandia.gov/trac/coopr/downloader/)**: minimum version 3.5 or the VOTD installer.
-  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). Add the installation directory to the system path, so that the `glpsol` command is availables. Other supported solvers are CPLEX and Gurobi (if their executables are available).
+  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). Add the installation directory to the system path, so that the `glpsol` command is available. Other supported solvers are - among others - CPLEX and Gurobi.
   8. **Excel I/O** dependencies for Pandas: `pip install xlrd xlwt openpyxl==1.8.6` (Reason for version: Pandas only [supports openpyxl < 2.0.0 as of 2014-07-22](https://github.com/pydata/pandas/blob/master/pandas/compat/openpyxl_compat.py))
 
 ### Linux

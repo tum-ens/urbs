@@ -20,40 +20,40 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ### Windows
 
-For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work
+For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work, though 64 bit is recommended.
 
   1. **[Python 2.7](https://python.org/download)**. Python 3 support is not possible yet, but planned once all used packages support it.
   2. **[pip](https://pip.pypa.io/en/latest/installing.html)** .The Python package manager. Facilitates installing many packages. After installation, add `C:\Python27\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
   3. **IPython**: execute `pip install ipython` in a command prompt.
-  4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/) 
+  4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/). *How to select the correct file:* Download the newest stable version eache package, whose filename suffix matches both "bitness" (32 bit or 64 bit) and Python version (i.e. 2.7).  
       1. [Numpy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
       2. [SciPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
       3. [Matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). Now you can start `ipython --pylab` and have a MATLAB-style command line with plotting capabilities.
   5. **[Pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output.
-  6. **[Coopr](https://software.sandia.gov/trac/coopr/downloader/)**: minimum version 3.5 or the VOTD installer.
-  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). Add the installation directory to the system path, so that the `glpsol` command is available. Other supported solvers are - among others - CPLEX and Gurobi.
+  6. **[Coopr](https://software.sandia.gov/trac/coopr/downloader/)**: minimum version 3.5 or the VOTD (Version of the Day) installer. As of 2014-08-01, only the latter is available for Windows users.
+  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). Simply unzip the latest version somewhere, e.g. `C:\GLPK`. Then add the directory containing `glpsol.exe` to the system path (like in step 2), so that the `glpsol` command is available. Other supported solvers are - among others - CPLEX and Gurobi.
   8. **Excel I/O** dependencies for Pandas: `pip install xlrd xlwt openpyxl==1.8.6` (Reason for version: Pandas only [supports openpyxl < 2.0.0 as of 2014-07-22](https://github.com/pydata/pandas/blob/master/pandas/compat/openpyxl_compat.py))
 
 ### Linux
 
-Use the package manager to get all the packages listed in the Windows installation section. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names:
+Use the package manager to get all the packages listed in the Windows installation section. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names or differing procedures to get the individual packages to run:
 
   - **Everything** except Coopr & Excel I/O `sudo apt-get install python python-pip python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose glpk-utils`
   - **Coopr & Excel I/O** `sudo pip install coopr xlwt xlrd openpyxl==1.8.6`
 
 ## Get started
 
-Once installation is complete, clone this repository and execute the run script:
+Once installation is complete, clone (or download) this repository and execute the run script in CMD:
 
     git clone https://github.com/tum-ens/urbs.git
     cd urbs
     python runme.py
 
-About a minute later, the folder `results` contains plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definition is contained in the run script. To get a graphical and tabular summary over all scenarios, execute
+About a minute later, the folder `results` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definition is contained in the run script (whatch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
 
     python comp.py
 
-and look at `results/comp.xlsx` and `results/comp.png` for a quick comparison. The script parses the summary spreadsheets for all scenarios.
+and look at the new files `results/comp.xlsx` and `results/comp.png` for a quick comparison. This script parses the summary spreadsheets for all scenarios.
 
 ## Next steps
 

@@ -1,6 +1,7 @@
 import glob
+import matplotlib.gridspec as gs
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as mpl_gs
+import matplotlib.ticker as tkr
 import os
 import pandas as pd
 import urbs
@@ -70,7 +71,7 @@ esums = esums / 1e3
 # PLOT
 
 fig = plt.figure(figsize=(20, 8))
-gs = mpl_gs.GridSpec(1, 2, width_ratios=[2, 3])
+gs = gs.GridSpec(1, 2, width_ratios=[2, 3])
 
 ax0 = plt.subplot(gs[0])
 bp0 = costs.plot(ax=ax0, kind='barh', stacked=True)
@@ -95,6 +96,10 @@ for ax in [ax0, ax1]:
                   linestyle='dotted')
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')
+    
+    # group 1,000,000 with commas
+    group_thousands = tkr.FuncFormatter(lambda x, pos: '{:0,d}'.format(int(x)))
+    ax.xaxis.set_major_formatter(group_thousands)
 
     # legend
     lg = ax.legend(frameon=False, loc='upper center',

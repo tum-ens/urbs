@@ -504,7 +504,7 @@ def create_model(data, timesteps):
     def def_storage_capacity_rule(m, sit, sto, com):
         return (m.cap_sto_c[sit, sto, com] ==
                 m.cap_sto_c_new[sit, sto, com] +
-                m.storage.loc[sit, sto, com]['inst-cap-p'])
+                m.storage.loc[sit, sto, com]['inst-cap-c'])
 
     def res_storage_input_by_power_rule(m, t, sit, sto, com):
         return m.e_sto_in[t, sit, sto, com] <= m.cap_sto_p[sit, sto, com]
@@ -1225,7 +1225,6 @@ def plot(instance, com, sit, timesteps=None):
     """
     import matplotlib.pyplot as plt
     import matplotlib as mpl
-    import matplotlib.gridspec as mpl_gs
 
     if timesteps is None:
         # default to all simulated timesteps
@@ -1233,7 +1232,7 @@ def plot(instance, com, sit, timesteps=None):
 
     # FIGURE
     fig = plt.figure(figsize=(16, 8))
-    gs = mpl_gs.GridSpec(2, 1, height_ratios=[2, 1])
+    gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2, 1])
 
     created, consumed, stored, imported, exported = get_timeseries(
         instance, com, sit, timesteps)
@@ -1351,6 +1350,12 @@ def plot(instance, com, sit, timesteps=None):
                       linestyle='dotted')
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
+        
+        # group 1,000,000 with commas
+        group_thousands = mpl.ticker.FuncFormatter(
+            lambda x, pos: '{:0,d}'.format(int(x)))
+        ax.yaxis.set_major_formatter(group_thousands)
+
     return fig
 
 

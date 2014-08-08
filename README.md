@@ -1,6 +1,6 @@
 # URBS
 
-URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit committment for distributed energy systems. Its name, latin for city, stems from its origina as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to to continents.
+URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
 
 ## Features
 
@@ -23,16 +23,20 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work, though 64 bit is recommended.
 
   1. **[Python 2.7](https://python.org/download)**. Python 3 support is not possible yet, but planned once all used packages support it.
-  2. **[pip](https://pip.pypa.io/en/latest/installing.html)**.The Python package manager. It allows to install many Python packages with a simple command. After installation, add `C:\Python27\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
+  2. **[pip](https://pip.pypa.io/en/latest/installing.html)**.The Python package manager. It allows to install many Python packages with a simple command. 
+      1. After installation, add `C:\Python27\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
   3. **IPython**: execute `pip install ipython` in a command prompt.
   4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/). *How to select the correct file:* Download the newest stable version of each package, whose filename suffix matches both "bitness" (32 bit or 64 bit) and Python version (i.e. 2.7).  
       1. [NumPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
       2. [SciPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
-      3. [matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). Now you can start `ipython --pylab` and have a MATLAB-style command line with plotting capabilities.
-  5. **[pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output.
+      3. [matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). 
+      4. As a test, you can try start `ipython --pylab` and have a MATLAB-style command line with plotting capabilities. If you receive message about "ipython could not be found", check if the `C:\Python27\Scripts` is added to the "Path" system variable as described in step 2.i. above.
+  5. **[pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output. Its capabilities are exploited to write short analysis scripts in `runme.py` and `comp.py`, as well as in the functions `urbs.plot` and `urbs.report`.
   6. **[Coopr](https://software.sandia.gov/trac/coopr/downloader/)**: minimum version 3.5 or the VOTD (Version of the Day) installer. As of 2014-08-01, only the latter is available for Windows users.
-  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). Simply unzip the latest version somewhere, e.g. `C:\GLPK`. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2), so that the `glpsol` command is available. Other supported solvers are - among others - CPLEX and Gurobi.
-  8. **Excel I/O** dependencies for Pandas: `pip install xlrd xlwt openpyxl==1.8.6` (Reason for version: Pandas only [supports openpyxl < 2.0.0 as of 2014-07-22](https://github.com/pydata/pandas/blob/master/pandas/compat/openpyxl_compat.py))
+  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). 
+      1. Simply unzip the latest version somewhere, e.g. `C:\GLPK`. 
+      2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2.i.), so that the `glpsol` command is available on the command prompt.
+  8. **Excel** reading/writing: `pip install xlrd xlwt openpyxl==1.8.6`
 
 ### Linux
 
@@ -43,7 +47,7 @@ Use the package manager to get all the packages listed in the Windows installati
 
 ## Get started
 
-Once installation is complete, clone (or download) this repository and execute the run script in CMD:
+Once installation is complete, clone (or download) this repository and execute the runme script on the command prompt:
 
     git clone https://github.com/tum-ens/urbs.git
     cd urbs

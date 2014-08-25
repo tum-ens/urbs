@@ -109,7 +109,8 @@ COLORS = {
     'Storage': (60, 36, 154),
     'Wind': (122, 179, 225),
     'Stock': (222, 222, 222),
-    'Decoration': (128, 128, 128)}
+    'Decoration': (128, 128, 128),
+    'Grid': (92, 92, 92)}
 
 
 def read_excel(filename):
@@ -205,9 +206,8 @@ def create_model(data, timesteps):
 
     # Preparations
     # ============
-    # Excel import
-    # use Pandas DataFrames instead of Pyomo parameters for entity
-    # attributes. Syntax to access a value:
+    # Data import. Syntax to access a value within equation definitions looks
+    # like this:
     #
     #     m.process.loc[sit, pro, coin, cout][attribute]
     #
@@ -915,39 +915,35 @@ def list_entities(instance, entity_type):
 
     """
 
+    # helper function to discern entities by type
+    def filter_by_type(entity, entity_type):
+        if entity_type == 'set':
+            return isinstance(entity, pyomo.Set) and not entity.virtual
+        elif entity_type == 'par':
+            return isinstance(entity, pyomo.Param)
+        elif entity_type == 'var':
+            return isinstance(entity, pyomo.Var)
+        elif entity_type == 'con':
+            return isinstance(entity, pyomo.Constraint)
+        elif entity_type == 'obj':
+            return isinstance(entity, pyomo.Objective)
+        else:
+            raise ValueError("Unknown entity_type '{}'".format(entity_type))
+
+    # iterate through all model components and keep only 
     iter_entities = instance.__dict__.iteritems()
+    entities = sorted(
+        (name, entity.doc, get_onset_names(entity))
+        for (name, entity) in iter_entities
+        if filter_by_type(entity, entity_type))
 
-    if entity_type == 'set':
-        entities = sorted(
-            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if isinstance(y, pyomo.Set) and not y.virtual)
-
-    elif entity_type == 'par':
-        entities = sorted(
-            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if isinstance(y, pyomo.Param))
-
-    elif entity_type == 'var':
-        entities = sorted(
-            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if isinstance(y, pyomo.Var))
-
-    elif entity_type == 'con':
-        entities = sorted(
-            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if isinstance(y, pyomo.Constraint))
-
-    elif entity_type == 'obj':
-        entities = sorted(
-            (x, y.doc, get_onset_names(y)) for (x, y) in iter_entities
-            if isinstance(y, pyomo.Objective))
-
+    # if something was found, wrap tuples in DataFrame, otherwise return empty
+    if entities:
+        entities = pd.DataFrame(entities,
+                                columns=['Name', 'Description', 'Domain'])
+        entities.set_index('Name', inplace=True)
     else:
-        raise ValueError("Unknown parameter entity_type")
-
-    entities = pd.DataFrame(entities,
-                            columns=['Name', 'Description', 'Domain'])
-    entities.set_index('Name', inplace=True)
+        entities = pd.DataFrame()
     return entities
 
 
@@ -1344,10 +1340,10 @@ def plot(instance, com, sit, timesteps=None):
         plt.setp(ax.spines.values(), color=to_color('Decoration'))
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)
-        ax.xaxis.grid(True, 'major', color=to_color('Decoration'),
-                      linestyle='dotted')
-        ax.yaxis.grid(True, 'major', color=to_color('Decoration'),
-                      linestyle='dotted')
+        ax.xaxis.grid(True, 'major', color=to_color('Grid'),
+                      linestyle='-')
+        ax.yaxis.grid(True, 'major', color=to_color('Grid'),
+                      linestyle='-')
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
         

@@ -1,3 +1,4 @@
+import coopr.environ
 import os
 import pandas as pd
 import urbs

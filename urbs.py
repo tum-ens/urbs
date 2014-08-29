@@ -110,7 +110,7 @@ COLORS = {
     'Wind': (122, 179, 225),
     'Stock': (222, 222, 222),
     'Decoration': (128, 128, 128),
-    'Grid': (92, 92, 92)}
+    'Grid': (128, 128, 128)}
 
 
 def read_excel(filename):

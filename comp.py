@@ -90,10 +90,9 @@ for bp in [bp0, bp1]:
 
 # set limits and ticks for both axes
 for ax in [ax0, ax1]:
-    plt.setp(ax.spines.values(), color=urbs.to_color('Decoration'))
+    plt.setp(ax.spines.values(), color=urbs.to_color('Grid'))
     ax.yaxis.grid(False)
-    ax.xaxis.grid(True, 'major', color=urbs.to_color('Decoration'),
-                  linestyle='dotted')
+    ax.xaxis.grid(True, 'major', color=urbs.to_color('Grid'), linestyle='-')
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')
     

@@ -1,6 +1,6 @@
-"""URBS: A linear optimisation model for distributed energy systems
+"""
 
-URBS minimises total cost for providing energy in form of desired commodities
+urbs minimises total cost for providing energy in form of desired commodities
 (usually electricity) to satisfy a given demand in form of timeseries. The
 model contains commodities (electricity, fossil fuels, renewable energy
 sources, greenhouse gases), processes that convert one commodity to another
@@ -31,19 +31,20 @@ Commodities are goods that can be generated, stored, transmitted and consumed.
 By convention, they are represented by their energy content (in MWh), but can
 be changed (to J, kW, t, kg) by simply using different (consistent) units for
 all input data. Each commodity must be exactly one of following four types:
-  - Demand: The 
-  - Stock: Can be introduced (bought, mined, taken out of "stock") in arbitrary 
-    quantities at any time for a given, fixed price per unit. Its maximum 
-    supply can be limited per timestep or for a whole year. Typical examples of
-    stock commodities are coal, gas, uranium or biomass.
-  - SupIm: Fluctuating resources like
-    solar radiation and wind energy, which are available according to
-    a timeseries of values. Can also be used to model "must-run" plants like
-    uncontrollable, distributed generation units.
-  - Env: The special commodity CO2 is of this type and represents the
-    amount (in tons) of greenhouse gas emissions from processes. Its
-    total amount can be limited, to investigate the effect of policies
-    on the.
+
+* Demand: The 
+* Stock: Can be introduced (bought, mined, taken out of "stock") in arbitrary 
+  quantities at any time for a given, fixed price per unit. Its maximum 
+  supply can be limited per timestep or for a whole year. Typical examples of
+  stock commodities are coal, gas, uranium or biomass.
+* SupIm: Fluctuating resources like
+  solar radiation and wind energy, which are available according to
+  a timeseries of values. Can also be used to model "must-run" plants like
+  uncontrollable, distributed generation units.
+* Env: The special commodity CO2 is of this type and represents the
+  amount (in tons) of greenhouse gas emissions from processes. Its
+  total amount can be limited, to investigate the effect of policies
+  on the.
 
 Stock commodities have three numeric attributes that represent their price,
 total annual and per timestep supply. Environmental commodities (i.e. CO2) have
@@ -729,12 +730,13 @@ def annuity_factor(n, i):
     Evaluates the annuity factor formula for depreciation duration
     and interest rate. Works also well for equally sized numpy arrays
     of values for n and i.
+    
     Args:
         n: depreciation period (years)
         i: interest rate (percent, e.g. 0.06 means 6 %)
 
     Returns:
-        Value of the expression (1+i)**n * i / ((1+i)**n - 1)
+        Value of the expression :math:`\\frac{(1+i)^n i}{(1+i)^n - 1}`
 
     Example:
         >>> round(annuity_factor(20, 0.07), 5)
@@ -1206,18 +1208,17 @@ def report(instance, filename, commodities, sites):
                 timeseries[(co, sit)].to_excel(writer, sheet_name)
 
 
-def plot(instance, com, sit, timesteps=None):
+def plot(prob, com, sit, timesteps=None):
     """Plot a stacked timeseries of commodity balance and storage.
 
     Creates a stackplot of the energy balance of a given commodity, together
     with stored energy in a second subplot.
 
     Args:
-        instance: urbs model instance
+        prob: urbs model instance
         com: commodity name to plot
         sit: site name to plot
-        timesteps: optional list of modelled timesteps to plot
-            defaults to instance.tm
+        timesteps: optional list of  timesteps to plot; default: prob.tm
 
     Returns:
         fig: figure handle

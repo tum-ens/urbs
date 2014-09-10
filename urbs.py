@@ -757,7 +757,8 @@ def commodity_balance(m, tm, sit, com):
     Args:
         m: the model object
         tm: the timestep
-        co: the commodity
+        site: the site
+        com: the commodity
 
     Returns
         balance: net value of consumed (+) or provided (-) energy
@@ -796,6 +797,9 @@ def split_columns(columns, sep='.'):
     Args:
         columns: list of column labels, containing the separator string
         sep: the separator string (default: '.')
+        
+    Returns:
+        a MultiIndex corresponding to input, with levels split at separator
 
     Example:
         >>> split_columns(['DE.Elec', 'MA.Elec', 'NO.Wind'])

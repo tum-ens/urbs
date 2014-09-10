@@ -23,10 +23,9 @@ Overview
   for possibly multiple commodities (e.g. electricity).
 * By default, operates on hourly-spaced timesteps (configurable).
 * Thanks to `pandas`_, complex data analysis code is short and extensible.
-* The model itself is quite small (<50 kB source code) thanks to relying on 
-  the `Coopr`_/`Pyomo`_
+* The model itself is quite small thanks to relying on the `Coopr`_/`Pyomo`_
+  packages.
 * urbs includes reporting and plotting functionality.
-
 
 Contents
 --------
@@ -37,6 +36,17 @@ Contents
    tutorial
    api
 
+
+Screenshots
+-----------
+
+.. image:: img/plot.*
+   :width: 66%
+   :align: center
+.. image:: img/comp.*
+   :width: 66%
+   :align: center
+   
 
 Dependencies
 ------------

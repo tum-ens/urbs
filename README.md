@@ -8,13 +8,13 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
   * It finds the minimum cost energy system to satisfy given demand timeseries for possibly multiple commodities (e.g. electricity).
   * By default, operates on hourly-spaced timesteps (configurable).
   * Thanks to [Pandas](https://pandas.pydata.org), complex data analysis is easy.
-  * The model itself is quite small (<50 kB source code) thanks to relying on the [Coopr](https://software.sandia.gov/trac/coopr)/[Pyomo](https://software.sandia.gov/trac/coopr/wiki/Pyomo) and includes reporting and plotting functionality.
+  * The model itself is quite small thanks to relying on the [Coopr](https://software.sandia.gov/trac/coopr)/[Pyomo](https://software.sandia.gov/trac/coopr/wiki/Pyomo) and includes reporting and plotting functionality.
 
 ## Screenshots
 
-[![](http://ojdo.de/dw/_media/software:urbs:scenario_all_together-elec-north.png?w=400&tok=a9a9d8)](http://ojdo.de/dw/_media/software:urbs:scenario_all_together-elec-north.png)
+[![](http://ojdo.de/dw/_media/software:urbs:scenario_all_together-elec-north.png?w=400&tok=a9a9d8)](doc/img/plot.png)
 
-[![](http://ojdo.de/dw/_media/software:urbs:comp.png?w=400&tok=0e5b95)](http://ojdo.de/dw/_media/software:urbs:comp.png)
+[![](http://ojdo.de/dw/_media/software:urbs:comp.png?w=400&tok=0e5b95)](doc/img/comp.png)
 
 ## Installation
 

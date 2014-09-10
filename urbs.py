@@ -187,13 +187,15 @@ def read_excel(filename):
     return data
 
 
-def create_model(data, timesteps):
+def create_model(data, timesteps, dt=1):
     """Create a pyomo ConcreteModel URBS object from given input data.
     
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
             'transmission', 'storage', 'demand' and 'supim'.
-            
+        timesteps: list of timesteps
+        dt: timestep duration in hours (default: 1)
+        
     Returns:
         a pyomo ConcreteModel object
     """
@@ -291,6 +293,7 @@ def create_model(data, timesteps):
     #       values: dict of parameter values, addressed by elements of domains
     # if domain is skipped, defines a scalar parameter with a single value
     m.weight = pyomo.Param(initialize=float(8760) / len(m.t))
+    m.dt = pyomo.Param(initialize=dt)
 
     # Variables
     # =========
@@ -493,9 +496,9 @@ def create_model(data, timesteps):
         return (m.e_sto_con[t, sit, sto, com] ==
                 m.e_sto_con[t-1, sit, sto, com] +
                 m.e_sto_in[t, sit, sto, com] *
-                m.storage.loc[sit, sto, com]['eff-in'] -
+                m.storage.loc[sit, sto, com]['eff-in'] * m.dt -
                 m.e_sto_out[t, sit, sto, com] /
-                m.storage.loc[sit, sto, com]['eff-out'])
+                m.storage.loc[sit, sto, com]['eff-out'] * m.dt)
 
     def def_storage_power_rule(m, sit, sto, com):
         return (m.cap_sto_p[sit, sto, com] ==
@@ -751,7 +754,7 @@ def commodity_balance(m, tm, sit, com):
 
     For a given commodity co and timestep tm, calculate the balance of
     consumed (to process/storage/transmission, counts positive) and provided
-    (from process/storage/transmission, counts negative) energy. Used as helper
+    (from process/storage/transmission, counts negative) power. Used as helper
     function in create_model for constraints on demand and stock commodities.
 
     Args:
@@ -761,7 +764,7 @@ def commodity_balance(m, tm, sit, com):
         com: the commodity
 
     Returns
-        balance: net value of consumed (+) or provided (-) energy
+        balance: net value of consumed (positive) or provided (negative) power
 
     """
     balance = 0

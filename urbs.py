@@ -820,7 +820,7 @@ def get_entity(instance, name):
 
     # retrieve entity, its type and its onset names
     entity = instance.__getattribute__(name)
-    labels = get_onset_names(entity)
+    labels = _get_onset_names(entity)
 
     # extract values
     if isinstance(entity, pyomo.Set):
@@ -935,7 +935,7 @@ def list_entities(instance, entity_type):
     # iterate through all model components and keep only 
     iter_entities = instance.__dict__.iteritems()
     entities = sorted(
-        (name, entity.doc, get_onset_names(entity))
+        (name, entity.doc, _get_onset_names(entity))
         for (name, entity) in iter_entities
         if filter_by_type(entity, entity_type))
 
@@ -949,12 +949,12 @@ def list_entities(instance, entity_type):
     return entities
 
 
-def get_onset_names(entity):
+def _get_onset_names(entity):
     """
         Example:
             >>> data = read_excel('data-example.xlsx')
             >>> model = create_model(data, range(1,25))
-            >>> get_onset_names(model.e_co_stock)
+            >>> _get_onset_names(model.e_co_stock)
             ['t', 'sit', 'com', 'com_type']
     """
     # get column titles for entities from domain set names
@@ -969,7 +969,7 @@ def get_onset_names(entity):
                 domains = entity.set_tuple
 
             for domain_set in domains:
-                labels.extend(get_onset_names(domain_set))
+                labels.extend(_get_onset_names(domain_set))
 
         elif entity.dimen == 1:
             if entity.domain:
@@ -985,7 +985,7 @@ def get_onset_names(entity):
     elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Constraint,
                     pyomo.Objective)):
         if entity.dim() > 0 and entity._index:
-            labels = get_onset_names(entity._index)
+            labels = _get_onset_names(entity._index)
         else:
             # zero dimensions, so no onset labels
             pass
@@ -1052,17 +1052,20 @@ def get_timeseries(instance, com, sit, timesteps=None):
         created, consumed, storage = get_timeseries(instance, co)
 
     Args:
-        instance: a urbs model instance
-        com: a commodity
-        sit: a site
-        timesteps: optional list of timesteps, defaults to modelled timesteps
+        instance: a urbs model instance.
+        com: a commodity.
+        sit: a site.
+        timesteps: optional list of timesteps, defaults to modelled timesteps.
 
     Returns:
-        created: timeseries of commodity creation, including stock source
-        consumed: timeseries of commodity consumption, including demand
-        storage: timeseries of commodity storage (level, stored, retrieved)
-        imported: timeseries of commodity import (by site)
-        exported: timeseries of commodity export (by site)
+        a (created, consumed, storage, imported, exported) tuple of DataFrames 
+        timeseries. These are
+        
+        * created: timeseries of commodity creation, including stock source
+        * consumed: timeseries of commodity consumption, including demand
+        * storage: timeseries of commodity storage (level, stored, retrieved)
+        * imported: timeseries of commodity import (by site)
+        * exported: timeseries of commodity export (by site)
     """
     if timesteps is None:
         # default to all simulated timesteps
@@ -1228,16 +1231,16 @@ def plot(prob, com, sit, timesteps=None):
 
     if timesteps is None:
         # default to all simulated timesteps
-        timesteps = sorted(get_entity(instance, 'tm').index)
+        timesteps = sorted(get_entity(prob, 'tm').index)
 
     # FIGURE
     fig = plt.figure(figsize=(16, 8))
     gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2, 1])
 
     created, consumed, stored, imported, exported = get_timeseries(
-        instance, com, sit, timesteps)
+        prob, com, sit, timesteps)
 
-    costs, cpro, ctra, csto, co2 = get_constants(instance)
+    costs, cpro, ctra, csto, co2 = get_constants(prob)
 
     # move retrieved/stored storage timeseries to created/consumed and
     # rename storage columns back to 'storage' for color mapping

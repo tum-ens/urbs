@@ -1,12 +1,11 @@
 Tutorial
 ========
 
-Let's go!
+This document shows how to start working with `urbs`. It will show how to write
+the example program `runme.py` and 
 
 
-More headings
--------------
+First steps
+-----------
 
-
-And more subheadings
---------------------
+This section shows how to first run the example model `runme.py`.

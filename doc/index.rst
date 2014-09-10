@@ -37,7 +37,19 @@ Contents
    tutorial
    api
 
+
+Dependencies
+------------
+
+* `coopr`_ interface to optimisation solvers (CPLEX, GLPK, Gurobi, ...).
+  At least one solver supported by coopr must be installed.
+* `matplotlib`_ for plotting (simple as MATLAB, or powerful to the last
+  linestyle)
+* `pandas`_ for input and result data handling, report generation 
+* `pyomo`_ for writing the model equations
+
    
 .. _coopr: https://software.sandia.gov/trac/coopr
+.. _matplotlib: http://matplotlib.org
 .. _pandas: https://pandas.pydata.org
 .. _pyomo: https://software.sandia.gov/trac/coopr/wiki/Pyomo

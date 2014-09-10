@@ -3,8 +3,9 @@ API
 
 .. currentmodule:: urbs
 
-This page contains the extracted urbs module and function docstrings. The
-section contains a brief model overview.
+This page contains the extracted `urbs.py` module and function docstrings. The
+first section contains a brief model overview. Members shows the annotated 
+docstrings of all member functions, grouped by topic.
 
 Module
 ------

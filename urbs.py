@@ -1051,13 +1051,16 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     Args:
         instance: a urbs model instance
-        co: a commodity
+        com: a commodity
+        sit: a site
         timesteps: optional list of timesteps, defaults to modelled timesteps
 
     Returns:
         created: timeseries of commodity creation, including stock source
         consumed: timeseries of commodity consumption, including demand
         storage: timeseries of commodity storage (level, stored, retrieved)
+        imported: timeseries of commodity import (by site)
+        exported: timeseries of commodity export (by site)
     """
     if timesteps is None:
         # default to all simulated timesteps

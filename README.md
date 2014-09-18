@@ -24,15 +24,17 @@ There are 2 ways to get all required packages under Windows. I recommend using t
 
 #### Anaconda (recommended)
 
-  1. **[Anaconda (Python 2.7](http://continuum.io/downloads). Choose the 64-bit installer if possible.
+  1. **[Anaconda (Python 2.7)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.
        1. During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
   2. **Coopr/Pyomo**
        1. Launch a new command prompt (Win+R, type "cmd", Enter)
-       2. Enter `pip install coopr`
+       2. Type `pip install coopr`, hit Enter.
   3. **GLPK**
        1. Download the latest version (e.g. GLPK-4.55) of [WinGLPK](http://sourceforge.net/projects/winglpk/files/winglpk/)
        2. Extract the contents to a folder, e.g. `C:\GLPK`
        3. Add the subfolder `w64` to your system path, e.g. `C:\GLPK\w64` ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)).
+
+Continue at [Get Started](#get-started).
 
 #### Manually (the hard way)
 
@@ -54,22 +56,27 @@ For all packages, best take the latest release or release candidate version. Bot
       2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2.i.), so that the `glpsol` command is available on the command prompt.
   8. **Excel** reading/writing: `pip install xlrd xlwt openpyxl==1.8.6`
 
+Continue at [Get Started](#get-started).
+  
 ### Linux
 
-Use the package manager to get all the packages listed in the Windows installation section. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names or differing procedures to get the individual packages to run:
+Use your Linux distribution's package manager to get all the packages listed in the Windows installation section. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names or differing procedures to get the individual packages to run:
 
   - **Everything** except Coopr & Excel I/O `sudo apt-get install python python-pip python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose glpk-utils`
   - **Coopr & Excel I/O** `sudo pip install coopr xlwt xlrd openpyxl==1.8.6`
 
+Continue at [Get Started](#get-started).
+
+  
 ## Get started
 
-Once installation is complete, clone (or download) this repository and execute the runme script on the command prompt:
+Once installation is complete, finally [install git (for version control)](http://git-scm.com/). Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux): 
 
     git clone https://github.com/tum-ens/urbs.git
     cd urbs
     python runme.py
 
-About a minute later, the folder `results` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definition is contained in the run script (whatch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
+About a minute later, the subfolder `results` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definitions are contained in the run script (whatch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
 
     python comp.py
 
@@ -77,12 +84,13 @@ and look at the new files `results/comp.xlsx` and `results/comp.png` for a quick
 
 ## Next steps
 
-  1. Read the source code of `runme.py` and `comp.py`. 
-  2. Quickly scan through `urbs.py`, read docstrings.
-  3. Try adding/modifying scenarios in `runme.py` and see their effect on results.
-  4. Fire up IPython (`ipython --pylab`) and run the scripts from there using the run command: `run runme` and `run comp`. Then use `whos` and inspect the workspace afterwards (`whos`). See what you can do (analyses, plotting) with the DataFrames. Take the `urbs.get_constants`, `urbs.get_timeseries` and `urbs.plot` functions as inspriation and the [Pandas docs](http://pandas.pydata.org/pandas-docs/stable/) as reference.
+  1. Head over to the tutorial on http://urbs.readthedocs.org
+  2. Read the source code of `runme.py` and `comp.py`. 
+  3. Quickly scan through `urbs.py`, read docstrings.
+  4. Try adding/modifying scenarios in `runme.py` and see their effect on results.
+  5. Fire up IPython (`ipython`) and run the scripts from there using the run command: `run runme` and `run comp`. Then use `whos` and inspect the workspace afterwards (`whos`). See what you can do (analyses, plotting) with the DataFrames. Take the `urbs.get_constants`, `urbs.get_timeseries` and `urbs.plot` functions as inspriation and the [Pandas docs](http://pandas.pydata.org/pandas-docs/stable/) as reference.
   
 ## Further reading
 
   - The book [Python for Data Analysis](http://shop.oreilly.com/product/0636920023784.do) best summarises the capabilities of the packages installed here. It starts with IPython, then adds NumPy, slowly fades to pandas and then shows first basic, then advanced data conversion and analysis recipes. Visualisation with matplotlib is given its own chapter, both with and without pandas.
-  - For a huge buffet of appetizers, showing the capabilities of the Python for scientific computing, I recommend browsing this [gallery of interesting IPython Notebooks](https://github.com/ipython/ipython/wiki/A-gallery-of-interesting-IPython-Notebooks).
+  - For a huge buffet of appetizers showing the capabilities of Python for scientific computing, I recommend browsing this [gallery of interesting IPython Notebooks](https://github.com/ipython/ipython/wiki/A-gallery-of-interesting-IPython-Notebooks).

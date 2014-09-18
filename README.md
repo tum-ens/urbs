@@ -20,6 +20,22 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ### Windows
 
+There are 2 ways to get all required packages under Windows. I recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python 2.7 (sorry, 3.X ist not yet supported) installation, you can also download the required packages one by one.
+
+#### Anaconda (recommended)
+
+  1. **[Anaconda (Python 2.7](http://continuum.io/downloads). Choose the 64-bit installer if possible.
+       1. During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
+  2. **Coopr/Pyomo**
+       1. Launch a new command prompt (Win+R, type "cmd", Enter)
+       2. Enter `pip install coopr`
+  3. **GLPK**
+       1. Download the latest version (e.g. GLPK-4.55) of [WinGLPK](http://sourceforge.net/projects/winglpk/files/winglpk/)
+       2. Extract the contents to a folder, e.g. `C:\GLPK`
+       3. Add the subfolder `w64` to your system path, e.g. `C:\GLPK\w64` ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)).
+
+#### Manually (the hard way)
+
 For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work, though 64 bit is recommended.
 
   1. **[Python 2.7](https://python.org/download)**. Python 3 support is not possible yet, but planned once all used packages support it.

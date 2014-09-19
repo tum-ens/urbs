@@ -32,19 +32,20 @@ By convention, they are represented by their energy content (in MWh), but can
 be changed (to J, kW, t, kg) by simply using different (consistent) units for
 all input data. Each commodity must be exactly one of following four types:
 
-* Demand: The 
-* Stock: Can be introduced (bought, mined, taken out of "stock") in arbitrary 
-  quantities at any time for a given, fixed price per unit. Its maximum 
-  supply can be limited per timestep or for a whole year. Typical examples of
-  stock commodities are coal, gas, uranium or biomass.
-* SupIm: Fluctuating resources like
-  solar radiation and wind energy, which are available according to
-  a timeseries of values. Can also be used to model "must-run" plants like
-  uncontrollable, distributed generation units.
-* Env: The special commodity CO2 is of this type and represents the
-  amount (in tons) of greenhouse gas emissions from processes. Its
-  total amount can be limited, to investigate the effect of policies
-  on the.
+  * Stock: Buyable at any time for a given price. Supply can be limited
+    per timestep or for a whole year. Examples are coal, gas, uranium
+    or biomass.
+  * SupIm: Supply intermittent stands for fluctuating resources like
+    solar radiation and wind energy, which are available according to 
+    a timeseries of values, which could be derived from weather data.
+  * Demand: These commodities have a timeseries for the requirement
+    associated and must be provided by output from other process or 
+    from storage. Usually, there is only one demand commodity called 
+    electricity (abbreviated to Elec or ElecAC), but
+  * Env: The special commodity CO2 is of this type and represents the
+    amount (in tons) of greenhouse gas emissions from processes. Its
+    total amount can be limited, to investigate the effect of policies
+    on the.
 
 Stock commodities have three numeric attributes that represent their price,
 total annual and per timestep supply. Environmental commodities (i.e. CO2) have

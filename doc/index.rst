@@ -8,7 +8,7 @@ urbs: A linear optimisation model for distributed energy systems
 
 :Author: Johannes Dorfner, <johannes.dorfner@tum.de>
 :Version: |version|
-:Date: 10 September 2014
+:Date: |today|
 :Copyright:
   This documentation is licensed under a `Creative Commons Attribution 4.0 
   International`__ license.
@@ -35,6 +35,7 @@ Contents
    :maxdepth: 2
 
    tutorial
+   report
    api
 
 

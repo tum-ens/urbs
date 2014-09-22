@@ -11,8 +11,8 @@ master_doc = 'index'
 
 project = u'urbs'
 copyright = u'2014, tum-ens'
-version = '0.1'
-release = '0.1'
+version = '0.2'
+release = '0.2'
 
 exclude_patterns = ['_build']
 #pygments_style = 'sphinx'
@@ -26,7 +26,6 @@ htmlhelp_basename = 'urbsdoc'
 latex_elements = {
     'papersize': 'a4paper',
     'pointsize': '11pt',
-
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -75,5 +74,6 @@ epub_exclude_files = ['search.html']
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'http://docs.python.org/': None,
-    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None)}
+    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+    'matplotlib': ('http://matplotlib.org/', None)}
 

@@ -31,7 +31,8 @@ Members
 -------
 
 This section lists and describes the use of all module-level functions. They
-are roughly ordered from most to least relevant.
+are roughly ordered from high-level to low-level access, followed by helper 
+functions.
 
 Create model
 ^^^^^^^^^^^^
@@ -85,6 +86,8 @@ urbs model and should cover most use cases.
   :param list sites: list sites for which to output timeseries
 
 
+.. _medium-level-functions:
+  
 Retrieve results
 ^^^^^^^^^^^^^^^^
 

@@ -20,7 +20,7 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ### Windows
 
-There are 2 ways to get all required packages under Windows. I recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python 2.7 (sorry, 3.X ist not yet supported) installation, you can also download the required packages one by one.
+There are 2 ways to get all required packages under Windows. I recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python 2.7 (sorry, 3.x is not yet supported) installation, you can also download the required packages one by one.
 
 #### Anaconda (recommended)
 
@@ -84,7 +84,7 @@ and look at the new files `results/comp.xlsx` and `results/comp.png` for a quick
 
 ## Next steps
 
-  1. Head over to the tutorial on http://urbs.readthedocs.org
+  1. Head over to the tutorial at http://urbs.readthedocs.org, which goes through runme.py step by step. 
   2. Read the source code of `runme.py` and `comp.py`. 
   3. Quickly scan through `urbs.py`, read docstrings.
   4. Try adding/modifying scenarios in `runme.py` and see their effect on results.
@@ -94,3 +94,20 @@ and look at the new files `results/comp.xlsx` and `results/comp.png` for a quick
 
   - The book [Python for Data Analysis](http://shop.oreilly.com/product/0636920023784.do) best summarises the capabilities of the packages installed here. It starts with IPython, then adds NumPy, slowly fades to pandas and then shows first basic, then advanced data conversion and analysis recipes. Visualisation with matplotlib is given its own chapter, both with and without pandas.
   - For a huge buffet of appetizers showing the capabilities of Python for scientific computing, I recommend browsing this [gallery of interesting IPython Notebooks](https://github.com/ipython/ipython/wiki/A-gallery-of-interesting-IPython-Notebooks).
+  
+## Copyright
+
+Copyright (C) 2014  TUM ENS
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>

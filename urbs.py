@@ -1,4 +1,4 @@
-"""
+"""urbs: A linear optimisation model for distributed energy systems
 
 urbs minimises total cost for providing energy in form of desired commodities
 (usually electricity) to satisfy a given demand in form of timeseries. The
@@ -293,7 +293,7 @@ def create_model(data, timesteps, dt=1):
     #       domain: one or multiple model sets; empty for scalar parameters
     #       values: dict of parameter values, addressed by elements of domains
     # if domain is skipped, defines a scalar parameter with a single value
-    m.weight = pyomo.Param(initialize=float(8760) / len(m.t))
+    m.weight = pyomo.Param(initialize=float(8760) / (len(m.t) * dt))
     m.dt = pyomo.Param(initialize=dt)
 
     # Variables
@@ -405,8 +405,8 @@ def create_model(data, timesteps, dt=1):
         if com not in m.com_demand:
             return pyomo.Constraint.Skip
         else:
-            provided_energy = - commodity_balance(m, tm, sit, com)
-            return (provided_energy >=
+            provided_power = - commodity_balance(m, tm, sit, com)
+            return (provided_power >=
                     m.demand.loc[tm][sit, com])
 
     def def_e_co_stock_rule(m, tm, sit, com, com_type):
@@ -416,12 +416,12 @@ def create_model(data, timesteps, dt=1):
             return (m.e_co_stock[tm, sit, com, com_type] ==
                     commodity_balance(m, tm, sit, com))
 
-    def res_stock_hour_rule(m, tm, sit, com, com_type):
+    def res_stock_step_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
             return pyomo.Constraint.Skip
         else:
             return (m.e_co_stock[tm, sit, com, com_type] <=
-                    m.commodity.loc[sit, com, com_type]['maxperhour'])
+                    m.commodity.loc[sit, com, com_type]['maxperstep'])
 
     def res_stock_total_rule(m, sit, com, com_type):
         if com not in m.com_stock:
@@ -430,7 +430,8 @@ def create_model(data, timesteps, dt=1):
             # calculate total consumption of commodity com
             total_consumption = 0
             for tm in m.tm:
-                total_consumption += m.e_co_stock[tm, sit, com, com_type]
+                total_consumption += (
+                    m.e_co_stock[tm, sit, com, com_type] * m.dt)
             total_consumption *= m.weight
             return (total_consumption <=
                     m.commodity.loc[sit, com, com_type]['max'])
@@ -458,7 +459,7 @@ def create_model(data, timesteps, dt=1):
         return (m.co2_pro_out[tm, sit, pro, coin, cout] ==
                 m.e_pro_in[tm, sit, pro, coin, cout] *
                 m.process.loc[sit, pro, coin, cout]['co2'] *
-                m.weight)
+                m.dt)
 
     def res_process_output_by_capacity_rule(m, tm, sit, pro, coin, cout):
         return (m.e_pro_out[tm, sit, pro, coin, cout] <=
@@ -544,7 +545,7 @@ def create_model(data, timesteps, dt=1):
 
     # emissions
     def res_co2_emission_rule(m):
-        return (pyomo.summation(m.co2_pro_out) <=
+        return (pyomo.summation(m.co2_pro_out) * m.weight <=
                 m.commodity.loc['Global', 'CO2', 'Env']['max'])
 
     # costs
@@ -595,23 +596,23 @@ def create_model(data, timesteps, dt=1):
 
         elif cost_type == 'Var':
             return m.costs['Var'] == \
-                sum(m.e_pro_out[(tm,) + p] *
+                sum(m.e_pro_out[(tm,) + p] * m.dt *
                     m.process.loc[p]['var-cost'] *
                     m.weight
                     for tm in m.tm for p in m.pro_tuples) + \
-                sum(m.e_tra_in[(tm,) + t] *
+                sum(m.e_tra_in[(tm,) + t] * m.dt *
                     m.transmission.loc[t]['var-cost'] *
                     m.weight
                     for tm in m.tm for t in m.tra_tuples) + \
                 sum(m.e_sto_con[(tm,) + s] *
                     m.storage.loc[s]['var-cost-c'] * m.weight +
-                    (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
+                    (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) * m.dt *
                     m.storage.loc[s]['var-cost-p'] * m.weight
                     for tm in m.tm for s in m.sto_tuples)
 
         elif cost_type == 'Fuel':
             return m.costs['Fuel'] == sum(
-                m.e_co_stock[(tm,) + c] *
+                m.e_co_stock[(tm,) + c] * m.dt *
                 m.commodity.loc[c]['price'] *
                 m.weight
                 for tm in m.tm for c in m.com_tuples
@@ -638,10 +639,10 @@ def create_model(data, timesteps, dt=1):
         doc='storage + transmission + process + source >= demand')
     m.def_e_co_stock = pyomo.Constraint(
         m.tm, m.com_tuples,
-        doc='commodity source term = hourly commodity consumption')
-    m.res_stock_hour = pyomo.Constraint(
+        doc='commodity source term = commodity consumption per timestep')
+    m.res_stock_step = pyomo.Constraint(
         m.tm, m.com_tuples,
-        doc='hourly commodity source term <= commodity.maxperhour')
+        doc='commodity source term <= commodity.maxperstep')
     m.res_stock_total = pyomo.Constraint(
         m.com_tuples,
         doc='total commodity source term <= commodity.max')
@@ -715,7 +716,7 @@ def create_model(data, timesteps, dt=1):
 
     # emissions
     m.res_co2_emission = pyomo.Constraint(
-        doc='total CO2 emissions <= commodity.global.co2.max')
+        doc='annual CO2 emissions <= commodity.global.co2.max')
 
     # costs
     m.def_costs = pyomo.Constraint(

@@ -961,7 +961,7 @@ def get_constants(instance):
 
     # co2 timeseries
     co2 = get_entity(instance, 'co2_pro_out')
-    co2 = co2.unstack(0).sum(1)  # sum co2 emissions over timesteps
+    co2 = co2.unstack(level=0).sum(axis=1)  # sum co2 emissions over timesteps
 
     # better labels
     cpro.columns = ['Total', 'New']
@@ -972,6 +972,7 @@ def get_constants(instance):
     # better index names
     cpro.index.names = ['sit', 'pro', 'coin', 'cout']
     ctra.index.names = ['sitin', 'sitout', 'tra', 'com']
+    co2.index.names = ['sit', 'pro', 'coin', 'cout']
 
     return costs, cpro, ctra, csto, co2
 
@@ -1090,19 +1091,21 @@ def report(instance, filename, commodities, sites):
     # get the data
     costs, cpro, ctra, csto, co2 = get_constants(instance)
 
-    # write to Excel
+    # create spreadsheet writer object
     with pd.ExcelWriter(filename) as writer:
 
-        # write to excel
+        # write constants to spreadsheet
         costs.to_excel(writer, 'Costs')
         co2.to_frame('CO2').to_excel(writer, 'CO2')
         cpro.to_excel(writer, 'Process caps')
         ctra.to_excel(writer, 'Transmission caps')
         csto.to_excel(writer, 'Storage caps')
+        
+        # initialize timeseries tableaus
         energies = []
         timeseries = {}
 
-        # timeseries
+        # collect timeseries data
         for co in commodities:
             for sit in sites:
                 created, consumed, stored, imported, exported = get_timeseries(
@@ -1132,10 +1135,11 @@ def report(instance, filename, commodities, sites):
                                  'Import', 'Export', 'Balance'])
                 energies.append(sums.to_frame("{}.{}".format(co, sit)))
 
-        # concatenate the timeseries sums
+        # concatenate energy sums
         energy = pd.concat(energies, axis=1).fillna(0)
         energy.to_excel(writer, 'Energy sums')
 
+        # write timeseries to individual sheets
         for co in commodities:
             for sit in sites:
                 sheet_name = "{}.{} timeseries".format(co, sit)

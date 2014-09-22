@@ -11,21 +11,23 @@ timesteps = range(offset, offset+length+1)
 
 # SCENARIOS
 def scenario_base(data):
-    # don't change data file
-    pass
+    # do nothing
+    return data
 
 
 def scenario_stock_prices(data):
     # change stock commodity prices
     co = data['commodity']
     stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
-    co.loc[stock_commodities_only, 'price'] *= 1.0
+    co.loc[stock_commodities_only, 'price'] *= 1.5
+    return data
 
 
 def scenario_co2_limit(data):
     # change CO2 limit
     co = data['commodity']
     co.loc[('Global', 'CO2', 'Env'), 'max'] *= 0.05
+    return data
 
 
 def scenario_north_process_caps(data):
@@ -33,13 +35,15 @@ def scenario_north_process_caps(data):
     pro = data['process']
     pro.loc[('North', 'turb', 'Hydro', 'Elec'), 'cap-up'] *= 0.5
     pro.loc[('North', 'pp', 'Biomass', 'Elec'), 'cap-up'] *= 0.25
+    return data
 
 
 def scenario_all_together(data):
     # combine all other scenarios
-    scenario_stock_prices(data)
-    scenario_co2_limit(data)
-    scenario_north_process_caps(data)
+    data = scenario_stock_prices(data)
+    data = scenario_co2_limit(data)
+    data = scenario_north_process_caps(data)
+    return data 
 
 
 # select scenarios to be run
@@ -57,7 +61,7 @@ for scenario in scenarios:
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = urbs.read_excel(filename)
-    scenario(data)
+    data = scenario(data)
 
     # create model, solve it, read results
     model = urbs.create_model(data, timesteps)
@@ -82,11 +86,17 @@ for scenario in scenarios:
 
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in prob.demand.columns:
+        # create figure
         fig = urbs.plot(prob, com, sit)
+        
+        # change the figure title
         ax0 = fig.get_axes()[0]
-        new_title = ax0.get_title().replace('Energy balance of ',
-                                            '{}: '.format(sce))
-        ax0.set_title(new_title)
+        nice_sce_name = sce.replace('_', ' ').title()
+        new_figure_title = ax0.get_title().replace(
+            'Energy balance of ', '{}: '.format(nice_sce_name))
+        ax0.set_title(new_figure_title)
+        
+        # save plot to files 
         for ext in ['png', 'pdf']:
             fig_filename = os.path.join(
                 'results', '{}-{}-{}.{}').format(sce, com, sit, ext)

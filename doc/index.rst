@@ -10,14 +10,15 @@ urbs: A linear optimisation model for distributed energy systems
 :Version: |version|
 :Date: 10 September 2014
 :Copyright:
-  This work is licensed under a `Creative Commons Attribution 3.0 License`__.
+  This documentation is licensed under a `Creative Commons Attribution 4.0 
+  International`__ license.
 
-.. __: http://creativecommons.org/licenses/by/3.0/
+.. __: http://creativecommons.org/licenses/by/4.0/
 
 
 Overview
 --------
-* urbs is a linear programming model for multi-commodity energy systems with 
+* `urbs`_ is a linear programming model for multi-commodity energy systems with 
   a focus on optimal storage sizing and use.
 * It finds the minimum cost energy system to satisfy given demand timeseries 
   for possibly multiple commodities (e.g. electricity).
@@ -52,14 +53,15 @@ Dependencies
 ------------
 
 * `coopr`_ interface to optimisation solvers (CPLEX, GLPK, Gurobi, ...).
-  At least one solver supported by coopr must be installed.
-* `matplotlib`_ for plotting (simple as MATLAB, or powerful to the last
-  linestyle)
+  At least one supported solver by coopr must be installed.
+* `matplotlib`_ for plotting
 * `pandas`_ for input and result data handling, report generation 
-* `pyomo`_ for writing the model equations
+* `pyomo`_ for the model equations
 
    
 .. _coopr: https://software.sandia.gov/trac/coopr
 .. _matplotlib: http://matplotlib.org
 .. _pandas: https://pandas.pydata.org
 .. _pyomo: https://software.sandia.gov/trac/coopr/wiki/Pyomo
+.. _urbs: https://github.com/tum-ens/urbs
+

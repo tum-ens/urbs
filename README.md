@@ -14,9 +14,9 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ## Screenshots
 
-[![](http://ojdo.de/dw/_media/software:urbs:scenario_all_together-elec-north.png?w=400&tok=a9a9d8)](doc/img/plot.png)
+<a href="doc/img/plot.png"><img src="doc/img/plot.png" alt="Timeseries plot of 8 days of electricity generation in vertex 'North' in scenario_all_together in hourly resolution: Hydro and biomass provide flat base load of about 50% to cover the daily fluctuating load, while large share of wind and small part photovoltaic generation cover the rest, supported by a day-night storage." style="width:400px"></a>
 
-[![](http://ojdo.de/dw/_media/software:urbs:comp.png?w=400&tok=0e5b95)](doc/img/comp.png)
+<a href="doc/img/comp.png"><img src="doc/img/comp.png" alt="Bar chart of cumulated annual electricity generation costs for all 5 scenarios defined in runme.py." style="width:400px"></a>
 
 ## Installation
 

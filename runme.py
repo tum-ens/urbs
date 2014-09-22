@@ -1,6 +1,5 @@
 import coopr.environ
 import os
-import pandas as pd
 import urbs
 from coopr.opt.base import SolverFactory
 

@@ -193,7 +193,7 @@ Plotting
    
 First, the use of the module constant :data:`COLORS` for customising plot
 colors is demonstrated. All plot colors are user-defineable by adding color 
-:func:`tuple`s ``(r, g, b)`` or modifying existing tuples for commodities and 
+:func:`tuple` ``(r, g, b)`` or modifying existing tuples for commodities and 
 plot decoration elements. Here, new colors for displaying import/export are
 added. Without these, pseudo-random colors are generated in 
 :func:`to_color`.

@@ -63,16 +63,19 @@ def read_excel(filename):
     with pd.ExcelFile(filename) as xls:
         commodity = xls.parse(
             'Commodity',
-            index_col=['Sit', 'Com', 'Type'])
+            index_col=['Site', 'Commodity', 'Type'])
         process = xls.parse(
             'Process',
-            index_col=['Sit', 'Pro', 'CoIn', 'CoOut'])
+            index_col=['Site', 'Process'])
+        process_commodity = xls.parse(
+            'Process-Commodity',
+            index_col=['Process', 'Commodity', 'Direction'])
         transmission = xls.parse(
             'Transmission',
-            index_col=['SitIn', 'SitOut', 'Tra', 'Com'])
+            index_col=['Site In', 'Site Out', 'Transmission', 'Commodity'])
         storage = xls.parse(
             'Storage',
-            index_col=['Sit', 'Sto', 'Com'])
+            index_col=['Site', 'Storage', 'Commodity'])
         demand = xls.parse(
             'Demand',
             index_col=['t'])
@@ -97,6 +100,7 @@ def read_excel(filename):
     data = {
         'commodity': commodity,
         'process': process,
+        'process_commodity': process_commodity,
         'transmission': transmission,
         'storage': storage,
         'demand': demand,
@@ -135,13 +139,19 @@ def create_model(data, timesteps, dt=1):
     # Data import. Syntax to access a value within equation definitions looks
     # like this:
     #
-    #     m.process.loc[sit, pro, coin, cout][attribute]
+    #     m.storage.loc[site, storage, commodity][attribute]
     #
-    get_inputs = itemgetter(
-        "commodity", "process", "transmission", "storage",
-        "demand", "supim")
-    (m.commodity, m.process, m.transmission, m.storage,
-        m.demand, m.supim) = get_inputs(data)
+    m.commodity = data['commodity']
+    m.process = data['process']
+    m.process_commodity = data['process_commodity']
+    m.transmission = data['transmission']
+    m.storage = data['storage']
+    m.demand = data['demand']
+    m.supim = data['supim']
+
+    # process input/output ratios
+    m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
+    m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
 
     # Sets
     # ====
@@ -164,12 +174,12 @@ def create_model(data, timesteps, dt=1):
     
     # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Sit').unique(),
+        initialize=m.commodity.index.get_level_values('Site').unique(),
         doc='Set of sites')
     
     # commodity (e.g. solar, wind, coal...)
     m.com = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Com').unique(),
+        initialize=m.commodity.index.get_level_values('Commodity').unique(),
         doc='Set of commodities')
     
     # commodity type (i.e. SupIm, Demand, Stock, Env)
@@ -179,17 +189,17 @@ def create_model(data, timesteps, dt=1):
     
     # process (e.g. turb, wt, gt...)    
     m.pro = pyomo.Set(
-        initialize=m.process.index.get_level_values('Pro').unique(),
+        initialize=m.process.index.get_level_values('Process').unique(),
         doc='Set of conversion processes')
     
     # tranmission (e.g. hvac, hvdc, pipeline...)
     m.tra = pyomo.Set(
-        initialize=m.transmission.index.get_level_values('Tra').unique(),
+        initialize=m.transmission.index.get_level_values('Transmission').unique(),
         doc='Set of tranmission technologies')
     
     # storage (e.g. hydrogen, pump storage)
     m.sto = pyomo.Set(
-        initialize=m.storage.index.get_level_values('Sto').unique(),
+        initialize=m.storage.index.get_level_values('Storage').unique(),
         doc='Set of storage technologies')
     
     # cost_type
@@ -197,67 +207,78 @@ def create_model(data, timesteps, dt=1):
         initialize=['Inv', 'Fix', 'Var', 'Fuel'],
         doc='Set of cost types (hard-coded)')
 
-    # sets of existing tuples:
-    # com_tuples = [('DE', 'Coal', 'Stock'), ('MA', 'Wind', 'SupIm'), ...]
-    # pro_tuples = [('DE', 'pp', 'Coal', 'Elec'), ('NO', 'wt', 'Wind', 'Elec')]
-    # sto_tuples = [('DE', 'bat', 'Elec'), ('NO', 'pst', 'Elec')...]
-    m.com_tuples = pyomo.Set(within=m.sit*m.com*m.com_type,
-                             initialize=m.commodity.index)
-    m.pro_tuples = pyomo.Set(within=m.sit*m.pro*m.com*m.com,
-                             initialize=m.process.index)
-    m.tra_tuples = pyomo.Set(within=m.sit*m.sit*m.tra*m.com,
-                             initialize=m.transmission.index)
-    m.sto_tuples = pyomo.Set(within=m.sit*m.sto*m.com,
-                             initialize=m.storage.index)
+    # tuple sets
+    m.com_tuples = pyomo.Set(
+        within=m.sit*m.com*m.com_type,
+        initialize=m.commodity.index,
+        doc='Combinations (tuples) of possible commodities by site')
+    m.pro_tuples = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=m.process.index,
+        doc='Combinations (tuples) of possible processes by site')
+    m.tra_tuples = pyomo.Set(
+        within=m.sit*m.sit*m.tra*m.com,
+        initialize=m.transmission.index,
+        doc='Combinations (tuples) of possible transmission by sites')
+    m.sto_tuples = pyomo.Set(
+        within=m.sit*m.sto*m.com,
+        initialize=m.storage.index,
+        doc='Combinations (tuples) of possible storage by site')
+    
+    # process input/output
+    m.pro_input_tuples = pyomo.Set(
+        within=m.pro*m.com,
+        initialize=m.r_in.index,
+        doc='Commodities consumed by processes')
+    m.pro_output_tuples = pyomo.Set(
+        within=m.pro*m.com,
+        initialize=m.r_out.index,
+        doc='Commodities produced by prcoesses')
 
-    # subsets of commodities by type
-    # for equations that apply to only one commodity type
+    # commodity type subsets
     m.com_supim = pyomo.Set(
         within=m.com,
-        initialize=set(c[1] for c in m.com_tuples if c[2] == 'SupIm'))
+        initialize=set(c[1] for c in m.com_tuples if c[2] == 'SupIm'),
+        doc='Commodities that have intermittend (timeseries) input')
     m.com_stock = pyomo.Set(
         within=m.com,
-        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Stock'))
+        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Stock'),
+        doc='Commodities that can be purchased at some site(s)')
     m.com_demand = pyomo.Set(
         within=m.com,
-        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Demand'))
+        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Demand'),
+        doc='Commodities that have a demand (implies timeseries)')
 
     # Parameters
-    # ==========
-    # for model entities (commodity, process, transmission, storage) no
-    # parames are needed, just use the DataFrames m.commodity, m.process,
-    # m.storage and m.transmission directly.
-    # Syntax: m.{name} = Param({domain}, initialize={values})
-    # where name: param name
-    #       domain: one or multiple model sets; empty for scalar parameters
-    #       values: dict of parameter values, addressed by elements of domains
-    # if domain is skipped, defines a scalar parameter with a single value
     
-    # weight = length of year (hours) / length of simulation (hours)
-    # weight scales costs and emissions from length of simulation to a full
-    # year, making comparisons among cost types (invest is annualized, fixed
-    # costs are annual by default, variable costs are scaled by weight) and 
-    # among different simulation durations meaningful.
     m.weight = pyomo.Param(
         initialize=float(8760) / (len(m.t) * dt),
-        doc='Scaling factor for variable costs and emissions to annual total')
-    # dt = spacing between timesteps. Required for storage equation that
-    # converts between energy (storage content, e_sto_con) and power (all other
-    # quantities that start with "e_")
+        doc='Pre-factor for variable costs and emissions for an annual result')
     m.dt = pyomo.Param(
         initialize=dt,
-        doc='Duration between t and t+1 (in hours, default: 1)')
+        doc='Time step duration (in hours), default: 1')
 
     # Variables
-    # =========
-    # listed alphabetically
-    # Syntax: m.{name} = Var({domain}, within={range}, doc={docstring})
-    # where name: variable name
-    #       domain: variable domain, consisting of one or multiple sets
-    #       range: variable values, like Binary, Integer, NonNegativeReals
-    #       docstring: a documentation string/short description
+   
+    # emissions
+    m.co2_pro_out = pyomo.Var(
+        m.tm, m.pro_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='CO2 emissions from process (t) per timestep')
     
-    # capacities
+    # costs
+    m.costs = pyomo.Var(
+        m.cost_type,
+        within=pyomo.NonNegativeReals,
+        doc='Costs by type (EUR/a)')
+    
+    # commodity
+    m.e_co_stock = pyomo.Var(
+        m.tm, m.com_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Use of stock commodity source (MW) per timestep')
+    
+    # process
     m.cap_pro = pyomo.Var(
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
@@ -266,6 +287,20 @@ def create_model(data, timesteps, dt=1):
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
+    m.tau_pro = pyomo.Var(
+        m.tm, m.pro_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Power flow (MW) through process')
+    m.e_pro_in = pyomo.Var(
+        m.tm, m.pro_tuples, m.com,
+        within=pyomo.NonNegativeReals,
+        doc='Power flow of commodity into process (MW) per timestep')
+    m.e_pro_out = pyomo.Var(
+        m.tm, m.pro_tuples, m, com
+        within=pyomo.NonNegativeReals,
+        doc='Power flow out of process (MW) per timestep')
+    
+    # transmission
     m.cap_tra = pyomo.Var(
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
@@ -274,6 +309,16 @@ def create_model(data, timesteps, dt=1):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+    m.e_tra_in = pyomo.Var(
+        m.tm, m.tra_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Power flow into transmission line (MW) per timestep')
+    m.e_tra_out = pyomo.Var(
+        m.tm, m.tra_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Power flow out of transmission line (MW) per timestep')
+    
+    # storage
     m.cap_sto_c = pyomo.Var(
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
@@ -290,40 +335,6 @@ def create_model(data, timesteps, dt=1):
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
-    
-    # emissions
-    m.co2_pro_out = pyomo.Var(
-        m.tm, m.pro_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='CO2 emissions from process (t) per timestep')
-    
-    # costs
-    m.costs = pyomo.Var(
-        m.cost_type,
-        within=pyomo.NonNegativeReals,
-        doc='Costs by type (EUR/a)')
-    
-    # timeseries
-    m.e_co_stock = pyomo.Var(
-        m.tm, m.com_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='Use of stock commodity source (MW) per timestep')
-    m.e_pro_in = pyomo.Var(
-        m.tm, m.pro_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='Power flow into process (MW) per timestep')
-    m.e_pro_out = pyomo.Var(
-        m.tm, m.pro_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='Power flow out of process (MW) per timestep')
-    m.e_tra_in = pyomo.Var(
-        m.tm, m.tra_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='Power flow into transmission line (MW) per timestep')
-    m.e_tra_out = pyomo.Var(
-        m.tm, m.tra_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='Power flow out of transmission line (MW) per timestep')
     m.e_sto_in = pyomo.Var(
         m.tm, m.sto_tuples,
         within=pyomo.NonNegativeReals,
@@ -337,20 +348,7 @@ def create_model(data, timesteps, dt=1):
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
 
-    # Equation definition
-    # ===================
-    # listed by topic. All equations except the Objective function are
-    # of type Constraint, although there are two semantics for those,
-    # indicated by the name prefix (def, res).
-    #  - def: definition, usually equations, defining variable values
-    #  - res: restriction, usually inequalities, limiting variable values
-    # topics
-    #  - commodity
-    #  - process
-    #  - transmission
-    #  - storage
-    #  - emissions
-    #  - costs
+    # Constraints
 
     # commodity
     
@@ -394,22 +392,24 @@ def create_model(data, timesteps, dt=1):
                     m.commodity.loc[sit, com, com_type]['max'])
 
     # process
-    
-    # process capacity == new capacity + existing capacity
-    def def_process_capacity_rule(m, sit, pro, coin, cout):
-        return (m.cap_pro[sit, pro, coin, cout] ==
-                m.cap_pro_new[sit, pro, coin, cout] +
-                m.process.loc[sit, pro, coin, cout]['inst-cap'])
+    def def_process_capacity_rule(m, sit, pro):
+        return (m.cap_pro[sit, pro] ==
+                m.cap_pro_new[sit, pro] +
+                m.process.loc[sit, pro]['inst-cap'])
     
     # process output == process input * efficiency
-    def def_process_output_rule(m, tm, sit, pro, coin, cout):
-        return (m.e_pro_out[tm, sit, pro, coin, cout] ==
-                m.e_pro_in[tm, sit, pro, coin, cout] *
-                m.process.loc[sit, pro, coin, cout]['eff'])
+    def def_process_throughput_rule(m, tm, sit, pro):
+        return m.tau_pro[tm, sit, pro] == throughput_sum(m, tm, sit, pro)
+        
+    def def_process_input_rule(m, tm, sit, pro, co):
+        return (m.e_pro_in[tm, sit, pro, co] ==
+                m.tau_pro[tm, sit, pro] * m.r_in.loc[pro, co])
+        
+    def def_process_output_rule(m, tm, sit, pro, co):
+        return (m.e_pro_out[tm, sit, pro, co] ==
+                m.tau_pro[tm, sit, pro] * m.r_out.loc[pro, co])
 
-    # for processes that consume supim commodities:
-    # process output == installed capacity * capacity factor (timeseries)            
-    def def_intermittent_supply_rule(m, tm, sit, pro, coin, cout):
+    def def_intermittent_supply_rule(m, tm, sit, pro, coin):
         if coin in m.com_supim:
             return (m.e_pro_in[tm, sit, pro, coin, cout] ==
                     m.cap_pro[sit, pro, coin, cout] *
@@ -536,7 +536,8 @@ def create_model(data, timesteps, dt=1):
         return (pyomo.summation(m.co2_pro_out) * m.weight <=
                 m.commodity.loc['Global', 'CO2', 'Env']['max'])
 
-    # costs
+    # Objective
+    
     def def_costs_rule(m, cost_type):
         """Calculate total costs by cost type.
 
@@ -613,14 +614,7 @@ def create_model(data, timesteps, dt=1):
     def obj_rule(m):
         return pyomo.summation(m.costs)
 
-    # Equation declaration
-    # ====================
-    # declarations connect rule functions to the model, specifying
-    # the model sets for which the constraints are enforced
-    # a constraint with m.{name} automagically refers to the function named
-    # {name}_rule defined above. If the names don't match, one could link the 
-    # Constraint to a function by using the rule keyword. Example:
-    # m.every_step = pyomo.Constraint(m.tm, rule=any_function_name)
+    # Equation declarations
 
     # commodity
     m.res_demand = pyomo.Constraint(
@@ -640,11 +634,17 @@ def create_model(data, timesteps, dt=1):
     m.def_process_capacity = pyomo.Constraint(
         m.pro_tuples,
         doc='total process capacity = inst-cap + new capacity')
-    m.def_process_output = pyomo.Constraint(
+    m.def_process_throughput = pyomo.Constraint(
         m.tm, m.pro_tuples,
+        doc='process throughput = weighted sum of process inputs')
+    m.def_process_input = pyomo.Constraint(
+        m.tm, m.pro_input_tuples,
+        doc='')
+    m.def_process_output = pyomo.Constraint(
+        m.tm, m.pro_output_tuples,
         doc='process output = process input * efficiency')
     m.def_intermittent_supply = pyomo.Constraint(
-        m.tm, m.pro_tuples,
+        m.tm, m.pro_input_tuples,
         doc='process output = process capacity * supim timeseries')
     m.def_co2_emissions = pyomo.Constraint(
         m.tm, m.pro_tuples,
@@ -759,13 +759,13 @@ def commodity_balance(m, tm, sit, com):
 
     """
     balance = 0
-    for p in m.pro_tuples:
-        if p[0] == sit and p[2] == com:
+    for site, process in m.pro_tuples:
+        if site == sit and com in m.r_in.loc[process].index:
             # usage as input for process increases balance
-            balance += m.e_pro_in[(tm,)+p]
-        if p[0] == sit and p[3] == com:
+            balance += m.e_pro_in[(tm,)+process]
+        if site == sit and com in m.r_out.loc[process].index:
             # output from processes decreases balance
-            balance -= m.e_pro_out[(tm,)+p]
+            balance -= m.e_pro_out[(tm,)+process]
     for t in m.tra_tuples:
         # exports increase balance
         if t[0] == sit and t[3] == com:
@@ -781,6 +781,13 @@ def commodity_balance(m, tm, sit, com):
             balance -= m.e_sto_out[(tm,)+s]
     return balance
 
+def throughput_sum(m, tm, sit, pro):
+    """ Calculate process throughput as the weighted sum of inputs. """
+    throughput = 0
+    for (process, com) in m.pro_input_tuples:
+        if process == pro:                
+            throughput += m.e_pro_in[tm, sit, pro, com] / m.r_in.loc[pro, com]
+    return throughput
 
 def split_columns(columns, sep='.'):
     """Split columns by separator into MultiIndex.

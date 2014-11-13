@@ -64,7 +64,7 @@ Constants
 
 .. literalinclude:: ../urbs.py
    :start-after:        # write constants to spreadsheet
-   :end-before:        energies = []
+   :end-before:        # initialize timeseries tableaus
 
 As written already, the individual :class:`~pandas.DataFrame` objects are
 written to individual sheets within the same spreadsheet file by using the

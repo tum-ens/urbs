@@ -149,6 +149,8 @@ def create_model(data, timesteps, dt=1):
     # where name: set name
     #       domain: set domain for tuple sets, a cartesian set product
     #       values: set values, a list or array of element tuples
+    
+    # generate ordered timesteps
     m.t = pyomo.Set(
         initialize=m.settings['timesteps'],
         ordered=True,
@@ -158,24 +160,38 @@ def create_model(data, timesteps, dt=1):
         initialize=m.settings['timesteps'][1:],
         ordered=True,
         doc='Set of modelled timesteps')
+    
+    # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Sit').unique(),
         doc='Set of sites')
+    
+    # commodity (e.g. solar, wind, coal...)
     m.com = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Com').unique(),
         doc='Set of commodities')
+    
+    # commodity type (e.g. SupIm, Demand, Stock, Env)
     m.com_type = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Type').unique(),
         doc='Set of commodity types')
+    
+    # process (e.g. turb, wt, gt...)    
     m.pro = pyomo.Set(
         initialize=m.process.index.get_level_values('Pro').unique(),
         doc='Set of conversion processes')
+    
+    # tranmission (e.g. hvac)
     m.tra = pyomo.Set(
         initialize=m.transmission.index.get_level_values('Tra').unique(),
         doc='Set of tranmission technologies')
+    
+    # storage (e.g. hydrogen, pump storage)
     m.sto = pyomo.Set(
         initialize=m.storage.index.get_level_values('Sto').unique(),
         doc='Set of storage technologies')
+    
+    # cost_type
     m.cost_type = pyomo.Set(
         initialize=['Inv', 'Fix', 'Var', 'Fuel'],
         doc='Set of cost types (hard-coded)')
@@ -215,6 +231,12 @@ def create_model(data, timesteps, dt=1):
     #       domain: one or multiple model sets; empty for scalar parameters
     #       values: dict of parameter values, addressed by elements of domains
     # if domain is skipped, defines a scalar parameter with a single value
+ 
+    # extrapolation to the yearly total
+    # len(list) delivers the number of objects in list as integer    
+    # meaning of product len(m.t) * dt ???
+    # m.weight >= 1
+    
     m.weight = pyomo.Param(initialize=float(8760) / (len(m.t) * dt))
     m.dt = pyomo.Param(initialize=dt)
 
@@ -323,6 +345,8 @@ def create_model(data, timesteps, dt=1):
     #  - costs
 
     # commodity
+    
+    # supply >= demand
     def res_demand_rule(m, tm, sit, com, com_type):
         if com not in m.com_demand:
             return pyomo.Constraint.Skip
@@ -331,13 +355,15 @@ def create_model(data, timesteps, dt=1):
             return (provided_power >=
                     m.demand.loc[tm][sit, com])
 
+    # calculation of import/purchase???                
     def def_e_co_stock_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
             return pyomo.Constraint.Skip
         else:
             return (m.e_co_stock[tm, sit, com, com_type] ==
                     commodity_balance(m, tm, sit, com))
-
+    
+    # restriction for hourly stock purchase
     def res_stock_step_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
             return pyomo.Constraint.Skip
@@ -345,11 +371,11 @@ def create_model(data, timesteps, dt=1):
             return (m.e_co_stock[tm, sit, com, com_type] <=
                     m.commodity.loc[sit, com, com_type]['maxperstep'])
 
+    # calculate total consumption of commodity com
     def res_stock_total_rule(m, sit, com, com_type):
         if com not in m.com_stock:
             return pyomo.Constraint.Skip
         else:
-            # calculate total consumption of commodity com
             total_consumption = 0
             for tm in m.tm:
                 total_consumption += (
@@ -359,16 +385,20 @@ def create_model(data, timesteps, dt=1):
                     m.commodity.loc[sit, com, com_type]['max'])
 
     # process
+    
+    # process capacity == new capacity + existing capacity
     def def_process_capacity_rule(m, sit, pro, coin, cout):
         return (m.cap_pro[sit, pro, coin, cout] ==
                 m.cap_pro_new[sit, pro, coin, cout] +
                 m.process.loc[sit, pro, coin, cout]['inst-cap'])
-
+    
+    # output == input * efficiency
     def def_process_output_rule(m, tm, sit, pro, coin, cout):
         return (m.e_pro_out[tm, sit, pro, coin, cout] ==
                 m.e_pro_in[tm, sit, pro, coin, cout] *
                 m.process.loc[sit, pro, coin, cout]['eff'])
 
+    # output == installed capacity * supply per hour by intermittent sources            
     def def_intermittent_supply_rule(m, tm, sit, pro, coin, cout):
         if coin in m.com_supim:
             return (m.e_pro_in[tm, sit, pro, coin, cout] ==
@@ -377,45 +407,58 @@ def create_model(data, timesteps, dt=1):
         else:
             return pyomo.Constraint.Skip
 
+    # calculation of co2 emissions per process
+    # per timestep or per year???        
     def def_co2_emissions_rule(m, tm, sit, pro, coin, cout):
         return (m.co2_pro_out[tm, sit, pro, coin, cout] ==
                 m.e_pro_in[tm, sit, pro, coin, cout] *
                 m.process.loc[sit, pro, coin, cout]['co2'] *
                 m.dt)
-
+    
+    # output <= capacity 
     def res_process_output_by_capacity_rule(m, tm, sit, pro, coin, cout):
         return (m.e_pro_out[tm, sit, pro, coin, cout] <=
                 m.cap_pro[sit, pro, coin, cout])
-
+    
+    # lower bound <= process capacity <= upper bound
     def res_process_capacity_rule(m, sit, pro, coin, cout):
         return (m.process.loc[sit, pro, coin, cout]['cap-lo'],
                 m.cap_pro[sit, pro, coin, cout],
                 m.process.loc[sit, pro, coin, cout]['cap-up'])
 
     # transmission
+    
+    # transmission capacity == new capacity + existing capacity
     def def_transmission_capacity_rule(m, sin, sout, tra, com):
         return (m.cap_tra[sin, sout, tra, com] ==
                 m.cap_tra_new[sin, sout, tra, com] +
                 m.transmission.loc[sin, sout, tra, com]['inst-cap'])
 
+    # output == input * efficiency
     def def_transmission_output_rule(m, tm, sin, sout, tra, com):
         return (m.e_tra_out[tm, sin, sout, tra, com] ==
                 m.e_tra_in[tm, sin, sout, tra, com] *
                 m.transmission.loc[sin, sout, tra, com]['eff'])
-
+    
+    # input <= transmission capacity
     def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
         return (m.e_tra_in[tm, sin, sout, tra, com] <=
                 m.cap_tra[sin, sout, tra, com])
-
+    
+    # lower bound <= transmission capacity <= upper bound
     def res_transmission_capacity_rule(m, sin, sout, tra, com):
         return (m.transmission.loc[sin, sout, tra, com]['cap-lo'],
                 m.cap_tra[sin, sout, tra, com],
                 m.transmission.loc[sin, sout, tra, com]['cap-up'])
-
+    
+    # input capacity == output capacity
     def res_transmission_symmetry_rule(m, sin, sout, tra, com):
         return m.cap_tra[sin, sout, tra, com] == m.cap_tra[sout, sin, tra, com]
 
     # storage
+    
+    # content in timestep [t]
+    # energy balance between timesteps [t-1] and [t]
     def def_storage_state_rule(m, t, sit, sto, com):
         return (m.e_sto_con[t, sit, sto, com] ==
                 m.e_sto_con[t-1, sit, sto, com] +
@@ -424,35 +467,45 @@ def create_model(data, timesteps, dt=1):
                 m.e_sto_out[t, sit, sto, com] /
                 m.storage.loc[sit, sto, com]['eff-out'] * m.dt)
 
+    # storage power == new power + existing power            
     def def_storage_power_rule(m, sit, sto, com):
         return (m.cap_sto_p[sit, sto, com] ==
                 m.cap_sto_p_new[sit, sto, com] +
                 m.storage.loc[sit, sto, com]['inst-cap-p'])
-
+    
+    # storage capacity == new capacity + existing capacity
     def def_storage_capacity_rule(m, sit, sto, com):
         return (m.cap_sto_c[sit, sto, com] ==
                 m.cap_sto_c_new[sit, sto, com] +
                 m.storage.loc[sit, sto, com]['inst-cap-c'])
-
+    
+    # input <= power
     def res_storage_input_by_power_rule(m, t, sit, sto, com):
         return m.e_sto_in[t, sit, sto, com] <= m.cap_sto_p[sit, sto, com]
-
+    
+    # output <= power
     def res_storage_output_by_power_rule(m, t, sit, sto, co):
         return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co]
 
+    # content <= capacity    
     def res_storage_state_by_capacity_rule(m, t, sit, sto, com):
         return m.e_sto_con[t, sit, sto, com] <= m.cap_sto_c[sit, sto, com]
 
+    # lower bound <= power <= upper bound    
     def res_storage_power_rule(m, sit, sto, com):
         return (m.storage.loc[sit, sto, com]['cap-lo-p'],
                 m.cap_sto_p[sit, sto, com],
                 m.storage.loc[sit, sto, com]['cap-up-p'])
 
+    # lower bound <= capacity <= upper bound
     def res_storage_capacity_rule(m, sit, sto, com):
         return (m.storage.loc[sit, sto, com]['cap-lo-c'],
                 m.cap_sto_c[sit, sto, com],
                 m.storage.loc[sit, sto, com]['cap-up-c'])
 
+    # initialization of storage content in first timestep t[1]
+    # initialization of storage content in final timestep t[len(m.t)]
+    # content[t=1] == content[t=T] == capacity * factor
     def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
         if t == m.t[1]:  # first timestep (Pyomo uses 1-based indexing)
             return (m.e_sto_con[t, sit, sto, com] ==
@@ -466,6 +519,8 @@ def create_model(data, timesteps, dt=1):
             return pyomo.Constraint.Skip
 
     # emissions
+    
+    # total co2 emissions <= maximum emissions
     def res_co2_emission_rule(m):
         return (pyomo.summation(m.co2_pro_out) * m.weight <=
                 m.commodity.loc['Global', 'CO2', 'Env']['max'])

@@ -218,19 +218,29 @@ def create_model(data, timesteps, dt=1):
         initialize=m.r_out.index,
         doc='Commodities produced by prcoesses')
 
+    # helper function for creating commodity type subsets
+    def commodity_subset(com_tuples, type_name):
+        """ Unique list of commodity names for given type. """
+        return set(com for sit, com, com_type in com_tuples 
+                   if com_type == type_name)
+
     # commodity type subsets
     m.com_supim = pyomo.Set(
         within=m.com,
-        initialize=set(c[1] for c in m.com_tuples if c[2] == 'SupIm'),
+        initialize=commodity_subset(m.com_tuples, 'Supim'),
         doc='Commodities that have intermittend (timeseries) input')
     m.com_stock = pyomo.Set(
         within=m.com,
-        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Stock'),
+        initialize=commodity_subset(m.com_tuples, 'Stock'),
         doc='Commodities that can be purchased at some site(s)')
     m.com_demand = pyomo.Set(
         within=m.com,
-        initialize=set(c[1] for c in m.com_tuples if c[2] == 'Demand'),
+        initialize=commodity_subset(m.com_tuples, 'Demand'),
         doc='Commodities that have a demand (implies timeseries)')
+    m.com_env = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Env'),
+        doc='Commodities that (might) have a maximum creation limit')
 
     # Parameters
     
@@ -328,20 +338,15 @@ def create_model(data, timesteps, dt=1):
     # Constraints
 
     # commodity
-    def res_demand_rule(m, tm, sit, com, com_type):
-        if com not in m.com_demand:
-            return pyomo.Constraint.Skip
-        else:
-            provided_power = - commodity_balance(m, tm, sit, com)
-            return (provided_power >=
-                    m.demand.loc[tm][sit, com])
-
-    def def_e_co_stock_rule(m, tm, sit, com, com_type):
-        if com not in m.com_stock:
-            return pyomo.Constraint.Skip
-        else:
-            return (m.e_co_stock[tm, sit, com, com_type] ==
-                    commodity_balance(m, tm, sit, com))
+    def res_vertex_rule(m, tm, sit, com, com_type):
+        # 
+        power_surplus = - commodity_balance(m, tm, sit, com)
+        if com in m.com_stock:
+            power_surplus += m.e_co_stock[tm, sit, com, com_type]
+        if com in m.com_demand:
+            power_surplus -= m.demand.loc[tm][sit, com]
+            
+        return power_surplus >= 0
 
     def res_stock_step_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
@@ -362,6 +367,28 @@ def create_model(data, timesteps, dt=1):
             total_consumption *= m.weight
             return (total_consumption <=
                     m.commodity.loc[sit, com, com_type]['max'])
+
+    def res_env_step_rule(m, tm, sit, com, com_type):
+        if com not in m.com_env:
+            return pyomo.Constraint.Skip
+        else:
+            environmental_output = - commodity_balance(m, tm, sit, com)
+            return (environmental_output <=
+                    m.commodity.loc[sit, com, com_type]['maxperstep'])
+
+    def res_env_total_rule(m, sit, com, com_type):
+        if com not in m.com_env:
+            return pyomo.Constraint.Skip
+        else:
+            # calculate total creation of environmental commodity com
+            env_output_sum = 0
+            for tm in m.tm:
+                env_output_sum += (
+                    - commodity_balance(m, tm, sit, com) * m.dt)
+            env_output_sum *= m.weight
+            return (env_output_sum <=
+                    m.commodity.loc[sit, com, com_type]['max'])
+
 
     # process
     def def_process_capacity_rule(m, sit, pro):

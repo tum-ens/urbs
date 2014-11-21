@@ -70,10 +70,14 @@ for scenario in scenarios:
     result = optim.solve(prob, tee=True)
     prob.load(result)
 
+    #create timestamp for filename: abc_YYYY-MM-DD_hh-mm.*
+    from datetime import datetime
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
+        
     # write report to spreadsheet
     urbs.report(
         prob,
-        os.path.join('results', '{}.xlsx').format(sce),
+        os.path.join('results', '{}_{}.xlsx').format(sce, timestamp),
         ['Elec'], ['South', 'Mid', 'North'])
 
     # add or change plot colours
@@ -83,7 +87,7 @@ for scenario in scenarios:
         'North': (200, 200, 230)}
     for country, color in my_colors.iteritems():
         urbs.COLORS[country] = color
-
+    
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in prob.demand.columns:
         # create figure
@@ -99,5 +103,5 @@ for scenario in scenarios:
         # save plot to files 
         for ext in ['png', 'pdf']:
             fig_filename = os.path.join(
-                'results', '{}-{}-{}.{}').format(sce, com, sit, ext)
+                'results', '{}-{}-{}_{}.{}').format(sce, com, sit, timestamp, ext)
             fig.savefig(fig_filename, bbox_inches='tight')

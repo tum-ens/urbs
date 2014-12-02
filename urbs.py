@@ -210,13 +210,19 @@ def create_model(data, timesteps, dt=1):
     
     # process input/output
     m.pro_input_tuples = pyomo.Set(
-        within=m.pro*m.com,
-        initialize=m.r_in.index,
-        doc='Commodities consumed by processes')
+        within=m.sit*m.pro*m.com,
+        initialize=[(site, process, commodity) 
+                    for (site, process) in m.pro_tuples 
+                    for (pro, commodity) in m.r_in.index 
+                    if process==pro],
+        doc='Commodities consumed by process by site')
     m.pro_output_tuples = pyomo.Set(
-        within=m.pro*m.com,
-        initialize=m.r_out.index,
-        doc='Commodities produced by prcoesses')
+        within=m.sit*m.pro*m.com,
+        initialize=[(site, process, commodity) 
+                    for (site, process) in m.pro_tuples 
+                    for (pro, commodity) in m.r_out.index 
+                    if process==pro],
+        doc='Commodities produced by process by site')
 
     # helper function for creating commodity type subsets
     def commodity_subset(com_tuples, type_name):
@@ -227,8 +233,8 @@ def create_model(data, timesteps, dt=1):
     # commodity type subsets
     m.com_supim = pyomo.Set(
         within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Supim'),
-        doc='Commodities that have intermittend (timeseries) input')
+        initialize=commodity_subset(m.com_tuples, 'SupIm'),
+        doc='Commodities that have intermittent (timeseries) input')
     m.com_stock = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Stock'),
@@ -283,7 +289,7 @@ def create_model(data, timesteps, dt=1):
         within=pyomo.NonNegativeReals,
         doc='Power flow of commodity into process (MW) per timestep')
     m.e_pro_out = pyomo.Var(
-        m.tm, m.pro_tuples, m, com
+        m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
     
@@ -339,13 +345,17 @@ def create_model(data, timesteps, dt=1):
 
     # commodity
     def res_vertex_rule(m, tm, sit, com, com_type):
-        # 
+        # no vertex rule for environmental or supim commodities
+        if com in m.com_env:
+            return pyomo.Constraint.Skip
+        if com in m.com_supim:
+            return pyomo.Constraint.Skip
+        
         power_surplus = - commodity_balance(m, tm, sit, com)
         if com in m.com_stock:
             power_surplus += m.e_co_stock[tm, sit, com, com_type]
         if com in m.com_demand:
-            power_surplus -= m.demand.loc[tm][sit, com]
-            
+            power_surplus -= m.demand.loc[tm][sit, com]    
         return power_surplus >= 0
 
     def res_stock_step_rule(m, tm, sit, com, com_type):
@@ -406,20 +416,18 @@ def create_model(data, timesteps, dt=1):
 
     def def_intermittent_supply_rule(m, tm, sit, pro, coin):
         if coin in m.com_supim:
-            return (m.e_pro_in[tm, sit, pro, coin, cout] ==
-                    m.cap_pro[sit, pro, coin, cout] *
-                    m.supim.loc[tm][sit, coin])
+            return (m.e_pro_in[tm, sit, pro, coin] ==
+                    m.cap_pro[sit, pro] * m.supim.loc[tm][sit, coin])
         else:
             return pyomo.Constraint.Skip
 
-    def res_process_output_by_capacity_rule(m, tm, sit, pro, coin, cout):
-        return (m.e_pro_out[tm, sit, pro, coin, cout] <=
-                m.cap_pro[sit, pro, coin, cout])
+    def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
+        return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
 
-    def res_process_capacity_rule(m, sit, pro, coin, cout):
-        return (m.process.loc[sit, pro, coin, cout]['cap-lo'],
-                m.cap_pro[sit, pro, coin, cout],
-                m.process.loc[sit, pro, coin, cout]['cap-up'])
+    def res_process_capacity_rule(m, sit, pro):
+        return (m.process.loc[sit, pro]['cap-lo'],
+                m.cap_pro[sit, pro],
+                m.process.loc[sit, pro]['cap-up'])
 
     # transmission
     def def_transmission_capacity_rule(m, sin, sout, tra, com):
@@ -544,7 +552,7 @@ def create_model(data, timesteps, dt=1):
 
         elif cost_type == 'Var':
             return m.costs['Var'] == \
-                sum(m.pro_tau[(tm,) + p] * m.dt *
+                sum(m.tau_pro[(tm,) + p] * m.dt *
                     m.process.loc[p]['var-cost'] *
                     m.weight
                     for tm in m.tm for p in m.pro_tuples) + \
@@ -575,18 +583,21 @@ def create_model(data, timesteps, dt=1):
     # Equation declarations
 
     # commodity
-    m.res_demand = pyomo.Constraint(
+    m.res_vertex = pyomo.Constraint(
         m.tm, m.com_tuples,
         doc='storage + transmission + process + source >= demand')
-    m.def_e_co_stock = pyomo.Constraint(
-        m.tm, m.com_tuples,
-        doc='commodity source term = commodity consumption per timestep')
     m.res_stock_step = pyomo.Constraint(
         m.tm, m.com_tuples,
-        doc='commodity source term <= commodity.maxperstep')
+        doc='stock commodity input per step <= commodity.maxperstep')
     m.res_stock_total = pyomo.Constraint(
         m.com_tuples,
-        doc='total commodity source term <= commodity.max')
+        doc='total stock commodity input <= commodity.max')
+    m.res_env_step = pyomo.Constraint(
+        m.tm, m.com_tuples,
+        doc='environmental output per step <= commodity.maxperstep')
+    m.res_env_total = pyomo.Constraint(
+        m.com_tuples,
+        doc='total environmental commodity output <= commodity.max')
 
     # process
     m.def_process_capacity = pyomo.Constraint(
@@ -594,16 +605,16 @@ def create_model(data, timesteps, dt=1):
         doc='total process capacity = inst-cap + new capacity')
     m.def_process_input = pyomo.Constraint(
         m.tm, m.pro_input_tuples,
-        doc='')
+        doc='process input = process throughput * input ratio')
     m.def_process_output = pyomo.Constraint(
         m.tm, m.pro_output_tuples,
-        doc='process output = process input * efficiency')
+        doc='process output = process throughput * output ratio')
     m.def_intermittent_supply = pyomo.Constraint(
         m.tm, m.pro_input_tuples,
         doc='process output = process capacity * supim timeseries')
-    m.res_process_output_by_capacity = pyomo.Constraint(
+    m.res_process_throughput_by_capacity = pyomo.Constraint(
         m.tm, m.pro_tuples,
-        doc='process output <= total process capacity')
+        doc='process throughput <= total process capacity')
     m.res_process_capacity = pyomo.Constraint(
         m.pro_tuples,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
@@ -980,8 +991,8 @@ def get_constants(instance):
     csto.columns = ['C Total', 'C New', 'P Total', 'P New']
 
     # better index names
-    cpro.index.names = ['sit', 'pro', 'coin', 'cout']
-    ctra.index.names = ['sitin', 'sitout', 'tra', 'com']
+    cpro.index.names = ['Site', 'Process']
+    ctra.index.names = ['Site In', 'Site Out', 'Transmission', 'Commodity']
 
     return costs, cpro, ctra, csto
 
@@ -1030,28 +1041,22 @@ def get_timeseries(instance, com, sit, timesteps=None):
     stock.name = 'Stock'
 
     # PROCESS
-    # group process energies by input/output commodity
-    # select all entries of created and consumed desired commodity co
-    # and slice to the desired timesteps
+    # select all entries of created and consumed desired commodity com and site
+    # sit. Keep only entries with non-zero values and unstack process column.
+    # Finally, slice to the desired timesteps.
     epro = get_entities(instance, ['e_pro_in', 'e_pro_out'])
-    epro.index.names = ['tm', 'sit', 'pro', 'coin', 'cout']
-    epro = epro.groupby(level=['tm', 'sit', 'coin', 'cout']).sum()
-    epro = epro.xs(sit, level='sit')
+    epro = epro.xs(sit, level='sit').xs(com, level='com')
     try:
-        created = epro.xs(com, level='cout')['e_pro_out'].unstack()
-        created = created.loc[timesteps]
+        created = epro[epro['e_pro_out'] > 0]['e_pro_out'].unstack(level='pro')
+        created = created.loc[timesteps].fillna(0)
     except KeyError:
         created = pd.DataFrame(index=timesteps)
 
     try:
-        consumed = epro.xs(com, level='coin')['e_pro_in'].unstack()
-        consumed = consumed.loc[timesteps]
+        consumed = epro[epro['e_pro_in'] > 0]['e_pro_in'].unstack(level='pro')
+        consumed = consumed.loc[timesteps].fillna(0)
     except KeyError:
         consumed = pd.DataFrame(index=timesteps)
-
-    # remove Slack if zero, keep else
-    if 'Slack' in created.columns and not created['Slack'].any():
-        created.pop('Slack')
 
     # TRANSMISSION
     etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])

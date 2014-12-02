@@ -5,7 +5,7 @@ from coopr.opt.base import SolverFactory
 from datetime import datetime
 
 # INIT
-filename = 'data-example.xlsx'
+filename = 'mimo-example.xlsx'
 (offset, length) = (4000, 5*24)  # timestep selection
 timesteps = range(offset, offset+length+1)
 
@@ -25,17 +25,17 @@ def scenario_stock_prices(data):
 
 
 def scenario_co2_limit(data):
-    # change CO2 limit
+    # change CO2 limit for all sites
     co = data['commodity']
-    co.loc[('Global', 'CO2', 'Env'), 'max'] *= 0.05
+    co['max'] *= 0.05
     return data
 
 
 def scenario_north_process_caps(data):
     # change maximum installable capacity
     pro = data['process']
-    pro.loc[('North', 'turb', 'Hydro', 'Elec'), 'cap-up'] *= 0.5
-    pro.loc[('North', 'pp', 'Biomass', 'Elec'), 'cap-up'] *= 0.25
+    pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
+    pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
     return data
 
 
@@ -54,7 +54,6 @@ scenarios = [
     scenario_co2_limit,
     scenario_north_process_caps,
     scenario_all_together]
-
 
 # MAIN
 

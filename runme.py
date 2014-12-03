@@ -2,6 +2,7 @@ import coopr.environ
 import os
 import urbs
 from coopr.opt.base import SolverFactory
+from datetime import datetime
 
 # INIT
 filename = 'data-example.xlsx'
@@ -71,13 +72,12 @@ for scenario in scenarios:
     prob.load(result)
 
     #create timestamp for filename: abc_YYYY-MM-DD_hh-mm.*
-    from datetime import datetime
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
+    now = datetime.now().strftime('%Y%m%dT%H%M')
         
     # write report to spreadsheet
     urbs.report(
         prob,
-        os.path.join('results', '{}_{}.xlsx').format(sce, timestamp),
+        os.path.join('results', '{}-{}.xlsx').format(sce, now),
         ['Elec'], ['South', 'Mid', 'North'])
 
     # add or change plot colours
@@ -103,5 +103,5 @@ for scenario in scenarios:
         # save plot to files 
         for ext in ['png', 'pdf']:
             fig_filename = os.path.join(
-                'results', '{}-{}-{}_{}.{}').format(sce, com, sit, timestamp, ext)
+                'results', '{}-{}-{}-{}.{}').format(sce, com, sit, now, ext)
             fig.savefig(fig_filename, bbox_inches='tight')

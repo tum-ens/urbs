@@ -11,18 +11,23 @@ import urbs
 # create list of report files to compare
 # derive list of scenario names for column labels/figure captions
 result_files = sorted(glob.glob(os.path.join('results', 'scenario_*.xlsx')))
-scenario_names = [os.path.basename(rf)
-                  .replace('_', ' ')
-                  .replace('.xlsx', '')
-                  .replace('scenario ', '')
+scenario_names = [os.path.basename(rf) # drop folder names, keep filename
+                  .replace('_', ' ') # replace _ with spaces
+                  .replace('.xlsx', '') # drop file extension
+                  .replace('scenario ', '') # drop 'scenario ' prefix
                   for rf in result_files]
+scenario_names = [s[0:s.find('-')] for s in scenario_names] # drop everything after first '-'
+
 # output files basename (without file extension)
 output_filename = os.path.join('results', 'comp')
 
 # find base scenario and put at first position
-base_scenario = scenario_names.index('base')
-result_files.insert(0, result_files.pop(base_scenario))
-scenario_names.insert(0, scenario_names.pop(base_scenario))
+try:
+    base_scenario = scenario_names.index('base')
+    result_files.insert(0, result_files.pop(base_scenario))
+    scenario_names.insert(0, scenario_names.pop(base_scenario))
+except ValueError:
+    pass # do nothing if no base scenario is found
 
 costs = []  # total costs by type and scenario
 esums = []  # sum of energy produced by scenario

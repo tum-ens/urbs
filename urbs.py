@@ -344,20 +344,41 @@ def create_model(data, timesteps, dt=1):
     # Constraints
 
     # commodity
+    
+    # vertex equation: calculate balance for given commodity and site;
+    # contains implicit constraints for process activity, import/export and 
+    # storage activity (calculated by function commodity_balance);
+    # contains implicit constraint for stock commodity source term
     def res_vertex_rule(m, tm, sit, com, com_type):
-        # no vertex rule for environmental or supim commodities
+        # environmental or supim commodities don't have this constraint (yet)
         if com in m.com_env:
             return pyomo.Constraint.Skip
         if com in m.com_supim:
             return pyomo.Constraint.Skip
         
+        # helper function commodity_balance calculates balance from input to 
+        # and output from processes, storage and transmission.
+        # if power_surplus > 0: production/storage/imports create net positive
+        #                       amount of commodity com
+        # if power_surplus < 0: production/storage/exports consume a net
+        #                       amount of the commodity com
         power_surplus = - commodity_balance(m, tm, sit, com)
+        
+        # if com is a stock commodity, the commodity source term e_co_stock 
+        # can supply a possibly negative power_surplus
         if com in m.com_stock:
             power_surplus += m.e_co_stock[tm, sit, com, com_type]
+            
+        # if com is a demand commodity, the power_surplus is reduced by the 
+        # demand value; no scaling by m.dt or m.weight is needed here, as this
+        # constraint is about power (MW), not energy (MWh)
         if com in m.com_demand:
-            power_surplus -= m.demand.loc[tm][sit, com]    
+            power_surplus -= m.demand.loc[tm][sit, com]
         return power_surplus >= 0
 
+    # stock commodity purchase == commodity consumption, according to
+    # commodity_balance of current (time step, site, commodity);
+    # limit stock commodity use per time step
     def res_stock_step_rule(m, tm, sit, com, com_type):
         if com not in m.com_stock:
             return pyomo.Constraint.Skip
@@ -365,6 +386,8 @@ def create_model(data, timesteps, dt=1):
             return (m.e_co_stock[tm, sit, com, com_type] <=
                     m.commodity.loc[sit, com, com_type]['maxperstep'])
 
+    # limit stock commodity use in total (scaled to annual consumption, thanks
+    # to m.weight)
     def res_stock_total_rule(m, sit, com, com_type):
         if com not in m.com_stock:
             return pyomo.Constraint.Skip
@@ -378,6 +401,10 @@ def create_model(data, timesteps, dt=1):
             return (total_consumption <=
                     m.commodity.loc[sit, com, com_type]['max'])
 
+    # environmental commodity creation == - commodity_balance of that commodity
+    # used for modelling emissions (e.g. CO2) or other end-of-pipe results of
+    # any process activity;
+    # limit environmental commodity output per time step
     def res_env_step_rule(m, tm, sit, com, com_type):
         if com not in m.com_env:
             return pyomo.Constraint.Skip
@@ -386,6 +413,8 @@ def create_model(data, timesteps, dt=1):
             return (environmental_output <=
                     m.commodity.loc[sit, com, com_type]['maxperstep'])
 
+    # limit environmental commodity output in total (scaled to annual
+    # emissions, thanks to m.weight)
     def res_env_total_rule(m, sit, com, com_type):
         if com not in m.com_env:
             return pyomo.Constraint.Skip
@@ -393,27 +422,30 @@ def create_model(data, timesteps, dt=1):
             # calculate total creation of environmental commodity com
             env_output_sum = 0
             for tm in m.tm:
-                env_output_sum += (
-                    - commodity_balance(m, tm, sit, com) * m.dt)
+                env_output_sum += (- commodity_balance(m, tm, sit, com) * m.dt)
             env_output_sum *= m.weight
             return (env_output_sum <=
                     m.commodity.loc[sit, com, com_type]['max'])
 
 
     # process
+    # process capacity == new capacity + existing capacity
     def def_process_capacity_rule(m, sit, pro):
         return (m.cap_pro[sit, pro] ==
                 m.cap_pro_new[sit, pro] +
                 m.process.loc[sit, pro]['inst-cap'])
         
+    # process input power == process throughput * input ratio
     def def_process_input_rule(m, tm, sit, pro, co):
         return (m.e_pro_in[tm, sit, pro, co] ==
                 m.tau_pro[tm, sit, pro] * m.r_in.loc[pro, co])
         
+    # process output power = process throughput * output ratio
     def def_process_output_rule(m, tm, sit, pro, co):
         return (m.e_pro_out[tm, sit, pro, co] ==
                 m.tau_pro[tm, sit, pro] * m.r_out.loc[pro, co])
 
+    # process input (for supim commodity) = process capacity * timeseries
     def def_intermittent_supply_rule(m, tm, sit, pro, coin):
         if coin in m.com_supim:
             return (m.e_pro_in[tm, sit, pro, coin] ==
@@ -421,38 +453,50 @@ def create_model(data, timesteps, dt=1):
         else:
             return pyomo.Constraint.Skip
 
+    # process throughput <= process capacity
     def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
         return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
 
+    # lower bound <= process capacity <= upper bound
     def res_process_capacity_rule(m, sit, pro):
         return (m.process.loc[sit, pro]['cap-lo'],
                 m.cap_pro[sit, pro],
                 m.process.loc[sit, pro]['cap-up'])
 
     # transmission
+    
+    # transmission capacity == new capacity + existing capacity
     def def_transmission_capacity_rule(m, sin, sout, tra, com):
         return (m.cap_tra[sin, sout, tra, com] ==
                 m.cap_tra_new[sin, sout, tra, com] +
                 m.transmission.loc[sin, sout, tra, com]['inst-cap'])
 
+    # transmission output == transmission input * efficiency
     def def_transmission_output_rule(m, tm, sin, sout, tra, com):
         return (m.e_tra_out[tm, sin, sout, tra, com] ==
                 m.e_tra_in[tm, sin, sout, tra, com] *
                 m.transmission.loc[sin, sout, tra, com]['eff'])
 
+    # transmission input <= transmission capacity
     def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
         return (m.e_tra_in[tm, sin, sout, tra, com] <=
                 m.cap_tra[sin, sout, tra, com])
 
+    # lower bound <= transmission capacity <= upper bound
     def res_transmission_capacity_rule(m, sin, sout, tra, com):
         return (m.transmission.loc[sin, sout, tra, com]['cap-lo'],
                 m.cap_tra[sin, sout, tra, com],
                 m.transmission.loc[sin, sout, tra, com]['cap-up'])
 
+    # transmission capacity from A to B == transmission capacity from B to A
     def res_transmission_symmetry_rule(m, sin, sout, tra, com):
         return m.cap_tra[sin, sout, tra, com] == m.cap_tra[sout, sin, tra, com]
 
     # storage
+    
+    # storage content in timestep [t] == storage content[t-1]
+    # + newly stored energy * input efficiency
+    # - retrieved energy / output efficiency
     def def_storage_state_rule(m, t, sit, sto, com):
         return (m.e_sto_con[t, sit, sto, com] ==
                 m.e_sto_con[t-1, sit, sto, com] +
@@ -461,35 +505,45 @@ def create_model(data, timesteps, dt=1):
                 m.e_sto_out[t, sit, sto, com] /
                 m.storage.loc[sit, sto, com]['eff-out'] * m.dt)
 
+    # storage power == new storage power + existing storage power  
     def def_storage_power_rule(m, sit, sto, com):
         return (m.cap_sto_p[sit, sto, com] ==
                 m.cap_sto_p_new[sit, sto, com] +
                 m.storage.loc[sit, sto, com]['inst-cap-p'])
 
+    # storage capacity == new storage capacity + existing storage capacity
     def def_storage_capacity_rule(m, sit, sto, com):
         return (m.cap_sto_c[sit, sto, com] ==
                 m.cap_sto_c_new[sit, sto, com] +
                 m.storage.loc[sit, sto, com]['inst-cap-c'])
 
+    # storage input <= storage power
     def res_storage_input_by_power_rule(m, t, sit, sto, com):
         return m.e_sto_in[t, sit, sto, com] <= m.cap_sto_p[sit, sto, com]
 
+    # storage output <= storage power
     def res_storage_output_by_power_rule(m, t, sit, sto, co):
         return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co]
 
+    # storage content <= storage capacity    
     def res_storage_state_by_capacity_rule(m, t, sit, sto, com):
         return m.e_sto_con[t, sit, sto, com] <= m.cap_sto_c[sit, sto, com]
 
+    # lower bound <= storage power <= upper bound    
     def res_storage_power_rule(m, sit, sto, com):
         return (m.storage.loc[sit, sto, com]['cap-lo-p'],
                 m.cap_sto_p[sit, sto, com],
                 m.storage.loc[sit, sto, com]['cap-up-p'])
 
+    # lower bound <= storage capacity <= upper bound
     def res_storage_capacity_rule(m, sit, sto, com):
         return (m.storage.loc[sit, sto, com]['cap-lo-c'],
                 m.cap_sto_c[sit, sto, com],
                 m.storage.loc[sit, sto, com]['cap-up-c'])
 
+    # initialization of storage content in first timestep t[1]
+    # forced minimun  storage content in final timestep t[len(m.t)]
+    # content[t=1] == storage capacity * fraction <= content[t=final]
     def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
         if t == m.t[1]:  # first timestep (Pyomo uses 1-based indexing)
             return (m.e_sto_con[t, sit, sto, com] ==
@@ -520,6 +574,7 @@ def create_model(data, timesteps, dt=1):
           - Fixed costs for process power, storage power and storage
             capacity.
           - Variables costs for usage of processes, storage and transmission.
+          - Fuel costs for stock commodity purchase.
           
         """
         if cost_type == 'Inv':
@@ -581,6 +636,13 @@ def create_model(data, timesteps, dt=1):
         return pyomo.summation(m.costs)
 
     # Equation declarations
+    # the constraints defined above as Python functions are now linked to the 
+    # optimization problem by converting them to a Constraint object, one per 
+    # equation. For example, constraint m.res_vertex automagically refers to
+    # the definition res_vertex_rule (that's a Pyomo convention). One could
+    # also use differently named functions, but then one would need to specify
+    # the function name using the rule=function_name keyword, i.e.:
+    # 
 
     # commodity
     m.res_vertex = pyomo.Constraint(

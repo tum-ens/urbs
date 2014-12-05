@@ -16,25 +16,20 @@ from operator import itemgetter
 from random import random
 
 COLORS = {
-    'Biomass': (0, 122, 55),
-    'Coal': (100, 100, 100),
-    'Demand': (25, 25, 25),
-    'Diesel': (116, 66, 65),
-    'Gas': (237, 227, 0),
-    'Elec': (0, 101, 189),
-    'Heat': (230, 112, 36),
-    'Hydro': (198, 188, 240),
-    'Import': (128, 128, 200),
-    'Lignite': (116, 66, 65),
-    'Oil': (116, 66, 65),
-    'Overproduction': (190, 0, 99),
-    'Slack': (163, 74, 130),
-    'Solar': (243, 174, 0),
-    'Storage': (60, 36, 154),
-    'Wind': (122, 179, 225),
-    'Stock': (222, 222, 222),
-    'Decoration': (128, 128, 128),
-    'Grid': (128, 128, 128)}
+    'Biomass plant': (0, 122, 55),
+    'Coal plant': (100, 100, 100),
+    'Gas plant': (237, 227, 0),
+    'Hydro plant': (198, 188, 240),
+    'Lignite plant': (116, 66, 65),
+    'Photovoltaics': (243, 174, 0),
+    'Slack powerplant': (163, 74, 130),
+    'Wind park': (122, 179, 225),
+    'Decoration': (128, 128, 128), # plot labels
+    'Demand': (25, 25, 25), # thick demand line
+    'Grid': (128, 128, 128), # background grid
+    'Overproduction': (190, 0, 99), # excess power
+    'Storage': (60, 36, 154), # storage area
+    'Stock': (222, 222, 222)} # stock commodity power
 
 
 def read_excel(filename):

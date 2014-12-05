@@ -1119,14 +1119,14 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # TRANSMISSION
     etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])
-    if not etra.empty:
+    try:
         etra.index.names = ['tm', 'sitin', 'sitout', 'tra', 'com']
         etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
         etra = etra.xs(com, level='com')
     
         imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack()
         exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack()
-    else:
+    except (ValueError, KeyError):
         imported = pd.DataFrame(index=timesteps)
         exported = pd.DataFrame(index=timesteps)
 
@@ -1140,7 +1140,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
         stored = esto.xs(com, level='com')
         stored = stored.loc[timesteps]
         stored.columns = ['Level', 'Stored', 'Retrieved']
-    except KeyError:
+    except (KeyError, ValueError):
         stored = pd.DataFrame(0, index=timesteps,
                               columns=['Level', 'Stored', 'Retrieved'])
 

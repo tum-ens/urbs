@@ -25,12 +25,12 @@ COLORS = {
     'Photovoltaics': (243, 174, 0),
     'Slack powerplant': (163, 74, 130),
     'Wind park': (122, 179, 225),
-    'Decoration': (128, 128, 128), # plot labels
-    'Demand': (25, 25, 25), # thick demand line
-    'Grid': (128, 128, 128), # background grid
-    'Overproduction': (190, 0, 99), # excess power
-    'Storage': (60, 36, 154), # storage area
-    'Stock': (222, 222, 222)} # stock commodity power
+    'Decoration': (128, 128, 128),  # plot labels
+    'Demand': (25, 25, 25),  # thick demand line
+    'Grid': (128, 128, 128),  # background grid
+    'Overproduction': (190, 0, 99),  # excess power
+    'Storage': (60, 36, 154),  # storage area
+    'Stock': (222, 222, 222)}  # stock commodity power
 
 
 def read_excel(filename):
@@ -50,7 +50,7 @@ def read_excel(filename):
 
     Returns:
         a dict of 6 DataFrames
-        
+
     Example:
         >>> data = read_excel('data-example.xlsx')
         >>> data['commodity'].loc[('Global', 'CO2', 'Env'), 'max']
@@ -120,13 +120,13 @@ def read_excel(filename):
 
 def create_model(data, timesteps, dt=1):
     """Create a pyomo ConcreteModel URBS object from given input data.
-    
+
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
             'transmission', 'storage', 'demand' and 'supim'.
         timesteps: list of timesteps
         dt: timestep duration in hours (default: 1)
-        
+
     Returns:
         a pyomo ConcreteModel object
     """
@@ -163,33 +163,51 @@ def create_model(data, timesteps, dt=1):
     # where name: set name
     #       domain: set domain for tuple sets, a cartesian set product
     #       values: set values, a list or array of element tuples
+
+    # generate ordered time step sets
     m.t = pyomo.Set(
         initialize=m.settings['timesteps'],
         ordered=True,
         doc='Set of timesteps')
+
+    # modelled (i.e. excluding init time step for storage) time steps
     m.tm = pyomo.Set(
         within=m.t,
         initialize=m.settings['timesteps'][1:],
         ordered=True,
         doc='Set of modelled timesteps')
+
+    # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Site').unique(),
         doc='Set of sites')
+
+    # commodity (e.g. solar, wind, coal...)
     m.com = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Commodity').unique(),
         doc='Set of commodities')
+
+    # commodity type (i.e. SupIm, Demand, Stock, Env)
     m.com_type = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Type').unique(),
         doc='Set of commodity types')
+
+    # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
     m.pro = pyomo.Set(
         initialize=m.process.index.get_level_values('Process').unique(),
         doc='Set of conversion processes')
+
+    # tranmission (e.g. hvac, hvdc, pipeline...)
     m.tra = pyomo.Set(
         initialize=m.transmission.index.get_level_values('Transmission').unique(),
         doc='Set of tranmission technologies')
+
+    # storage (e.g. hydrogen, pump storage)
     m.sto = pyomo.Set(
         initialize=m.storage.index.get_level_values('Storage').unique(),
         doc='Set of storage technologies')
+
+    # cost_type
     m.cost_type = pyomo.Set(
         initialize=['Inv', 'Fix', 'Var', 'Fuel'],
         doc='Set of cost types (hard-coded)')
@@ -198,40 +216,40 @@ def create_model(data, timesteps, dt=1):
     m.com_tuples = pyomo.Set(
         within=m.sit*m.com*m.com_type,
         initialize=m.commodity.index,
-        doc='Combinations (tuples) of possible commodities by site')
+        doc='Combinations of defined commodities, e.g. (Mid,Elec,Demand)')
     m.pro_tuples = pyomo.Set(
         within=m.sit*m.pro,
         initialize=m.process.index,
-        doc='Combinations (tuples) of possible processes by site')
+        doc='Combinations of possible processes, e.g. (North,Coal plant)')
     m.tra_tuples = pyomo.Set(
         within=m.sit*m.sit*m.tra*m.com,
         initialize=m.transmission.index,
-        doc='Combinations (tuples) of possible transmission by sites')
+        doc='Combinations of possible transmission, e.g. (South,Mid,hvac,Elec)')
     m.sto_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
         initialize=m.storage.index,
-        doc='Combinations (tuples) of possible storage by site')
-    
+        doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
+
     # process input/output
     m.pro_input_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
-        initialize=[(site, process, commodity) 
-                    for (site, process) in m.pro_tuples 
-                    for (pro, commodity) in m.r_in.index 
-                    if process==pro],
-        doc='Commodities consumed by process by site')
+        initialize=[(site, process, commodity)
+                    for (site, process) in m.pro_tuples
+                    for (pro, commodity) in m.r_in.index
+                    if process == pro],
+        doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')
     m.pro_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
-        initialize=[(site, process, commodity) 
-                    for (site, process) in m.pro_tuples 
-                    for (pro, commodity) in m.r_out.index 
-                    if process==pro],
-        doc='Commodities produced by process by site')
+        initialize=[(site, process, commodity)
+                    for (site, process) in m.pro_tuples
+                    for (pro, commodity) in m.r_out.index
+                    if process == pro],
+        doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
 
     # helper function for creating commodity type subsets
     def commodity_subset(com_tuples, type_name):
         """ Unique list of commodity names for given type. """
-        return set(com for sit, com, com_type in com_tuples 
+        return set(com for sit, com, com_type in com_tuples
                    if com_type == type_name)
 
     # commodity type subsets
@@ -253,28 +271,37 @@ def create_model(data, timesteps, dt=1):
         doc='Commodities that (might) have a maximum creation limit')
 
     # Parameters
-    
+
+    # weight = length of year (hours) / length of simulation (hours)
+    # weight scales costs and emissions from length of simulation to a full
+    # year, making comparisons among cost types (invest is annualized, fixed
+    # costs are annual by default, variable costs are scaled by weight) and
+    # among different simulation durations meaningful.
     m.weight = pyomo.Param(
         initialize=float(8760) / (len(m.t) * dt),
         doc='Pre-factor for variable costs and emissions for an annual result')
+
+    # dt = spacing between timesteps. Required for storage equation that
+    # converts between energy (storage content, e_sto_con) and power (all other
+    # quantities that start with "e_")
     m.dt = pyomo.Param(
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
 
     # Variables
-    
+
     # costs
     m.costs = pyomo.Var(
         m.cost_type,
         within=pyomo.NonNegativeReals,
         doc='Costs by type (EUR/a)')
-    
+
     # commodity
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
         doc='Use of stock commodity source (MW) per timestep')
-    
+
     # process
     m.cap_pro = pyomo.Var(
         m.pro_tuples,
@@ -296,7 +323,7 @@ def create_model(data, timesteps, dt=1):
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
-    
+
     # transmission
     m.cap_tra = pyomo.Var(
         m.tra_tuples,
@@ -314,7 +341,7 @@ def create_model(data, timesteps, dt=1):
         m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of transmission line (MW) per timestep')
-    
+
     # storage
     m.cap_sto_c = pyomo.Var(
         m.sto_tuples,
@@ -348,9 +375,9 @@ def create_model(data, timesteps, dt=1):
     # Constraints
 
     # commodity
-    
+
     # vertex equation: calculate balance for given commodity and site;
-    # contains implicit constraints for process activity, import/export and 
+    # contains implicit constraints for process activity, import/export and
     # storage activity (calculated by function commodity_balance);
     # contains implicit constraint for stock commodity source term
     def res_vertex_rule(m, tm, sit, com, com_type):
@@ -359,21 +386,21 @@ def create_model(data, timesteps, dt=1):
             return pyomo.Constraint.Skip
         if com in m.com_supim:
             return pyomo.Constraint.Skip
-        
-        # helper function commodity_balance calculates balance from input to 
+
+        # helper function commodity_balance calculates balance from input to
         # and output from processes, storage and transmission.
         # if power_surplus > 0: production/storage/imports create net positive
         #                       amount of commodity com
         # if power_surplus < 0: production/storage/exports consume a net
         #                       amount of the commodity com
         power_surplus = - commodity_balance(m, tm, sit, com)
-        
-        # if com is a stock commodity, the commodity source term e_co_stock 
+
+        # if com is a stock commodity, the commodity source term e_co_stock
         # can supply a possibly negative power_surplus
         if com in m.com_stock:
             power_surplus += m.e_co_stock[tm, sit, com, com_type]
-            
-        # if com is a demand commodity, the power_surplus is reduced by the 
+
+        # if com is a demand commodity, the power_surplus is reduced by the
         # demand value; no scaling by m.dt or m.weight is needed here, as this
         # constraint is about power (MW), not energy (MWh)
         if com in m.com_demand:
@@ -431,19 +458,18 @@ def create_model(data, timesteps, dt=1):
             return (env_output_sum <=
                     m.commodity.loc[sit, com, com_type]['max'])
 
-
     # process
     # process capacity == new capacity + existing capacity
     def def_process_capacity_rule(m, sit, pro):
         return (m.cap_pro[sit, pro] ==
                 m.cap_pro_new[sit, pro] +
                 m.process.loc[sit, pro]['inst-cap'])
-        
+
     # process input power == process throughput * input ratio
     def def_process_input_rule(m, tm, sit, pro, co):
         return (m.e_pro_in[tm, sit, pro, co] ==
                 m.tau_pro[tm, sit, pro] * m.r_in.loc[pro, co])
-        
+
     # process output power = process throughput * output ratio
     def def_process_output_rule(m, tm, sit, pro, co):
         return (m.e_pro_out[tm, sit, pro, co] ==
@@ -468,7 +494,7 @@ def create_model(data, timesteps, dt=1):
                 m.process.loc[sit, pro]['cap-up'])
 
     # transmission
-    
+
     # transmission capacity == new capacity + existing capacity
     def def_transmission_capacity_rule(m, sin, sout, tra, com):
         return (m.cap_tra[sin, sout, tra, com] ==
@@ -497,7 +523,7 @@ def create_model(data, timesteps, dt=1):
         return m.cap_tra[sin, sout, tra, com] == m.cap_tra[sout, sin, tra, com]
 
     # storage
-    
+
     # storage content in timestep [t] == storage content[t-1]
     # + newly stored energy * input efficiency
     # - retrieved energy / output efficiency
@@ -509,7 +535,7 @@ def create_model(data, timesteps, dt=1):
                 m.e_sto_out[t, sit, sto, com] /
                 m.storage.loc[sit, sto, com]['eff-out'] * m.dt)
 
-    # storage power == new storage power + existing storage power  
+    # storage power == new storage power + existing storage power
     def def_storage_power_rule(m, sit, sto, com):
         return (m.cap_sto_p[sit, sto, com] ==
                 m.cap_sto_p_new[sit, sto, com] +
@@ -529,11 +555,11 @@ def create_model(data, timesteps, dt=1):
     def res_storage_output_by_power_rule(m, t, sit, sto, co):
         return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co]
 
-    # storage content <= storage capacity    
+    # storage content <= storage capacity
     def res_storage_state_by_capacity_rule(m, t, sit, sto, com):
         return m.e_sto_con[t, sit, sto, com] <= m.cap_sto_c[sit, sto, com]
 
-    # lower bound <= storage power <= upper bound    
+    # lower bound <= storage power <= upper bound
     def res_storage_power_rule(m, sit, sto, com):
         return (m.storage.loc[sit, sto, com]['cap-lo-p'],
                 m.cap_sto_p[sit, sto, com],
@@ -560,9 +586,7 @@ def create_model(data, timesteps, dt=1):
         else:
             return pyomo.Constraint.Skip
 
-
     # Objective
-    
     def def_costs_rule(m, cost_type):
         """Calculate total costs by cost type.
 
@@ -579,7 +603,7 @@ def create_model(data, timesteps, dt=1):
             capacity.
           - Variables costs for usage of processes, storage and transmission.
           - Fuel costs for stock commodity purchase.
-          
+
         """
         if cost_type == 'Inv':
             return m.costs['Inv'] == \
@@ -640,13 +664,13 @@ def create_model(data, timesteps, dt=1):
         return pyomo.summation(m.costs)
 
     # Equation declarations
-    # the constraints defined above as Python functions are now linked to the 
-    # optimization problem by converting them to a Constraint object, one per 
+    # the constraints defined above as Python functions are now linked to the
+    # optimization problem by converting them to a Constraint object, one per
     # equation. For example, constraint m.res_vertex automagically refers to
     # the definition res_vertex_rule (that's a Pyomo convention). One could
     # also use differently named functions, but then one would need to specify
     # the function name using the rule=function_name keyword, i.e.:
-    # 
+    #
 
     # commodity
     m.res_vertex = pyomo.Constraint(
@@ -739,28 +763,28 @@ def create_model(data, timesteps, dt=1):
     m.obj = pyomo.Objective(
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
-    
-    # possibly: add hack features    
+
+    # possibly: add hack features
     if 'hacks' in data:
         m = add_hacks(m, data['hacks'])
-    
+
     return m
-        
-    
+
+
 def add_hacks(model, hacks):
-    """ add hackish features to model object 
-    
+    """ add hackish features to model object
+
     This function is reserved for corner cases/features that still lack a
     satisfyingly general solution that could become part of create_model.
     Use hack features sparingly and think about how to incorporate into main
-    model function before adding here. Otherwise, these features might become 
+    model function before adding here. Otherwise, these features might become
     a maintenance burden.
-    
+
     """
 
     # Global CO2 limit
     try:
-        global_co2_limit = hacks.loc['Global CO2 limit', 'Value']            
+        global_co2_limit = hacks.loc['Global CO2 limit', 'Value']
     except KeyError:
         global_co2_limit = float('inf')
 
@@ -771,16 +795,17 @@ def add_hacks(model, hacks):
             co2_output_sum = 0
             for tm in m.tm:
                 for sit in m.sit:
-                    # minus because negative commodity_balance == creation of that
-                    # commodity. 
-                    co2_output_sum += (- 
-                        commodity_balance(m, tm, sit, 'CO2') * m.dt)
+                    # minus because negative commodity_balance == creation of 
+                    # that commodity.
+                    co2_output_sum += (
+                        - commodity_balance(m, tm, sit, 'CO2') * m.dt)
+
             # scaling to annual output (cf. definition of m.weight)
             co2_output_sum *= m.weight
             return (co2_output_sum <= global_co2_limit)
-        
+
         model.global_co2_limit = pyomo.Constraint(
-            doc='total co2 commodity output <= hacks.Glocal CO2 limit') 
+            doc='total co2 commodity output <= hacks.Glocal CO2 limit')
 
     return model
 
@@ -791,7 +816,7 @@ def annuity_factor(n, i):
     Evaluates the annuity factor formula for depreciation duration
     and interest rate. Works also well for equally sized numpy arrays
     of values for n and i.
-    
+
     Args:
         n: depreciation period (years)
         i: interest rate (percent, e.g. 0.06 means 6 %)
@@ -858,7 +883,7 @@ def split_columns(columns, sep='.'):
     Args:
         columns: list of column labels, containing the separator string
         sep: the separator string (default: '.')
-        
+
     Returns:
         a MultiIndex corresponding to input, with levels split at separator
 
@@ -998,7 +1023,7 @@ def list_entities(instance, entity_type):
         else:
             raise ValueError("Unknown entity_type '{}'".format(entity_type))
 
-    # iterate through all model components and keep only 
+    # iterate through all model components and keep only
     iter_entities = instance.__dict__.iteritems()
     entities = sorted(
         (name, entity.doc, _get_onset_names(entity))
@@ -1073,7 +1098,7 @@ def get_constants(instance):
 
     Returns:
         (costs, cpro, ctra, csto) tuple
-        
+
     Example:
         >>> import coopr.environ
         >>> from coopr.opt.base import SolverFactory
@@ -1120,9 +1145,9 @@ def get_timeseries(instance, com, sit, timesteps=None):
         timesteps: optional list of timesteps, defaults to modelled timesteps.
 
     Returns:
-        a (created, consumed, storage, imported, exported) tuple of DataFrames 
+        a (created, consumed, storage, imported, exported) tuple of DataFrames
         timeseries. These are
-        
+
         * created: timeseries of commodity creation, including stock source
         * consumed: timeseries of commodity consumption, including demand
         * storage: timeseries of commodity storage (level, stored, retrieved)
@@ -1174,7 +1199,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
         etra.index.names = ['tm', 'sitin', 'sitout', 'tra', 'com']
         etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
         etra = etra.xs(com, level='com')
-    
+
         imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack()
         exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack()
     except (ValueError, KeyError):
@@ -1227,7 +1252,7 @@ def report(instance, filename, commodities, sites):
         cpro.to_excel(writer, 'Process caps')
         ctra.to_excel(writer, 'Transmission caps')
         csto.to_excel(writer, 'Storage caps')
-        
+
         # initialize timeseries tableaus
         energies = []
         timeseries = {}
@@ -1415,7 +1440,7 @@ def plot(prob, com, sit, timesteps=None):
                       linestyle='-')
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
-        
+
         # group 1,000,000 with commas
         group_thousands = mpl.ticker.FuncFormatter(
             lambda x, pos: '{:0,d}'.format(int(x)))

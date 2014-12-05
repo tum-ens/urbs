@@ -70,13 +70,19 @@ for scenario in scenarios:
     result = optim.solve(prob, tee=True)
     prob.load(result)
 
-    #create timestamp for filename: abc_YYYY-MM-DD_hh-mm.*
+    #create timestamp for result
     now = datetime.now().strftime('%Y%m%dT%H%M')
+    
+    # create result directory if not existent
+    result_dir = os.path.join('result', '{}-{}'.format(
+                              os.path.splitext(filename)[0], now))
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
         
     # write report to spreadsheet
     urbs.report(
         prob,
-        os.path.join('results', '{}-{}.xlsx').format(sce, now),
+        os.path.join(result_dir, '{}-{}.xlsx').format(sce, now),
         ['Elec'], ['South', 'Mid', 'North'])
 
     # add or change plot colours
@@ -102,5 +108,5 @@ for scenario in scenarios:
         # save plot to files 
         for ext in ['png', 'pdf']:
             fig_filename = os.path.join(
-                'results', '{}-{}-{}-{}.{}').format(sce, com, sit, now, ext)
+                result_dir, '{}-{}-{}-{}.{}').format(sce, com, sit, now, ext)
             fig.savefig(fig_filename, bbox_inches='tight')

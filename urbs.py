@@ -1432,6 +1432,7 @@ def plot(prob, com, sit, timesteps=None):
     for ax in [ax0, ax1]:
         # ax.set_axis_bgcolor((0, 0, 0, 0))
         plt.setp(ax.spines.values(), color=to_color('Decoration'))
+        ax.set_frame_on(False)
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)
         ax.xaxis.grid(True, 'major', color=to_color('Grid'),

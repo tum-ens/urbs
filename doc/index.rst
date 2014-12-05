@@ -45,7 +45,7 @@ Changes from version 0.2 to 0.3
   throughout your input.
 * Moved hard-coded 'Global CO2 limit' constraint to dedicated "Hacks"
   spreadsheet, while the constraint is :func:`add_hacks`.
-* The main file ``urbs.py``  has
+* More docstrings and comments in the main file ``urbs.py``
 
 Overview
 --------

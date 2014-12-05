@@ -4,11 +4,6 @@ import urbs
 from coopr.opt.base import SolverFactory
 from datetime import datetime
 
-# INIT
-input_file = 'mimo-example.xlsx'
-(offset, length) = (4000, 5*24)  # timestep selection
-timesteps = range(offset, offset+length+1)
-
 
 # SCENARIOS
 def scenario_base(data):
@@ -47,27 +42,32 @@ def scenario_all_together(data):
     return data 
 
 
-# select scenarios to be run
-scenarios = [
-    scenario_base,
-    scenario_stock_prices,
-    scenario_co2_limit,
-    scenario_north_process_caps,
-    scenario_all_together]
-
-# MAIN
-
-#create timestamp for result
-now = datetime.now().strftime('%Y%m%dT%H%M%S')
-
-# create result directory if not existent
-result_dir = os.path.join('result', '{}-{}'.format(
-                          os.path.splitext(input_file)[0], now))
-if not os.path.exists(result_dir):
-    os.makedirs(result_dir)
+def prepare_result_directory(result_name):
+    """ create a time stamped directory within the result folder """
+    # timestamp for result directory
+    now = datetime.now().strftime('%Y%m%dT%H%M%S')
+    
+    # create result directory if not existent
+    result_dir = os.path.join('result', '{}-{}'.format(result_name, now))
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+        
+    return result_dir
 
 
-for scenario in scenarios:
+def run_scenario(input_file, timesteps, scenario, result_dir):
+    """ run an urbs model for given input, time steps and scenario
+    
+    Args:
+        input_file: filename to an Excel spreadsheet for urbs.read_excel
+        timesteps: a list of timesteps, e.g. range(0,8761)
+        scenario: a scenario function that modifies the input data dict
+        result_dir: directory name for result spreadsheet and plots
+        
+    Returns:
+        the urbs model instance
+    """
+    
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = urbs.read_excel(input_file)
@@ -114,3 +114,25 @@ for scenario in scenarios:
             fig_filename = os.path.join(
                 result_dir, '{}-{}-{}-{}.{}').format(sce, com, sit, now, ext)
             fig.savefig(fig_filename, bbox_inches='tight')
+    
+    return prob            
+            
+if __name__ == '__main__':
+    input_file = 'mimo-example.xlsx'
+    result_name = os.path.splitext(input_file)[0]  # cut away file extension
+    result_dir = prepare_result_directory(result_name)  # name + time stamp
+
+    (offset, length) = (4000, 5*24)  # time step selection
+    timesteps = range(offset, offset+length+1)
+    
+    # select scenarios to be run
+    scenarios = [
+        scenario_base,
+        scenario_stock_prices,
+        scenario_co2_limit,
+        scenario_north_process_caps,
+        scenario_all_together]
+    scenarios = scenarios[:1]  # select by slicing 
+        
+    for scenario in scenarios:
+        prob = run_scenario(input_file, timesteps, scenario, result_dir)

@@ -43,11 +43,13 @@ Create model
   :return dict data: urbs input dict 
   
   The spreadsheet must contain 6 sheets labelled 'Commodity', 'Process', 
-  'Transmission', 'Storage', 'SupIm', and 'Demand'.
+  'Transmission', 'Storage', 'SupIm', and 'Demand'. It can contain a 7th sheet
+  called 'Hacks'. If present
   
-  Refer to `data-example.xlsx` for exemplary documentation of the table
-  contents. 
-
+  Refer to the `mimo-example.xlsx` file for exemplary documentation of the 
+  table contents and definitions of all attributes by selecting the column
+  titles. 
+  
   
 .. function:: create_model(data, timesteps)
 
@@ -59,7 +61,24 @@ Create model
   
   Timestep numbers must match those of the demand and supim timeseries. 
 
+  
+.. function:: add_hacks(model, hacks)
 
+  Is called by :func:`create_model` to add special elements, e.g. constraints,
+  to the model. Each hack, if present, can trigger the creation of additional
+  sets, parameters, variables or constraints. Refer to the code of this
+  function to see which hacks exists and what they do.
+  
+  As of v0.3, only one hack exists: if a line "Global CO2 limit" exists in the
+  hacks DataFrame, its value is used as a global upper limit for a constraint
+  that limits the annual creation of the commodity "CO2".
+
+  :param model: urbs model object (not instance!)
+  :param hacks: a DataFrame of hacks  
+  
+  :return model: the modified urbs model object
+
+  
 Report & plotting
 ^^^^^^^^^^^^^^^^^
 
@@ -205,7 +224,7 @@ Helper functions
 
 .. data:: COLORS
   
-  Dictionary of commodity and site colors. Colors are stored as `(r,g,b)`
+  Dictionary of process and site colors. Colors are stored as `(r,g,b)`
   tuples in range `0-255`. To retrieve a color in a form usable with 
   matplotlib, used the helper function :func:`to_color`.
   

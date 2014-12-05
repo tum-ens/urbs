@@ -11,8 +11,8 @@ master_doc = 'index'
 
 project = u'urbs'
 copyright = u'2014, tum-ens'
-version = '0.2'
-release = '0.2'
+version = '0.3'
+release = '0.3'
 
 exclude_patterns = ['_build']
 #pygments_style = 'sphinx'

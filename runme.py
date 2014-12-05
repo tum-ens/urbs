@@ -5,7 +5,7 @@ from coopr.opt.base import SolverFactory
 from datetime import datetime
 
 # INIT
-filename = 'mimo-example.xlsx'
+input_file = 'mimo-example.xlsx'
 (offset, length) = (4000, 5*24)  # timestep selection
 timesteps = range(offset, offset+length+1)
 
@@ -25,9 +25,9 @@ def scenario_stock_prices(data):
 
 
 def scenario_co2_limit(data):
-    # change CO2 limit for all sites
-    co = data['commodity']
-    co['max'] *= 0.05
+    # change global CO2 limit
+    hacks = data['hacks']
+    hacks.loc['Global CO2 limit', 'Value'] *= 0.05
     return data
 
 
@@ -57,10 +57,20 @@ scenarios = [
 
 # MAIN
 
+#create timestamp for result
+now = datetime.now().strftime('%Y%m%dT%H%M%S')
+
+# create result directory if not existent
+result_dir = os.path.join('result', '{}-{}'.format(
+                          os.path.splitext(input_file)[0], now))
+if not os.path.exists(result_dir):
+    os.makedirs(result_dir)
+
+
 for scenario in scenarios:
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = urbs.read_excel(filename)
+    data = urbs.read_excel(input_file)
     data = scenario(data)
 
     # create model, solve it, read results
@@ -69,23 +79,17 @@ for scenario in scenarios:
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     result = optim.solve(prob, tee=True)
     prob.load(result)
-
-    #create timestamp for result
-    now = datetime.now().strftime('%Y%m%dT%H%M')
     
-    # create result directory if not existent
-    result_dir = os.path.join('result', '{}-{}'.format(
-                              os.path.splitext(filename)[0], now))
-    if not os.path.exists(result_dir):
-        os.makedirs(result_dir)
-        
+    # refresh time stamp string
+    now = prob.created
+    
     # write report to spreadsheet
     urbs.report(
         prob,
         os.path.join(result_dir, '{}-{}.xlsx').format(sce, now),
         ['Elec'], ['South', 'Mid', 'North'])
 
-    # add or change plot colours
+    # add or change plot colors
     my_colors = {
         'South': (230, 200, 200),
         'Mid': (200, 230, 200),

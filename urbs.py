@@ -10,6 +10,7 @@ commodities.
 
 """
 import coopr.pyomo as pyomo
+import math
 import pandas as pd
 from datetime import datetime
 from operator import itemgetter
@@ -77,6 +78,12 @@ def read_excel(filename):
         supim = xls.parse(
             'SupIm',
             index_col=['t'])
+        try:
+            hacks = xls.parse(
+                'Hacks',
+                index_col=['Name'])
+        except XLRDError:
+            hacks = None
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -100,6 +107,8 @@ def read_excel(filename):
         'storage': storage,
         'demand': demand,
         'supim': supim}
+    if hacks is not None:
+        data['hacks'] = hacks
 
     # sort nested indexes to make direct assignments work, cf
     # http://pandas.pydata.org/pandas-docs/stable/indexing.html#the-need-for-sortedness-with-multiindex
@@ -730,8 +739,50 @@ def create_model(data, timesteps, dt=1):
     m.obj = pyomo.Objective(
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
-
+    
+    # possibly: add hack features    
+    if 'hacks' in data:
+        m = add_hacks(m, data['hacks'])
+    
     return m
+        
+    
+def add_hacks(model, hacks):
+    """ add hackish features to model object 
+    
+    This function is reserved for corner cases/features that still lack a
+    satisfyingly general solution that could become part of create_model.
+    Use hack features sparingly and think about how to incorporate into main
+    model function before adding here. Otherwise, these features might become 
+    a maintenance burden.
+    
+    """
+
+    # Global CO2 limit
+    try:
+        global_co2_limit = hacks.loc['Global CO2 limit', 'Value']            
+    except KeyError:
+        global_co2_limit = float('inf')
+
+    # only add constraint if limit is finite
+    if not math.isinf(global_co2_limit):
+        # total CO2 output <= Global CO2 limit
+        def global_co2_limit_rule(m):
+            co2_output_sum = 0
+            for tm in m.tm:
+                for sit in m.sit:
+                    # minus because negative commodity_balance == creation of that
+                    # commodity. 
+                    co2_output_sum += (- 
+                        commodity_balance(m, tm, sit, 'CO2') * m.dt)
+            # scaling to annual output (cf. definition of m.weight)
+            co2_output_sum *= m.weight
+            return (co2_output_sum <= global_co2_limit)
+        
+        model.global_co2_limit = pyomo.Constraint(
+            doc='total co2 commodity output <= hacks.Glocal CO2 limit') 
+
+    return model
 
 
 def annuity_factor(n, i):

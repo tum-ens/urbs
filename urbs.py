@@ -877,9 +877,10 @@ def get_entity(instance, name):
         if label in labels[:k]:
             labels[k] = labels[k] + "_"
 
-    # name columns according to labels + entity name
-    results.columns = labels + [name]
-    results.set_index(labels, inplace=True)
+    if not results.empty:
+        # name columns according to labels + entity name
+        results.columns = labels + [name]
+        results.set_index(labels, inplace=True)
 
     return results
 
@@ -1047,14 +1048,15 @@ def get_constants(instance):
     csto = get_entities(instance, ['cap_sto_c', 'cap_sto_c_new',
                                    'cap_sto_p', 'cap_sto_p_new'])
 
-    # better labels
-    cpro.columns = ['Total', 'New']
-    ctra.columns = ['Total', 'New']
-    csto.columns = ['C Total', 'C New', 'P Total', 'P New']
-
-    # better index names
-    cpro.index.names = ['Site', 'Process']
-    ctra.index.names = ['Site In', 'Site Out', 'Transmission', 'Commodity']
+    # better labels and index names
+    if not cpro.empty:
+        cpro.index.names = ['Site', 'Process']
+        cpro.columns = ['Total', 'New']
+    if not ctra.empty:
+        ctra.index.names = ['Site In', 'Site Out', 'Transmission', 'Commodity']
+        ctra.columns = ['Total', 'New']
+    if not csto.empty:
+        csto.columns = ['C Total', 'C New', 'P Total', 'P New']
 
     return costs, cpro, ctra, csto
 
@@ -1122,12 +1124,16 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # TRANSMISSION
     etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])
-    etra.index.names = ['tm', 'sitin', 'sitout', 'tra', 'com']
-    etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
-    etra = etra.xs(com, level='com')
-
-    imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack()
-    exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack()
+    if not etra.empty:
+        etra.index.names = ['tm', 'sitin', 'sitout', 'tra', 'com']
+        etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
+        etra = etra.xs(com, level='com')
+    
+        imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack()
+        exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack()
+    else:
+        imported = pd.DataFrame(index=timesteps)
+        exported = pd.DataFrame(index=timesteps)
 
     # STORAGE
     # group storage energies by commodity

@@ -30,7 +30,7 @@ There are 2 ways to get all required packages under Windows. I recommend using t
        1. During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
   2. **Coopr/Pyomo**
        1. Launch a new command prompt (Win+R, type "cmd", Enter)
-       2. Type `pip install coopr`, hit Enter.
+       2. Type `pip install coopr==3.5.8787`, hit Enter. (As of 2015-01-16, coopr 4.0 on PYPI is not working yet.) 
   3. **GLPK**
        1. Download the latest version (e.g. GLPK-4.55) of [WinGLPK](http://sourceforge.net/projects/winglpk/files/winglpk/)
        2. Extract the contents to a folder, e.g. `C:\GLPK`

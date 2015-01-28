@@ -1516,7 +1516,17 @@ def to_color(obj=None):
     
 
 def save(prob, filename):
-    """Save rivus model instance (possibly including result) to file
+    """Save rivus model instance to a gzip'ed pickle file
+    
+    Pickle is the standard Python way of serializing and de-serializing Python
+    objects. By using it, saving any object, in case of this function a 
+    Pyomo ConcreteModel, becomes a twoliner. 
+    <https://docs.python.org/2/library/pickle.html>
+    GZip is a standard Python compression library that is used to transparently
+    compress the pickle file further.
+    <https://docs.python.org/2/library/gzip.html>
+    It is used over the possibly more compact bzip2 compression due to the
+    lower runtime. Source: <http://stackoverflow.com/a/18475192/2375855
     
     Args:
         prob: a rivus model instance
@@ -1535,7 +1545,7 @@ def save(prob, filename):
 
 
 def load(filename):
-    """Load a rivus model instance from a pickle file
+    """Load a rivus model instance from a gzip'ed pickle file
     
     Args:
         filename: pickle file

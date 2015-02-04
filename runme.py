@@ -87,7 +87,12 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
     urbs.report(
         prob,
         os.path.join(result_dir, '{}-{}.xlsx').format(sce, now),
-        ['Elec'], ['South', 'Mid', 'North'])
+        prob.com_demand, prob.sit)
+    
+    # store optimisation problem for later re-analysis
+    urbs.save(
+        prob,
+        os.path.join(result_dir, '{}-{}.pgz').format(sce, now))
 
     # add or change plot colors
     my_colors = {

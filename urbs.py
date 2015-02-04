@@ -1161,15 +1161,18 @@ def get_constants(instance):
     csto = get_entities(instance, ['cap_sto_c', 'cap_sto_c_new',
                                    'cap_sto_p', 'cap_sto_p_new'])
 
-    # better labels and index names
+    # better labels and index names and return sorted
     if not cpro.empty:
         cpro.index.names = ['Site', 'Process']
         cpro.columns = ['Total', 'New']
+        cpro.sortlevel(inplace=True)
     if not ctra.empty:
         ctra.index.names = ['Site In', 'Site Out', 'Transmission', 'Commodity']
         ctra.columns = ['Total', 'New']
+        ctra.sortlevel(inplace=True)
     if not csto.empty:
         csto.columns = ['C Total', 'C New', 'P Total', 'P New']
+        csto.sortlevel(inplace=True)
 
     return costs, cpro, ctra, csto
 
@@ -1242,8 +1245,9 @@ def get_timeseries(instance, com, sit, timesteps=None):
         etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
         etra = etra.xs(com, level='com')
 
-        imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack()
-        exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack()
+        imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack().fillna(0)
+        exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack().fillna(0)
+        
     except (ValueError, KeyError):
         imported = pd.DataFrame(index=timesteps)
         exported = pd.DataFrame(index=timesteps)
@@ -1253,8 +1257,8 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # select all entries with desired commodity co
     esto = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
     esto = esto.groupby(level=['t', 'sit', 'com']).sum()
-    esto = esto.xs(sit, level='sit')
     try:
+        esto = esto.xs(sit, level='sit')
         stored = esto.xs(com, level='com')
         stored = stored.loc[timesteps]
         stored.columns = ['Level', 'Stored', 'Retrieved']
@@ -1336,7 +1340,8 @@ def report(instance, filename, commodities, sites):
         # write timeseries to individual sheets
         for co in commodities:
             for sit in sites:
-                sheet_name = "{}.{} timeseries".format(co, sit)
+                # sheet names cannot be longer than 31 characters...
+                sheet_name = "{}.{} timeseries".format(co, sit)[:31]
                 timeseries[(co, sit)].to_excel(writer, sheet_name)
 
 
@@ -1455,7 +1460,10 @@ def plot(prob, com, sit, timesteps=None):
     # labels & y-limits
     ax1.set_xlabel('Time in year (h)')
     ax1.set_ylabel('Energy (MWh)')
-    ax1.set_ylim((0, csto.loc[sit, :, com]['C Total'].sum()))
+    try:
+        ax1.set_ylim((0, csto.loc[sit, :, com]['C Total'].sum()))
+    except KeyError:
+        pass
 
     # make xtick distance duration-dependent
     if len(timesteps) > 26*168:

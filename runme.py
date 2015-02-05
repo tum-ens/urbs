@@ -127,7 +127,7 @@ if __name__ == '__main__':
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
-    (offset, length) = (4000, 5*24)  # time step selection
+    (offset, length) = (3999, 10*24)  # time step selection
     timesteps = range(offset, offset+length+1)
     
     # select scenarios to be run
@@ -137,7 +137,7 @@ if __name__ == '__main__':
         scenario_co2_limit,
         scenario_north_process_caps,
         scenario_all_together]
-    scenarios = scenarios[:1]  # select by slicing 
+    #scenarios = scenarios[:1]  # select by slicing 
         
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir)

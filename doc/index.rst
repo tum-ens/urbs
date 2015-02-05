@@ -60,25 +60,31 @@ Changes from version 0.2 to 0.3
 
 * Processes now support multiple inputs and multiple output commodities.
 * As a consequence :func:`plot` now plots commodity balance by processes, not 
-  input commodities, as this would be underspecified.
-* URBS now supports input files with only a single site; simply delete all
+  input commodities.
+* urbs now supports input files with only a single site; simply delete all
   entries from the 'Transmission' spreadsheet and only use a single site name 
   throughout your input.
 * Moved hard-coded 'Global CO2 limit' constraint to dedicated "Hacks"
   spreadsheet, while the constraint is :func:`add_hacks`.
-* More docstrings and comments in the main file ``urbs.py``
+* More docstrings and comments in the main file ``urbs.py``.
 
 
 Screenshots
 -----------
 
-Motivational result images:
+This is a typical result plot created by :func:`urbs.plot`, showing electricity
+generation and storage levels in one site over 10 days (240 time steps):
 
 .. image:: img/plot.*
-   :width: 66%
+   :width: 95%
    :align: center
-.. image:: img/comp.*
-   :width: 66%
+   
+A comparison script ``comp.py`` how one can create automated cross-scenario
+analyses. This figure shows costs and generated electricity by source for 5
+scenarios: 
+   
+.. image:: img/comparison.*
+   :width: 95%
    :align: center
    
 

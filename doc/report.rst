@@ -5,9 +5,10 @@
 Reporting function explained
 ============================
 
-As the reporting function :func:`report` is not too long, a commented walk
-through through its implementation in style of the :ref:`tutorial` seemed like
-a good idea. So here it is:
+This page is a "code walkthrough" through the function :func:`report`. It shows
+more technical details than the :ref:`tutorial` or :ref:`workflow` pages, to
+facilitate writing one's own analysis scripts that directly retrieve variables
+from the optimisation:
 
 Report
 ------
@@ -18,7 +19,7 @@ So let's start by first printing the function as a whole:
    :pyobject: report
    
 After the function header and the docstring briefly explaining its use, another
-function, :func:`get_constants`, is called. So before really diving into the
+function, :func:`get_constants`, is called. Before really diving into the
 report function, first one of the two :ref:`medium-level-functions` functions
 is presented.
    

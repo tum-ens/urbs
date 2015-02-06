@@ -280,8 +280,10 @@ series. *Vled Haven* has the highest peak load with 75 MW, followed by
 
 .. note::
 
-    Have a :download:`newsealand.xlsx <newsealand/newsealand.xlsx>` here.
-    
+    For reference this is how 
+    :download:`newsealand.xlsx <newsealand/newsealand.xlsx>` looks for me
+    having performed the above steps.
+
 
 Test-drive the input
 --------------------

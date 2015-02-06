@@ -457,6 +457,11 @@ so you exclude them from the ``scenarios`` :class:`list`:
         for scenario in scenarios:
             prob = run_scenario(input_file, timesteps, scenario, result_dir)
 
+            
+.. note::
+
+    For reference, here is how :download:`runns.py <newsealand/runns.py>` looks
+    for me.
 
 .. _installation instructions: 
    https://github.com/tum-ens/urbs/blob/master/README.md#installation

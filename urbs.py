@@ -37,7 +37,7 @@ def read_excel(filename):
     """Read Excel input file and prepare URBS input dict.
 
     Reads an Excel spreadsheet that adheres to the structure shown in
-    data-example.xlsx. Two preprocessing steps happen here:
+    mimo-example.xlsx. Two preprocessing steps happen here:
     1. Column titles in 'Demand' and 'SupIm' are split, so that
     'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
     2. The attribute 'annuity-factor' is derived here from the columns 'wacc'
@@ -52,9 +52,9 @@ def read_excel(filename):
         a dict of 6 DataFrames
 
     Example:
-        >>> data = read_excel('data-example.xlsx')
-        >>> data['commodity'].loc[('Global', 'CO2', 'Env'), 'max']
-        150000000.0
+        >>> data = read_excel('mimo-example.xlsx')
+        >>> data['hacks'].loc['Global CO2 limit', 'Value']
+        150000000
     """
     with pd.ExcelFile(filename) as xls:
         commodity = xls.parse(
@@ -118,25 +118,25 @@ def read_excel(filename):
     return data
 
 
-def create_model(data, timesteps, dt=1):
+def create_model(data, timesteps=None, dt=1):
     """Create a pyomo ConcreteModel URBS object from given input data.
 
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
             'transmission', 'storage', 'demand' and 'supim'.
-        timesteps: list of timesteps
+        timesteps: optional list of timesteps, default: demand timeseries
         dt: timestep duration in hours (default: 1)
 
     Returns:
         a pyomo ConcreteModel object
     """
-    m = pyomo.ConcreteModel()
+    m = pyomo.ConcreteModel()    
     m.name = 'URBS'
-    m.settings = {
-        'dateformat': '%Y%m%dT%H%M%S',
-        'timesteps': timesteps,
-        }
-    m.created = datetime.now().strftime(m.settings['dateformat'])
+    m.created = datetime.now().strftime(%Y%m%dT%H%M%S)
+    
+    # Optional
+    if not timesteps:
+        timesteps = data['demand'].index.tolist()
 
     # Preparations
     # ============
@@ -151,7 +151,7 @@ def create_model(data, timesteps, dt=1):
     m.transmission = data['transmission']
     m.storage = data['storage']
     m.demand = data['demand']
-    m.supim = data['supim']        
+    m.supim = data['supim']    
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
@@ -1040,13 +1040,12 @@ def list_entities(instance, entity_type):
         DataFrame of entities
 
     Example:
-        >>> data = read_excel('data-example.xlsx')
+        >>> data = read_excel('mimo-example.xlsx')
         >>> model = create_model(data, range(1,25))
         >>> list_entities(model, 'obj')  #doctest: +NORMALIZE_WHITESPACE
                                          Description Domain
         Name
         obj   minimize(cost = sum of all cost types)     []
-        [1 rows x 2 columns]
 
     """
 
@@ -1085,7 +1084,7 @@ def list_entities(instance, entity_type):
 def _get_onset_names(entity):
     """
         Example:
-            >>> data = read_excel('data-example.xlsx')
+            >>> data = read_excel('mimo-example.xlsx')
             >>> model = create_model(data, range(1,25))
             >>> _get_onset_names(model.e_co_stock)
             ['t', 'sit', 'com', 'com_type']
@@ -1144,16 +1143,20 @@ def get_constants(instance):
     Example:
         >>> import coopr.environ
         >>> from coopr.opt.base import SolverFactory
-        >>> data = read_excel('data-example.xlsx')
+        >>> data = read_excel('mimo-example.xlsx')
         >>> model = create_model(data, range(1,25))
         >>> prob = model.create()
         >>> optim = SolverFactory('glpk')
         >>> result = optim.solve(prob)
         >>> prob.load(result)
         True
-        >>> get_constants(prob)[-1].sum() <= prob.commodity.loc[
-        ...     ('Global', 'CO2', 'Env'), 'max']
-        True
+        >>> cap_pro = get_constants(prob)[1]['Total']
+        >>> cap_pro.xs('Wind park', level='Process').apply(int)
+        Site
+        Mid      13000
+        North    27271
+        South     2674
+        Name: Total, dtype: int64
     """
     costs = get_entity(instance, 'costs')
     cpro = get_entities(instance, ['cap_pro', 'cap_pro_new'])
@@ -1181,17 +1184,18 @@ def get_timeseries(instance, com, sit, timesteps=None):
     """Return DataFrames of all timeseries referring to given commodity
 
     Usage:
-        created, consumed, storage = get_timeseries(instance, co)
+        create, consume, store, imp, exp = get_timeseries(instance, co,
+                                                          sit, timesteps)
 
     Args:
-        instance: a urbs model instance.
-        com: a commodity.
-        sit: a site.
-        timesteps: optional list of timesteps, defaults to modelled timesteps.
+        instance: a urbs model instance
+        com: a commodity
+        sit: a site
+        timesteps: optional list of timesteps, defaults: all modelled timesteps
 
     Returns:
         a (created, consumed, storage, imported, exported) tuple of DataFrames
-        timeseries. These are
+        timeseries. These are:
 
         * created: timeseries of commodity creation, including stock source
         * consumed: timeseries of commodity consumption, including demand
@@ -1536,7 +1540,7 @@ def save(prob, filename):
     compress the pickle file further.
     <https://docs.python.org/2/library/gzip.html>
     It is used over the possibly more compact bzip2 compression due to the
-    lower runtime. Source: <http://stackoverflow.com/a/18475192/2375855
+    lower runtime. Source: <http://stackoverflow.com/a/18475192/2375855>
     
     Args:
         prob: a rivus model instance
@@ -1572,3 +1576,10 @@ def load(filename):
         prob = pickle.load(file_handle)
     return prob
 
+
+if __name__ == "__main__":
+    # if executed as a script, run doctests on this module
+    import doctest
+    (failure_count, test_count) = doctest.testmod(report=True)
+    passed_count = test_count - failure_count
+    print('{} of {} tests passed.'.format(passed_count, test_count))

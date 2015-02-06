@@ -132,7 +132,7 @@ def create_model(data, timesteps=None, dt=1):
     """
     m = pyomo.ConcreteModel()    
     m.name = 'URBS'
-    m.created = datetime.now().strftime(%Y%m%dT%H%M%S)
+    m.created = datetime.now().strftime('%Y%m%dT%H%M%S')
     
     # Optional
     if not timesteps:
@@ -151,7 +151,8 @@ def create_model(data, timesteps=None, dt=1):
     m.transmission = data['transmission']
     m.storage = data['storage']
     m.demand = data['demand']
-    m.supim = data['supim']    
+    m.supim = data['supim']
+    m.timesteps = timesteps
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
@@ -166,14 +167,14 @@ def create_model(data, timesteps=None, dt=1):
 
     # generate ordered time step sets
     m.t = pyomo.Set(
-        initialize=m.settings['timesteps'],
+        initialize=m.timesteps,
         ordered=True,
         doc='Set of timesteps')
 
     # modelled (i.e. excluding init time step for storage) time steps
     m.tm = pyomo.Set(
         within=m.t,
-        initialize=m.settings['timesteps'][1:],
+        initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of modelled timesteps')
 

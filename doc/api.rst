@@ -123,7 +123,7 @@ result analysis scripts might be needed. These can be built on top of the
 following two **medium-level** functions. They retrieve all time-dependent and
 -independent quantities and return them as ready-to-use DataFrames.
 
-.. function:: urbs.get_constants(prob)
+.. function:: get_constants(prob)
   
   Return summary DataFrames for time-independent variables
   
@@ -132,7 +132,7 @@ following two **medium-level** functions. They retrieve all time-dependent and
   :return: tuple of constants (costs, process, transmission, storage)
 
   
-.. function:: urbs.get_timeseries(prob, com, sit, timesteps=None)
+.. function:: get_timeseries(prob, com, sit, timesteps=None)
 
   Return DataFrames of all timeseries referring to a given commodity and site
 

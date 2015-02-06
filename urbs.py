@@ -1275,14 +1275,14 @@ def get_timeseries(instance, com, sit, timesteps=None):
     return created, consumed, stored, imported, exported
 
 
-def report(instance, filename, commodities, sites):
+def report(instance, filename, commodities=None, sites=None):
     """Write result summary to a spreadsheet file
 
     Args:
         instance: a urbs model instance
         filename: Excel spreadsheet filename, will be overwritten if exists
-        commodities: list of commodities for which to create timeseries sheets
-        sites: list of sites
+        commodities: optional list of commodities for which to write timeseries
+        sites: optional list of sites for which to write timeseries
 
     Returns:
         Nothing
@@ -1333,16 +1333,18 @@ def report(instance, filename, commodities, sites):
                                  'Import', 'Export', 'Balance'])
                 energies.append(sums.to_frame("{}.{}".format(co, sit)))
 
-        # concatenate energy sums
-        energy = pd.concat(energies, axis=1).fillna(0)
-        energy.to_excel(writer, 'Energy sums')
-
-        # write timeseries to individual sheets
-        for co in commodities:
-            for sit in sites:
-                # sheet names cannot be longer than 31 characters...
-                sheet_name = "{}.{} timeseries".format(co, sit)[:31]
-                timeseries[(co, sit)].to_excel(writer, sheet_name)
+        # write timeseries data (if any)
+        if timeseries:
+            # concatenate energy sums
+            energy = pd.concat(energies, axis=1).fillna(0)
+            energy.to_excel(writer, 'Energy sums')
+    
+            # write timeseries to individual sheets
+            for co in commodities:
+                for sit in sites:
+                    # sheet names cannot be longer than 31 characters...
+                    sheet_name = "{}.{} timeseries".format(co, sit)[:31]
+                    timeseries[(co, sit)].to_excel(writer, sheet_name)
 
 
 def plot(prob, com, sit, timesteps=None):

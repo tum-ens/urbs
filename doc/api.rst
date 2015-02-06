@@ -157,10 +157,10 @@ Persistence
 To store valuable results for later analysis, or cross-scenario comparisons
 weeks after the original run, saving a problem instance with loaded results
 makes it possible to use one's comparison scripts without having to solve the
-optimisation problem again. Simply :func:`load` the previously :func:`save`d
-object with these functions:
+optimisation problem again. Simply :func:`load` the previously stored object 
+using :func:`save`:
 
-.. function:: urbs.save(prob, filename)
+.. function:: save(prob, filename)
 
     Save rivus model instance to a gzip'ed pickle file
     
@@ -181,7 +181,7 @@ object with these functions:
         
     :return: nothing
         
-.. function:: urbs.load(filename)
+.. function:: load(filename)
 
     Load a rivus model instance from a gzip'ed pickle file
     
@@ -195,21 +195,21 @@ Low-level access
 If the previous functions still don't cut it, there are three **low-level**
 functions.
 
-.. function:: urbs.list_entities(prob, entity_type)
+.. function:: list_entities(prob, entity_type)
 
   :param prob: urbs model instance
   :param str entity_type: allowed values: set, par, var, con, obj 
   
   :return: a DataFrame with name, description and domain of entities
 
-.. function:: urbs.get_entity(prob, name)
+.. function:: get_entity(prob, name)
 
   :param prob: urbs model instance
   :param str name: name of a model entity
 
   :return: Series with values of model entity
   
-.. function:: urbs.get_entities(prob, names)
+.. function:: get_entities(prob, names)
 
   :param prob: urbs model instance
   :param list name: list of model entity names

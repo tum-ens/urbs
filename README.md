@@ -72,7 +72,9 @@ Continue at [Get Started](#get-started).
   
 ## Get started
 
-Once installation is complete, finally [install git (for version control)](http://git-scm.com/). Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux): 
+Once installation is complete, finally [install git (for version control)](http://git-scm.com/). **Remark:** at step "Adjusting your PATH environment", select "Run Git from the Windows Command Prompt".
+
+Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux): 
 
     git clone https://github.com/tum-ens/urbs.git
     cd urbs

@@ -368,14 +368,9 @@ def create_model(data, timesteps=None, dt=1):
         doc='Energy content of storage (MWh) in timestep')
 
     # Equation declarations
-    # the constraints defined above as Python functions are now linked to the
-    # optimization problem by converting them to a Constraint object, one per
-    # equation. For example, constraint m.res_vertex automagically refers to
-    # the definition res_vertex_rule (that's a Pyomo convention). One could
-    # also use differently named functions, but then one would need to specify
-    # the function name using the rule=function_name keyword, i.e.:
-    #
-
+    # equation bodies are defined in separate functions, refered to here by 
+    # their name in the "rule" keyword.
+    
     # commodity
     m.res_vertex = pyomo.Constraint(
         m.tm, m.com_tuples,

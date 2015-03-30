@@ -1526,7 +1526,7 @@ def to_color(obj=None):
     
 
 def save(prob, filename):
-    """Save rivus model instance to a gzip'ed pickle file
+    """Save urbs model instance to a gzip'ed pickle file
     
     Pickle is the standard Python way of serializing and de-serializing Python
     objects. By using it, saving any object, in case of this function a 
@@ -1539,7 +1539,7 @@ def save(prob, filename):
     lower runtime. Source: <http://stackoverflow.com/a/18475192/2375855>
     
     Args:
-        prob: a rivus model instance
+        prob: a urbs model instance
         filename: pickle file to be written
         
     Returns:
@@ -1555,13 +1555,13 @@ def save(prob, filename):
 
 
 def load(filename):
-    """Load a rivus model instance from a gzip'ed pickle file
+    """Load a urbs model instance from a gzip'ed pickle file
     
     Args:
         filename: pickle file
     
     Returns:
-        prob: the unpickled rivus model instance
+        prob: the unpickled urbs model instance
     """
     import gzip
     try:

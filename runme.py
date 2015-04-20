@@ -1,4 +1,5 @@
 import coopr.environ
+import matplotlib.pyplot as plt
 import os
 import urbs
 from coopr.opt.base import SolverFactory
@@ -79,9 +80,13 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     result = optim.solve(prob, tee=True)
     prob.load(result)
-    
+        
     # refresh time stamp string
     now = prob.created
+    
+    # save problem and solver statistics
+    urbs.save_log(result, 
+                  os.path.join(result_dir, '{}-{}.log').format(sce, now))
     
     # write report to spreadsheet
     urbs.report(
@@ -119,9 +124,9 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
             fig_filename = os.path.join(
                 result_dir, '{}-{}-{}-{}.{}').format(sce, com, sit, now, ext)
             fig.savefig(fig_filename, bbox_inches='tight')
-    
+        plt.close(fig)
     return prob            
-            
+
 if __name__ == '__main__':
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension

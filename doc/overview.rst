@@ -22,7 +22,8 @@ all input data. Each commodity must be exactly one of following four types:
   * Demand: These commodities have a timeseries for the requirement
     associated and must be provided by output from other process or 
     from storage. Usually, there is only one demand commodity called 
-    electricity (abbreviated to Elec or ElecAC), but
+    electricity (abbreviated to Elec), but multiple (e.g. electricity, space 
+    heating, process heat, space cooling) demands can be specified.
   * Env: The special commodity CO2 is of this type and represents the
     amount (in tons) of greenhouse gas emissions from processes. Its
     total amount can be limited, to investigate the effect of policies

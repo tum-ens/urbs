@@ -235,7 +235,7 @@ Therefore, you set the value to ``inf``:
 Time series
 ^^^^^^^^^^^
 
-The only commodity of type ``Env`` is *Wind*, which you defined in sheet
+The only commodity of type ``SupIm`` is *Wind*, which you defined in sheet
 **Commodity** on all four islands. Therefore, in total 4 time series must be
 provided here, even if they are all zeros. As your data provider has not kept
 his promise to send you the data on time, you (ab)use the ``mimo-example.xlsx``

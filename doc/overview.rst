@@ -46,9 +46,13 @@ can be visualised like a black box with one input (commodity) and one output
 technical parameter. Fixed costs for investment and maintenance (per capacity)
 and variable costs for operation (per output) are the economic parameters.
 
-Processes are defined over the tuple ``(site, process, input, output)``. For
-example, ``(Iceland, turbine, geothermal, electricity)`` describes a geothermal
-plant generating electricity in Iceland.
+Processes are defined over two tuples. The first tuple ``(site, process)``
+specifies the location of a named process. E.g. ``(Iceland, turbine)`` would
+locate a process ``turbine`` at site ``Iceland``. The second tuple ``(process,
+commodity, direction)`` then specifies the inputs and outputs for that process.
+For example, ``(turbine, geothermal, In)`` and ``(turbine, electricity, Out)``
+describes that the process named ``turbine`` has a single input ``geothermal``
+and the single output ``electricity``.
 
 
 Transmission
@@ -83,7 +87,7 @@ Timeseries
 
 Demand
 """"""
-Each combination of site and demand commodity may have one timeseries,
+Each combination ``(site, demand commidty)`` may have one timeseries,
 describing the (average) power demand (MWh/h) per timestep. They are a crucial
 input parameter, as the whole optimisation aims to satisfy these demands with
 minimal costs from the given technologies (process, storage, transmission).

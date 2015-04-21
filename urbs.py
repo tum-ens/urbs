@@ -529,7 +529,10 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # demand value; no scaling by m.dt or m.weight is needed here, as this
     # constraint is about power (MW), not energy (MWh)
     if com in m.com_demand:
-        power_surplus -= m.demand.loc[tm][sit, com]
+        try:
+            power_surplus -= m.demand.loc[tm][sit, com]
+        except KeyError:
+            pass
     return power_surplus >= 0
 
 # stock commodity purchase == commodity consumption, according to
@@ -1205,10 +1208,10 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # DEMAND
     # default to zeros if commodity has no demand, get timeseries
-    if com not in instance.com_demand:
-        demand = pd.Series(0, index=timesteps)
-    else:
+    try:
         demand = instance.demand.loc[timesteps][sit, com]
+    except KeyError:
+        demand = pd.Series(0, index=timesteps)
     demand.name = 'Demand'
 
     # STOCK

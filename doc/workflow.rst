@@ -183,7 +183,7 @@ actually the summed ``inv-cost`` for both directions.
     :header-rows: 1
     :stub-columns: 4
     
-    Site In,Site Out,Transmission,Commodity,eff,inv-cost,fix-cost,var-cost,inst-cap,cap-lo,cap-up,wacc,
+    Site In,Site Out,Transmission,Commodity,eff,inv-cost,fix-cost,var-cost,inst-cap,cap-lo,cap-up,wacc,depr.
     Jepid Island,Vled Haven,undersea,Elec,0.85,**1100000**,30000,0,0,0,inf,0.07,30
     Qlyph Archipelago,Vled Haven,undersea,Elec,0.95,**500000**,15000,0,0,0,inf,0.07,30
     Stryworf Key,Vled Haven,undersea,Elec,0.9,**800000**,22500,0,0,0,inf,0.07,30

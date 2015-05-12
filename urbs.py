@@ -1528,20 +1528,6 @@ def to_color(obj=None):
     return color
     
 
-def save_log(result, filename):
-    """Save urbs result and solver information to a log file.
-    
-    Args:
-        result: as returned by the solve method of a solver object
-        filename: log file to be written
-        
-    Returns:
-        Nothing
-    """
-    with open(filename, 'w') as file_handle:
-        file_handle.write(str(result))
-
-
 def save(prob, filename):
     """Save urbs model instance to a gzip'ed pickle file.
     

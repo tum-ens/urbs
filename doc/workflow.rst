@@ -138,10 +138,10 @@ With only these processes remaining, the sheet **Process**, needs some work,
 too. create an entry for each process that can be built at a given site. The
 upper capacity limits ``cap-up`` for each process are the most important
 figure. *Qlyph Archipelago* is known for its large areas suitable for wind
-parks up to 200 MW, only surpased by the great offshore sites of *Jepid 
-Island*. The other islands only have space for up to 120 MW or 80 MW.
-*Gas plants* can be built up to 100 MW on every island, except for *Vled
-Haven*, which can house up to 80 MW only. 
+parks up to 200 MW, only surpased by the great offshore sites of *Jepid Island*
+with 250 MW potential capacity. The other islands only have space for up to
+120 MW or 80 MW. *Gas plants* can be built up to 100 MW on every island, except
+for *Vled Haven*, which can house up to 80 MW only. 
 
 *Slack powerplants* are set to an installed capacity ``inst-cap`` higher than
 the peak demand in each site, so that any residual load could always be

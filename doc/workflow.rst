@@ -257,8 +257,8 @@ that, you get the following table of capacity factors:
     4,0.561,0.956,0.956,0.461
     ...,...,...,...,...
 
-You make sure that both the island names and the commodity name match *exactly*
-with the name given on the other sheets.
+You make sure that both the island names and the commodity name *exactly* match
+the identifiers used on the other sheets.
 
 For the demand, you also have no real data for now. But with some scaling
 (divide by 1000), the example series make for a good temporary demand time
@@ -280,7 +280,7 @@ series. *Vled Haven* has the highest peak load with 75 MW, followed by
 
 .. note::
 
-    For reference this is how 
+    For reference, this is how 
     :download:`newsealand.xlsx <newsealand/newsealand.xlsx>` looks for me
     having performed the above steps.
 
@@ -323,9 +323,11 @@ package::
 Ignore the deprecation warning [1]_ for now. The solver object has a ``solve``
 method, which takes the problem as an argument and returns a solution. For
 bigger problems, the next step can take several hours or even days. Therefore,
-you enable visible progress output by setting the option ``Tee`` [2]_::
+you enable visible progress output by setting the option ``tee`` [2]_. 
+Additionally, you can save the output to a logfile using the ``logfile`` 
+option::
     
-    >>> result = optim.solve(prob, tee=True)
+    >>> result = optim.solve(prob, logfile='solver.log', tee=True)
     
 This results in roughly the following output appearing on the console::    
     
@@ -375,13 +377,13 @@ result numbers, use :func:`report`::
 By default, this report only includes total costs and capacities of process,
 transmission and storage. By adding the optional third and fourth parameter,
 you can retreive timeseries listings of energy production per site. For now,
-you are only interested in *electricity* ind *Vled Haven*::
+you are only interested in *electricity* in *Vled Haven*::
     
     >>> urbs.report(prob, 'report-vled-haven.xlsx',
     ...             ['Elec'], ['Vled Haven'])
     
-Then you finally want to see how the electricity production *looks* like on all
-four islands. For that you use :func:`plot`::
+Then you finally want to see how the electricity production *looks* like. For 
+that you use :func:`plot`::
     
     >>> %matplotlib
     >>> fig = urbs.plot(prob, 'Elec', 'Vled Haven')
@@ -399,20 +401,23 @@ using::
     
 The file extension determines how the output is written. Among the supported
 formats are jpg, pdf, png, svg and tif. Use ``png`` if raster images are needed
-and rely on ``pdf`` or ``svg`` for vector output.
+and rely on ``pdf`` or ``svg`` for vector output. The ``dpi`` option is only
+used for raster images. ``bbox_inches='tight'`` removes unnecessary whitespace
+around the plot, making it suitable for inclusion in reports or presentations.
     
     
 Create a run script
 -------------------
 
-As it is quite tedious to perform the test-drive actions by hand all the time,
-a script can automate these. This is where ``runme.py`` becomes handy. 
+As it is quite tedious to perform the above actions by hand all the time,
+a script can automate these. This is where a ``runme.py`` script becomes handy. 
 
-Create a copy of the script and give it a suitable name, e.g. ``runns.py``.
+Create a copy of the script file ``runme.py`` and give it a suitable name, 
+e.g. ``runns.py``.
 
 Modify the ``scenario_co2_limit`` function. As the base scenario now has no
 limit, reducing it by 95 % does not make it finite. Therefore you set a fixed
-hard (annual) limit of 50 Mt CO2:
+hard (annual) limit of 50 million tonnes of CO2 equivalent:
     
 .. code-block:: python
    :emphasize-lines: 4

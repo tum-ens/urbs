@@ -74,19 +74,20 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
     data = urbs.read_excel(input_file)
     data = scenario(data)
 
-    log_filename = os.path.join(result_dir, '{}-{}.log').format(sce, now)
-
-    # create model, solve it, read results
+    # create model
     model = urbs.create_model(data, timesteps)
     prob = model.create()
+    
+    # refresh time stamp string and create filename for logfile
+    now = prob.created
+    log_filename = os.path.join(result_dir, '{}-{}.log').format(sce, now)
+
+    # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     result = optim.solve(prob, 
                          tee=True,
-                         log=log_filename)
+                         logfile=log_filename)
     prob.load(result)
-        
-    # refresh time stamp string
-    now = prob.created
     
     # write report to spreadsheet
     urbs.report(

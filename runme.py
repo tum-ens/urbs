@@ -70,7 +70,6 @@ def setup_solver(optim, logfile='solver.log'):
         optim.set_options("log={}".format(logfile))
         # optim.set_options("tmlim=7200")  # seconds
         # optim.set_options("mipgap=.0005")
-        pass
     else:
         print("Warning from setup_solver: no options set for solver "
               "'{}'!".format(optim.name))

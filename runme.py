@@ -56,6 +56,27 @@ def prepare_result_directory(result_name):
     return result_dir
 
 
+def setup_solver(optim, logfile='solver.log'):
+    """ """
+    if optim.name == 'gurobi':
+        # reference with list of option names
+        # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
+        optim.set_options("logfile={}".format(logfile)) 
+        # optim.set_options("TimeLimit=7200")  # seconds
+        # optim.set_options("MIPGap=5e-4")  # default = 1e-4
+    elif optim.name == 'glpk':
+        # reference with list of options
+        # execute 'glpsol --help'
+        optim.set_options("log={}".format(logfile))
+        # optim.set_options("tmlim=7200")  # seconds
+        # optim.set_options("mipgap=.0005")
+        pass
+    else:
+        print("Warning from setup_solver: no options set for solver "
+              "'{}'!".format(optim.name))
+    return optim
+
+
 def run_scenario(input_file, timesteps, scenario, result_dir):
     """ run an urbs model for given input, time steps and scenario
     
@@ -83,10 +104,9 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
     log_filename = os.path.join(result_dir, '{}-{}.log').format(sce, now)
 
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
-    result = optim.solve(prob, 
-                         tee=True,
-                         logfile=log_filename)
+    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
+    optim = setup_solver(optim, logfile=log_filename)
+    result = optim.solve(prob, tee=True)
     prob.load(result)
     
     # write report to spreadsheet

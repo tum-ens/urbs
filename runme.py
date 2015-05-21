@@ -1,5 +1,4 @@
 import coopr.environ
-import matplotlib.pyplot as plt
 import os
 import urbs
 from coopr.opt.base import SolverFactory
@@ -40,19 +39,19 @@ def scenario_all_together(data):
     data = scenario_stock_prices(data)
     data = scenario_co2_limit(data)
     data = scenario_north_process_caps(data)
-    return data 
+    return data
 
 
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder """
     # timestamp for result directory
     now = datetime.now().strftime('%Y%m%dT%H%M%S')
-    
+
     # create result directory if not existent
     result_dir = os.path.join('result', '{}-{}'.format(result_name, now))
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
-        
+
     return result_dir
 
 
@@ -62,8 +61,8 @@ def setup_solver(optim, logfile='solver.log'):
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
         optim.set_options("logfile={}".format(logfile)) 
-        # optim.set_options("TimeLimit=7200")  # seconds
-        # optim.set_options("MIPGap=5e-4")  # default = 1e-4
+        # optim.set_options("timelimit=7200")  # seconds
+        # optim.set_options("mipgap=5e-4")  # default = 1e-4
     elif optim.name == 'glpk':
         # reference with list of options
         # execute 'glpsol --help'
@@ -75,20 +74,19 @@ def setup_solver(optim, logfile='solver.log'):
               "'{}'!".format(optim.name))
     return optim
 
-
-def run_scenario(input_file, timesteps, scenario, result_dir):
+def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     """ run an urbs model for given input, time steps and scenario
-    
+
     Args:
         input_file: filename to an Excel spreadsheet for urbs.read_excel
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
-        
+
     Returns:
         the urbs model instance
     """
-    
+
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = urbs.read_excel(input_file)
@@ -97,7 +95,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
     # create model
     model = urbs.create_model(data, timesteps)
     prob = model.create()
-    
+
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}-{}.log').format(sce, now)
@@ -107,18 +105,42 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
     prob.load(result)
-    
+
     # write report to spreadsheet
     urbs.report(
         prob,
         os.path.join(result_dir, '{}-{}.xlsx').format(sce, now),
         prob.com_demand, prob.sit)
-    
+
     # store optimisation problem for later re-analysis
     urbs.save(
         prob,
         os.path.join(result_dir, '{}-{}.pgz').format(sce, now))
 
+    urbs.result_figures(
+        prob, 
+        os.path.join(result_dir, '{}-{}'.format(sce,now)),
+        plot_title_prefix=sce.replace('_', ' ').title(),
+        periods=plot_periods)
+    return prob
+
+if __name__ == '__main__':
+    input_file = 'mimo-example.xlsx'
+    result_name = os.path.splitext(input_file)[0]  # cut away file extension
+    result_dir = prepare_result_directory(result_name)  # name + time stamp
+
+    # simulation timesteps
+    (offset, length) = (5000, 10*24)  # time step selection
+    timesteps = range(offset, offset+length+1)
+    
+    # plotting timesteps
+    periods = {
+        #'spr': range(1000, 1000+24*7),
+        #'sum': range(3000, 3000+24*7),
+        'aut': range(5000, 5000+24*7),
+        #'win': range(7000, 7000+24*7),
+    }
+    
     # add or change plot colors
     my_colors = {
         'South': (230, 200, 200),
@@ -126,35 +148,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
         'North': (200, 200, 230)}
     for country, color in my_colors.iteritems():
         urbs.COLORS[country] = color
-    
-    # create timeseries plot for each demand (site, commodity) timeseries
-    for sit, com in prob.demand.columns:
-        # create figure
-        fig = urbs.plot(prob, com, sit)
-        
-        # change the figure title
-        ax0 = fig.get_axes()[0]
-        nice_sce_name = sce.replace('_', ' ').title()
-        new_figure_title = ax0.get_title().replace(
-            'Energy balance of ', '{}: '.format(nice_sce_name))
-        ax0.set_title(new_figure_title)
-        
-        # save plot to files 
-        for ext in ['png', 'pdf']:
-            fig_filename = os.path.join(
-                result_dir, '{}-{}-{}-{}.{}').format(sce, com, sit, now, ext)
-            fig.savefig(fig_filename, bbox_inches='tight')
-        plt.close(fig)
-    return prob            
 
-if __name__ == '__main__':
-    input_file = 'mimo-example.xlsx'
-    result_name = os.path.splitext(input_file)[0]  # cut away file extension
-    result_dir = prepare_result_directory(result_name)  # name + time stamp
-
-    (offset, length) = (3999, 10*24)  # time step selection
-    timesteps = range(offset, offset+length+1)
-    
     # select scenarios to be run
     scenarios = [
         scenario_base,
@@ -162,7 +156,8 @@ if __name__ == '__main__':
         scenario_co2_limit,
         scenario_north_process_caps,
         scenario_all_together]
-    #scenarios = scenarios[:1]  # select by slicing 
-        
+    #scenarios = scenarios[:1]  # select by slicing
+
     for scenario in scenarios:
-        prob = run_scenario(input_file, timesteps, scenario, result_dir)
+        prob = run_scenario(input_file, timesteps, scenario, 
+                            result_dir, plot_periods=periods)

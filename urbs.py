@@ -11,6 +11,7 @@ commodities.
 """
 import coopr.pyomo as pyomo
 import math
+import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 from operator import itemgetter
@@ -1505,6 +1506,43 @@ def plot(prob, com, sit, timesteps=None):
     return fig
 
 
+def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}):
+    """Create plot for each site and demand commodity and save to files.
+    
+    Args:
+        prob: urbs model instance
+        figure_basename: relative filename prefix that is shared
+        plot_title_prefix: (optional) plot title identifier
+        periods: (optional) dict of 'period name': timesteps_list items
+                 if omitted, one period 'all' with all timesteps is assumed
+    """
+    # default to all timesteps if no
+    if not periods:
+        periods = {'all': sorted(get_entity(prob, 'tm').index)}
+            
+    # create timeseries plot for each demand (site, commodity) timeseries
+    for sit, com in prob.demand.columns:
+        for period, timesteps in periods.items():
+            # do the plotting
+            fig = plot(prob, com, sit, timesteps=timesteps)
+
+            # change the figure title
+            ax0 = fig.get_axes()[0]
+            # if no custom title prefix is specified, use the figure 
+            if not plot_title_prefix:
+                plot_title_prefix = os.path.basename(figure_basename)
+            new_figure_title = ax0.get_title().replace(
+                'Energy balance of ', '{}: '.format(plot_title_prefix))
+            ax0.set_title(new_figure_title)
+            
+            # save plot to files
+            for ext in ['png', 'pdf']:
+                fig_filename = '{}-{}-{}-{}.{}'.format(
+                                    figure_basename, com, sit, period, ext)
+                fig.savefig(fig_filename, bbox_inches='tight')
+            plt.close(fig)
+
+
 def to_color(obj=None):
     """Assign a deterministic pseudo-random color to argument.
 
@@ -1554,7 +1592,7 @@ def save(prob, filename):
     except ImportError:
         import pickle
     with gzip.GzipFile(filename, 'wb') as file_handle:
-        pickle.dump(prob, file_handle)
+        pickle.dump(prob, file_handle, pickle.HIGHEST_PROTOCOL)
 
 
 def load(filename):

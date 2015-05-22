@@ -11,7 +11,6 @@ commodities.
 """
 import coopr.pyomo as pyomo
 import math
-import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 from operator import itemgetter
@@ -79,6 +78,9 @@ def read_excel(filename):
         supim = xls.parse(
             'SupIm',
             index_col=['t'])
+        buy_sell_price = xls.parse(
+            'Buy-Sell-Price',
+            index_col=['t'])
         try:
             hacks = xls.parse(
                 'Hacks',
@@ -91,6 +93,7 @@ def read_excel(filename):
     # column index ('DE', 'Elec')
     demand.columns = split_columns(demand.columns, '.')
     supim.columns = split_columns(supim.columns, '.')
+    buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
 
     # derive annuity factor from WACC and depreciation periods
     process['annuity-factor'] = annuity_factor(
@@ -107,7 +110,8 @@ def read_excel(filename):
         'transmission': transmission,
         'storage': storage,
         'demand': demand,
-        'supim': supim}
+        'supim': supim,
+        'buy_sell_price': buy_sell_price}
     if hacks is not None:
         data['hacks'] = hacks
 
@@ -153,6 +157,7 @@ def create_model(data, timesteps=None, dt=1):
     m.storage = data['storage']
     m.demand = data['demand']
     m.supim = data['supim']
+    m.buy_sell_price = data['buy_sell_price']
     m.timesteps = timesteps
 
     # process input/output ratios
@@ -211,7 +216,7 @@ def create_model(data, timesteps=None, dt=1):
 
     # cost_type
     m.cost_type = pyomo.Set(
-        initialize=['Inv', 'Fix', 'Var', 'Fuel'],
+        initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase'],
         doc='Set of cost types (hard-coded)')
 
     # tuple sets
@@ -257,6 +262,14 @@ def create_model(data, timesteps=None, dt=1):
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Stock'),
         doc='Commodities that can be purchased at some site(s)')
+    m.com_sell = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Sell'),
+        doc='Commodities that can be sold')
+    m.com_buy = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Buy'),
+        doc='Commodities that can be purchased')
     m.com_demand = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Demand'),
@@ -289,7 +302,7 @@ def create_model(data, timesteps=None, dt=1):
     # costs
     m.costs = pyomo.Var(
         m.cost_type,
-        within=pyomo.NonNegativeReals,
+        within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
 
     # commodity
@@ -297,6 +310,14 @@ def create_model(data, timesteps=None, dt=1):
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
         doc='Use of stock commodity source (MW) per timestep')
+    m.e_co_sell = pyomo.Var(
+        m.tm, m.com_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Use of sell commodity source (kW) per timestep')
+    m.e_co_buy = pyomo.Var(
+        m.tm, m.com_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Use of buy commodity source (kW) per timestep')
 
     # process
     m.cap_pro = pyomo.Var(
@@ -376,7 +397,7 @@ def create_model(data, timesteps=None, dt=1):
     m.res_vertex = pyomo.Constraint(
         m.tm, m.com_tuples,
         rule=res_vertex_rule,
-        doc='storage + transmission + process + source >= demand')
+        doc='storage + transmission + process + source + buy - sell >= demand')
     m.res_stock_step = pyomo.Constraint(
         m.tm, m.com_tuples,
         rule=res_stock_step_rule,
@@ -385,6 +406,22 @@ def create_model(data, timesteps=None, dt=1):
         m.com_tuples,
         rule=res_stock_total_rule,
         doc='total stock commodity input <= commodity.max')
+    m.res_sell_step = pyomo.Constraint(
+        m.tm, m.com_tuples,
+        rule=res_sell_step_rule,
+        doc='sell commodity output per step <= commodity.maxperstep')
+    m.res_sell_total = pyomo.Constraint(
+        m.com_tuples,
+        rule=res_sell_total_rule,
+        doc='total sell commodity output <= commodity.max')
+    m.res_buy_step = pyomo.Constraint(
+        m.tm, m.com_tuples,
+        rule=res_buy_step_rule,
+        doc='buy commodity output per step <= commodity.maxperstep')
+    m.res_buy_total = pyomo.Constraint(
+        m.com_tuples,
+        rule=res_buy_total_rule,
+        doc='total buy commodity output <= commodity.max')
     m.res_env_step = pyomo.Constraint(
         m.tm, m.com_tuples,
         rule=res_env_step_rule,
@@ -419,6 +456,10 @@ def create_model(data, timesteps=None, dt=1):
         m.pro_tuples,
         rule=res_process_capacity_rule,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
+    m.res_sell_buy_symmetry = pyomo.Constraint(
+        m.pro_input_tuples,
+        rule=res_sell_buy_symmetry_rule,
+        doc='total power connection capacity must be symmetric in both directions')
 
     # transmission
     m.def_transmission_capacity = pyomo.Constraint(
@@ -526,6 +567,16 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     if com in m.com_stock:
         power_surplus += m.e_co_stock[tm, sit, com, com_type]
 
+   # if com is a sell commodity, the commodity source term e_co_sell
+    # can supply a possibly positive power_surplus
+    if com in m.com_sell:
+        power_surplus -= m.e_co_sell[tm, sit, com, com_type]
+
+   # if com is a buy commodity, the commodity source term e_co_buy
+    # can supply a possibly negative power_surplus
+    if com in m.com_buy:
+        power_surplus += m.e_co_buy[tm, sit, com, com_type]
+
     # if com is a demand commodity, the power_surplus is reduced by the
     # demand value; no scaling by m.dt or m.weight is needed here, as this
     # constraint is about power (MW), not energy (MWh)
@@ -534,7 +585,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
             power_surplus -= m.demand.loc[tm][sit, com]
         except KeyError:
             pass
-    return power_surplus >= 0
+    return power_surplus == 0
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -557,6 +608,52 @@ def res_stock_total_rule(m, sit, com, com_type):
         for tm in m.tm:
             total_consumption += (
                 m.e_co_stock[tm, sit, com, com_type] * m.dt)
+        total_consumption *= m.weight
+        return (total_consumption <=
+                m.commodity.loc[sit, com, com_type]['max'])
+
+# limit sell commodity use per time step
+def res_sell_step_rule(m, tm, sit, com, com_type):
+    if com not in m.com_sell:
+        return pyomo.Constraint.Skip
+    else:
+        return (m.e_co_sell[tm, sit, com, com_type] <=
+                m.commodity.loc[sit, com, com_type]['maxperstep'])
+
+# limit sell commodity use in total (scaled to annual consumption, thanks
+# to m.weight)
+def res_sell_total_rule(m, sit, com, com_type):
+    if com not in m.com_sell:
+        return pyomo.Constraint.Skip
+    else:
+        # calculate total sale of commodity com
+        total_consumption = 0
+        for tm in m.tm:
+            total_consumption += (
+                m.e_co_sell[tm, sit, com, com_type] * m.dt)
+        total_consumption *= m.weight
+        return (total_consumption <=
+                m.commodity.loc[sit, com, com_type]['max'])
+
+# limit buy commodity use per time step
+def res_buy_step_rule(m, tm, sit, com, com_type):
+    if com not in m.com_buy:
+        return pyomo.Constraint.Skip
+    else:
+        return (m.e_co_buy[tm, sit, com, com_type] <=
+                m.commodity.loc[sit, com, com_type]['maxperstep'])
+
+# limit buy commodity use in total (scaled to annual consumption, thanks
+# to m.weight)
+def res_buy_total_rule(m, sit, com, com_type):
+    if com not in m.com_buy:
+        return pyomo.Constraint.Skip
+    else:
+        # calculate total sale of commodity com
+        total_consumption = 0
+        for tm in m.tm:
+            total_consumption += (
+                m.e_co_buy[tm, sit, com, com_type] * m.dt)
         total_consumption *= m.weight
         return (total_consumption <=
                 m.commodity.loc[sit, com, com_type]['max'])
@@ -621,6 +718,29 @@ def res_process_capacity_rule(m, sit, pro):
     return (m.process.loc[sit, pro]['cap-lo'],
             m.cap_pro[sit, pro],
             m.process.loc[sit, pro]['cap-up'])
+
+# power connection capacity: Sell == Buy
+def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
+    # constraint only for sell and buy processes
+    # and the processes musst be in the same site
+    if coin in m.com_buy:
+        pro_output_tuples = list(m.pro_output_tuples.value)
+        pro_input_tuples = list(m.pro_input_tuples.value)
+        # search the output commodities for the "buy" process
+        # out = (site,output_commodity)
+        out = set([(x[0],x[2]) for x in pro_output_tuples if x[1] == pro_in])
+        # search the sell process for the output_commodity from the buy process
+        inp_p = ([x for x in pro_output_tuples if x[2] in m.com_sell])
+        for k in range(len(inp_p)):
+            pro_out = inp_p[k][1]
+            inp = set([(x[0],x[2]) for x in pro_input_tuples if x[1] == pro_out])
+            # check: buy - commodity == commodity - sell; for a site
+            if not(inp.isdisjoint(out)):
+                return (m.cap_pro[sit_in, pro_in] ==
+                                    m.cap_pro[sit_in, pro_out])
+        return pyomo.Constraint.Skip
+    else:
+        return pyomo.Constraint.Skip
 
 # transmission
 
@@ -786,6 +906,44 @@ def def_costs_rule(m, cost_type):
             for tm in m.tm for c in m.com_tuples
             if c[1] in m.com_stock)
 
+    elif cost_type == 'Revenue':
+        revenue = 0
+        sell_tuples = commodity_subset_list(m.com_tuples, m.com_sell)
+        for c in sell_tuples:
+            # check com price fix or timeseries
+            if not isinstance(m.commodity.loc[c]['price'], float):
+                # factor, to realize a different commodity price for each site
+                factor = extract_number_str(m.commodity.loc[c]['price'])
+                # calculate the purchase with the hourly commodity price
+                revenue += sum(m.e_co_sell[(tm,) + c] * factor *
+                    m.buy_sell_price.loc[(tm,) + (c[1],)] * m.weight * m.dt
+                    for tm in m.tm)
+            else:
+                # commodity price is the same in each hour
+                revenue += sum(m.e_co_sell[(tm,) + c] * m.dt *
+                m.commodity.loc[c]['price'] * m.weight
+                for tm in m.tm)
+        return m.costs['Revenue'] == -revenue
+
+    elif cost_type == 'Purchase':
+        purchase = 0
+        buy_tuples = commodity_subset_list(m.com_tuples, m.com_buy)
+        for c in buy_tuples:
+            # check com price fix or timeseries
+            if not isinstance(m.commodity.loc[c]['price'], float):
+                # factor, to realize a different commodity price for each site
+                factor = extract_number_str(m.commodity.loc[c]['price'])
+                # calculate the purchase with the hourly commodity price
+                purchase += sum(m.e_co_buy[(tm,) + c] * factor *
+                    m.buy_sell_price.loc[(tm,) + (c[1],)] * m.weight * m.dt
+                    for tm in m.tm)
+            else:
+                # commodity price is the same in each hour
+                purchase += sum(m.e_co_buy[(tm,) + c] * m.dt *
+                m.commodity.loc[c]['price'] * m.weight
+                for tm in m.tm)
+        return m.costs['Purchase'] == purchase
+
     else:
         raise NotImplementedError("Unknown cost type.")
 
@@ -938,6 +1096,38 @@ def commodity_subset(com_tuples, type_name):
     return set(com for sit, com, com_type in com_tuples 
                if com_type == type_name)
 
+def commodity_subset_list(com_tuples, type_list):
+    """ Unique list of commodity names for given list (type).
+
+    Args:
+        com_tuples: a list of (site, commodity, commodity type) tuples
+        type_list: list of a commodity type ('Buy')=>('Elec buy', 'Heat buy')
+
+    Returns:
+        The set (unique list of tuples) of tuples of the desired type
+    """
+    return set((sit, com, com_type) for sit, com, com_type in com_tuples
+               if com in type_list)
+
+def extract_number_str(str_in):
+    """ Extract the first number from a given string and
+         and convert to the float type
+
+    Args:
+        str_in: a string ('1,20BUY')
+
+    Returns:
+        A float number (1.20)
+    """
+    import re
+    # replace all commas with points
+    str_in = str_in.replace(',','.')
+    # find the first number and convert to float
+    factor_str = re.search('\d+[\.]?\d*',str_in)
+    if factor_str is None:
+        return 1
+    else:
+        return float(factor_str.group(0))
 
 def get_entity(instance, name):
     """ Return a DataFrame for an entity in model instance.
@@ -1430,10 +1620,26 @@ def plot(prob, com, sit, timesteps=None):
     ax0.set_ylabel('Power (MW)')
 
     # legend
+    # add "only" consumed commodities to the legend
+    lg_items = tuple(created.columns)
+    for item in consumed.columns:
+        # if item not in created add to legend, except items
+        # from consumed which are all-zeros
+        if item in created.columns or not consumed[item].any():
+            pass
+        else:
+            # add item/commodity is not consumed
+            commodity_color = to_color(item)
+            proxy_artists.append(mpl.patches.Rectangle(
+                (0, 0), 0, 0, facecolor=commodity_color))
+            lg_items = lg_items + (item,)
+
+    ncol_items=len(proxy_artists)
+
     lg = ax0.legend(proxy_artists,
-                    tuple(created.columns),
+                    lg_items,
                     frameon=False,
-                    ncol=created.shape[1],
+                    ncol=ncol_items,
                     loc='upper center',
                     bbox_to_anchor=(0.5, -0.01))
     plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
@@ -1506,43 +1712,6 @@ def plot(prob, com, sit, timesteps=None):
     return fig
 
 
-def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}):
-    """Create plot for each site and demand commodity and save to files.
-    
-    Args:
-        prob: urbs model instance
-        figure_basename: relative filename prefix that is shared
-        plot_title_prefix: (optional) plot title identifier
-        periods: (optional) dict of 'period name': timesteps_list items
-                 if omitted, one period 'all' with all timesteps is assumed
-    """
-    # default to all timesteps if no
-    if not periods:
-        periods = {'all': sorted(get_entity(prob, 'tm').index)}
-            
-    # create timeseries plot for each demand (site, commodity) timeseries
-    for sit, com in prob.demand.columns:
-        for period, timesteps in periods.items():
-            # do the plotting
-            fig = plot(prob, com, sit, timesteps=timesteps)
-
-            # change the figure title
-            ax0 = fig.get_axes()[0]
-            # if no custom title prefix is specified, use the figure 
-            if not plot_title_prefix:
-                plot_title_prefix = os.path.basename(figure_basename)
-            new_figure_title = ax0.get_title().replace(
-                'Energy balance of ', '{}: '.format(plot_title_prefix))
-            ax0.set_title(new_figure_title)
-            
-            # save plot to files
-            for ext in ['png', 'pdf']:
-                fig_filename = '{}-{}-{}-{}.{}'.format(
-                                    figure_basename, com, sit, period, ext)
-                fig.savefig(fig_filename, bbox_inches='tight')
-            plt.close(fig)
-
-
 def to_color(obj=None):
     """Assign a deterministic pseudo-random color to argument.
 
@@ -1592,7 +1761,7 @@ def save(prob, filename):
     except ImportError:
         import pickle
     with gzip.GzipFile(filename, 'wb') as file_handle:
-        pickle.dump(prob, file_handle, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(prob, file_handle)
 
 
 def load(filename):

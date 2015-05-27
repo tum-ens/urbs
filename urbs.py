@@ -1430,10 +1430,24 @@ def plot(prob, com, sit, timesteps=None):
     ax0.set_ylabel('Power (MW)')
 
     # legend
+    # add "only" consumed commodities to the legend
+    lg_items = tuple(created.columns)
+    for item in consumed.columns:
+        # if item not in created add to legend, except items
+        # from consumed which are all-zeros
+        if item in created.columns or not consumed[item].any():
+            pass
+        else:
+            # add item/commodity is not consumed
+            commodity_color = to_color(item)
+            proxy_artists.append(mpl.patches.Rectangle(
+                (0, 0), 0, 0, facecolor=commodity_color))
+            lg_items = lg_items + (item,)
+
     lg = ax0.legend(proxy_artists,
-                    tuple(created.columns),
+                    lg_items,
                     frameon=False,
-                    ncol=created.shape[1],
+                    ncol=len(proxy_artists),
                     loc='upper center',
                     bbox_to_anchor=(0.5, -0.01))
     plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),

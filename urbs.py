@@ -1522,7 +1522,7 @@ def plot(prob, com, sit, timesteps=None):
 
 def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}):
     """Create plot for each site and demand commodity and save to files.
-    
+
     Args:
         prob: urbs model instance
         figure_basename: relative filename prefix that is shared
@@ -1533,22 +1533,25 @@ def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}):
     # default to all timesteps if no
     if not periods:
         periods = {'all': sorted(get_entity(prob, 'tm').index)}
-            
+
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in prob.demand.columns:
         for period, timesteps in periods.items():
+            # if timesteps[0] is the init timestep =>  excluding  (storage isn't defined)
+            if prob.t.value[0] == periods[period][0]:
+                timesteps = timesteps[1:]
             # do the plotting
             fig = plot(prob, com, sit, timesteps=timesteps)
 
             # change the figure title
             ax0 = fig.get_axes()[0]
-            # if no custom title prefix is specified, use the figure 
+            # if no custom title prefix is specified, use the figure
             if not plot_title_prefix:
                 plot_title_prefix = os.path.basename(figure_basename)
             new_figure_title = ax0.get_title().replace(
                 'Energy balance of ', '{}: '.format(plot_title_prefix))
             ax0.set_title(new_figure_title)
-            
+
             # save plot to files
             for ext in ['png', 'pdf']:
                 fig_filename = '{}-{}-{}-{}.{}'.format(

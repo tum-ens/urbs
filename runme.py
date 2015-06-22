@@ -1,7 +1,7 @@
-import coopr.environ
+import pyomo.environ
 import os
 import urbs
-from coopr.opt.base import SolverFactory
+from pyomo.opt.base import SolverFactory
 from datetime import datetime
 
 

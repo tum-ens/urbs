@@ -45,7 +45,7 @@ def scenario_all_together(data):
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder """
     # timestamp for result directory
-    now = datetime.now().strftime('%Y%m%dT%H%M%S')
+    now = datetime.now().strftime('%Y%m%dT%H%M')
 
     # create result directory if not existent
     result_dir = os.path.join('result', '{}-{}'.format(result_name, now))
@@ -98,7 +98,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
 
     # refresh time stamp string and create filename for logfile
     now = prob.created
-    log_filename = os.path.join(result_dir, '{}-{}.log').format(sce, now)
+    log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
@@ -109,17 +109,17 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     # write report to spreadsheet
     urbs.report(
         prob,
-        os.path.join(result_dir, '{}-{}.xlsx').format(sce, now),
+        os.path.join(result_dir, '{}.xlsx').format(sce),
         prob.com_demand, prob.sit)
 
     # store optimisation problem for later re-analysis
     urbs.save(
         prob,
-        os.path.join(result_dir, '{}-{}.pgz').format(sce, now))
+        os.path.join(result_dir, '{}.pgz').format(sce))
 
     urbs.result_figures(
         prob, 
-        os.path.join(result_dir, '{}-{}'.format(sce,now)),
+        os.path.join(result_dir, '{}'.format(sce)),
         plot_title_prefix=sce.replace('_', ' ').title(),
         periods=plot_periods)
     return prob
@@ -156,7 +156,6 @@ if __name__ == '__main__':
         scenario_co2_limit,
         scenario_north_process_caps,
         scenario_all_together]
-    #scenarios = scenarios[:1]  # select by slicing
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, 

@@ -133,7 +133,7 @@ def create_model(data, timesteps=None, dt=1):
     """
     m = pyomo.ConcreteModel()    
     m.name = 'URBS'
-    m.created = datetime.now().strftime('%Y%m%dT%H%M%S')
+    m.created = datetime.now().strftime('%Y%m%dT%H%M')
     
     # Optional
     if not timesteps:
@@ -202,7 +202,7 @@ def create_model(data, timesteps=None, dt=1):
     # tranmission (e.g. hvac, hvdc, pipeline...)
     m.tra = pyomo.Set(
         initialize=m.transmission.index.get_level_values('Transmission').unique(),
-        doc='Set of tranmission technologies')
+        doc='Set of transmission technologies')
 
     # storage (e.g. hydrogen, pump storage)
     m.sto = pyomo.Set(
@@ -369,7 +369,7 @@ def create_model(data, timesteps=None, dt=1):
         doc='Energy content of storage (MWh) in timestep')
 
     # Equation declarations
-    # equation bodies are defined in separate functions, refered to here by 
+    # equation bodies are defined in separate functions, referred to here by 
     # their name in the "rule" keyword.
     
     # commodity

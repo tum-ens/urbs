@@ -1587,7 +1587,7 @@ def report(instance, filename, commodities=None, sites=None):
                     timeseries[(co, sit)].to_excel(writer, sheet_name)
 
 
-def plot(prob, com, sit, timesteps=None):
+def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     """Plot a stacked timeseries of commodity balance and storage.
 
     Creates a stackplot of the energy balance of a given commodity, together
@@ -1598,6 +1598,8 @@ def plot(prob, com, sit, timesteps=None):
         com: commodity name to plot
         sit: site name to plot
         timesteps: optional list of  timesteps to plot; default: prob.tm
+        power_unit: optional string for unit; default: 'MW'
+        energy_unit: optional string for storage plot; default: 'MWh'
 
     Returns:
         fig: figure handle
@@ -1663,7 +1665,7 @@ def plot(prob, com, sit, timesteps=None):
 
     # label
     ax0.set_title('Energy balance of {} in {}'.format(com, sit))
-    ax0.set_ylabel('Power (MW)')
+    ax0.set_ylabel('Power ({})'.format(power_unit))
 
     # legend
     # add "only" consumed commodities to the legend
@@ -1715,7 +1717,7 @@ def plot(prob, com, sit, timesteps=None):
 
     # labels & y-limits
     ax1.set_xlabel('Time in year (h)')
-    ax1.set_ylabel('Energy (MWh)')
+    ax1.set_ylabel('Energy ({})'.format(energy_unit))
     try:
         ax1.set_ylim((0, csto.loc[sit, :, com]['C Total'].sum()))
     except KeyError:
@@ -1756,7 +1758,7 @@ def plot(prob, com, sit, timesteps=None):
     return fig
 
 
-def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}):
+def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}, **kwds):
     """Create plot for each site and demand commodity and save to files.
     
     Args:
@@ -1765,6 +1767,7 @@ def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}):
         plot_title_prefix: (optional) plot title identifier
         periods: (optional) dict of 'period name': timesteps_list items
                  if omitted, one period 'all' with all timesteps is assumed
+        **kwds: (optional) keyword arguments are forwarded to urbs.plot()
     """
     # default to all timesteps if no
     if not periods:
@@ -1774,7 +1777,7 @@ def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}):
     for sit, com in prob.demand.columns:
         for period, timesteps in periods.items():
             # do the plotting
-            fig = plot(prob, com, sit, timesteps=timesteps)
+            fig = plot(prob, com, sit, timesteps=timesteps, **kwds)
 
             # change the figure title
             ax0 = fig.get_axes()[0]

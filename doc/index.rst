@@ -8,7 +8,9 @@
 urbs: A linear optimisation model for distributed energy systems
 ================================================================
 
-:Author: Johannes Dorfner, <johannes.dorfner@tum.de>
+:Maintainer: Johannes Dorfner, <johannes.dorfner@tum.de>
+:Organization: `Institute for Renewable and Sustainable Energy Systems`_,
+               Technische Universität München
 :Version: |version|
 :Date: |today|
 :Copyright:
@@ -63,7 +65,7 @@ Changes
 * Persistence functions `load` and `save`, based on pickle, allow saving
   and retrieving input data and problem instances including results, for later
   re-plotting or re-analysis without having to solve them again.
-* Documenation: `workflow`_ tutorial added with example "Newsealand"
+* Documenation: :doc:`workflow` tutorial added with example "Newsealand"
 
 2014-12-05 Version 0.3
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -109,6 +111,7 @@ Dependencies
 
    
 .. _coopr: https://software.sandia.gov/trac/coopr
+.. _Institute for Renewable and Sustainable Energy Systems: http://www.ens.ei.tum.de/
 .. _matplotlib: http://matplotlib.org
 .. _pandas: https://pandas.pydata.org
 .. _pyomo: https://software.sandia.gov/trac/coopr/wiki/Pyomo

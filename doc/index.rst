@@ -55,8 +55,18 @@ Features
 Changes
 -------
 
-Changes from version 0.2 to 0.3
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2015-07-29 Version 0.4
+^^^^^^^^^^^^^^^^^^^^^^
+
+* Additional commodity types `Buy` and `Sell`, which support time-dependent 
+  prices.
+* Persistence functions `load` and `save`, based on pickle, allow saving
+  and retrieving input data and problem instances including results, for later
+  re-plotting or re-analysis without having to solve them again.
+* Documenation: `workflow`_ tutorial added with example "Newsealand"
+
+2014-12-05 Version 0.3
+^^^^^^^^^^^^^^^^^^^^^^
 
 * Processes now support multiple inputs and multiple output commodities.
 * As a consequence :func:`plot` now plots commodity balance by processes, not 

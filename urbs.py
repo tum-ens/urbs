@@ -16,6 +16,7 @@ import pandas as pd
 from datetime import datetime
 from operator import itemgetter
 from random import random
+from xlrd import XLRDError
 
 COLORS = {
     'Biomass plant': (0, 122, 55),

@@ -1719,7 +1719,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     ax1.set_xlabel('Time in year (h)')
     ax1.set_ylabel('Energy ({})'.format(energy_unit))
     try:
-        ax1.set_ylim((0, csto.loc[sit, :, com]['C Total'].sum()))
+        ax1.set_ylim((0, 0.5 + csto.loc[sit, :, com]['C Total'].sum()))
     except KeyError:
         pass
 

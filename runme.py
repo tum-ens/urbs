@@ -102,7 +102,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('glpk') # cplex, glpk, gurobi, ...
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
     prob.load(result)
@@ -111,8 +111,6 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     cdir = os.getcwd()
     respath = os.path.join(cdir, result_dir)
     shutil.copy(input_file,respath)
-    #cdir = os.getcwd()
-    #shutil.copyfile(str(input_file), str(cdir)+'\\result_dir')
 	
 	# write report to spreadsheet
     urbs.report(

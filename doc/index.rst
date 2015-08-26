@@ -39,6 +39,7 @@ More technical documents deal with the internal workings:
    
    report
    api
+   mathdoc
 
 
 Features

@@ -15,7 +15,7 @@ understanding the main concepts of the model. Many objects are represented by va
 therefore sets can be easily used to check whether some object has a specific characteristic or not.
 Additionally sets are useful to define a hierarchy of objects. 
 Mathematical notation of sets are expressed with uppercase letters, and their members are usually expressed with the same
-lowercase letters. Main sets, subsets, and tuple sets will be introduced in this respective order.
+lowercase letters. Main sets, tuple sets and subsets will be introduced in this respective order.
 
 .. table:: *Table: Model Sets*
 	
@@ -26,11 +26,11 @@ lowercase letters. Main sets, subsets, and tuple sets will be introduced in this
 	:math:`t \in T_\text{m}` Modelled Timesteps
 	:math:`v \in V`          Sites
 	:math:`c \in C`          Commodities
-	.                        Commodity Types
+	:math:`q \in Q`          Commodity Types
 	:math:`p \in P`          Processes
 	:math:`s \in S`          Storages
 	:math:`f \in F`          Transmissions
-	.                        Cost Types
+	:math:`r \in R`          Cost Types
 	======================== =====================
 
 Time Steps
@@ -190,3 +190,123 @@ In script ``urbs.py`` this set is defined as ``cost_type`` and initalized by the
         initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase'],
         doc='Set of cost types (hard-coded)')
 		
+
+Tuple Sets
+==========
+
+A tuple is finite, ordered collection of elements.For example, the tuple ``(hat,red,large)`` consists of 3 ordered elements 
+and defines another element itself.
+Tuples are needed in this model to define the combinations of elements from different sets.
+Defining a tuple lets us assemble related elements and use them as a single element.
+As a result a collection of by the same rule defined tuples, represents a tuple set.
+
+Commodity Tuples
+^^^^^^^^^^^^^^^^
+
+Commodity tuples represents combinations of defined commodities.
+These are represented by the set :math:`C_{vq}`.
+A member :math:`c_{vq}` in set :math:`C_{vq}` is a commodity :math:`c` of commodity type :math:`q` in site :math:`v`.
+For example, `(Mid, Elec, Demand)` is interpreted as commodity `Elec` of commodity type `Demand` in site `Mid`.
+This set is defined as ``com_tuples`` and given by the code fragment:
+
+::
+
+    m.com_tuples = pyomo.Set(
+        within=m.sit*m.com*m.com_type,
+        initialize=m.commodity.index,
+        doc='Combinations of defined commodities, e.g. (Mid,Elec,Demand)')
+		
+
+Process Tuples
+^^^^^^^^^^^^^^
+
+Process Tuples represents combinations of possible processes.
+These are represented by the set :math:`P_v`.
+A member :math:`p_v` in set :math:`P_v` is a process :math:`p` in site :math:`v`.
+For example, `(North, Coal Plant)` is interpreted as process `Coal Plant` in site `North`.
+This set is defined as ``pro_tuples`` and given by the code fragment:
+
+::
+
+    m.pro_tuples = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=m.process.index,
+        doc='Combinations of possible processes, e.g. (North,Coal plant)')
+		
+
+Transmission Tuples
+^^^^^^^^^^^^^^^^^^^
+
+Transmission tuples represents combinations of possible transmissions.
+These are represented by the set :math:`F_{c{v_\text{out}}{v_\text{in}}}`.
+A member :math:`f_{c{v_\text{out}}{v_\text{in}}}` in set :math:`F_{c{v_\text{out}}{v_\text{in}}}` is a transmission :math:`f`,that is directed from an origin site :math:`v_\text{out}` to a destination site :math:`v_{in}` and carries a commodity :math:`c`.
+The term "\ `directed from an origin site` :math:`v_\text{out}` `to a destination site` :math:`v_\text{in}`" can also be defined as an Arc :math:`a` .
+For example, `(South, Mid, hvac, Elec)` is interpreted as transmission `hvac` that is directed from origin site `South` to destination site `Mid` carrying commodity `Elec`.
+This set is defined as ``tra_tuples`` and given by the code fragment:
+
+::
+
+    m.tra_tuples = pyomo.Set(
+        within=m.sit*m.sit*m.tra*m.com,
+        initialize=m.transmission.index,
+        doc='Combinations of possible transmission, e.g. (South,Mid,hvac,Elec)')
+		
+
+Additionally, Subsets :math:`F_{vc}^\text{exp}` and :math:`F_{vc}^\text{imp}` represents all exporting and importing transmissions of a commodity :math:`c` in a site :math:`v`.
+These subsets can be obtained by fixing either the origin site(for export):math:`v_\text{out}` or the destination site(for import):math:`v_\text{in}` to a desired site :math:`v` in tuple set :math:`F_{c{v_\text{out}}{v_\text{in}}}`.
+
+Storage Tuples
+^^^^^^^^^^^^^^
+Storage tuples represents combinations of possible storages by site.
+These are represented by the set :math:`S_{vc}`.
+A member :math:`s_{vc}` in set :math:`S_{vc}` is a storage :math:`s` of commodity :math:`c` in site :math:`v`
+For example, `(Mid, Bat, Elec)` is interpreted as storage `Bat` of commodity `Elec` in site `Mid`.
+This set is defined as ``sto_tuples`` and given by the code fragment:
+
+::
+
+    m.sto_tuples = pyomo.Set(
+        within=m.sit*m.sto*m.com,
+        initialize=m.storage.index,
+        doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
+		
+
+Process Input Tuples
+^^^^^^^^^^^^^^^^^^^^
+Process input tuples represents commodities consumed by processes.
+These are represented by the set :math:`C_{vp}^\text{in}`.
+A member :math:`c_{vp}^\text{in}` in set :math:`C_{vp}^\text{in}` is a commodity :math:`c` consumed by the process :math:`p` in site :math:`v`.
+For example, `(Mid,PV,Solar)` is interpreted as commodity `Solar` is consumed by the process `PV` in the site `Mid`. 
+This set is defined as ``pro_input_tuples`` and given by the code fragment:
+
+::
+
+    m.pro_input_tuples = pyomo.Set(
+        within=m.sit*m.pro*m.com,
+        initialize=[(site, process, commodity)
+                    for (site, process) in m.pro_tuples
+                    for (pro, commodity) in m.r_in.index
+                    if process == pro],
+        doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')
+
+Where; ``r_in`` represents the process input ratio.
+
+Process Output Tuples
+^^^^^^^^^^^^^^^^^^^^^
+Process output tuples represents commodities generated by processes.
+These are represented by the set :math:`C_{vp}^\text{out}`.
+A member :math:`c_{vp}^\text{out}` in set :math:`C_{vp}^\text{out}` is a commodity :math:`c` generated by the process :math:`p` in site :math:`v`.
+For example, `(Mid,PV,Elec)` is interpreted as the commodity `Elec` is generated by the process `PV` in the site `Mid`. 
+This set is defined as ``pro_output_tuples`` and given by the code fragment:
+
+::
+
+    m.pro_output_tuples = pyomo.Set(
+        within=m.sit*m.pro*m.com,
+        initialize=[(site, process, commodity)
+                    for (site, process) in m.pro_tuples
+                    for (pro, commodity) in m.r_out.index
+                    if process == pro],
+        doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
+		
+Where; ``r_out`` represents the process output ratio.

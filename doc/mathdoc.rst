@@ -1,3 +1,5 @@
+.. module:: urbs
+
 Mathematical Documentation
 **************************
 
@@ -42,8 +44,8 @@ The set of **time steps** :math:`T = \{t_0,\dots,t_N\}` for :math:`N` in :math:`
 represents Time. This set contains :math:`N+1` sequential time steps with equal spaces.
 Each time step represents another point in time. At the initialisation of the model this set
 is fixed by the user by setting the variable ``timesteps`` in script ``runme.py``.
-Duration of space between timesteps :math:`\Delta t = t_{x+1} - t_x`, length of simulation :math:`\Delta t \cdot N`,
-time interval :math:`[t_0,t_N]` and  can be fixed to satisfy the needs of the user.
+Duration of space between timesteps :math:`\Delta t = t_{x+1} - t_x`, length of simulation :math:`\Delta t \cdot N` and
+time interval :math:`[t_0,t_N]` can be fixed to satisfy the needs of the user.
 In code this set is defined by the set ``t`` and initialized by the section:
 
 ::
@@ -181,7 +183,8 @@ One of the major goals of the model is to calculate the costs of a simulated ene
 There are 6 different types of costs. Each one has different features and are defined for
 different instances. Set of **cost types** is hardcoded, which means they are not considered to be
 fixed or changed  by the user.
-These types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``.
+The Set :math:`R` defines the Cost Types, each member :math:`r` of this set :math:`R` represents a unique cost type name.
+The cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``.
 In script ``urbs.py`` this set is defined as ``cost_type`` and initalized by the code fragment:
 
 ::
@@ -321,15 +324,15 @@ Since there are 6 types of commodity types, there are also 6 commodity type subs
 
 	**Supply Intermittent Commodities** (``SupIm``): The set :math:`C_\text{sup}` represents all commodities :math:`c` of commodity type ``SupIm``. Commodities of this type have intermittent timeseries, in other words, availability of these commodities are not constant. These commodities might have various energy content for every timestep :math:`t`. For example solar radiation is contingent on many factors such as sun position, weather and varies permanently.
 
-	**Stock Commodities** (``Stock``): The set :math:`C_\text{st}` represents all commodities :math:`c` of commodity type ``Stock``. Commodities of this type can be purchased at any time for a given price.
+	**Stock Commodities** (``Stock``): The set :math:`C_\text{st}` represents all commodities :math:`c` of commodity type ``Stock``. Commodities of this type can be purchased at any time for a given price( :math:`k_{vc}^\text{fuel}`).
 
-	**Sell Commodities** (``Sell``): The set :math:`C_\text{sell}` represents all commodities :math:`c` of commodity type ``Sell``. Commodities that can be sold.
+	**Sell Commodities** (``Sell``): The set :math:`C_\text{sell}` represents all commodities :math:`c` of commodity type ``Sell``. Commodities that can be sold. These Commodities have a sell price ( :math:`k_{vct}^\text{bs}` ) that may vary with the given timestep :math:`t`.
 
-	**Buy Commodities** (``Buy``): The set :math:`C_\text{buy}` represents all commodities :math:`c` of commodity type ``Buy``. Commodities that can be purchased.
+	**Buy Commodities** (``Buy``): The set :math:`C_\text{buy}` represents all commodities :math:`c` of commodity type ``Buy``. Commodities that can be purchased. These Commodities have a buy price ( :math:`k_{vc}^\text{bs}` ) that may vary with the given timestep :math:`t`.
 
 	**Demand Commodities** (``Demand``): The set :math:`C_\text{dem}` represents all commodities :math:`c` of commodity type ``Demand``. Commodities of this type are the requested commodities of the energy system. They are usually the end product of the model (e.g Electricity:Elec).
 
-	**Environmental Commodities** (``Env``): The set :math:`C_\text{env}` represents all commodities :math:`c` of commodity type ``Env``. Commodities of this type are usually the byproducts of processes, an optional maximum creation limit can be set to control the generation of these commodities (e.g Greenhouse Gas Emissions: :math:`\text{CO}_2`).
+	**Environmental Commodities** (``Env``): The set :math:`C_\text{env}` represents all commodities :math:`c` of commodity type ``Env``. Commodities of this type are usually the undesired byproducts of processes that might be harmful for environment, optional maximum creation limits can be set to control the generation of these commodities (e.g Greenhouse Gas Emissions: :math:`\text{CO}_2`).
 
 Commodity Type Subsets are given by the code fragment:
 ::
@@ -359,16 +362,103 @@ Commodity Type Subsets are given by the code fragment:
         initialize=commodity_subset(m.com_tuples, 'Env'),
         doc='Commodities that (might) have a maximum creation limit')
 
+where;
+
+.. function:: commodity_subset(com_tuples, type_name)
+
+  Returns the commodity names(:math:`c`) of the given commodity type(:math:`q`).
+
+  :param com_tuples: A list of tuples (site, commodity, commodity type)
+  :param type_name: A commodity type or a list of commodity types
+
+  :return: The set (unique elements/list) of commodity names of the desired commodity type.
 
 Variables
 =========
+All the variables that the optimization model requires to calculate an optimal
+solution will be listed and defined in this section.
+A variable is a numerical value that is determined during optimization.
+Variables can denote a single, independent value, or an array of
+values. Variables define the search space for optimization.
+Variables of this optimization model can be seperated into sections by their area of use.
+These Sections are Cost, Commodity, Process, Transmission and Storage.
 
-A variable is a numerical value that is determined during optimization. Variables can denote a single, independent value, or an array of
-values. Variables define the search space for optimization. 
+.. table:: *Table: Model Variables*
 
+	+------------------------------------+------+----------------------------------+
+	| Variable                           | Unit | Description                      |
+	+====================================+======+==================================+
+	| Cost  Variables                                                              |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta`                      | €/a  | Total System Cost                |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta_\text{inv}`           | €/a  | Investment Costs                 |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta_\text{fix}`           | €/a  | Fix Costs                        |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta_\text{var}`           | €/a  | Variable Costs                   |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta_\text{fuel}`          | €/a  | Fuel Costs                       |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta_\text{rev}`           | €/a  | Revenue Costs                    |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                   |
+	+------------------------------------+------+----------------------------------+
+	| Commodity Variables                                                          |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\varrho_{vct}`              | kW   | Sell Commodity Source Term       |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\psi_{vct}`                 | kW   | Buy Commodity Source Term        |
+	+------------------------------------+------+----------------------------------+
+	| Process Variables                                                            |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\kappa_{vp}`                | MW   | Total Process Capacity           |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\hat{\kappa}_{vp}`          | MW   | New Process Capacity             |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\tau_{vpt}`                 | MW   | Process Throughput               |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\epsilon_{vcpt}^\text{in}`  | MW   | Process Input Commodity Flow     |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
+	+------------------------------------+------+----------------------------------+
+	| Transmission Variables                                                       |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\kappa_{af}`                | MW   | Total transmission Capacity      |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\hat{\kappa}_{af}`          | MW   | New Transmission Capacity        |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\pi_{aft}^\text{in}`        | MW   | Transmission Power Flow (Input)  |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\pi_{aft}^\text{out}`       | MW   | Transmission Power Flow (Output) |
+	+------------------------------------+------+----------------------------------+
+	| Storage Variables                                                            |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\kappa_{vs}^\text{c}`       | MW   | Total Storage Size               |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\hat{\kappa}_{vs}^\text{c}` | MW   | New Storage Size                 |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\kappa_{vs}^\text{p}`       | MWh  | Total Storage Power              |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\hat{\kappa}_{vs}^\text{p}` | MWh  | New Storage Power                |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\epsilon_{vst}^\text{in}`   | MWh  | Storage Power Flow (Input)       |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\epsilon_{vst}^\text{out}`  | MWh  | Storage Power Flow (Output)      |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\epsilon_{vst}^\text{con}`  | MW   | Storage Energy Content           |
+	+------------------------------------+------+----------------------------------+
+
+
+	
 Cost Variables
 ^^^^^^^^^^^^^^
-**Total System Cost**, :math:`\zeta`, ``costs`` :
+**Total System Cost**, :math:`\zeta` : the variable :math:`\zeta` represents
+the *annual total expense incurred* in reaching the satisfaction of the given energy demand.
+This is calculated by the sum total of all costs by type(:math:`\zeta_r`,  :math:`\forall r \in R`) and defined as  ``costs`` by the following code fragment:
+
 ::
 
     m.costs = pyomo.Var(
@@ -376,42 +466,55 @@ Cost Variables
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
 
-Total System costs by type:
+More information on calculation of this variable is available at the `Cost Function`_ section.
 
-	Investment Costs :math:`\zeta_\text{inv}` :
-	
-	Fix Costs :math:`\zeta_\text{fix}` :
-	
-	Variable Costs :math:`\zeta_\text{var}` :
-	
-	Fuel Costs :math:`\zeta_\text{fuel}` :
-	
-	Revenue Costs :math:`\zeta_\text{rev}` :
-	
-	Purchase Costs :math:`\zeta_\text{pur}` :
+Total System costs by type: System costs are divided into 6 cost types by their meaning and purpose.
+The seperaton of costs by type, facilitates business planning and provides calculation accuracy
+As mentioned before these cost types are hardcoded, which means they are not considered to be fixed or changed by the user.
+These cost types are as following;
 
+	**Investment Costs** :math:`\zeta_\text{inv}` : The variable :math:`\zeta_\text{inv}` represents the annualised total investment costs.
+		Costs for required new investments on storage, process and transmission technologies.
+	
+	**Fix Costs** :math:`\zeta_\text{fix}` : The variable :math:`\zeta_\text{fix}` represents the annualised total fix costs.
+		Fix costs for all used storage, process, and transmission technologies. Such as maintenance costs.
+		
+	**Variable Costs** :math:`\zeta_\text{var}` : The variable :math:`\zeta_\text{var}` represents the annualised total fix costs.
+		Variable costs that are reliant on the usage amount and period of the storage, process, transmission technologies.
+		
+	**Fuel Costs** :math:`\zeta_\text{fuel}` : The variable :math:`\zeta_\text{fuel}` represents the annualised total fuel costs.
+		Fuel costs are dependent on the usage of stock commodities( :math:`\forall c \in C_\text{stock}`).
+		
+	**Revenue Costs** :math:`\zeta_\text{rev}` : The variable :math:`\zeta_\text{rev}` represents the annualised total revenue costs.
+		Revenue costs is defined for the costs that occures by selling the sell commodities( :math:`\forall c \in C_\text{sell}`).
+		Since this variable is an income for the system, it is either zero or has a negative value.
+		
+	**Purchase Costs** :math:`\zeta_\text{pur}` : The variable :math:`\zeta_\text{pur}` represents the annualised total purchase costs.
+		Purchase costs is defined for the costs that occures by buying the buy commodities ( :math:`\forall c \in C_\text{buy}` ).
+		
+	For more information on calculation of these variables see `Cost Function`_ section.
 
 Commodity Variables
 ^^^^^^^^^^^^^^^^^^^
 
-**Stock Commodity Source Term**, :math:`\rho_{vct}`, ``e_co_stock``:
-::
+**Stock Commodity Source Term**, :math:`\rho_{vct}`, ``e_co_stock``, MW : The variable :math:`\rho_{vct}` represents the energy amount in [MW] that is being used by the system of commodity :math:`c` from type stock (:math:`\forall c \in C_\text{stock}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+In script ``urbs.py`` this variable is defined by the variable ``e_co_stock`` and initialized by the following code fragment: ::
 
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
         doc='Use of stock commodity source (MW) per timestep')
 
-**Sell Commodity Source Term**, :math:`\varrho_{vct}`, ``e_co_sell``:
-::
+**Sell Commodity Source Term**, :math:`\varrho_{vct}`, ``e_co_sell``, kW : The variable :math:`\varrho_{vct}` represents the energy amount in [kW] that is being used by the system of commodity :math:`c` from type sell (:math:`\forall c \in C_\text{sell}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+In script ``urbs.py`` this variable is defined by the variable ``e_co_sell`` and initialized by the following code fragment: ::
 
     m.e_co_sell = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
         doc='Use of sell commodity source (kW) per timestep')
 
-**Buy Commodity Source Term**, :math:`\psi_{vct}`, ``e_co_buy``:
-::
+**Buy Commodity Source Term**, :math:`\psi_{vct}`, ``e_co_buy``, kW : The variable :math:`\psi_{vct}` represents the energy amount in [kW] that is being used by the system of commodity :math:`c` from type buy (:math:`\forall c \in C_\text{buy}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+In script ``urbs.py`` this variable is defined by the variable ``e_co_buy`` and initialized by the following code fragment: ::
 
     m.e_co_buy = pyomo.Var(
        m.tm, m.com_tuples,
@@ -421,32 +524,34 @@ Commodity Variables
 Process Variables
 ^^^^^^^^^^^^^^^^^
 
-**Total Process Capacity**, :math:`\kappa_{vp}`, ``cap_pro``:
-::
+**Total Process Capacity**, :math:`\kappa_{vp}`, ``cap_pro``: The variable :math:`\kappa_{vp}` represents the total potential power output (capacity) of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`), that is required in the energy system. The total process capacity includes both the already installed process capacity and the additional new process capacity that needs to be installed. This variable facilitates defining some specifications of the process technologies. Since the costs of the process technologies are mostly directly proportional to the power output of processes, this variable acts as a scale factor of process technologies and helps us to calculate a more accurate cost plan. For further information see Process Capacity Rule.
+This variable is expressed in the unit MW 
+In script ``urbs.py`` this variable is defined by the model variable ``cap_pro`` and initialized by the following code fragment: ::
 
     m.cap_pro = pyomo.Var(
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='Total process capacity (MW)')
 
-**New Process Capacity**, :math:`\hat{\kappa}_{vp}`, ``cap_pro_new``:
-::
+**New Process Capacity**, :math:`\hat{\kappa}_{vp}`, ``cap_pro_new``: The variable :math:`\hat{\kappa}_{vp}` represents the power output capacity of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) that needs to be installed additionally to the energy system in order to  provide the optimal solution.
+This variable is expressed in the unit MW.
+In script ``urbs.py`` this variable is defined by the model variable ``cap_pro_new`` and initialized by the following code fragment: ::
 
     m.cap_pro_new = pyomo.Var(
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
 
-**Process Throughput**, :math:`\tau_{vpt}`, ``tau_pro`` :
-::
+**Process Throughput**, :math:`\tau_{vpt}`, ``tau_pro`` : The variable :math:`\tau_{vpt}` represents the power flow through a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). This variable is expressed in the unit MW. 
+In script ``urbs.py`` this variable is defined by the model variable ``tau_pro`` and initialized by the following code fragment: ::
 
     m.tau_pro = pyomo.Var(
         m.tm, m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow (MW) through process')
 
-**Process Input Commodity Flow**, :math:`\epsilon_{vcpt}^\text{in}`, ``e_pro_in``:
-::
+**Process Input Commodity Flow**, :math:`\epsilon_{vcpt}^\text{in}`, ``e_pro_in``: The variable :math:`\epsilon_{vcpt}^\text{in}` represents the power flow input into a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) caused by an input commodity :math:`c` (:math:`\forall c \in C`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). This variable is expressed in the unit MW.
+In script ``urbs.py`` this variable is defined by the model variable ``e_pro_in`` and initialized by the following code fragment: ::
 
     m.e_pro_in = pyomo.Var(
         m.tm, m.pro_tuples, m.com,
@@ -454,8 +559,8 @@ Process Variables
         doc='Power flow of commodity into process (MW) per timestep')
 
 
-**Process Output Commodity Flow**, :math:`\epsilon_{vcpt}^\text{out}`, ``e_pro_out``:
-::
+**Process Output Commodity Flow**, :math:`\epsilon_{vcpt}^\text{out}`, ``e_pro_out``: The variable :math:`\epsilon_{vcpt}^\text{out}` represents the power flow output out of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) caused by an output commodity :math:`c` (:math:`\forall c \in C`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). This variable is expressed in the unit MW.
+In script ``urbs.py`` this variable is defined by the model variable ``e_pro_out`` and initialized by the following code fragment: ::
 
     m.e_pro_out = pyomo.Var(
         m.tm, m.pro_tuples, m.com,
@@ -465,32 +570,30 @@ Process Variables
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Total Transmission Capacity**, :math:`\kappa_{af}`, ``cap_tra``:
-::
+**Total Transmission Capacity**, :math:`\kappa_{af}`, ``cap_tra``: The variable :math:`\kappa_{af}` represents the total potential transfer power of a transmission tuple :math:`f_{ca}`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The total transmission capacity includes both the already installed transmission capacity and the additional new transmission capacity that needs to be installed. This variable is expressed in the unit MW.
+In script ``urbs.py`` this variable is defined by the model variable ``cap_tra`` and initialized by the following code fragment: ::
 
     m.cap_tra = pyomo.Var(
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Total transmission capacity (MW)')
 
-**New Transmission Capacity**, :math:`\hat{\kappa}_{af}`, ``cap_tra_new``:
-::
+**New Transmission Capacity**, :math:`\hat{\kappa}_{af}`, ``cap_tra_new``: The variable :math:`\hat{\kappa}_{af}` represents the additional capacity, that needs to be installed, of a transmission tuple :math:`f_{ca}`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable is expressed in the unit MW.
+In script ``urbs.py`` this variable is defined by the model variable ``cap_tra_new`` and initialized by the following code fragment: ::
 
     m.cap_tra_new = pyomo.Var(
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
 
-**Transmission Power Flow (Input)**, :math:`\pi_{aft}^\text{in}`, ``e_tra_in``:
-::
+**Transmission Power Flow (Input)**, :math:`\pi_{aft}^\text{in}`, ``e_tra_in``: The variable :math:`\pi_{aft}^\text{in}` represents the power flow input into a transmission tuple :math:`f_{ca}` at a timestep :math:`t`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_tra_in`` and initialized by the following code fragment: ::
 
     m.e_tra_in = pyomo.Var(
         m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow into transmission line (MW) per timestep')
 
-**Transmission Power Flow (Output)**, :math:`\pi_{aft}^\text{out}`, ``e_tra_out``:
-::
+**Transmission Power Flow (Output)**, :math:`\pi_{aft}^\text{out}`, ``e_tra_out``: The variable :math:`\pi_{aft}^\text{out}` represents the power flow output out of a transmission tuple :math:`f_{ca}` at a timestep :math:`t`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_tra_out`` and initialized by the following code fragment: ::
 
     m.e_tra_out = pyomo.Var(
         m.tm, m.tra_tuples,
@@ -500,23 +603,23 @@ Transmission Variables
 Storage Variables
 ^^^^^^^^^^^^^^^^^
 
-**Total Storage Size**, :math:`\kappa_{vs}^\text{c}`, ``cap_sto_c``:
-::
+**Total Storage Size**, :math:`\kappa_{vs}^\text{c}`, ``cap_sto_c``: The variable :math:`\kappa_{vs}^\text{c}` represents the total load capacity of a storage tuple :math:`s_{vc}`. The total storage load capacity includes both the already installed storage load capacity and the additional new storage load capacity that needs to be installed. This variable is expressed in unit MWh. In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_c`` and initialized by the following code fragment: ::
 
     m.cap_sto_c = pyomo.Var(
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='Total storage size (MWh)')
 
-**New Storage Size**, :math:`\hat{\kappa}_{vs}^\text{c}`, ``cap_sto_c_new``:
-::
+**New Storage Size**, :math:`\hat{\kappa}_{vs}^\text{c}`, ``cap_sto_c_new``: The variable :math:`\hat{\kappa}_{vs}^\text{c}` represents the additional storage load capacity of a storage tuple :math:`s_{vc}` that needs to be installed to the energy system in order to provide the optimal solution.
+This variable is expressed in the unit MWh.
+In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_c_new`` and initialized by the following code fragment: ::
 
     m.cap_sto_c_new = pyomo.Var(
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='New storage size (MWh)')
 
-**Total Storage Power**, :math:`\kappa_{vs}^\text{p}`, ``cap_sto_p``:
+**Total Storage Power**, :math:`\kappa_{vs}^\text{p}`, ``cap_sto_p``: The variable :math:`\kappa_{vs}^\text{p}` represents the total potential discharge power of a storage tuple :math:`s_{vc}`. The total storage power includes both the already installed storage power and the additional new storage power that needs to be installed. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_p`` and initialized by the following code fragment:
 ::
 
     m.cap_sto_p = pyomo.Var(
@@ -524,7 +627,9 @@ Storage Variables
         within=pyomo.NonNegativeReals,
         doc='Total storage power (MW)')
 
-**New Storage Power**, :math:`\hat{\kappa}_{vs}^\text{p}`, ``cap_sto_p_new``:
+**New Storage Power**, :math:`\hat{\kappa}_{vs}^\text{p}`, ``cap_sto_p_new``: The variable :math:`\hat{\kappa}_{vs}^\text{p}` represents the additional potential discharge power of a storage tuple :math:`s_{vc}` that needs to be installed to the energy system in order to provide the optimal solution.
+This variable is expressed in the unit MW.
+In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_p_new`` and initialized by the following code fragment:
 ::
 
     m.cap_sto_p_new = pyomo.Var(
@@ -532,7 +637,7 @@ Storage Variables
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
 
-**Storage Power Flow (Input)**, :math:`\epsilon_{vst}^\text{in}`, ``e_sto_in``:
+**Storage Power Flow (Input)**, :math:`\epsilon_{vst}^\text{in}`, ``e_sto_in``: The variable :math:`\epsilon_{vst}^\text{in}` represents the input power flow into a storage tuple :math:`s_{vc}` at a timestep :math:`t`. Input power flow into a storage tuple can also be defined as the charge of a storage tuple. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_in`` and initialized by the following code fragment:
 ::
 
     m.e_sto_in = pyomo.Var(
@@ -540,7 +645,7 @@ Storage Variables
         within=pyomo.NonNegativeReals,
         doc='Power flow into storage (MW) per timestep')
 
-**Storage Power Flow (Output)**, :math:`\epsilon_{vst}^\text{out}`, ``e_sto_out``:
+**Storage Power Flow (Output)**, :math:`\epsilon_{vst}^\text{out}`, ``e_sto_out``:  The variable :math:`\epsilon_{vst}^\text{out}` represents the output power flow out of a storage tuple :math:`s_{vc}` at a timestep :math:`t`. Output power flow out of a storage tuple can also be defined as the discharge of a storage tuple. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_out`` and initialized by the following code fragment:
 ::
 
     m.e_sto_out = pyomo.Var(
@@ -548,7 +653,7 @@ Storage Variables
         within=pyomo.NonNegativeReals,
         doc='Power flow out of storage (MW) per timestep')
 
-**Storage Energy Content**, :math:`\epsilon_{vst}^\text{con}`, ``e_sto_con``:
+**Storage Energy Content**, :math:`\epsilon_{vst}^\text{con}`, ``e_sto_con``: The variable :math:`\epsilon_{vst}^\text{con}` represents the energy amount that is loaded in a storage tuple :math:`s_{vc}` at a timestep :math:`t`. This variable is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_out`` and initialized by the following code fragment:
 ::
 
     m.e_sto_con = pyomo.Var(
@@ -558,13 +663,15 @@ Storage Variables
 
 Parameters
 ==========
+All the parameters that the optimization model requires to calculate an optimal solution will be listed and defined in this section.
+A parameter is a data, that is provided by the user before the optimization simulation starts. These parameters are the values that define the specifications of the modelled energy system. Parameters of this optimization model can be seperated into two main parts, these are Technical and Economical Parameters. 
 
 Technical Parameters
 ^^^^^^^^^^^^^^^^^^^^
 
 General Technical Parameters
 ----------------------------
-**Weight**, :math:`w`, ``weight``:
+**Weight**, :math:`w`, ``weight``: The variable :math:`w` helps to scale variable costs and emissions from the length of simulation, that the energy system model is being observed, to an annual result. This variable represents the rate of a year (8760 hours) to the observed time span. The observed time span is calculated by the product of number of time steps of the set :math:`T` and the time step duration. In script ``urbs.py`` this variable is defined by the model variable ``weight`` and initialized by the following code fragment:
 ::
 
     m.weight = pyomo.Param(
@@ -572,7 +679,7 @@ General Technical Parameters
         doc='Pre-factor for variable costs and emissions for an annual result')
 		
 
-**Timestep Duration**, :math:`\Delta t`, ``dt``:
+**Timestep Duration**, :math:`\Delta t`, ``dt``: The variable :math:`\Delta t` represents the duration between two sequential timesteps :math:`t_x` and :math:`t_{x+1}`. This is calculated by the subtraction of smaller one from the bigger of the two sequential timesteps :math:`\Delta t = t_{x+1} - t_x`. This variable is the unit of time for the optimization model This variable is expressed in the unit h and by default the value is set to ``1``. In script ``urbs.py`` this variable is defined by the model variable ``dt`` and initialized by the following code fragment:
 ::
 
     m.dt = pyomo.Param(
@@ -583,72 +690,76 @@ General Technical Parameters
 Commodity Technical Parameters
 ------------------------------
 
-**Demand for Commodity**, :math:`d_{vct}`, ``m.demand.loc[tm][sit,com]``:
+**Demand for Commodity**, :math:`d_{vct}`, ``m.demand.loc[tm][sit,com]``: The parameter represents the energy amount of a demand commodity tuple :math:`c_{vq}` required at a timestep :math:`t` (:math:`\forall v \in V, q = "Demand", \forall t \in T_m`). The unit of this parameter is MW. This data is to be provided by the user and to be entered in the spreadsheet. The related section for this parameter in the spreadsheet can be found under the "Demand" sheet. Here each row represents another timestep :math:`t` and each column represent a commodity tuple :math:`c_{vq}`. Rows are named after the timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the combination of site name :math:`v` and commodity name :math:`c` respecting the order and seperated by a period(.). For example (Mid, Elec) represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted in column declarations, because every commodity of this parameter has to be from commodity type `Demand` in any case.
 
-**Intermittent Supply Capacity Factor**, :math:`s_{vct}`, ``m.supim.loc[tm][sit,com]``:
+**Intermittent Supply Capacity Factor**, :math:`s_{vct}`, ``m.supim.loc[tm][sit,com]``: The parameter :math:`s_{vct}` represents the normalized availability of an supply intermittent commodity :math:`c` :math:`(\forall c \in C_\text{sup})` in a site :math:`v` at a timestep :math:`t`. In other words this parameter gives the ratio of current available energy amount to maximum potential energy amount of a supply intermittent commodity. This data is to be provided by the user and to be entered in the spreadsheet. The related section for this parameter in the spreadsheet can be found under the "SupIm" sheet. Here each row represents another timestep :math:`t` and each column represent a commodity tuple :math:`c_{vq}`. Rows are named after the timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the combination of site name :math:`v` and commodity name :math:`c`, in this respective order and seperated by a period(.). For example (Mid.Elec) represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted in column declarations, because every commodity of this parameter has to be from commodity type `SupIm` in any case.
 
-**Maximum Stock Supply Limit Per Time Step**, :math:`\overline{l}_{vc}`, ``m.commodity.loc[sit,com,com_type]['maxperstep']``:
+**Maximum Stock Supply Limit Per Time Step**, :math:`\overline{l}_{vc}`, ``m.commodity.loc[sit,com,com_type]['maxperstep']``: The parameter :math:`\overline{l}_{vc}` represents the maximum energy amount of a stock commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Stock"`)  that energy model is allowed to use per time step. The unit of this parameter is MW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet.  Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of stock commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{l}_{vc}`. If there is no desired restriction of a stock commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-**Maximum Annual Stock Supply Limit Per Vertex**, :math:`\overline{L}_{vc}`, ``m.commodity.loc[sit,com,com_type]['max']``:
+**Maximum Annual Stock Supply Limit Per Vertex**, :math:`\overline{L}_{vc}`, ``m.commodity.loc[sit,com,com_type]['max']``: The parameter :math:`\overline{L}_{vc}` represents the maximum energy amount of a stock commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Stock"`) that energy model is allowed to use annually. The unit of this parameter is MW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of stock commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{L}_{vc}`. If there is no desired restriction of a stock commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
 
-**Maximum Environmental Output Per Time Step**, :math:`\overline{m}_{vc}`, ``m.commodity.loc[sit,com,com_type]['maxperstep']``:
+**Maximum Environmental Output Per Time Step**, :math:`\overline{m}_{vc}`, ``m.commodity.loc[sit,com,com_type]['maxperstep']``: The parameter :math:`\overline{m}_{vc}` represents the maximum energy amount of an environmental commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Env"`)  that energy model is allowed to produce and release to environment per time step. The unit of this parameter is MW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of enviromental commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{m}_{vc}`. If there is no desired restriction of an enviromental commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-**Maximum Annual Environmental Output**, :math:`\overline{M}_{vc}`, ``m.commodity.loc[sit,com,com_type]['max']``:
+**Maximum Annual Environmental Output**, :math:`\overline{M}_{vc}`, ``m.commodity.loc[sit,com,com_type]['max']``: The parameter :math:`\overline{M}_{vc}` represents the maximum energy amount of an environmental commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Env"`) that energy model is allowed to produce and release to environment annually. The unit of this parameter is MW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of an environmental commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{M}_{vc}`. If there is no desired restriction of a stock commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-**Maximum Sell Limit Per Time Step**, :math:`\overline{g}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``:
+**Maximum Sell Limit Per Time Step**, :math:`\overline{g}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``: The parameter :math:`\overline{g}_{vc}` represents the maximum energy amount of a sell commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Sell"`)  that energy model is allowed to sell per time step. The unit of this parameter is kW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of sell commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{g}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-**Maximum Annual Sell Limit**, :math:`\overline{G}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``:
+**Maximum Annual Sell Limit**, :math:`\overline{G}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``: The parameter :math:`\overline{G}_{vc}` represents the maximum energy amount of a sell commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Sell"`) that energy model is allowed to sell annually. The unit of this parameter is kW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of sell commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{G}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
 
-**Maximum Buy Limit Per Time Step**, :math:`\overline{b}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``:
+**Maximum Buy Limit Per Time Step**, :math:`\overline{b}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``: The parameter :math:`\overline{b}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy per time step. The unit of this parameter is kW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of buy commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{b}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-**Maximum Annual Buy Limit**, :math:`\overline{B}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``:
 
-**Maximum Global Annual CO**:math:`_\text{2}` **Emission Limit**, :math:`\overline{L}_{CO_2}`, ``m.hack.loc['Global CO2 Limit','Value']``:
+**Maximum Annual Buy Limit**, :math:`\overline{B}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``: The parameter :math:`\overline{B}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy annually. The unit of this parameter is kW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of buy commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{B}_{vc}`. If there is no desired restriction of a buy commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
+
+**Maximum Global Annual CO**:math:`_\textbf{2}` **Emission Limit**, :math:`\overline{L}_{CO_2}`, ``m.hack.loc['Global CO2 Limit','Value']``: The parameter :math:`\overline{L}_{CO_2}` represents the maximum total energy amount of all environmental commodities that energy model is allowed to produce and release to environment annually. The unit of this parameter is MW. This parameter is optional. If the user desires to set a maximum annual limit to total :math:`CO_2` emission of the whole energy model, this can be done by entering the desired value to the related spreadsheet. The related section for this parameter can be found under the sheet "hacks". Here the the cell where the "Global CO2 limit" row and "value" column intersects stands for the parameter :math:`\overline{L}_{CO_2}`. If the user wants to disable this parameter and restriction it provides, this cell can be set to "inf" or simply be deleted. 
 
 Process Technical Parameters
 ----------------------------
 
-**Process Capacity Lower Bound**, :math:`\underline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-lo']``:
+**Process Capacity Lower Bound**, :math:`\underline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-lo]``: The parameter :math:`\underline{K}_{vp}` represents the minimum amount of power output capacity of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the fourth column with the header label "cap-lo" represents the parameters :math:`\underline{K}_{vp}` belonging to the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired minimum limit for the process capacities, this parameter can be simply set to "0", to ignore this parameter. 
 
-**Process Capacity Installed**, :math:`K_{vp}`, ``m.process.loc[sit,pro]['inst-cap']``:
+**Process Capacity Installed**, :math:`K_{vp}`, ``m.process.loc[sit,pro]['inst-cap']``: The parameter :math:`K_{vp}` represents the amount of power output capacity of a process :math:`p` in a site :math:`v`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the third column with the header label "inst-cap" represents the parameters :math:`K_{vp}` belonging to the corresponding process :math:`p` and site :math:`v` combinations.
 
-**Process Capacity Upper Bound**, :math:`\overline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-up']``:
+**Process Capacity Upper Bound**, :math:`\overline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-up']``: The parameter :math:`\overline{K}_{vp}` represents the maximum amount of power output capacity of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the fifth column with the header label "cap-up" represents the parameters :math:`\underline{K}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired maximum limit for the process capacities, this parameter can be simply set to an unrealistic high value, to ignore this parameter.
 
-**Process Input Ratio**, :math:`r_{pc}^\text{in}`, ``m.r_in.loc[pro,co]``:
+**Process Input Ratio**, :math:`r_{pc}^\text{in}`, ``m.r_in.loc[pro,co]``: The parameter :math:`r_{pc}^\text{in}` represents the normalized ratio of the amount of a commodity :math:`c` that goes into a process :math:`p` as an input commodity. The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
 
-**Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out.loc[pro,co]``:
+**Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out.loc[pro,co]``: The parameter :math:`r_{pc}^\text{out}` represents the normlized ratio of the amount of a commodity :math:`c`, that comes out of a process :math:`p` as an output commodity.  The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
+
+
+Basically these ratios shows how much of which commodity is consumed and generated by a process :math:`p` in a site :math:`v`.
 
 Storage Technical Parameters
 ----------------------------
 
-**Initial and Final Storage Content (relative)**, :math:`I_{vs}`, ``m.storage.loc[sit,sto,com]['init']``:
+**Initial and Final Storage Content (relative)**, :math:`I_{vs}`, ``m.storage.loc[sit,sto,com]['init']``: The parameter :math:`I_{vs}` represents the initial load factor of a storage :math:`s` in a site :math:`v`. This parameter shows as a percentage, how much of a storage is loaded at the beginning of the simulation. The same value should be preserved at the end of the simulation, to make sure that the optimization model doesn't consume the whole storage content at once and leave it empty at the end, otherwise this would disrupt the continuity of the optimization. The value of this parameter is expressed as a normalized percentage, where "1" represents a fully loaded storage and "0" represents an empty storage. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The twentieth column with the header label "init" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
-**Storage Efficiency During Charge**, :math:`e_{vs}^\text{in}`, ``m.storage.loc[sit,sto,com]['eff-in']``:
+**Storage Efficiency During Charge**, :math:`e_{vs}^\text{in}`, ``m.storage.loc[sit,sto,com]['eff-in']``: The parameter :math:`e_{vs}^\text{in}` represents the charge efficiency of a storage :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The charge efficiency shows, how much of a desired energy and accordingly power can be succesfully stored into a storage. The value of this parameter is expressed as a normalized percentage, where "1" represents a charge with no power or energy loss and "0" represents that storage technology consumes whole enery during charge. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The tenth column with the header label "eff-in" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
-**Storage Efficiency During Discharge**, :math:`e_{vs}^\text{out}`, ``m.storage.loc[sit,sto,com]['eff-out']``:
+**Storage Efficiency During Discharge**, :math:`e_{vs}^\text{out}`, ``m.storage.loc[sit,sto,com]['eff-out']``:  The parameter :math:`e_{vs}^\text{out}` represents the discharge efficiency of a storage :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The discharge efficiency shows, how much of a desired energy and accordingly power can be succesfully retrieved out of a storage.  The value of this parameter is expressed as a normalized efipercentage, where "1" represents a discharge with no power or energy loss and "0" represents that storage technology consumes whole enery during discharge. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The eleventh column with the header label "eff-out" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
-**Storage Content Lower Bound**, :math:`\underline{K}_{vs}^\text{c}`, ``m.storage.loc[sit,sto,com]['cap-lo-c']``:
+**Storage Content Lower Bound**, :math:`\underline{K}_{vs}^\text{c}`, ``m.storage.loc[sit,sto,com]['cap-lo-c']``: The parameter :math:`\underline{K}_{vs}^\text{c}` represents the minimum amount of energy content capacity allowed of a storage :math:`s` storing a commodity :math:`c` in a site :math:`v`, that the energy system model is allowed to have. The unit of this parameter is MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The fifth column with the header label "cap-lo-c" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.  If there is no desired minimum limit for the storage energy content capacities, this parameter can be simply set to "0", to ignore this parameter. 
 
-**Storage Content Installed**, :math:`K_{vs}^\text{c}`, ``m.storage.loc[sit,sto,com]['inst-cap-c']``:
+**Storage Content Installed**, :math:`K_{vs}^\text{c}`, ``m.storage.loc[sit,sto,com]['inst-cap-c']``: The parameter :math:`K_{vs}^\text{c}` represents the amount of energy content capacity of a storage :math:`s` storing commodity :math:`c` in a site :math:`v`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The fourth column with the header label "inst-cap-c" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
-**Storage Content Upper Bound**, :math:`\overline{K}_{vs}^\text{c}`, ``m.storage.loc[sit,sto,com]['cap-up-c']``:
+**Storage Content Upper Bound**, :math:`\overline{K}_{vs}^\text{c}`, ``m.storage.loc[sit,sto,com]['cap-up-c']``: The parameter :math:`\overline{K}_{vs}^\text{c}` represents the maximum amount of energy content capacity allowed of a storage :math:`s` storing a commodity :math:`c` in a site :math:`v`, that the energy system model is allowed to have.  The unit of this parameter is MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The sixth column with the header label "cap-up-c" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations. If there is no desired maximum limit for the storage energy content capacitites, this parameter can be simply set to ""inf"" or an unrealistic high value, to ignore this parameter.
 
-**Storage Power Lower Bound**, :math:`\underline{K}_{vs}^\text{p}`, ``m.storage.loc[sit,sto,com]['cap-lo-p']``:
+**Storage Power Lower Bound**, :math:`\underline{K}_{vs}^\text{p}`, ``m.storage.loc[sit,sto,com]['cap-lo-p']``: The parameter :math:`\underline{K}_{vs}^\text{p}` represents the minimum amount of power output capacity of a storage :math:`s` storing commodity :math:`c` in a site :math:`v`, that energy system model is allowed to have. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The eighth column with the header label "cap-lo-p" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.  If there is no desired minimum limit for the storage energy content capacities, this parameter can be simply set to "0", to ignore this parameter. 
 
-**Storage Power Installed**, :math:`K_{vs}^\text{p}`, ``m.storage.loc[sit,sto,com]['inst-cap-p']``:
+**Storage Power Installed**, :math:`K_{vs}^\text{p}`, ``m.storage.loc[sit,sto,com]['inst-cap-p']``:  The parameter :math:`K_{vs}^\text{c}` represents the amount of power output capacity of a storage :math:`s` storing commodity :math:`c` in a site :math:`v`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The seventh column with the header label "inst-cap-p" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
-**Storage Power Upper Bound**, :math:`\overline{K}_{vs}^\text{p}`, ``m.storage.loc[sit,sto,com]['cap-up-p']``:
+**Storage Power Upper Bound**, :math:`\overline{K}_{vs}^\text{p}`, ``m.storage.loc[sit,sto,com]['cap-up-p']``: The parameter :math:`\overline{K}_{vs}^\text{p}` represents the maximum amount of power output capacity allowed of a storage :math:`s` storing a commodity :math:`c` in a site :math:`v`, that the energy system model is allowed to have.  The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The sixth column with the header label "cap-up-p" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations. If there is no desired maximum limit for the storage energy content capacitites, this parameter can be simply set to ""inf"" or an unrealistic high value, to ignore this parameter.
 
 Transmission Technical Parameters
 ---------------------------------
 
-**Transmission Efficiency**, :math:`e_{af}`, ``m.transmission.loc[sin,sout,tra,com]['eff']``:
+**Transmission Efficiency**, :math:`e_{af}`, ``m.transmission.loc[sin,sout,tra,com]['eff']``: The parameter :math:`e_{af}` represents the energy efficiency of a transmission :math:`f` that transfers a commodity :math:`c` through arc :math:`a`. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The ratio of the output energy amount to input energy amount, gives the energy efficiency of a transmission process. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The fifth column with the header label "eff" represents the parameters :math:`e_{af}` of the corresponding combinations.
 
-**Tranmission Capacity Lower Bound**, :math:`\underline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-lo']``:
+**Tranmission Capacity Lower Bound**, :math:`\underline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-lo']``: The parameter :math:`\underline{K}_{af}` represents the minimum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "cap-lo" represents the parameters :math:`e_{af}` of the corresponding combinations. 
 
-**Tranmission Capacity Installed**, :math:`K_{af}`, ``m.transmission.loc[sin,sout,tra,com]['inst-cap']``:
+**Tranmission Capacity Installed**, :math:`K_{af}`, ``m.transmission.loc[sin,sout,tra,com]['inst-cap']``: The parameter :math:`K_{af}` represents the amount of power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "inst-cap" represents the parameters :math:`e_{af}` of the corresponding combinations.
 
-**Tranmission Capacity Upper Bound**, :math:`\overline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-up']``:
+**Tranmission Capacity Upper Bound**, :math:`\overline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-up']``: The parameter :math:`\overline{K}_{af}` represents the maximum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "cap-up" represents the parameters :math:`e_{af}` of the corresponding combinations. 
 
 Economical Parameters
 ^^^^^^^^^^^^^^^^^^^^^
@@ -656,9 +767,19 @@ Economical Parameters
 Commodity Economical Parameters
 -------------------------------
 
-**Stock Commodity Fuel Costs**, :math:`k_{vc}^\text{fuel}`, ``m.commodity.loc[c]['price']``:
+**Stock Commodity Fuel Costs**, :math:`k_{vc}^\text{fuel}`, ``m.commodity.loc[c]['price']``: The parameter :math:`k_{vc}^\text{fuel}` represents the purchase cost for purchasing one unit(1 MWh) of a stock commodity :math:`c` (:math:`\forall c \in C_\text{stock}`) in a site :math:`v` (:math:`\forall v \in V`) . The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of stock commodity tuples (:math:`\forall q = "Stock"`) in this sheet with the header label "price" represents the corresponding parameter :math:`k_{vc}^\text{fuel}`.
 
-**Buy/Sell Commodity Buy/Sell Costs**, :math:`k_{vc}^\text{bs}`, ``com_prices[c].loc[tm]``:
+**Buy/Sell Commodity Buy/Sell Costs**, :math:`k_{vct}^\text{bs}`, ``com_prices[c].loc[tm]``: The parameter :math:`k_{vct}^\text{bs}` represents the purchase/buy cost for purchasing/selling one unit(1 MWh) of a buy/sell commodity :math:`c` (:math:`\forall c \in C_\text{buy}`)/(:math:`\forall c \in C_\text{sell}`) in a site :math:`v` (:math:`\forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_m`). The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of buy/sell commodity tuples (:math:`\forall q = "Buy"`)/(:math:`\forall q = "Sell"`) in this sheet with the header label "price" represents how the parameter :math:`k_{vct}^\text{bs}` will be defined. There are two options for this parameter. This parameter will either be a fix value for the whole simulation duration or will vary with the timesteps :math:`t`. For the first option, if the buy/sell price of a buy/sell commodity is a fix value for the whole simulation duration, this value can be entered directly into the corresponding cell with the unit €/MWh. For the second option, if the buy/sell price of a buy/sell commodity depends on time, accordingly on timesteps, a string(a linear sequence of characters, words, or other data) should be written in the corresponding cell. An example string looks like this: "1,25xBuy" where the first numbers (1,25) represent a coefficient for the price. This value is than multiplied by values from another list given with timeseries. Here the word "Buy" refers to a timeseries located in ""Buy-Sell-Price"" sheet with commodity names,types and timesteps. This timeseries should be filled with time dependent buy/sell price variables. The parameter :math:`k_{vct}^\text{bs}` is than calculated by the product of the price coefficient and the related time variable for a given timestep :math:`t`. This calculation and the decision for one of the two options is executed by the helper function :func:`get_com_price`.
+
+.. function:: get_com_price(instance, tuples)
+
+  :param str instance: a Pyomo ConcreteModel instance
+  :param list tuples: a list of (site, commodity, commodity type) tuples
+  
+  :return: a Pandas DataFrame with entities as columns and timesteps as index
+  
+  Calculate commodity prices for each modelled timestep.
+  Checks if the input is a float, if it is a float than gets the input value as a fix value for commodity price, otherwise if the input value is not a float, but a string, extracts the price coefficient from the string and  multiplies it with a timeseries of commodity price variables.
 
 Process Economical Parameters
 -----------------------------
@@ -823,7 +944,7 @@ Revenue Costs
 .. math::
 
 	\zeta_\text{rev} = 
-	-w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{sell}}} \varrho_{vct} k_{vc}^\text{bs} \Delta t
+	-w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{sell}}} \varrho_{vct} k_{vct}^\text{bs} \Delta t
 
 ::
 
@@ -842,7 +963,7 @@ Purchase Costs
 .. math::
 
 	\zeta_\text{rev} = 
-	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{buy}}} \psi_{vct} k_{vc}^\text{bs} \Delta t
+	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{buy}}} \psi_{vct} k_{vct}^\text{bs} \Delta t
 
 ::
 
@@ -902,7 +1023,7 @@ Commodity Constraints
 
 .. math::
 
-	\qquad & \forall v\in V, c\in C^\text{v}, t\in T\colon \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \qquad \rho_{vct} - \mathrm{CB}(v,c,t) - d_{vct} &\geq 0 &&
+	\forall v\in V, c\in C^\text{v}, t\in T\colon \qquad & \qquad \rho_{vct} - \mathrm{CB}(v,c,t) - d_{vct} &\geq 0 &&
 
 ::
 
@@ -958,7 +1079,7 @@ Commodity Constraints
 
 .. math::
 
-	\forall v\in V, c\in C_\text{st}, t\in T\colon \qquad & \rho_{vct} &\leq \overline{l}_{vc}
+	\forall v\in V, c\in C_\text{st}, t\in T\colon \qquad & \qquad \rho_{vct} &\leq \overline{l}_{vc}
 
 ::
 

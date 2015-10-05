@@ -388,7 +388,7 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| Variable                           | Unit | Description                      |
 	+====================================+======+==================================+
-	| Cost  Variables                                                              |
+	| **Cost  Variables**                                                          |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\zeta`                      | €/a  | Total System Cost                |
 	+------------------------------------+------+----------------------------------+
@@ -404,7 +404,7 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                   |
 	+------------------------------------+------+----------------------------------+
-	| Commodity Variables                                                          |
+	| **Commodity Variables**                                                      |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
 	+------------------------------------+------+----------------------------------+
@@ -412,7 +412,7 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\psi_{vct}`                 | kW   | Buy Commodity Source Term        |
 	+------------------------------------+------+----------------------------------+
-	| Process Variables                                                            |
+	| **Process Variables**                                                        |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\kappa_{vp}`                | MW   | Total Process Capacity           |
 	+------------------------------------+------+----------------------------------+
@@ -424,7 +424,7 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
 	+------------------------------------+------+----------------------------------+
-	| Transmission Variables                                                       |
+	| **Transmission Variables**                                                   |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\kappa_{af}`                | MW   | Total transmission Capacity      |
 	+------------------------------------+------+----------------------------------+
@@ -434,7 +434,7 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\pi_{aft}^\text{out}`       | MW   | Transmission Power Flow (Output) |
 	+------------------------------------+------+----------------------------------+
-	| Storage Variables                                                            |
+	| **Storage Variables**                                                        |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\kappa_{vs}^\text{c}`       | MW   | Total Storage Size               |
 	+------------------------------------+------+----------------------------------+
@@ -524,7 +524,7 @@ In script ``urbs.py`` this variable is defined by the variable ``e_co_buy`` and 
 Process Variables
 ^^^^^^^^^^^^^^^^^
 
-**Total Process Capacity**, :math:`\kappa_{vp}`, ``cap_pro``: The variable :math:`\kappa_{vp}` represents the total potential power output (capacity) of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`), that is required in the energy system. The total process capacity includes both the already installed process capacity and the additional new process capacity that needs to be installed. This variable facilitates defining some specifications of the process technologies. Since the costs of the process technologies are mostly directly proportional to the power output of processes, this variable acts as a scale factor of process technologies and helps us to calculate a more accurate cost plan. For further information see Process Capacity Rule.
+**Total Process Capacity**, :math:`\kappa_{vp}`, ``cap_pro``: The variable :math:`\kappa_{vp}` represents the total potential power output (capacity) of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`), that is required in the energy system. The total process capacity includes both the already installed process capacity and the additional new process capacity that needs to be installed. Since the costs of the process technologies are mostly directly proportional to the power output of processes, this variable acts as a scale factor of process technologies and helps us to calculate a more accurate cost plan. For further information see Process Capacity Rule.
 This variable is expressed in the unit MW 
 In script ``urbs.py`` this variable is defined by the model variable ``cap_pro`` and initialized by the following code fragment: ::
 
@@ -669,6 +669,84 @@ A parameter is a data, that is provided by the user before the optimization simu
 Technical Parameters
 ^^^^^^^^^^^^^^^^^^^^
 
+.. table:: *Table: Technical Model Parameters*
+
+	+-----------------------------------+----+--------------------------------------------+
+	|Parameter                          |Unit|Description                                 |
+	+===================================+====+============================================+
+	|**General Technical Parameters**                                                     |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`w`                          | _  |Weight                                      |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\Delta t`                   |h   |Timestep Duration                           |
+	+-----------------------------------+----+--------------------------------------------+
+	|**Commodity Technical Parameters**                                                   |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`d_{vct}`                    |MW  |Demand for Commodity                        |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`s_{vct}`                    |MW  |Intermittent Supply Capacity Factor         |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{l}_{vc}`          |MW  |Maximum Stock Supply Limit Per Time Step    |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{L}_{vc}`          |MW  |Maximum Annual Stock Supply Limit Per Vertex|
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{m}_{vc}`          |MW  |Maximum Environmental Output Per Time Step  |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{M}_{vc}`          |MW  |Maximum Annual Environmental Output         |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{g}_{vc}`          |MW  |Maximum Sell Limit Per Time Step            |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{G}_{vc}`          |MW  |Maximum Annual Sell Limit                   |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{b}_{vc}`          |MW  |Maximum Buy Limit Per Time Step             |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{B}_{vc}`          |MW  |Maximum Annual Buy Limit                    |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{L}_{CO_2}`        |MW  |Maximum Global Annual CO2 Emission Limit    |
+	+-----------------------------------+----+--------------------------------------------+
+	|**Process Technical Parameters**                                                     |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{vp}`         |MW  |Process Capacity Lower Bound                |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`K_{vp}`                     |MW  |Process Capacity Installed                  |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vp}`          |MW  |Process Capacity Upper Bound                |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`r_{pc}^\text{in}`           | _  |Process Input Ratio                         |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`r_{pc}^\text{out}`          | _  |Process Output Ratio                        |
+	+-----------------------------------+----+--------------------------------------------+
+	|**Storage Technical Parameters**                                                     |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`I_{vs}`                     |1   |Initial and Final Storage Content(relative) |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`e_{vs}^\text{in}`           | _  |Storage Efficiency During Charge            |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`e_{vs}^\text{out}`          | _  |Storage Efficiency During Discharge         |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{vs}^\text{c}`|MWh |Storage Content Lower Bound                 |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`K_{vs}^\text{c}`            |MWh |Storage Content Installed                   |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vs}^\text{c}` |MWh |Storage Content Upper Bound                 |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{vs}^\text{p}`|MW  |Storage Power Lower Bound                   |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`K_{vs}^\text{p}`            |MW  |Storage Power Installed                     |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vs}^\text{p}` |MW  |Storage Power Upper Bound                   |
+	+-----------------------------------+----+--------------------------------------------+
+	|**Transmission Technical Parameters**                                                |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`e_{af}`                     | _  |Transmission Efficiency                     |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{af}`         |MW  |Tranmission Capacity Lower Bound            |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`K_{af}`                     |MW  |Tranmission Capacity Installed              |
+	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{af}`          |MW  |Tranmission Capacity Upper Bound            |
+	+-----------------------------------+----+--------------------------------------------+
+
 General Technical Parameters
 ----------------------------
 **Weight**, :math:`w`, ``weight``: The variable :math:`w` helps to scale variable costs and emissions from the length of simulation, that the energy system model is being observed, to an annual result. This variable represents the rate of a year (8760 hours) to the observed time span. The observed time span is calculated by the product of number of time steps of the set :math:`T` and the time step duration. In script ``urbs.py`` this variable is defined by the model variable ``weight`` and initialized by the following code fragment:
@@ -702,14 +780,14 @@ Commodity Technical Parameters
 
 **Maximum Annual Environmental Output**, :math:`\overline{M}_{vc}`, ``m.commodity.loc[sit,com,com_type]['max']``: The parameter :math:`\overline{M}_{vc}` represents the maximum energy amount of an environmental commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Env"`) that energy model is allowed to produce and release to environment annually. The unit of this parameter is MW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of an environmental commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{M}_{vc}`. If there is no desired restriction of a stock commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-**Maximum Sell Limit Per Time Step**, :math:`\overline{g}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``: The parameter :math:`\overline{g}_{vc}` represents the maximum energy amount of a sell commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Sell"`)  that energy model is allowed to sell per time step. The unit of this parameter is kW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of sell commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{g}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
+**Maximum Sell Limit Per Time Step**, :math:`\overline{g}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``: The parameter :math:`\overline{g}_{vc}` represents the maximum energy amount of a sell commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Sell"`)  that energy model is allowed to sell per time step. The unit of this parameter is MW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of sell commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{g}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-**Maximum Annual Sell Limit**, :math:`\overline{G}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``: The parameter :math:`\overline{G}_{vc}` represents the maximum energy amount of a sell commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Sell"`) that energy model is allowed to sell annually. The unit of this parameter is kW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of sell commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{G}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
+**Maximum Annual Sell Limit**, :math:`\overline{G}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``: The parameter :math:`\overline{G}_{vc}` represents the maximum energy amount of a sell commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Sell"`) that energy model is allowed to sell annually. The unit of this parameter is MW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of sell commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{G}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
 
-**Maximum Buy Limit Per Time Step**, :math:`\overline{b}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``: The parameter :math:`\overline{b}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy per time step. The unit of this parameter is kW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of buy commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{b}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
+**Maximum Buy Limit Per Time Step**, :math:`\overline{b}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``: The parameter :math:`\overline{b}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy per time step. The unit of this parameter is MW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of buy commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{b}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
 
-**Maximum Annual Buy Limit**, :math:`\overline{B}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``: The parameter :math:`\overline{B}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy annually. The unit of this parameter is kW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of buy commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{B}_{vc}`. If there is no desired restriction of a buy commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
+**Maximum Annual Buy Limit**, :math:`\overline{B}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``: The parameter :math:`\overline{B}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy annually. The unit of this parameter is MW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of buy commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{B}_{vc}`. If there is no desired restriction of a buy commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
 
 **Maximum Global Annual CO**:math:`_\textbf{2}` **Emission Limit**, :math:`\overline{L}_{CO_2}`, ``m.hack.loc['Global CO2 Limit','Value']``: The parameter :math:`\overline{L}_{CO_2}` represents the maximum total energy amount of all environmental commodities that energy model is allowed to produce and release to environment annually. The unit of this parameter is MW. This parameter is optional. If the user desires to set a maximum annual limit to total :math:`CO_2` emission of the whole energy model, this can be done by entering the desired value to the related spreadsheet. The related section for this parameter can be found under the sheet "hacks". Here the the cell where the "Global CO2 limit" row and "value" column intersects stands for the parameter :math:`\overline{L}_{CO_2}`. If the user wants to disable this parameter and restriction it provides, this cell can be set to "inf" or simply be deleted. 
 
@@ -753,7 +831,7 @@ Storage Technical Parameters
 Transmission Technical Parameters
 ---------------------------------
 
-**Transmission Efficiency**, :math:`e_{af}`, ``m.transmission.loc[sin,sout,tra,com]['eff']``: The parameter :math:`e_{af}` represents the energy efficiency of a transmission :math:`f` that transfers a commodity :math:`c` through arc :math:`a`. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The ratio of the output energy amount to input energy amount, gives the energy efficiency of a transmission process. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The fifth column with the header label "eff" represents the parameters :math:`e_{af}` of the corresponding combinations.
+**Transmission Efficiency**, :math:`e_{af}`, ``m.transmission.loc[sin,sout,tra,com]['eff']``: The parameter :math:`e_{af}` represents the energy efficiency of a transmission :math:`f` that transfers a commodity :math:`c` through an arc :math:`a`. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The ratio of the output energy amount to input energy amount, gives the energy efficiency of a transmission process. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The fifth column with the header label "eff" represents the parameters :math:`e_{af}` of the corresponding combinations.
 
 **Tranmission Capacity Lower Bound**, :math:`\underline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-lo']``: The parameter :math:`\underline{K}_{af}` represents the minimum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "cap-lo" represents the parameters :math:`e_{af}` of the corresponding combinations. 
 
@@ -763,6 +841,95 @@ Transmission Technical Parameters
 
 Economical Parameters
 ^^^^^^^^^^^^^^^^^^^^^
+
+.. table:: *Table: Economical Model Parameters*
+
+	+---------------------------+---------+-------------------------------------------------+
+	|Parameter                  |Unit     |Description                                      |
+	+===========================+=========+=================================================+
+	|:math:`AF`                 | _       |Annuity factor                                   |
+	+---------------------------+---------+-------------------------------------------------+
+	|**Commodity Economical Parameters**                                                    |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vc}^\text{fuel}` |€/MWh    |Stock Commodity Fuel Costs                       |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vct}^\text{bs}`  |€/MWh    |Buy/Sell Commodity Buy/Sell Costs                |
+	+---------------------------+---------+-------------------------------------------------+
+	|**Process Economical Parameters**                                                      |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`i_{vp}`             | _       |Weighted Average Cost of Capital for Process     |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`z_{vp}`             | _       |Process Depreciation Period                      |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vp}^\text{inv}`  |€/(MW a) |Annualised Process Capacity Investment Costs     |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vp}^\text{fix}`  |€/(MW a) |Process Capacity Fixed Costs                     |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vp}^\text{var}`  |€/MWh    |Process Variable Costs                           |
+	+---------------------------+---------+-------------------------------------------------+
+	|**Storage Economical Parameters**                                                      |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`i_{vs}`             | _       |Weighted Average Cost of Capital for Storage     |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`z_{vs}`             | _       |Storage Depreciation Period                      |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vs}^\text{p,inv}`|€/(MWh a)|Annualised Storage Power Investment Costs        |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vs}^\text{p,fix}`|€/(MW a) |Annual Storage Power Fixed Costs                 |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vs}^\text{p,var}`|€/MWh    |Storage Power Variable Costs                     |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vs}^\text{c,inv}`|€/(MWh a)|Annualised Storage Size Investment Costs         |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vs}^\text{c,fix}`|€/(MWh a)|Annual Storage Size Fixed Costs                  |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vs}^\text{c,var}`|€/MWh    |Storage Usage Variable Costs                     |
+	+---------------------------+---------+-------------------------------------------------+
+	|**Transmission Economical Parameters**                                                 |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`i_{vf}`             | _       |Weighted Average Cost of Capital for Transmission|
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`z_{af}`             | _       |Tranmission Depreciation Period                  |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{af}^\text{inv}`  |€/(MW a) |Annualised Transmission Capacity Investment Costs|
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{af}^\text{fix}`  |€/(MWh a)|Annual Transmission Capacity Fixed Costs         |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{af}^\text{var}`  |€/MWh    |Tranmission Usage Variable Costs                 |
+	+---------------------------+---------+-------------------------------------------------+
+
+**Annuity factor**, :math:`AF(n,i)`,: Annuity factor :math:`AF` is used to calculate the present value of future fixed annuities. The parameter annuity factor is the only parameter that is not given as an input by the user. This parameter is derived from the parameters WACC :math:`i` (Weighted average cost of capital) and Depreciation :math:`z` by the annuity factor formula. The value of this parameter is expressed with the following equation.
+ 
+.. math::
+
+	AF = \frac{(1+i)^n i}{(1+i)^n - 1}
+
+where;
+
+* n represents the depreciation period :math:`z`.
+* i represents the weighted average cost of capital(wacc) :math:`i`.
+
+This derived parameter is calculated by the helper function :func:`annuity factor` and defined by the following code fragment. ::
+
+    # derive annuity factor from WACC and depreciation periods
+    process['annuity-factor'] = annuity_factor(
+        process['depreciation'], process['wacc'])
+    transmission['annuity-factor'] = annuity_factor(
+        transmission['depreciation'], transmission['wacc'])
+    storage['annuity-factor'] = annuity_factor(
+        storage['depreciation'], storage['wacc'])
+
+.. function:: annuity_factor
+
+  Annuity factor formula.
+
+  Evaluates the annuity factor formula for depreciation duration
+  and interest rate. Works also well for equally sized numpy arrays as input.
+    
+  :param int n: number of depreciation periods (years)
+  :param float i: interest rate (percent, e.g. 0.06 means 6 %)
+
+  :return: value of the expression :math:`\frac{(1+i)^n i}{(1+i)^n - 1}`
 
 Commodity Economical Parameters
 -------------------------------
@@ -784,35 +951,48 @@ Commodity Economical Parameters
 Process Economical Parameters
 -----------------------------
 
-**Annualised Process Capacity Investment**, :math:`k_{vp}^\text{inv}`, ``m.process.loc[p]['inv-cost'] * m.process.loc[p]['annuity-factor']``:
+**Weighted Average Cost of Capital for Process**, :math:`i_{vp}`, : The parameter :math:`i_{vp}` represents the weighted average cost of capital for a process technology :math:`p` in a site :math:`v`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "wacc" represents the parameters :math:`i_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%
 
-**Process Capacity Fixed Costs**, :math:`k_{vp}^\text{fix}`, ``m.process.loc[p]['fix-cost']``:
+**Process Depreciation Period**, :math:`z_{vp}`, (a): The parameter :math:`z_{vp}` represents the depreciation period of a process :math:`p` in a site :math:`v`. The depreciation period gives the economic lifetime (more conservative than technical lifetime) of a process investment. The unit of this parameter is "a", where "a" represents a year of 8760 hours. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the tenth column with the header label "depreciation" represents the parameters :math:`z_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
-**Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``:
+**Annualised Process Capacity Investment Costs**, :math:`k_{vp}^\text{inv}`, ``m.process.loc[p]['inv-cost'] * m.process.loc[p]['annuity-factor']``: The parameter :math:`k_{vp}^\text{inv}` represents the annualised investment cost for adding one unit new capacity of a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/(MW a). This parameter is derived by the product of annuity factor :math:`AF` and the process capacity investment cost for a given process tuple. The process capacity investment cost is to be given as an input by the user. The related section for the process capacity investment cost in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the sixth column with the header label "inv-cost" represents the process capacity investment costs of the corresponding process :math:`p` and site :math:`v` combinations.
+
+**Process Capacity Fixed Costs**, :math:`k_{vp}^\text{fix}`, ``m.process.loc[p]['fix-cost']``: The parameter :math:`k_{vp}^\text{fix}` represents the fix cost per one unit capacity :math:`\kappa_{vp}` of a process technology :math:`p` in a site :math:`v`, that is charged annually. The unit of this parameter is €/(MW a). The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the seventh column with the header label "fix-cost" represents the parameters :math:`k_{vp}^\text{fix}` of the corresponding process :math:`p` and site :math:`v` combinations. 
+
+**Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``: The parameter :math:`k_{vp}^\text{var}` represents the variable cost per one unit energy throughput :math:`\tau_{vpt}` through a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the eighth column with the header label "var-cost" represents the parameters :math:`k_{vp}^\text{var}` of the corresponding process :math:`p` and site :math:`v` combinations. 
 
 Storage Economical Parameters
 -----------------------------
 
-**Annualised Storage Power Investment**, :math:`k_{vs}^\text{p,inv}`, ``m.storage.loc[s]['inv-cost-p'] * m.storage.loc[s]['annuity-factor']``:
+**Weighted Average Cost of Capital for Storage**, :math:`i_{vs}`, : The parameter :math:`i_{vs}` represents the weighted average cost of capital for a storage technology :math:`s` in a site :math:`v`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the nineteenth column with the header label "wacc" represents the parameters :math:`i_{vs}` of the corresponding storage :math:`s` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%.
 
-**Annual Storage Power Fixed Costs**, :math:`k_{vs}^\text{p,fix}`, ``m.storage.loc[s]['fix-cost-p']``:
+**Storage Depreciation Period**, :math:`z_{vs}`, (a): The parameter :math:`z_{vs}` represents the depreciation period of a storage :math:`s` in a site :math:`v`. The depreciation period gives the economic lifetime (more conservative than technical lifetime) of a storage investment. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the eighteenth column with the header label "depreciation" represents the parameters :math:`z_{vs}` of the corresponding storage :math:`s` and site :math:`v` combinations.
 
-**Storage Power Variable Costs**, :math:`k_{vs}^\text{p,var}`, ``m.storage.loc[s]['var-cost-p']``:
+**Annualised Storage Power Investment Costs**, :math:`k_{vs}^\text{p,inv}`, ``m.storage.loc[s]['inv-cost-p'] * m.storage.loc[s]['annuity-factor']``: The parameter :math:`k_{vs}^\text{p,inv}` represents the annualised investment cost for adding one unit new power output capacity of a storage technology :math:`s` in a site :math:`v`. The unit of this parameter is €/(MWh a). This parameter is derived by the product of annuity factor :math:`AF` and the investment cost for one unit of new power output capacity of a storage :math:`s` in a site :math:`v`, which is to be given as an input parameter by the user. The related section for the storage power output capacity investment cost in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the twelfth column with the header label "inv-cost-p" represents the storage power output capacity investment cost of the corresponding storage :math:`s` and site :math:`v` combinations. 
 
-**Annualised Storage Size Investment**, :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``:
+**Annual Storage Power Fixed Costs**, :math:`k_{vs}^\text{p,fix}`, ``m.storage.loc[s]['fix-cost-p']``: The parameter :math:`k_{vs}^\text{p,fix}` represents the fix cost per one unit power output capacity of a storage technology :math:`s` in a site :math:`v`, that is charged annually. The unit of this parameter is €/(MW a). The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the fourteenth column with the header label "fix-cost-p" represents the parameters :math:`k_{vs}^\text{p,fix}` of the corresponding storage :math:`s` and site :math:`v` combinations.
 
-**Annual Storage Size Fixed Costs**, :math:`k_{vs}^\text{c,fix}`, ``m.storage.loc[s]['fix-cost-c']``:
+**Storage Power Variable Costs**, :math:`k_{vs}^\text{p,var}`, ``m.storage.loc[s]['var-cost-p']``: The parameter :math:`k_{vs}^\text{p,var}` represents the variable cost per unit energy, that is stored in or retrieved from a storage technology :math:`s` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the sixteenth column with the header label "var-cost-p" represents the parameters :math:`k_{vs}^\text{p,var}` of the corresponding storage :math:`s` and site :math:`v` combinations.
 
-**Storage Usage Variable Costs**, :math:`k_{vs}^\text{c,var}`, ``m.storage.loc[s]['var-cost-c']``:
+**Annualised Storage Size Investment Costs**, :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``: The parameter :math:`k_{vs}^\text{c,inv}` represents the annualised investment cost for adding one unit new storage capacity to a storage technology :math:`s` in a site :math:`v`. The unit of this parameter is €/(MWh a). This parameter is derived by the product of annuity factor :math:`AF` and the investment cost for one unit of new storage capacity of a storage :math:`s` in a site :math:`v`, which is to be given as an input parameter by the user. The related section for the storage content capacity investment cost in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the thirteenth column with the header label "inv-cost-c" represents the storage content capacity investment cost of the corresponding storage :math:`s` and site :math:`v` combinations. 
+
+
+**Annual Storage Size Fixed Costs**, :math:`k_{vs}^\text{c,fix}`, ``m.storage.loc[s]['fix-cost-c']``: The parameter :math:`k_{vs}^\text{c,fix}` represents the fix cost per one unit storage content capacity of a storage technology :math:`s` in a site :math:`v`, that is charged annually. The unit of this parameter is €/(MWh a). The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the fifteenth column with the header label "fix-cost-c" represents the parameters :math:`k_{vs}^\text{c,fix}` of the corresponding storage :math:`s` and site :math:`v` combinations.
+
+**Storage Usage Variable Costs**, :math:`k_{vs}^\text{c,var}`, ``m.storage.loc[s]['var-cost-c']``: The parameter :math:`k_{vs}^\text{p,var}` represents the variable cost per unit energy, that is conserved in a storage technology :math:`s` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the seventeenth column with the header label "var-cost-c" represents the parameters :math:`k_{vs}^\text{c,var}` of the corresponding storage :math:`s` and site :math:`v` combinations. The value of this parameter is usually set to zero, but the parameter can be taken advantage of if the storage has a short term usage or has an increased devaluation due to usage, compared to amount of energy stored. 
 
 Transmission Economical Parameters
 ----------------------------------
 
-**Annualised Tranmission Capacity Investment**, :math:`k_{af}^\text{inv}`, ``m.transmission.loc[t]['inv-cost'] * m.transmission.loc[t]['annuity-factor']``:
+**Weighted Average Cost of Capital for Transmission**, :math:`i_{vf}`, : The parameter :math:`i_{vf}` represents the weighted average cost of capital for a transmission :math:`f` transferring commodities through an arc :math:`a`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the twelfth column with the header label "wacc" represents the parameters :math:`i_{vf}` of the corresponding transmission :math:`f` and arc :math:`a` combinations. The parameter is given as a percentage, where "0,07" means 7%.
 
-**Annual Transmission Capacity Fixed Costs**, :math:`k_{af}^\text{fix}`, ``m.transmission.loc[t]['fix-cost']``:
+**Tranmission Depreciation Period**, :math:`z_{af}`, (a): The parameter :math:`z_{af}` represents the depreciation period of a transmission :math:`f` transferring commodities through an arc :math:`a`. The depreciation period of gives the economic lifetime (more conservative than technical lifetime) of a transmission investment. The unit of this parameter is €/ (MW a). The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the thirteenth column with the header label "depreciation" represents the parameters :math:`z_{af}` of the corresponding transmission :math:`f` and arc :math:`a` combinations.
 
-**Tranmission Usage Variable Costs**, :math:`k_{af}^\text{var}`, ``m.transmission.loc[t]['var-cost']``:
+**Annualised Transmission Capacity Investment Costs**, :math:`k_{af}^\text{inv}`, ``m.transmission.loc[t]['inv-cost'] * m.transmission.loc[t]['annuity-factor']``: The parameter :math:`k_{af}^\text{inv}` represents the annualised investment cost for adding one unit new transmission capacity to a transmission :math:`f` transferring commodities through an arc :math:`a``. This parameter is derived by the product of annuity factor :math:`AF` and the investment cost for one unit of new transmission capacity of a transmission :math:`f` running through an arc :math:`a`, which is to be given as an input parameter by the user. The unit of this parameter is €/(MW a). The related section for the transmission capacity investment cost in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the sixth column with the header label "inv-cost" represents the transmission capacity investment cost of the corresponding transmission :math:`f` and arc :math:`a` combinations. 
+
+**Annual Transmission Capacity Fixed Costs**, :math:`k_{af}^\text{fix}`, ``m.transmission.loc[t]['fix-cost']``: The parameter :math:`k_{af}^\text{fix}` represents the fix cost per one unit capacity of a transmission :math:`f` transferring commodities through an arc :math:`a`, that is charged annually. The unit of this parameter is €/(MWh a). The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the seventh column with the header label "fix-cost" represents the parameters :math:`k_{af}^\text{fix}` of the corresponding transmission :math:`f` and arc :math:`a` combinations. 
+
+**Tranmission Usage Variable Costs**, :math:`k_{af}^\text{var}`, ``m.transmission.loc[t]['var-cost']``: The parameter :math:`k_{af}^\text{var}` represents the variable cost per unit energy, that is transferred with a transmissiom :math:`f` through an arc :math:`a`. The unit of this parameter is €/ MWh. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the eighth column with the header label "var-cost" represents the parameters :math:`k_{af}^\text{var}` of the corresponding transmission :math:`f` and arc :math:`a` combinations.
 
 Equations
 =========
@@ -820,18 +1000,31 @@ Equations
 Cost Function
 ^^^^^^^^^^^^^
 
+The variable total system cost :math:`\zeta` is calculated by the cost function. The cost function is the objective function of the optimization  model. Minimizing the value of the variable total system cost would give the most reasonable solution for the modelled energy system  The formula of the cost function expressed in mathematical notation is as following:
+
 .. math::
 
 	\zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur}
+
+The calculation of the variable total system cost is given in ``urbs.py`` by the following code fragment.  
 
 ::
 
 	def obj_rule(m):
 		return pyomo.summation(m.costs)
 
+The variable total system cost :math:`\zeta` is basically calculated by the summation of every type of total costs. As previously mentioned on `Cost Types`_ these cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``. The calculation of each single cost types are listed below.
 
 Investment Costs
 ----------------
+
+The variable investment costs :math:`\zeta_\text{inv}` represents the required annual expenses, in the hope of future benefits. These expenses are made on every new investment. The possible investments of an energy system in this model are:
+
+1. Additional power output capacity for process technologies.
+2. Additional power output capacity for storage technologies and additional content capacity for storage technologies.
+3. Additional power output capacity for transmission technologies.
+
+The calculation of total annual investment cost is expressed by the formula: 
 
 .. math::
 
@@ -839,6 +1032,29 @@ Investment Costs
 	\sum_{\substack{v \in V\\ p \in P}} \hat{\kappa}_{vp} k_p^\text{inv} +
 	\sum_{\substack{v \in V\\ s \in S}} \left( \hat{\kappa}_{vs}^\text{c} k_{vs}^\text{c,inv} + \hat{\kappa}_{vs}^\text{p} k_{vs}^\text{p,inv}\right) +
 	\sum_{\substack{a \in A\\ f \in F}} \hat{\kappa}_{af} k_{af}^\text{inv}
+
+
+The formula for the total annual investment cost consists of three main summands, these are the investment costs for processes, storages, and transmissions. 
+
+1. The first summand of the formula calculates the required annual investment expenses to install an additional power output capacity to process technologies. Total Process Investment Cost for all Process Tuples is defined by the sum of all possible annual process investment costs, which are calculated seperately for each process tuple ( :math:`p_v`, ``m.pro_tuples``) consisting of process :math:`p` in site :math:`v`. Annual process investment cost for a process tuple is calculated by the product of the variable new process capacity (m.cap_pro_new) and the parameter annualised process capacity investment cost ( :math:`k_{vp}^\text{inv}`, ``m.process.loc[p]['inv-cost'] * m.process.loc[p]['annuity-factor']``) for the given process tuple. In mathematical notation this summand is expressed as:
+
+.. math:: \sum_{\substack{v \in V\\ p \in P}} \hat{\kappa}_{vp} k_p^\text{inv}
+
+2. The second summand of the formula calculates the required investment expenses to install additional power output capacity and content capacity to storage technologies for every member of the set storage tuples :math:`\forall s_{vc} \in S_{vc}`. This summand consists of two products:
+	* The first product calculates the required annual investment expenses to install an additional content capacity to a given storage tuple . This is calculated by the product of the variable new storage size( :math:`\hat{\kappa}_{vs}^\text{c}`), ``cap_sto_c_new``) and the parameter annualised storage size investment costs ( :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``).
+	* The second product calculates the required annual investment expenses to install an additional power output capacity to a given storage tuple. This is calculated by the product of the variable new storage power ( :math:`\hat{\kappa}_{vs}^\text{p}`, ``cap_sto_p_new``) and the parameter annualised storage power investment costs ( :math:`k_{vs}^\text{p,inv}`, ``m.storage.loc[s]['inv-cost-p'] * m.storage.loc[s]['annuity-factor']``).
+
+   These two products for a given storage tuple are than added up. The calculation of investment costs for a storage tuple is than repeated for every single storage tuple to calculate the total investment costs for storage technologies. In mathematical notation this summand is expressed as:
+
+.. math:: \sum_{\substack{v \in V\\ s \in S}} ( \hat{\kappa}_{vs}^\text{c} k_{vs}^\text{c,inv} + \hat{\kappa}_{vs}^\text{p} k_{vs}^\text{p,inv})
+
+3. The third and the last summand of the formula calculates the required investment expenses to install additional power output capacity to transmission technologies. Total transmission investment cost for all transmission tuples is defined by the sum of all possible annual transmission investment costs, which are calculated seperately for each transmission tuple ( :math:`f_{ca}`). Annual transmission investment cost for a transmission tuple  is calculated by the product of the variable new transmission capacity ( :math:`\hat{\kappa}_{af}`, ``cap_tra_new``) and the parameter annualised transmission capacity investment costs ( :math:`k_{af}^\text{inv}`, ``m.transmission.loc[t]['inv-cost'] * m.transmission.loc[t]['annuity-factor']``) for the given transmission tuple. In mathematical notation this summand is expressed as:
+
+.. math:: \sum_{\substack{a \in A\\ f \in F}} \hat{\kappa}_{af} k_{af}^\text{inv}
+
+As mentioned above the variable investment costs () is calculated by the sum of these 3 summands.
+
+In script ``urbs.py`` the value of the total investment cost is calculated by the following code fragment:
 
 ::
 
@@ -860,9 +1076,16 @@ Investment Costs
                 m.storage.loc[s]['annuity-factor']
                 for s in m.sto_tuples)
 
-
 Fix Costs
 ---------
+
+The variable fix costs :math:`\zeta_\text{fix}` represents the total annual fixed costs for all used storage, process and transmission technologies. The possible fix costs of an energy system in this model can be divided into sections, these are:
+
+1. Fix costs for process technologies
+2. Fix costs for storage technologies
+3. Fix costs for transmission technologies.
+
+The calculation of total annual fix cost is expressed by the formula:
 
 .. math::
 
@@ -870,6 +1093,24 @@ Fix Costs
 	\sum_{\substack{v \in V\\ p \in P}} \kappa_{vp} k_{vp}^\text{fix} +
 	\sum_{\substack{v \in V\\ s \in S}} \left( \kappa_{vs}^\text{c} k_{vs}^\text{c,fix} + \kappa_{vs}^\text{p} k_{vs}^\text{p,fix} \right) +
 	\sum_{\substack{a \in A\\ f \in F}} \kappa_{af} k_{af}^\text{fix}
+
+The formula for the total annual fix cost consists of three main summands, these are the fix costs for process, storage and transmission technologies. The sum of these three summands returns the value of the variable fix costs :math:`\zeta_\text{fix}`.
+
+1. The first summand. In mathematical notation this summand is expressed as:
+
+.. math:: \sum_{\substack{v \in V\\ p \in P}} \kappa_{vp} k_{vp}^\text{fix}
+
+2. The second summand.
+	* size
+	* power
+	
+   In mathematical notation this summand is expressed as:
+
+.. math:: \sum_{\substack{v \in V\\ s \in S}} (\kappa_{vs}^\text{c} k_{vs}^\text{c,fix} + \kappa_{vs}^\text{p} k_{vs}^\text{p,fix})
+
+3. The third and the last summand. In mathematical notation this summand is expressed as:
+
+.. math:: \sum_{\substack{a \in A\\ f \in F}} \kappa_{af} k_{af}^\text{fix}
 
 ::
 

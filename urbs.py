@@ -315,11 +315,11 @@ def create_model(data, timesteps=None, dt=1):
     m.e_co_sell = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Use of sell commodity source (kW) per timestep')
+        doc='Use of sell commodity source (MW) per timestep')
     m.e_co_buy = pyomo.Var(
        m.tm, m.com_tuples,
        within=pyomo.NonNegativeReals,
-       doc='Use of buy commodity source (kW) per timestep')
+       doc='Use of buy commodity source (MW) per timestep')
 
     # process
     m.cap_pro = pyomo.Var(

@@ -1018,13 +1018,13 @@ The variable total system cost :math:`\zeta` is basically calculated by the summ
 Investment Costs
 ----------------
 
-The variable investment costs :math:`\zeta_\text{inv}` represents the required annual expenses, in the hope of future benefits. These expenses are made on every new investment. The possible investments of an energy system in this model are:
+The variable investment costs :math:`\zeta_\text{inv}` represents the required annual expenses made, in the hope of future benefits. These expenses are made on every new investment. The possible investments of an energy system in this model are:
 
 1. Additional power output capacity for process technologies.
 2. Additional power output capacity for storage technologies and additional content capacity for storage technologies.
 3. Additional power output capacity for transmission technologies.
 
-The calculation of total annual investment cost is expressed by the formula: 
+The calculation of total annual investment cost :math:`\zeta_\text{inv}` is expressed by the formula: 
 
 .. math::
 
@@ -1034,25 +1034,25 @@ The calculation of total annual investment cost is expressed by the formula:
 	\sum_{\substack{a \in A\\ f \in F}} \hat{\kappa}_{af} k_{af}^\text{inv}
 
 
-The formula for the total annual investment cost consists of three main summands, these are the investment costs for processes, storages, and transmissions. 
+Total annual investment cost is calculated by the sum of three main summands, these are the investment costs for processes, storages, and transmissions. 
 
-1. The first summand of the formula calculates the required annual investment expenses to install an additional power output capacity to process technologies. Total Process Investment Cost for all Process Tuples is defined by the sum of all possible annual process investment costs, which are calculated seperately for each process tuple ( :math:`p_v`, ``m.pro_tuples``) consisting of process :math:`p` in site :math:`v`. Annual process investment cost for a process tuple is calculated by the product of the variable new process capacity (m.cap_pro_new) and the parameter annualised process capacity investment cost ( :math:`k_{vp}^\text{inv}`, ``m.process.loc[p]['inv-cost'] * m.process.loc[p]['annuity-factor']``) for the given process tuple. In mathematical notation this summand is expressed as:
+1. The first summand of the formula calculates the required annual investment expenses to install an additional power output capacity to process technologies for every member of the set process tuples :math:`\forall p_v \in P_v`. Total process investment cost for all process tuples is defined by the sum of all possible annual process investment costs, which are calculated seperately for each process tuple ( :math:`p_v`, ``m.pro_tuples``) consisting of process :math:`p` in site :math:`v`. Annual process investment cost for a given process tuple :math:`p_v` is calculated by the product of the variable new process capacity ( :math:`\hat{\kappa}_{vp}`,``m.cap_pro_new``) and the parameter annualised process capacity investment cost ( :math:`k_{vp}^\text{inv}`, ``m.process.loc[p]['inv-cost'] * m.process.loc[p]['annuity-factor']``). In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{v \in V\\ p \in P}} \hat{\kappa}_{vp} k_p^\text{inv}
 
-2. The second summand of the formula calculates the required investment expenses to install additional power output capacity and content capacity to storage technologies for every member of the set storage tuples :math:`\forall s_{vc} \in S_{vc}`. This summand consists of two products:
-	* The first product calculates the required annual investment expenses to install an additional content capacity to a given storage tuple . This is calculated by the product of the variable new storage size( :math:`\hat{\kappa}_{vs}^\text{c}`), ``cap_sto_c_new``) and the parameter annualised storage size investment costs ( :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``).
+2. The second summand of the formula calculates the required investment expenses to install additional power output capacity and storage content capacity to storage technologies for every member of the set storage tuples (:math:`\forall s_{vc} \in S_{vc}`). This summand consists of two products:
+	* The first product calculates the required annual investment expenses to install an additional storage content capacity to a given storage tuple . This is calculated by the product of the variable new storage size( :math:`\hat{\kappa}_{vs}^\text{c}`, ``cap_sto_c_new``) and the parameter annualised storage size investment costs ( :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``).
 	* The second product calculates the required annual investment expenses to install an additional power output capacity to a given storage tuple. This is calculated by the product of the variable new storage power ( :math:`\hat{\kappa}_{vs}^\text{p}`, ``cap_sto_p_new``) and the parameter annualised storage power investment costs ( :math:`k_{vs}^\text{p,inv}`, ``m.storage.loc[s]['inv-cost-p'] * m.storage.loc[s]['annuity-factor']``).
 
-   These two products for a given storage tuple are than added up. The calculation of investment costs for a storage tuple is than repeated for every single storage tuple to calculate the total investment costs for storage technologies. In mathematical notation this summand is expressed as:
+   These two products for a given storage tuple are than added up. The calculation of investment costs for a given storage tuple is than repeated for every single storage tuple and summed up to calculate the total investment costs for storage technologies. In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{v \in V\\ s \in S}} ( \hat{\kappa}_{vs}^\text{c} k_{vs}^\text{c,inv} + \hat{\kappa}_{vs}^\text{p} k_{vs}^\text{p,inv})
 
-3. The third and the last summand of the formula calculates the required investment expenses to install additional power output capacity to transmission technologies. Total transmission investment cost for all transmission tuples is defined by the sum of all possible annual transmission investment costs, which are calculated seperately for each transmission tuple ( :math:`f_{ca}`). Annual transmission investment cost for a transmission tuple  is calculated by the product of the variable new transmission capacity ( :math:`\hat{\kappa}_{af}`, ``cap_tra_new``) and the parameter annualised transmission capacity investment costs ( :math:`k_{af}^\text{inv}`, ``m.transmission.loc[t]['inv-cost'] * m.transmission.loc[t]['annuity-factor']``) for the given transmission tuple. In mathematical notation this summand is expressed as:
+3. The third and the last summand of the formula calculates the required investment expenses to install additional power output capacity to transmission technologies for every member of the set transmission tuples :math:`\forall f_{ca} \in F_{ca}`. Total transmission investment cost for all transmission tuples is defined by the sum of all possible annual transmission investment costs, which are calculated seperately for each transmission tuple ( :math:`f_{ca}`). Annual transmission investment cost for a given transmission tuple is calculated by the product of the variable new transmission capacity ( :math:`\hat{\kappa}_{af}`, ``cap_tra_new``) and the parameter annualised transmission capacity investment costs ( :math:`k_{af}^\text{inv}`, ``m.transmission.loc[t]['inv-cost'] * m.transmission.loc[t]['annuity-factor']``) for the given transmission tuple. In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{a \in A\\ f \in F}} \hat{\kappa}_{af} k_{af}^\text{inv}
 
-As mentioned above the variable investment costs () is calculated by the sum of these 3 summands.
+As mentioned above the variable investment costs :math:`\zeta_\text{inv}` is calculated by the sum of these 3 summands.
 
 In script ``urbs.py`` the value of the total investment cost is calculated by the following code fragment:
 
@@ -1085,7 +1085,7 @@ The variable fix costs :math:`\zeta_\text{fix}` represents the total annual fixe
 2. Fix costs for storage technologies
 3. Fix costs for transmission technologies.
 
-The calculation of total annual fix cost is expressed by the formula:
+The calculation of total annual fix cost :math:`\zeta_\text{fix}` is expressed by the formula:
 
 .. math::
 
@@ -1094,23 +1094,27 @@ The calculation of total annual fix cost is expressed by the formula:
 	\sum_{\substack{v \in V\\ s \in S}} \left( \kappa_{vs}^\text{c} k_{vs}^\text{c,fix} + \kappa_{vs}^\text{p} k_{vs}^\text{p,fix} \right) +
 	\sum_{\substack{a \in A\\ f \in F}} \kappa_{af} k_{af}^\text{fix}
 
-The formula for the total annual fix cost consists of three main summands, these are the fix costs for process, storage and transmission technologies. The sum of these three summands returns the value of the variable fix costs :math:`\zeta_\text{fix}`.
+Total annual fix cost :math:`\zeta_\text{fix}` is calculated by the sum of three main summands, these are the fix costs for process, storage and transmission technologies.
 
-1. The first summand. In mathematical notation this summand is expressed as:
+1. The first summand of the formula calculates the required annual fix cost to keep all the process technologies maintained. This is calculated for every member of the set process tuples :math:`\forall p_v \in P_v`. Total process fix cost for all process tuples is defined by the sum of all possible annual process fix costs, which are calculated seperately for each process tuple ( :math:`p_v`, ``m.pro_tuples``) consisting of process :math:`p` in site :math:`v`. Annual process fix cost for a given process tuple is calculated by the product of the variable total process capacity ( :math:`\kappa_{vp}`, ``cap_pro``) and process capacity fixed cost ( :math:`k_{vp}^\text{fix}`, ``m.process.loc[p]['fix-cost']``). In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{v \in V\\ p \in P}} \kappa_{vp} k_{vp}^\text{fix}
 
-2. The second summand.
-	* size
-	* power
-	
-   In mathematical notation this summand is expressed as:
+2. The second summand of the formula calculates the required fix expenses to keep the power output capacity and storage content capacity of storage technologies maintained. The storage technologies here are, every member of the set storage tuples :math:`\forall s_{vc} \in S_{vc}`. This summand consists of two products:
+	* The first product calculates the required annual fix expenses to keep the storage content capacity of a given storage tuple maintained.  This is calculated by the product of the variable total storage size ( :math:`\kappa_{vs}^\text{c}`, ``cap_sto_c``) and the parameter annual storage size fixed costs ( :math:`k_{vs}^\text{c,fix}`, ``m.storage.loc[s]['fix-cost-c']``).
+	* The second product calculates the required annual fix expenses to keep the power output capacity of a given storage tuple maintained. This is calculated by the product of the variable total storage power ( :math:`\kappa_{vs}^\text{p}`, ``cap_sto_p``) and the parameter annual storage power fixed costs (:math:`k_{vs}^\text{p,fix}`, ``m.storage.loc[s]['fix-cost-p']``).
+
+   These two products for a given storage tuple are than added up. The calculation of fix costs for a storage tuple is than repeated for every single storage tuple and summed up to calculate the total fix costs for storage technologies. In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{v \in V\\ s \in S}} (\kappa_{vs}^\text{c} k_{vs}^\text{c,fix} + \kappa_{vs}^\text{p} k_{vs}^\text{p,fix})
 
-3. The third and the last summand. In mathematical notation this summand is expressed as:
+3. The third and the last summand of the formula calculates the required fix expenses to keep the power output capacity of transmission technologies maintained. The transmission technologies here are, every member of the set transmission tuples :math:`\forall f_{ca} \in F_{ca}`. Total transmission fix cost for all transmission tuples is defined by the sum of all possible annual transmission fix costs, which are calculated seperately for each transmission tuple :math:`f_{ca}`. Annual transmission fix cost for a given transmission tuple is calculated by the product of the variable total transmission capacity ( :math:`\kappa_{af}`, ``cap_tra``) and the parameter annual transmission capacity fixed costs ( :math:`k_{af}^\text{fix}`, ``m.transmission.loc[t]['fix-cost']``) for the given transmission tuple :math:`f_{ca}`. In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{a \in A\\ f \in F}} \kappa_{af} k_{af}^\text{fix}
+
+As mentioned above the variable fix costs :math:`\zeta_\text{fix}` is calculated by the sum of these 3 summands.
+
+In script ``urbs.py`` the value of the total fix cost is calculated by the following code fragment:
 
 ::
 
@@ -1163,11 +1167,21 @@ Variable Costs
 Fuel Costs
 ----------
 
+The variable fuel costs :math:`\zeta_\text{fuel}` represents the total annual expenses that are required to be made to buy stock commodities :math:`c \in C_\text{stock}`. The calculation of the variable total annual fuel cost :math:`\zeta_\text{fuel}` is expressed by the following mathematical notation:
+
 .. math::
 
 	\zeta_\text{fuel} = 
 	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{stock}}} \rho_{vct} k_{vc}^\text{fuel} \Delta t
 
+The variable :math:`\zeta_\text{fuel}` is calculated by the sum of all possible annual fuel costs, defined by the combinations of commodity tuples of commodity type 'Stock'( :math:`\forall c_{vq} \in C_{vq} \land q = \text{'Stock'}`) and timesteps( :math:`\forall t \in T_m`). These annual fuel costs are calculated by the product of the following elements:
+
+	* The parameter stock commodity fuel cost for a given stock commodity :math:`c` in a site :math:`v`.( :math:`k_{vc}^\text{fuel}`, ``m.commodity.loc[c]['price']``)
+	* The variable stock commodity source term for a given stock commodity :math:`c` in a site :math:`v` at a timestep :math:`t`.( :math:`\rho_{vct}`, ``e_co_stock``)
+	* The variable timestep duration.( :math:`\Delta t`, ``dt``)
+	* The variable weight.( :math:`w`, ``weight``)
+
+In script ``urbs.py`` the value of the total fuel cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Fuel':
@@ -1182,11 +1196,23 @@ Fuel Costs
 Revenue Costs
 -------------
 
+The variable revenue costs :math:`\zeta_\text{rev}` represents the total annual expenses that are required to be made to sell sell commodities :math:`c \in C_\text{sell}`. The calculation of the variable total annual revenue cost :math:`\zeta_\text{rev}` is expressed by the following mathematical notation:
+
 .. math::
 
 	\zeta_\text{rev} = 
 	-w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{sell}}} \varrho_{vct} k_{vct}^\text{bs} \Delta t
 
+The variable :math:`\zeta_\text{rev}` is calculated by the sum of all possible annual revenue costs, defined by the combinations of commodity tuples of commodity type 'Sell'( :math:`\forall c_{vq} \in C_{vq} \land q = \text{'Sell'}`) and timesteps (:math:`\forall t \in T_m`). These annual revenue costs are calculated by the product of the following elements:
+
+	* The parameter sell commodity sell cost for given sell commodity :math:`c` in a site :math:`v`.( :math:`k_{vct}^\text{bs}`, ``com_prices[c].loc[tm]`` )
+	* The variable sell commodity source term for a given sell commodity :math:`c` in a site :math:`v` at a timestep :math:`t`.( :math:`\varrho_{vct}`, ``e_co_sell``)
+	* The variable timestep duration.( :math:`\Delta t`, ``dt``)
+	* The variable weight.( :math:`w`, ``weight``)
+	* Coefficient [-1].
+
+Since this variable is an income for the energy system, it is multiplied with the value -1 to be able to give it in the cost function as a summand.
+In script ``urbs.py`` the value of the total revenue cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Revenue':
@@ -1201,11 +1227,21 @@ Revenue Costs
 Purchase Costs
 --------------
 
+The variable purchase costs :math:`\zeta_\text{pur}` represents the total annual expenses that are required to be made to purchase buy commodities :math:`c \in C_\text{buy}`. The calculation of the variable total annual purchase cost :math:`\zeta_\text{pur}` is expressed by the following mathematical notation:
+
 .. math::
 
-	\zeta_\text{rev} = 
+	\zeta_\text{pur} = 
 	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{buy}}} \psi_{vct} k_{vct}^\text{bs} \Delta t
 
+The variable :math:`\zeta_\text{pur}` is calculated by the sum of akk possible annual purchase costs, defined by the combinations of commodity tuples of commodity type 'Buy'( :math:`\forall c_{vq} \in C_{vq} \land q = \text{'Buy'}`) and timesteps (:math:`\forall t \in T_m`). These annual purchase costs are calculated by the product of the following elements:
+
+	* The parameter buy commodity buy cost for a given buy commodity :math:`c` in a site :math:`v`. ( :math:`k_{vct}^\text{bs}`, ``com_prices[c].loc[tm]`` )
+	* The variable buy commodity source term for a given buy commodity :math:`c` in a site :math:`v` at a timestep :math:`t`.( :math:`\psi_{vct}`, ``e_co_buy``)
+	* The variable timestep duration.( :math:`\Delta t`, ``dt``)
+	* The variable weight.( :math:`w`, ``weight``)
+
+In script ``urbs.py`` the value of the total purchase cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Purchase':

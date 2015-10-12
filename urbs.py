@@ -1496,8 +1496,8 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # group storage energies by commodity
     # select all entries with desired commodity co
     esto = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
-    esto = esto.groupby(level=['t', 'sit', 'com']).sum()
     try:
+        esto = esto.groupby(level=['t', 'sit', 'com']).sum()
         esto = esto.xs(sit, level='sit')
         stored = esto.xs(com, level='com')
         stored = stored.loc[timesteps]

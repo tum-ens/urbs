@@ -3,7 +3,7 @@
 URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
 
 [![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](https://urbs.readthedocs.org/en/latest/)
-[![DOI](https://zenodo.org/badge/18738/tum-ens/urbs.svg)](https://zenodo.org/badge/latestdoi/18738/tum-ens/urbs)
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.32038.svg)](http://dx.doi.org/10.5281/zenodo.32038)
 
 ## Features
 

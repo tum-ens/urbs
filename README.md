@@ -4,6 +4,7 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 [![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](https://urbs.readthedocs.org/en/latest/)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.32038.svg)](http://dx.doi.org/10.5281/zenodo.32038)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/tum-ens/urbs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Features
 

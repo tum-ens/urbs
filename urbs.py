@@ -1318,12 +1318,20 @@ def list_entities(instance, entity_type):
 
 
 def _get_onset_names(entity):
-    """
-        Example:
-            >>> data = read_excel('mimo-example.xlsx')
-            >>> model = create_model(data, range(1,25))
-            >>> _get_onset_names(model.e_co_stock)
-            ['t', 'sit', 'com', 'com_type']
+    """ Return a list of domain set names for a given model entity
+    
+    Args:
+        entity: a member entity (i.e. a Set, Param, Var, Objective, Constraint)
+                of a Pyomo ConcreteModel object
+                
+    Returns:
+        list of domain set names for that entity
+        
+    Example:
+        >>> data = read_excel('mimo-example.xlsx')
+        >>> model = create_model(data, range(1,25))
+        >>> _get_onset_names(model.e_co_stock)
+        ['t', 'sit', 'com', 'com_type']
     """
     # get column titles for entities from domain set names
     labels = []

@@ -724,7 +724,7 @@ def res_process_capacity_rule(m, sit, pro):
 # power connection capacity: Sell == Buy
 def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
 # constraint only for sell and buy processes
-# and the processes musst be in the same site
+# and the processes must be in the same site
     if coin in m.com_buy:
         sell_pro = search_sell_buy_tuple(m, sit_in, pro_in, coin)
         if sell_pro is None:
@@ -977,7 +977,7 @@ def annuity_factor(n, i):
 
     Args:
         n: depreciation period (years)
-        i: interest rate (percent, e.g. 0.06 means 6 %)
+        i: interest rate (e.g. 0.06 means 6 %)
 
     Returns:
         Value of the expression :math:`\\frac{(1+i)^n i}{(1+i)^n - 1}`
@@ -1139,12 +1139,12 @@ def extract_number_str(str_in):
     elif re.search('^\d*\.?\d+$',str_num) is not None:
         #No commas allowed
         #Pass: (1000.0), (001), (.001)
-        #Fail: (1,000.0
+        #Fail: (1,000.0)
         return float(str_num)
     elif re.search('^\d*\,?\d+$',str_num) is not None:
         #No dots allowed
         #Pass: (1000,0), (001), (,001)
-        #Fail: (1.000,0
+        #Fail: (1.000,0)
         str_num = str_num.replace(',','.')
         return float(str_num)
 

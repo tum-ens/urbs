@@ -96,7 +96,7 @@ Intermittent Supply
 """""""""""""""""""
 Each combination ``(site, supim commodity)`` must be supplied with one
 timeseries, normalised to a maximum value of 1 relative to the installed
-capacity of a process using this commodity as input. For eample, a wind power
+capacity of a process using this commodity as input. For example, a wind power
 timeseries should reach value 1, when the wind speed exceeds the modelled wind
 turbine's design wind speed is exceeded. This implies that any non-linear
 behaviour of intermittent processes can already be incorporated while preparing

@@ -42,10 +42,11 @@ Create model
   :param str filename: spreadsheet filename
   :return: urbs input dict 
   
-  The spreadsheet must contain 6 sheets labelled 'Commodity', 'Process', 
-  'Transmission', 'Storage', 'SupIm', and 'Demand'. It can contain a 7th sheet
-  called 'Hacks'. If present, function :func:`add_hacks` is called by 
-  :func:`create_model` upon model creation. 
+  The spreadsheet must contain 7 sheets labelled 'Commodity', 'Process',
+  'Process-Commodity', 'Transmission', 'Storage', 'Demand' and 'SupIm'.
+  It can contain 2 additional sheets called 'Buy-Sell-Price' and 'Hacks'.
+  If present, function :func:`add_hacks` is called by :func:`create_model`
+  upon model creation.
   
   Refer to the `mimo-example.xlsx` file for exemplary documentation of the 
   table contents and definitions of all attributes by selecting the column
@@ -54,7 +55,7 @@ Create model
   
 .. function:: create_model(data, timesteps)
 
-  Returns a Pyomo `ConcreteModel` object, which as to be still converted to a
+  Returns a Pyomo `ConcreteModel` object, which has still to be converted to a
   problem instance using its method ``create``.
   
   :param dict data: input like created by :func:`read_excel`
@@ -223,7 +224,7 @@ functions.
 Helper functions
 ^^^^^^^^^^^^^^^^
 
-.. function:: annuity_factor
+.. function:: annuity_factor(n, i)
 
   Annuity factor formula.
 
@@ -231,7 +232,7 @@ Helper functions
   and interest rate. Works also well for equally sized numpy arrays as input.
     
   :param int n: number of depreciation periods (years)
-  :param float i: interest rate (percent, e.g. 0.06 means 6 %)
+  :param float i: interest rate (e.g. 0.06 means 6 %)
 
   :return: value of the expression :math:`\frac{(1+i)^n i}{(1+i)^n - 1}`
 

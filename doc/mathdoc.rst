@@ -55,7 +55,7 @@ In code this set is defined by the set ``t`` and initialized by the section:
         ordered=True,
         doc='Set of timesteps')
 		
-Where;
+Where:
 
 * `Initialize`: A function that receives the set indices and model to return the value of that set element, initializes the set with data.
 * `Ordered`: A boolean value that indicates whether the set is ordered.
@@ -65,8 +65,8 @@ Modelled Timesteps
 ^^^^^^^^^^^^^^^^^^
 
 The Set, **modelled timesteps**, is a subset of the time steps set. The difference between modelled
-timesteps set and the timesteps set is that the initial timestep :math:`t_0` is not included. All other
-all other features of the set time steps also apply to the set of modelled timesteps. This set
+timesteps set and the timesteps set is that the initial timestep :math:`t_0` is not included.
+All other features of the set time steps also apply to the set of modelled timesteps. This set
 is later required to facilitate the definition of the storage state equation.
 In script ``urbs.py`` this set is defined by the set ``tm`` and initialized by the code fragment:
 
@@ -78,7 +78,7 @@ In script ``urbs.py`` this set is defined by the set ``tm`` and initialized by t
         ordered=True,
         doc='Set of modelled timesteps')
 		
-Where;
+Where:
 
 * `Within`: The option that supports the validation of a set array.
 * ``m.timesteps[1:]`` represents the timesteps set starting from the second element, excluding the first timestep :math:`t_0`
@@ -89,8 +89,8 @@ Sites
 **Sites** are represented by the set :math:`V`. A Site :math:`v` can be any distinct location, a place of
 settlement or activity (e.g `process`, `transmission`, `storage`).A site is for example an individual
 building, region, country or even continent. Sites can be imagined as nodes(vertices) on a graph of locations,
-connected by edges. Index of this set are the descriptions of the Sites.
-(e.g north, middle, south).In script ``urbs.py`` this set is defined by ``sit`` and initialized by the code fragment:
+connected by edges. Index of this set are the descriptions of the Sites (e.g north, middle, south).
+In script ``urbs.py`` this set is defined by ``sit`` and initialized by the code fragment:
 
 ::
 
@@ -168,7 +168,7 @@ Transmissions
 **Transmissions** :math:`f \in F` represent possible conveyances of commodities between sites.
 Transmission process technologies can vary between different commodities,
 due to distinct physical attributes and forms of commodities. Some examples for Transmission technologies are: `hvac`, `hvdc`, `pipeline`)
-In script ``urbs.py`` this set is defined as ``tra`` and initalized by the code fragment:
+In script ``urbs.py`` this set is defined as ``tra`` and initialized by the code fragment:
 
 ::
 
@@ -185,7 +185,7 @@ different instances. Set of **cost types** is hardcoded, which means they are no
 fixed or changed  by the user.
 The Set :math:`R` defines the Cost Types, each member :math:`r` of this set :math:`R` represents a unique cost type name.
 The cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``.
-In script ``urbs.py`` this set is defined as ``cost_type`` and initalized by the code fragment:
+In script ``urbs.py`` this set is defined as ``cost_type`` and initialized by the code fragment:
 
 ::
 
@@ -206,7 +206,7 @@ As a result a collection of by the same rule defined tuples, represents a tuple 
 Commodity Tuples
 ^^^^^^^^^^^^^^^^
 
-Commodity tuples represents combinations of defined commodities.
+Commodity tuples represent combinations of defined commodities.
 These are represented by the set :math:`C_{vq}`.
 A member :math:`c_{vq}` in set :math:`C_{vq}` is a commodity :math:`c` of commodity type :math:`q` in site :math:`v`.
 For example, `(Mid, Elec, Demand)` is interpreted as commodity `Elec` of commodity type `Demand` in site `Mid`.
@@ -223,7 +223,7 @@ This set is defined as ``com_tuples`` and given by the code fragment:
 Process Tuples
 ^^^^^^^^^^^^^^
 
-Process Tuples represents combinations of possible processes.
+Process tuples represent combinations of possible processes.
 These are represented by the set :math:`P_v`.
 A member :math:`p_v` in set :math:`P_v` is a process :math:`p` in site :math:`v`.
 For example, `(North, Coal Plant)` is interpreted as process `Coal Plant` in site `North`.
@@ -240,7 +240,7 @@ This set is defined as ``pro_tuples`` and given by the code fragment:
 Transmission Tuples
 ^^^^^^^^^^^^^^^^^^^
 
-Transmission tuples represents combinations of possible transmissions.
+Transmission tuples represent combinations of possible transmissions.
 These are represented by the set :math:`F_{c{v_\text{out}}{v_\text{in}}}`.
 A member :math:`f_{c{v_\text{out}}{v_\text{in}}}` in set :math:`F_{c{v_\text{out}}{v_\text{in}}}` is a transmission :math:`f`,that is directed from an origin site :math:`v_\text{out}` to a destination site :math:`v_{in}` and carries a commodity :math:`c`.
 The term "\ `directed from an origin site` :math:`v_\text{out}` `to a destination site` :math:`v_\text{in}`" can also be defined as an Arc :math:`a` .
@@ -260,7 +260,7 @@ These subsets can be obtained by fixing either the origin site(for export) :math
 
 Storage Tuples
 ^^^^^^^^^^^^^^
-Storage tuples represents combinations of possible storages by site.
+Storage tuples represent combinations of possible storages by site.
 These are represented by the set :math:`S_{vc}`.
 A member :math:`s_{vc}` in set :math:`S_{vc}` is a storage :math:`s` of commodity :math:`c` in site :math:`v`
 For example, `(Mid, Bat, Elec)` is interpreted as storage `Bat` of commodity `Elec` in site `Mid`.
@@ -276,7 +276,7 @@ This set is defined as ``sto_tuples`` and given by the code fragment:
 
 Process Input Tuples
 ^^^^^^^^^^^^^^^^^^^^
-Process input tuples represents commodities consumed by processes.
+Process input tuples represent commodities consumed by processes.
 These are represented by the set :math:`C_{vp}^\text{in}`.
 A member :math:`c_{vp}^\text{in}` in set :math:`C_{vp}^\text{in}` is a commodity :math:`c` consumed by the process :math:`p` in site :math:`v`.
 For example, `(Mid,PV,Solar)` is interpreted as commodity `Solar` is consumed by the process `PV` in the site `Mid`. 
@@ -292,11 +292,11 @@ This set is defined as ``pro_input_tuples`` and given by the code fragment:
                     if process == pro],
         doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')
 
-Where; ``r_in`` represents the process input ratio.
+Where: ``r_in`` represents the process input ratio.
 
 Process Output Tuples
 ^^^^^^^^^^^^^^^^^^^^^
-Process output tuples represents commodities generated by processes.
+Process output tuples represent commodities generated by processes.
 These are represented by the set :math:`C_{vp}^\text{out}`.
 A member :math:`c_{vp}^\text{out}` in set :math:`C_{vp}^\text{out}` is a commodity :math:`c` generated by the process :math:`p` in site :math:`v`.
 For example, `(Mid,PV,Elec)` is interpreted as the commodity `Elec` is generated by the process `PV` in the site `Mid`. 
@@ -312,7 +312,7 @@ This set is defined as ``pro_output_tuples`` and given by the code fragment:
                     if process == pro],
         doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
 		
-Where; ``r_out`` represents the process output ratio.
+Where: ``r_out`` represents the process output ratio.
 
 Commodity Type Subsets
 ======================
@@ -362,7 +362,7 @@ Commodity Type Subsets are given by the code fragment:
         initialize=commodity_subset(m.com_tuples, 'Env'),
         doc='Commodities that (might) have a maximum creation limit')
 
-where;
+Where:
 
 .. function:: commodity_subset(com_tuples, type_name)
 

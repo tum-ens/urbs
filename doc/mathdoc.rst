@@ -457,7 +457,7 @@ Cost Variables
 ^^^^^^^^^^^^^^
 **Total System Cost**, :math:`\zeta` : the variable :math:`\zeta` represents
 the *annual total expense incurred* in reaching the satisfaction of the given energy demand.
-This is calculated by the sum total of all costs by type(:math:`\zeta_r`,  :math:`\forall r \in R`) and defined as  ``costs`` by the following code fragment:
+This is calculated by the sum total of all costs by type(:math:`\zeta_r`, :math:`\forall r \in R`) and defined as  ``costs`` by the following code fragment:
 
 ::
 
@@ -469,7 +469,7 @@ This is calculated by the sum total of all costs by type(:math:`\zeta_r`,  :math
 More information on calculation of this variable is available at the `Cost Function`_ section.
 
 Total System costs by type: System costs are divided into 6 cost types by their meaning and purpose.
-The seperaton of costs by type, facilitates business planning and provides calculation accuracy
+The separation of costs by type, facilitates business planning and provides calculation accuracy
 As mentioned before these cost types are hardcoded, which means they are not considered to be fixed or changed by the user.
 These cost types are as following;
 
@@ -479,7 +479,7 @@ These cost types are as following;
 	**Fix Costs** :math:`\zeta_\text{fix}` : The variable :math:`\zeta_\text{fix}` represents the annualised total fix costs.
 		Fix costs for all used storage, process, and transmission technologies. Such as maintenance costs.
 		
-	**Variable Costs** :math:`\zeta_\text{var}` : The variable :math:`\zeta_\text{var}` represents the annualised total fix costs.
+	**Variable Costs** :math:`\zeta_\text{var}` : The variable :math:`\zeta_\text{var}` represents the annualised total variables costs.
 		Variable costs that are reliant on the usage amount and period of the storage, process, transmission technologies.
 		
 	**Fuel Costs** :math:`\zeta_\text{fuel}` : The variable :math:`\zeta_\text{fuel}` represents the annualised total fuel costs.
@@ -525,7 +525,7 @@ Process Variables
 ^^^^^^^^^^^^^^^^^
 
 **Total Process Capacity**, :math:`\kappa_{vp}`, ``cap_pro``: The variable :math:`\kappa_{vp}` represents the total potential power output (capacity) of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`), that is required in the energy system. The total process capacity includes both the already installed process capacity and the additional new process capacity that needs to be installed. Since the costs of the process technologies are mostly directly proportional to the power output of processes, this variable acts as a scale factor of process technologies and helps us to calculate a more accurate cost plan. For further information see Process Capacity Rule.
-This variable is expressed in the unit MW 
+This variable is expressed in the unit MW.
 In script ``urbs.py`` this variable is defined by the model variable ``cap_pro`` and initialized by the following code fragment: ::
 
     m.cap_pro = pyomo.Var(
@@ -678,7 +678,7 @@ Technical Parameters
 	+-----------------------------------+----+--------------------------------------------+
 	|:math:`w`                          | _  |Weight                                      |
 	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\Delta t`                   |h   |Timestep Duration                           |
+	|:math:`\Delta t`                   | h  |Timestep Duration                           |
 	+-----------------------------------+----+--------------------------------------------+
 	|**Commodity Technical Parameters**                                                   |
 	+-----------------------------------+----+--------------------------------------------+
@@ -718,7 +718,7 @@ Technical Parameters
 	+-----------------------------------+----+--------------------------------------------+
 	|**Storage Technical Parameters**                                                     |
 	+-----------------------------------+----+--------------------------------------------+
-	|:math:`I_{vs}`                     |1   |Initial and Final Storage Content(relative) |
+	|:math:`I_{vs}`                     | 1  |Initial and Final Storage Content(relative) |
 	+-----------------------------------+----+--------------------------------------------+
 	|:math:`e_{vs}^\text{in}`           | _  |Storage Efficiency During Charge            |
 	+-----------------------------------+----+--------------------------------------------+
@@ -770,9 +770,9 @@ Commodity Technical Parameters
 
 **Demand for Commodity**, :math:`d_{vct}`, ``m.demand.loc[tm][sit,com]``: The parameter represents the energy amount of a demand commodity tuple :math:`c_{vq}` required at a timestep :math:`t` (:math:`\forall v \in V, q = "Demand", \forall t \in T_m`). The unit of this parameter is MW. This data is to be provided by the user and to be entered in the spreadsheet. The related section for this parameter in the spreadsheet can be found under the "Demand" sheet. Here each row represents another timestep :math:`t` and each column represent a commodity tuple :math:`c_{vq}`. Rows are named after the timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the combination of site name :math:`v` and commodity name :math:`c` respecting the order and seperated by a period(.). For example (Mid, Elec) represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted in column declarations, because every commodity of this parameter has to be from commodity type `Demand` in any case.
 
-**Intermittent Supply Capacity Factor**, :math:`s_{vct}`, ``m.supim.loc[tm][sit,com]``: The parameter :math:`s_{vct}` represents the normalized availability of an supply intermittent commodity :math:`c` :math:`(\forall c \in C_\text{sup})` in a site :math:`v` at a timestep :math:`t`. In other words this parameter gives the ratio of current available energy amount to maximum potential energy amount of a supply intermittent commodity. This data is to be provided by the user and to be entered in the spreadsheet. The related section for this parameter in the spreadsheet can be found under the "SupIm" sheet. Here each row represents another timestep :math:`t` and each column represent a commodity tuple :math:`c_{vq}`. Rows are named after the timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the combination of site name :math:`v` and commodity name :math:`c`, in this respective order and seperated by a period(.). For example (Mid.Elec) represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted in column declarations, because every commodity of this parameter has to be from commodity type `SupIm` in any case.
+**Intermittent Supply Capacity Factor**, :math:`s_{vct}`, ``m.supim.loc[tm][sit,com]``: The parameter :math:`s_{vct}` represents the normalized availability of a supply intermittent commodity :math:`c` :math:`(\forall c \in C_\text{sup})` in a site :math:`v` at a timestep :math:`t`. In other words this parameter gives the ratio of current available energy amount to maximum potential energy amount of a supply intermittent commodity. This data is to be provided by the user and to be entered in the spreadsheet. The related section for this parameter in the spreadsheet can be found under the "SupIm" sheet. Here each row represents another timestep :math:`t` and each column represent a commodity tuple :math:`c_{vq}`. Rows are named after the timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the combination of site name :math:`v` and commodity name :math:`c`, in this respective order and seperated by a period(.). For example (Mid.Elec) represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted in column declarations, because every commodity of this parameter has to be from commodity type `SupIm` in any case.
 
-**Maximum Stock Supply Limit Per Time Step**, :math:`\overline{l}_{vc}`, ``m.commodity.loc[sit,com,com_type]['maxperstep']``: The parameter :math:`\overline{l}_{vc}` represents the maximum energy amount of a stock commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Stock"`)  that energy model is allowed to use per time step. The unit of this parameter is MW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet.  Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of stock commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{l}_{vc}`. If there is no desired restriction of a stock commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
+**Maximum Stock Supply Limit Per Time Step**, :math:`\overline{l}_{vc}`, ``m.commodity.loc[sit,com,com_type]['maxperstep']``: The parameter :math:`\overline{l}_{vc}` represents the maximum energy amount of a stock commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Stock"`) that energy model is allowed to use per time step. The unit of this parameter is MW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of stock commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{l}_{vc}`. If there is no desired restriction of a stock commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
 **Maximum Annual Stock Supply Limit Per Vertex**, :math:`\overline{L}_{vc}`, ``m.commodity.loc[sit,com,com_type]['max']``: The parameter :math:`\overline{L}_{vc}` represents the maximum energy amount of a stock commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Stock"`) that energy model is allowed to use annually. The unit of this parameter is MW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of stock commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{L}_{vc}`. If there is no desired restriction of a stock commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
 
@@ -805,7 +805,7 @@ Process Technical Parameters
 **Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out.loc[pro,co]``: The parameter :math:`r_{pc}^\text{out}` represents the normlized ratio of the amount of a commodity :math:`c`, that comes out of a process :math:`p` as an output commodity.  The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
 
 
-Basically these ratios shows how much of which commodity is consumed and generated by a process :math:`p` in a site :math:`v`.
+Basically these ratios show how much of which commodity is consumed and generated by a process :math:`p` in a site :math:`v`.
 
 Storage Technical Parameters
 ----------------------------
@@ -837,7 +837,7 @@ Transmission Technical Parameters
 
 **Tranmission Capacity Installed**, :math:`K_{af}`, ``m.transmission.loc[sin,sout,tra,com]['inst-cap']``: The parameter :math:`K_{af}` represents the amount of power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "inst-cap" represents the parameters :math:`K_{af}` of the corresponding combinations.
 
-**Tranmission Capacity Upper Bound**, :math:`\overline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-up']``: The parameter :math:`\overline{K}_{af}` represents the maximum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "cap-up" represents the parameters :math:`\overline{K}_{af}` of the corresponding combinations. 
+**Tranmission Capacity Upper Bound**, :math:`\overline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-up']``: The parameter :math:`\overline{K}_{af}` represents the maximum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission, site in, site out, commodity combination. The tenth column with the header label "cap-up" represents the parameters :math:`\overline{K}_{af}` of the corresponding combinations. 
 
 Economical Parameters
 ^^^^^^^^^^^^^^^^^^^^^
@@ -927,16 +927,16 @@ This derived parameter is calculated by the helper function :func:`annuity facto
   and interest rate. Works also well for equally sized numpy arrays as input.
     
   :param int n: number of depreciation periods (years)
-  :param float i: interest rate (percent, e.g. 0.06 means 6 %)
+  :param float i: interest rate (e.g. 0.06 means 6 %)
 
   :return: value of the expression :math:`\frac{(1+i)^n i}{(1+i)^n - 1}`
 
 Commodity Economical Parameters
 -------------------------------
 
-**Stock Commodity Fuel Costs**, :math:`k_{vc}^\text{fuel}`, ``m.commodity.loc[c]['price']``: The parameter :math:`k_{vc}^\text{fuel}` represents the purchase cost for purchasing one unit(1 MWh) of a stock commodity :math:`c` (:math:`\forall c \in C_\text{stock}`) in a site :math:`v` (:math:`\forall v \in V`) . The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of stock commodity tuples (:math:`\forall q = "Stock"`) in this sheet with the header label "price" represents the corresponding parameter :math:`k_{vc}^\text{fuel}`.
+**Stock Commodity Fuel Costs**, :math:`k_{vc}^\text{fuel}`, ``m.commodity.loc[c]['price']``: The parameter :math:`k_{vc}^\text{fuel}` represents the purchase cost for purchasing one unit (1 MWh) of a stock commodity :math:`c` (:math:`\forall c \in C_\text{stock}`) in a site :math:`v` (:math:`\forall v \in V`) . The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of stock commodity tuples (:math:`\forall q = "Stock"`) in this sheet with the header label "price" represents the corresponding parameter :math:`k_{vc}^\text{fuel}`.
 
-**Buy/Sell Commodity Buy/Sell Costs**, :math:`k_{vct}^\text{bs}`, ``com_prices[c].loc[tm]``: The parameter :math:`k_{vct}^\text{bs}` represents the purchase/buy cost for purchasing/selling one unit(1 MWh) of a buy/sell commodity :math:`c` (:math:`\forall c \in C_\text{buy}`)/(:math:`\forall c \in C_\text{sell}`) in a site :math:`v` (:math:`\forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_m`). The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of buy/sell commodity tuples (:math:`\forall q = "Buy"`)/(:math:`\forall q = "Sell"`) in this sheet with the header label "price" represents how the parameter :math:`k_{vct}^\text{bs}` will be defined. There are two options for this parameter. This parameter will either be a fix value for the whole simulation duration or will vary with the timesteps :math:`t`. For the first option, if the buy/sell price of a buy/sell commodity is a fix value for the whole simulation duration, this value can be entered directly into the corresponding cell with the unit €/MWh. For the second option, if the buy/sell price of a buy/sell commodity depends on time, accordingly on timesteps, a string(a linear sequence of characters, words, or other data) should be written in the corresponding cell. An example string looks like this: "1,25xBuy" where the first numbers (1,25) represent a coefficient for the price. This value is than multiplied by values from another list given with timeseries. Here the word "Buy" refers to a timeseries located in ""Buy-Sell-Price"" sheet with commodity names,types and timesteps. This timeseries should be filled with time dependent buy/sell price variables. The parameter :math:`k_{vct}^\text{bs}` is than calculated by the product of the price coefficient and the related time variable for a given timestep :math:`t`. This calculation and the decision for one of the two options is executed by the helper function :func:`get_com_price`.
+**Buy/Sell Commodity Buy/Sell Costs**, :math:`k_{vct}^\text{bs}`, ``com_prices[c].loc[tm]``: The parameter :math:`k_{vct}^\text{bs}` represents the purchase/buy cost for purchasing/selling one unit(1 MWh) of a buy/sell commodity :math:`c` (:math:`\forall c \in C_\text{buy}`)/(:math:`\forall c \in C_\text{sell}`) in a site :math:`v` (:math:`\forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_m`). The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of buy/sell commodity tuples (:math:`\forall q = "Buy"`)/(:math:`\forall q = "Sell"`) in this sheet with the header label "price" represents how the parameter :math:`k_{vct}^\text{bs}` will be defined. There are two options for this parameter. This parameter will either be a fix value for the whole simulation duration or will vary with the timesteps :math:`t`. For the first option, if the buy/sell price of a buy/sell commodity is a fix value for the whole simulation duration, this value can be entered directly into the corresponding cell with the unit €/MWh. For the second option, if the buy/sell price of a buy/sell commodity depends on time, accordingly on timesteps, a string (a linear sequence of characters, words, or other data) should be written in the corresponding cell. An example string looks like this: "1,25xBuy" where the first numbers (1,25) represent a coefficient for the price. This value is than multiplied by values from another list given with timeseries. Here the word "Buy" refers to a timeseries located in ""Buy-Sell-Price"" sheet with commodity names, types and timesteps. This timeseries should be filled with time dependent buy/sell price variables. The parameter :math:`k_{vct}^\text{bs}` is then calculated by the product of the price coefficient and the related time variable for a given timestep :math:`t`. This calculation and the decision for one of the two options is executed by the helper function :func:`get_com_price`.
 
 .. function:: get_com_price(instance, tuples)
 
@@ -946,12 +946,12 @@ Commodity Economical Parameters
   :return: a Pandas DataFrame with entities as columns and timesteps as index
   
   Calculate commodity prices for each modelled timestep.
-  Checks if the input is a float, if it is a float than gets the input value as a fix value for commodity price, otherwise if the input value is not a float, but a string, extracts the price coefficient from the string and  multiplies it with a timeseries of commodity price variables.
+  Checks whether the input is a float. If it is a float it gets the input value as a fix value for commodity price. Otherwise if the input value is not a float, but a string, it extracts the price coefficient from the string and  multiplies it with a timeseries of commodity price variables.
 
 Process Economical Parameters
 -----------------------------
 
-**Weighted Average Cost of Capital for Process**, :math:`i_{vp}`, : The parameter :math:`i_{vp}` represents the weighted average cost of capital for a process technology :math:`p` in a site :math:`v`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "wacc" represents the parameters :math:`i_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%
+**Weighted Average Cost of Capital for Process**, :math:`i_{vp}`, : The parameter :math:`i_{vp}` represents the weighted average cost of capital for a process technology :math:`p` in a site :math:`v`. The weighted average cost of capital gives the interest rate (%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "wacc" represents the parameters :math:`i_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%
 
 **Process Depreciation Period**, :math:`z_{vp}`, (a): The parameter :math:`z_{vp}` represents the depreciation period of a process :math:`p` in a site :math:`v`. The depreciation period gives the economic lifetime (more conservative than technical lifetime) of a process investment. The unit of this parameter is "a", where "a" represents a year of 8760 hours. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the tenth column with the header label "depreciation" represents the parameters :math:`z_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
@@ -1018,7 +1018,7 @@ The variable total system cost :math:`\zeta` is basically calculated by the summ
 Investment Costs
 ----------------
 
-The variable investment costs :math:`\zeta_\text{inv}` represents the required annual expenses made, in the hope of future benefits. These expenses are made on every new investment. The possible investments of an energy system in this model are:
+The variable investment costs :math:`\zeta_\text{inv}` represent the required annual expenses made, in the hope of future benefits. These expenses are made on every new investment. The possible investments of an energy system in this model are:
 
 1. Additional power output capacity for process technologies.
 2. Additional power output capacity for storage technologies and additional content capacity for storage technologies.
@@ -1040,8 +1040,8 @@ Total annual investment cost is calculated by the sum of three main summands, th
 
 .. math:: \sum_{\substack{v \in V\\ p \in P}} \hat{\kappa}_{vp} k_p^\text{inv}
 
-2. The second summand of the formula calculates the required investment expenses to install additional power output capacity and storage content capacity to storage technologies for every member of the set storage tuples (:math:`\forall s_{vc} \in S_{vc}`). This summand consists of two products:
-	* The first product calculates the required annual investment expenses to install an additional storage content capacity to a given storage tuple . This is calculated by the product of the variable new storage size( :math:`\hat{\kappa}_{vs}^\text{c}`, ``cap_sto_c_new``) and the parameter annualised storage size investment costs ( :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``).
+2. The second summand of the formula calculates the required investment expenses to install additional power output capacity and storage content capacity to storage technologies for every member of the set storage tuples ( :math:`\forall s_{vc} \in S_{vc}`). This summand consists of two products:
+	* The first product calculates the required annual investment expenses to install an additional storage content capacity to a given storage tuple . This is calculated by the product of the variable new storage size ( :math:`\hat{\kappa}_{vs}^\text{c}`, ``cap_sto_c_new``) and the parameter annualised storage size investment costs ( :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``).
 	* The second product calculates the required annual investment expenses to install an additional power output capacity to a given storage tuple. This is calculated by the product of the variable new storage power ( :math:`\hat{\kappa}_{vs}^\text{p}`, ``cap_sto_p_new``) and the parameter annualised storage power investment costs ( :math:`k_{vs}^\text{p,inv}`, ``m.storage.loc[s]['inv-cost-p'] * m.storage.loc[s]['annuity-factor']``).
 
    These two products for a given storage tuple are than added up. The calculation of investment costs for a given storage tuple is than repeated for every single storage tuple and summed up to calculate the total investment costs for storage technologies. In mathematical notation this summand is expressed as:
@@ -1104,7 +1104,7 @@ Total annual fix cost :math:`\zeta_\text{fix}` is calculated by the sum of three
 	* The first product calculates the required annual fix expenses to keep the storage content capacity of a given storage tuple maintained.  This is calculated by the product of the variable total storage size ( :math:`\kappa_{vs}^\text{c}`, ``cap_sto_c``) and the parameter annual storage size fixed costs ( :math:`k_{vs}^\text{c,fix}`, ``m.storage.loc[s]['fix-cost-c']``).
 	* The second product calculates the required annual fix expenses to keep the power output capacity of a given storage tuple maintained. This is calculated by the product of the variable total storage power ( :math:`\kappa_{vs}^\text{p}`, ``cap_sto_p``) and the parameter annual storage power fixed costs (:math:`k_{vs}^\text{p,fix}`, ``m.storage.loc[s]['fix-cost-p']``).
 
-   These two products for a given storage tuple are than added up. The calculation of fix costs for a storage tuple is than repeated for every single storage tuple and summed up to calculate the total fix costs for storage technologies. In mathematical notation this summand is expressed as:
+   These two products for a given storage tuple are than added up. The calculation of fix costs for a storage tuple is then repeated for every single storage tuple and summed up to calculate the total fix costs for storage technologies. In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{v \in V\\ s \in S}} (\kappa_{vs}^\text{c} k_{vs}^\text{c,fix} + \kappa_{vs}^\text{p} k_{vs}^\text{p,fix})
 
@@ -1732,7 +1732,7 @@ In script ``urbs.py`` the constraint process capacity limit rule is defined and 
 				m.cap_pro[sit, pro],
 				m.process.loc[sit, pro]['cap-up'])
 
-**Sell Buy Symmetry Rule**: The constraint sell buy symmetry rule defines the total process capacity :math:`\kappa_{vp}` of a process :math:`p` in a site :math:`v` that uses either sell or buy commodities ( :math:`c \in C_\text{sell} \vee C_\text{buy}`), therefore this constraint only applies to processes that use sell or buy commodities. The constraint states that the total process capacities :math:`\kappa_{vp}` of processes that use complementary buy and sell commodities must be equal.  Buy and sell commodities are complementary, when a commodity :math:`c` is an output of a process where the buy commodity is an input, and at the same time the commodity :math:`c` is an input commodity of a process where the sell commodity is an output.
+**Sell Buy Symmetry Rule**: The constraint sell buy symmetry rule defines the total process capacity :math:`\kappa_{vp}` of a process :math:`p` in a site :math:`v` that uses either sell or buy commodities ( :math:`c \in C_\text{sell} \vee C_\text{buy}`), therefore this constraint only applies to processes that use sell or buy commodities. The constraint states that the total process capacities :math:`\kappa_{vp}` of processes that use complementary buy and sell commodities must be equal. Buy and sell commodities are complementary, when a commodity :math:`c` is an output of a process where the buy commodity is an input, and at the same time the commodity :math:`c` is an input commodity of a process where the sell commodity is an output.
 
 In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calculated by the following code fragment:
 ::
@@ -1746,7 +1746,7 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
 
 	def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
 	# constraint only for sell and buy processes
-	# and the processes musst be in the same site
+	# and the processes must be in the same site
 		if coin in m.com_buy:
 			sell_pro = search_sell_buy_tuple(m, sit_in, pro_in, coin)
 			if sell_pro is None:
@@ -1850,7 +1850,7 @@ In script ``urbs.py`` the constraint transmission capacity limit rule is defined
 
 	\forall a\in A, f\in F\colon \qquad & \qquad \kappa_{af} &= \kappa_{a'f}
 
-In sctipt ``urbs.py`` the constraint transmission symmetry rule is defined and calculated by the following code fragment:
+In script ``urbs.py`` the constraint transmission symmetry rule is defined and calculated by the following code fragment:
 ::
 
     m.res_transmission_symmetry = pyomo.Constraint(

@@ -36,7 +36,7 @@ Several packages are included.
 * `os`_ is a builtin Python module, included here for its `os.path`_ submodule
   that offers operating system independent path manipulation routines. The 
   following code creates the path string ``'result/foo'`` or ``'result\\foo'``
-  (depending on the operating system),checks whether it exists and creates the
+  (depending on the operating system), checks whether it exists and creates the
   folder(s) if needed. This is used to prepare a new directory for generated
   result file::
       

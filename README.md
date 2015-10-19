@@ -82,7 +82,7 @@ Then, in a directory of your choice, clone this repository and execute the runme
     cd urbs
     python runme.py
 
-About a minute later, the subfolder `result` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definitions are contained in the run script (whatch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
+About a minute later, the subfolder `result` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definitions are contained in the run script (watch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
 
     python comp.py
 

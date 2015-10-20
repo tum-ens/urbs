@@ -59,34 +59,22 @@ def read_excel(filename):
         150000000
     """
     with pd.ExcelFile(filename) as xls:
-        commodity = xls.parse(
-            'Commodity',
-            index_col=['Site', 'Commodity', 'Type'])
-        process = xls.parse(
-            'Process',
-            index_col=['Site', 'Process'])
-        process_commodity = xls.parse(
-            'Process-Commodity',
-            index_col=['Process', 'Commodity', 'Direction'])
-        transmission = xls.parse(
-            'Transmission',
-            index_col=['Site In', 'Site Out', 'Transmission', 'Commodity'])
-        storage = xls.parse(
-            'Storage',
-            index_col=['Site', 'Storage', 'Commodity'])
-        demand = xls.parse(
-            'Demand',
-            index_col=['t'])
-        supim = xls.parse(
-            'SupIm',
-            index_col=['t'])
-        buy_sell_price = xls.parse(
-            'Buy-Sell-Price',
-            index_col=['t'])
+        commodity = (
+            xls.parse('Commodity').set_index(['Site', 'Commodity', 'Type']))
+        process = xls.parse('Process').set_index(['Site', 'Process'])
+        process_commodity = (
+            xls.parse('Process-Commodity')
+               .set_index(['Process', 'Commodity', 'Direction']))
+        transmission = (
+            xls.parse('Transmission')
+               .set_index(['Site In', 'Site Out', 'Transmission','Commodity']))
+        storage = (
+            xls.parse('Storage').set_index(['Site', 'Storage', 'Commodity']))
+        demand = xls.parse('Demand').set_index(['t'])
+        supim = xls.parse('SupIm').set_index(['t'])
+        buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         try:
-            hacks = xls.parse(
-                'Hacks',
-                index_col=['Name'])
+            hacks = xls.parse('Hacks').set_index(['Name'])
         except XLRDError:
             hacks = None
 

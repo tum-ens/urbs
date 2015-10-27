@@ -79,7 +79,7 @@ def compare_scenarios(result_files, output_filename):
     for rf in result_files:
         with pd.ExcelFile(rf) as xls:
             cost = xls.parse('Costs',index_col=[0])
-            esum = xls.parse('Energy sums',)
+            esum = xls.parse('Energy sums')
     
             # repair broken MultiIndex in the first column
             esum.reset_index(inplace=True)

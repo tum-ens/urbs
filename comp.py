@@ -78,8 +78,8 @@ def compare_scenarios(result_files, output_filename):
     
     for rf in result_files:
         with pd.ExcelFile(rf) as xls:
-            cost = xls.parse('Costs', has_index_names=True)
-            esum = xls.parse('Energy sums')
+            cost = xls.parse('Costs',index_col=[0])
+            esum = xls.parse('Energy sums',)
     
             # repair broken MultiIndex in the first column
             esum.reset_index(inplace=True)
@@ -101,7 +101,7 @@ def compare_scenarios(result_files, output_filename):
     # convert EUR/a to 1e9 EUR/a
     costs.columns = costs.columns.droplevel(1)
     costs.index.name = 'Cost type'
-    costs = costs.sort().transpose()
+    costs = costs.sort_index().transpose()
     costs = costs / 1e9
     
     # sum up created energy over all locations, but keeping scenarios (level=0)
@@ -111,7 +111,7 @@ def compare_scenarios(result_files, output_filename):
     esums = esums.loc['Created'].sum(axis=1, level=0)
     esums.index.name = 'Commodity'
     used_commodities = (esums.sum(axis=1) > 0)
-    esums = esums[used_commodities].sort().transpose()
+    esums = esums[used_commodities].sort_index().transpose()
     esums = esums / 1e3
     
     # PLOT

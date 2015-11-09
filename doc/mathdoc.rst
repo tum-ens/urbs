@@ -436,19 +436,19 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| **Storage Variables**                                                        |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\kappa_{vs}^\text{c}`       | MW   | Total Storage Size               |
+	| :math:`\kappa_{vs}^\text{c}`       | MWh  | Total Storage Size               |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\hat{\kappa}_{vs}^\text{c}` | MW   | New Storage Size                 |
+	| :math:`\hat{\kappa}_{vs}^\text{c}` | MWh  | New Storage Size                 |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\kappa_{vs}^\text{p}`       | MWh  | Total Storage Power              |
+	| :math:`\kappa_{vs}^\text{p}`       | MW   | Total Storage Power              |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\hat{\kappa}_{vs}^\text{p}` | MWh  | New Storage Power                |
+	| :math:`\hat{\kappa}_{vs}^\text{p}` | MW   | New Storage Power                |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vst}^\text{in}`   | MWh  | Storage Power Flow (Input)       |
+	| :math:`\epsilon_{vst}^\text{in}`   | MW   | Storage Power Flow (Input)       |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vst}^\text{out}`  | MWh  | Storage Power Flow (Output)      |
+	| :math:`\epsilon_{vst}^\text{out}`  | MW   | Storage Power Flow (Output)      |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vst}^\text{con}`  | MW   | Storage Energy Content           |
+	| :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content           |
 	+------------------------------------+------+----------------------------------+
 
 

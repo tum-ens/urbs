@@ -114,7 +114,7 @@ Dependencies
 .. _coopr: https://software.sandia.gov/trac/coopr
 .. _Institute for Renewable and Sustainable Energy Systems: http://www.ens.ei.tum.de/
 .. _matplotlib: http://matplotlib.org
-.. _pandas: https://pandas.pydata.org
+.. _pandas: http://pandas.pydata.org/
 .. _pyomo: https://software.sandia.gov/trac/coopr/wiki/Pyomo
 .. _urbs: https://github.com/tum-ens/urbs
 

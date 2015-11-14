@@ -1640,28 +1640,19 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
         if not created[col].any() and len(created.columns) > 1:
             if col not in consumed.columns or not consumed[col].any():
                 created.pop(col)
-				
-    # sorting plot elements
-	# calculate standard deviation possibly normed by mean value, takes ~10-100ms
-    if len(created.columns) > 1:
-        std = pd.DataFrame(np.zeros_like(created.tail(1)),
-                           index=created.index[-1:]+1, columns=created.columns)
-        for col in std.columns:
-            std[col] = np.std(created[col])
-        # sort created ascencing with std i.e. base load first
-        created = created.append(std)
-        new_columns = created.columns[created.ix[created.last_valid_index()].argsort()]
-        created = created[new_columns][:-1]
 
-    if len(consumed.columns) > 1:
-        std = pd.DataFrame(np.zeros_like(consumed.tail(1)),
-                           index=consumed.index[-1:]+1, columns=consumed.columns)
-        for col in std.columns:
-            std[col] = np.std(consumed[col])
-        # sort consumed ascencing with std i.e. base load first
-        consumed = consumed.append(std)
-        new_columns = consumed.columns[consumed.ix[consumed.last_valid_index()].argsort()]
-        consumed = consumed[new_columns][:-1]
+    # sorting plot elements
+    for elements in [created,consumed]:
+        if len(elements.columns) > 1:
+            # calculate standard deviation
+            std = pd.DataFrame(np.zeros_like(elements.tail(1)),
+                               index=elements.index[-1:]+1, columns=elements.columns)
+            for col in std.columns:
+                std[col] = np.std(elements[col])
+            # sort created/consumed ascencing with std i.e. base load first
+            elements = elements.append(std)
+            new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
+            elements = elements[new_columns][:-1]
 
     # PLOT CREATED
     ax0 = plt.subplot(gs[0])

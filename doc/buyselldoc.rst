@@ -62,7 +62,7 @@ grid with the continental grid. Both capacities and prices are fix.
     Gas plant,     0.50, 1000,  500,           25, 5,       30
     Purchase,      1.00, 1000, 1000, **15/45/75**, 0, 15/45/75
     Feed-in,       1.00, 1000, 1000, **15/45/75**, 0, 15/45/75
-	
+
 The modelled timespan is 6 weeks with different fix prices each. In week 1
 on the fourth day energy is purchased, because it is neccessary to cover
 the demand. In week 2 the sell price is higher than the variable costs of the
@@ -74,7 +74,7 @@ feed-in. In week 5 buy prices have dropped enough for purchased energy to
 replace energy produced by the gas plant. In week 6 they further dropped
 enough to even replace energy produced by the nuclear plant.
 
-.. image:: buysell/Scenario_1_-_Fix_Cap_Fix_Prices.png
+.. image:: paradiso/Scenario_1_-_Fix_Cap_Fix_Prices.png
     :width: 95%
     :align: center
 
@@ -129,9 +129,15 @@ But since the storage capacities are limited the opportunity costs of 15 €/MWh
 of substituting energy from the gas plant are higher than the 10 €/MWh profit
 margin it is not done.
 
-.. image:: buysell/Scenario_2_-_Fix_Cap_Var_Prices.png
+.. image:: paradiso/Scenario_2_-_Fix_Cap_Var_Prices.png
     :width: 95%
     :align: center
+
+.. note::
+
+    For trial e.g. of the result of greater storage capacities this
+    :download:`paradiso_2.xlsx <paradiso/paradiso_2.xlsx>`
+    is the input file used for this scenario.
 
 Variable Capacities - Variable Prices
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -200,9 +206,15 @@ As showed by the following diagramms this justifies the additional costs of
 250 € - 60 € = 190 € per purchased MWh to an amount that reduces the peak load
 by 73 MW.
 
-.. image:: buysell/Scenario_3_-_Var_Cap_Var_Prices.png
+.. image:: paradiso/Scenario_3_-_Var_Cap_Var_Prices.png
     :width: 95%
     :align: center
+
+.. note::
+
+    For trial e.g. of the result of different storage capacities this
+    :download:`paradiso_3.xlsx <paradiso/paradiso_3.xlsx>`
+    is the input file used for this scenario.
 
 System support by variable prices
 =================================
@@ -219,7 +231,7 @@ and put even more stress on the grid with large power gradients.
 .. csv-table:: Scenario Var Cap Sup Im
     :header-rows: 1
     :stub-columns: 1
-	
+
     Process, eff, inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
     Nuclear plant, 0.33, 0, 0,       5,   5,   10
     Coal Plant,    0.40, 0, 0,      11,   5,   16
@@ -234,12 +246,12 @@ The price function for the scenario was chosen as:
 .. code-block:: excel
 
     Buy price = 100 + 100 * Demand / mean(Demand) * (1.5 - SupIm)
-	
+
     Sell price = Buy Price / 5
-	
+
 The result is both more realistic and protective of the grid.
-	
-.. image:: buysell/Scenario_4_-_Var_Cap_Sup_Im.png
+
+.. image:: paradiso/Scenario_4_-_Var_Cap_Sup_Im.png
     :width: 95%
     :align: center
    

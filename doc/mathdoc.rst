@@ -1734,11 +1734,11 @@ In script ``urbs.py`` the constraint process throughput gradient rule is defined
             if m.cap_pro[sit, pro].value is None:
                 return pyomo.Constraint.Skip
             else:
-                return (m.tau_pro[t-1, sit, pro] - 
-                        m.process.loc[sit, pro]['max-grad'] * m.cap_pro[sit, pro],
+                return (m.tau_pro[t-1, sit, pro] - m.cap_pro[sit, pro] *
+                            m.process.loc[sit, pro]['max-grad'] * m.dt,
                         m.tau_pro[t, sit, pro],
-                        m.tau_pro[t-1, sit, pro] +
-                        m.process.loc[sit, pro]['max-grad'] * m.cap_pro[sit, pro])
+                        m.tau_pro[t-1, sit, pro] + m.cap_pro[sit, pro] *
+                            m.process.loc[sit, pro]['max-grad'] * m.dt)
         else:
             return pyomo.Constraint.Skip
 

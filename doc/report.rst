@@ -43,6 +43,18 @@ To sum over time, method :meth:`~pandas.DataFrame.sum` is called with its
 ``axis`` argument set to columns (``1``). This yields a DataFrame indexed over 
 the tuple *(site, process, input commodity, output commodity)* and the
 summed emissions as value.
+
+Get timeseries
+-------------
+
+.. literalinclude:: ../urbs.py
+   :pyobject: get_timeseries
+
+With the arguments ``instance``, ``com`` and ``sit`` the function :func:
+`get_timeseries` returns :class:`~pandas.DataFrames` of all timeseries that
+are referring to the given commodity and site.
+This includes the derivative for ``created`` and ``consumed``, which is
+calculated and standardized by the power capacity at the end of the function.
    
 Write to Excel
 --------------

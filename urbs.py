@@ -446,7 +446,7 @@ def create_model(data, timesteps=None, dt=1):
     m.res_process_throughput_gradient = pyomo.Constraint(
         m.tm, m.pro_tuples,
         rule=res_process_throughput_gradient_rule,
-        doc='process throughput gradient <= maximal gradient')
+        doc='absolut process throughput gradient <= maximal gradient')
     m.res_process_capacity = pyomo.Constraint(
         m.pro_tuples,
         rule=res_process_capacity_rule,
@@ -715,11 +715,11 @@ def res_process_throughput_gradient_rule(m, t, sit, pro):
         if m.cap_pro[sit, pro].value is None:
             return pyomo.Constraint.Skip
         else:
-            return (m.tau_pro[t-1, sit, pro] - 
-                    m.process.loc[sit, pro]['max-grad'] * m.cap_pro[sit, pro],
+            return (m.tau_pro[t-1, sit, pro] - m.cap_pro[sit, pro] *
+                        m.process.loc[sit, pro]['max-grad'] * m.dt,
                     m.tau_pro[t, sit, pro],
-                    m.tau_pro[t-1, sit, pro] +
-                    m.process.loc[sit, pro]['max-grad'] * m.cap_pro[sit, pro])
+                    m.tau_pro[t-1, sit, pro] + m.cap_pro[sit, pro] *
+                        m.process.loc[sit, pro]['max-grad'] * m.dt)
     else:
         return pyomo.Constraint.Skip
 
@@ -1525,9 +1525,9 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # DERIVATIVE
     derivative = created.join(consumed)
     derivative = pd.DataFrame(np.diff(derivative.T).T,
-                              index=derivative.index[:-1], columns=derivative.columns)
-    derivative = derivative.append(pd.DataFrame(np.zeros_like(derivative.tail(1)),
-                                   index=derivative.index[-1:]+1, columns=derivative.columns))
+                    index=derivative.index[:-1], columns=derivative.columns)
+    derivative = derivative.append( pd.DataFrame(np.zeros_like(derivative.tail(1)),
+                    index=derivative.index[-1:]+1, columns=derivative.columns) )
     # standardizing
     caps = get_entities(instance, ['cap_pro', 'cap_pro_new'])
     caps = caps.loc[:,'cap_pro_new']

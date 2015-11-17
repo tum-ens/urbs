@@ -13,6 +13,7 @@ import coopr.pyomo as pyomo
 import math
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 from datetime import datetime
 from operator import itemgetter
 from random import random
@@ -1639,6 +1640,19 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
         if not created[col].any() and len(created.columns) > 1:
             if col not in consumed.columns or not consumed[col].any():
                 created.pop(col)
+
+    # sorting plot elements
+    for elements in [created,consumed]:
+        if len(elements.columns) > 1:
+            # calculate standard deviation
+            std = pd.DataFrame(np.zeros_like(elements.tail(1)),
+                               index=elements.index[-1:]+1, columns=elements.columns)
+            for col in std.columns:
+                std[col] = np.std(elements[col])
+            # sort created/consumed ascencing with std i.e. base load first
+            elements = elements.append(std)
+            new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
+            elements = elements[new_columns][:-1]
 
     # PLOT CREATED
     ax0 = plt.subplot(gs[0])

@@ -1078,7 +1078,7 @@ def get_com_price(instance, tuples):
         # type(instance.commodity.loc[c]['price']):
         # float => fix: com price = 0.15
         # string => var: com price = '1.25xBuy' (Buy: refers to timeseries)
-        if not isinstance(instance.commodity.loc[c]['price'], float):
+        if not isinstance(instance.commodity.loc[c]['price'], (float, int)):
             # a different commodity price for each hour
             # factor, to realize a different commodity price for each site
             factor = extract_number_str(instance.commodity.loc[c]['price'])

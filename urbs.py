@@ -129,7 +129,7 @@ def read_excel(filename):
     return data
 
 
-def create_model(data, timesteps=None, dt=1):
+def create_model(data, timesteps=None, dt=1, dual=False):
     """Create a pyomo ConcreteModel URBS object from given input data.
 
     Args:
@@ -137,7 +137,8 @@ def create_model(data, timesteps=None, dt=1):
             'transmission', 'storage', 'demand' and 'supim'.
         timesteps: optional list of timesteps, default: demand timeseries
         dt: timestep duration in hours (default: 1)
-
+        dual: set True to add dual variables to model (slower); default: False
+        
     Returns:
         a pyomo ConcreteModel object
     """
@@ -656,6 +657,8 @@ def create_model(data, timesteps=None, dt=1):
     if 'hacks' in data:
         m = add_hacks(m, data['hacks'])
 
+    if dual:
+        m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
     return m
 
 

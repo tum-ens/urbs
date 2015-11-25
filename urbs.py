@@ -443,6 +443,10 @@ def create_model(data, timesteps=None, dt=1):
         m.tm, m.pro_tuples,
         rule=res_process_throughput_by_capacity_rule,
         doc='process throughput <= total process capacity')
+    m.res_process_throughput_gradient = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=res_process_throughput_gradient_rule,
+        doc='absolut process throughput gradient <= maximal gradient')
     m.res_process_capacity = pyomo.Constraint(
         m.pro_tuples,
         rule=res_process_capacity_rule,
@@ -703,6 +707,21 @@ def def_intermittent_supply_rule(m, tm, sit, pro, coin):
 # process throughput <= process capacity
 def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
     return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
+
+# absolute process throughput gradient <= maximal gradient
+def res_process_throughput_gradient_rule(m, t, sit, pro):
+# constraint only effectively restricting if max-grad < 1/dt
+    if m.process.loc[sit, pro]['max-grad'] < 1/m.dt.value:
+        if m.cap_pro[sit, pro].value is None:
+            return pyomo.Constraint.Skip
+        else:
+            return (m.tau_pro[t-1, sit, pro] - m.cap_pro[sit, pro] *
+                        m.process.loc[sit, pro]['max-grad'] * m.dt,
+                    m.tau_pro[t, sit, pro],
+                    m.tau_pro[t-1, sit, pro] + m.cap_pro[sit, pro] *
+                        m.process.loc[sit, pro]['max-grad'] * m.dt)
+    else:
+        return pyomo.Constraint.Skip
 
 # lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
@@ -1417,7 +1436,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
     """Return DataFrames of all timeseries referring to given commodity
 
     Usage:
-        create, consume, store, imp, exp = get_timeseries(instance, co,
+        create, consume, store, imp, exp, der = get_timeseries(instance, co,
                                                           sit, timesteps)
 
     Args:
@@ -1427,8 +1446,8 @@ def get_timeseries(instance, com, sit, timesteps=None):
         timesteps: optional list of timesteps, defaults: all modelled timesteps
 
     Returns:
-        a (created, consumed, storage, imported, exported) tuple of DataFrames
-        timeseries. These are:
+        a (created, consumed, storage, imported, exported, derivative) tuple
+        of DataFrames timeseries. These are:
 
         * created: timeseries of commodity creation, including stock source
         * consumed: timeseries of commodity consumption, including demand
@@ -1503,13 +1522,25 @@ def get_timeseries(instance, com, sit, timesteps=None):
         stored = pd.DataFrame(0, index=timesteps,
                               columns=['Level', 'Stored', 'Retrieved'])
 
+    # DERIVATIVE
+    derivative = created.join(consumed)
+    derivative = pd.DataFrame(np.diff(derivative.T).T,
+                    index=derivative.index[:-1], columns=derivative.columns)
+    derivative = derivative.append( pd.DataFrame(np.zeros_like(derivative.tail(1)),
+                    index=derivative.index[-1:]+1, columns=derivative.columns) )
+    # standardizing
+    caps = get_entities(instance, ['cap_pro', 'cap_pro_new'])
+    caps = caps.loc[:,'cap_pro_new']
+    for col in derivative.columns:
+        derivative[col] = derivative[col] / caps.loc[(sit,col)]
+
     # show stock as created
     created = created.join(stock)
 
     # show demand as consumed
     consumed = consumed.join(demand)
 
-    return created, consumed, stored, imported, exported
+    return created, consumed, stored, imported, exported, derivative
 
 
 def report(instance, filename, commodities=None, sites=None):
@@ -1543,7 +1574,7 @@ def report(instance, filename, commodities=None, sites=None):
         # collect timeseries data
         for co in commodities:
             for sit in sites:
-                created, consumed, stored, imported, exported = get_timeseries(
+                created, consumed, stored, imported, exported, derivative = get_timeseries(
                     instance, co, sit)
 
                 overprod = pd.DataFrame(
@@ -1553,10 +1584,10 @@ def report(instance, filename, commodities=None, sites=None):
                     stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
-                    [created, consumed, stored, imported, exported, overprod],
+                    [created, consumed, stored, imported, exported, overprod, derivative],
                     axis=1,
-                    keys=['Created', 'Consumed', 'Storage',
-                          'Import from', 'Export to', 'Balance'])
+                    keys=['Created', 'Consumed', 'Storage', 'Import from',
+                          'Export to', 'Balance', 'Derivative'])
                 timeseries[(co, sit)] = tableau.copy()
 
                 # timeseries sums
@@ -1612,7 +1643,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     fig = plt.figure(figsize=(16, 8))
     gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2, 1])
 
-    created, consumed, stored, imported, exported = get_timeseries(
+    created, consumed, stored, imported, exported, derivative = get_timeseries(
         prob, com, sit, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)

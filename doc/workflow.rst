@@ -152,19 +152,19 @@ to 9 M€/MWh. This yields the following table:
     :header-rows: 1
     :stub-columns: 2
 
-    Site,Process,inst-cap,cap-lo,cap-up,inv-cost,fix-cost,var-cost,wacc,depr.
-    Jepid Island,Gas plant,25,0,100,450000,6000,1.62,0.07,30
-    Jepid Island,Slack powerplant,999,999,999,0,0,**9000000.0**,0.07,1
-    Jepid Island,Wind park,0,0,**250**,900000,30000,0.0,0.07,25
-    Qlyph Archipelago,Gas plant,0,0,100,450000,6000,1.62,0.07,30
-    Qlyph Archipelago,Slack powerplant,999,999,999,0,0,**9000000.0**,0.07,1
-    Qlyph Archipelago,Wind park,0,0,**200**,900000,30000,0.0,0.07,25
-    Stryworf Key,Gas plant,25,0,100,450000,6000,1.62,0.07,30
-    Stryworf Key,Slack powerplant,999,999,999,0,0,**9000000**.0,0.07,1
-    Stryworf Key,Wind park,0,0,**120**,900000,30000,0.0,0.07,25
-    Vled Haven,Gas plant,0,0,80,450000,6000,1.62,0.07,30
-    Vled Haven,Slack powerplant,999,999,999,0,0,**9000000.0**,0.07,1
-    Vled Haven,Wind park,0,0,**80**,900000,30000,0.0,0.07,25
+    Site,Process,inst-cap,cap-lo,cap-up,max-grad,inv-cost,fix-cost,var-cost,wacc,depr.
+    Jepid Island,Gas plant,25,0,100,5,450000,6000,1.62,0.07,30
+    Jepid Island,Slack powerplant,999,999,999,inf,0,0,**9000000.0**,0.07,1
+    Jepid Island,Wind park,0,0,**250**,inf,900000,30000,0.0,0.07,25
+    Qlyph Archipelago,Gas plant,0,0,100,5,450000,6000,1.62,0.07,30
+    Qlyph Archipelago,Slack powerplant,999,999,999,inf,0,0,**9000000.0**,0.07,1
+    Qlyph Archipelago,Wind park,0,0,**200**,inf,900000,30000,0.0,0.07,25
+    Stryworf Key,Gas plant,25,0,100,5,450000,6000,1.62,0.07,30
+    Stryworf Key,Slack powerplant,999,999,999,inf,0,0,**9000000**.0,0.07,1
+    Stryworf Key,Wind park,0,0,**120**,inf,900000,30000,0.0,0.07,25
+    Vled Haven,Gas plant,0,0,80,5,450000,6000,1.62,0.07,30
+    Vled Haven,Slack powerplant,999,999,999,inf,0,0,**9000000.0**,0.07,1
+    Vled Haven,Wind park,0,0,**80**,inf,900000,30000,0.0,0.07,25
 
     
 Transmission

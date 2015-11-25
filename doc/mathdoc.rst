@@ -408,9 +408,9 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\varrho_{vct}`              | kW   | Sell Commodity Source Term       |
+	| :math:`\varrho_{vct}`              | MW   | Sell Commodity Source Term       |
 	+------------------------------------+------+----------------------------------+
-	| :math:`\psi_{vct}`                 | kW   | Buy Commodity Source Term        |
+	| :math:`\psi_{vct}`                 | MW   | Buy Commodity Source Term        |
 	+------------------------------------+------+----------------------------------+
 	| **Process Variables**                                                        |
 	+------------------------------------+------+----------------------------------+
@@ -505,21 +505,21 @@ In script ``urbs.py`` this variable is defined by the variable ``e_co_stock`` an
         within=pyomo.NonNegativeReals,
         doc='Use of stock commodity source (MW) per timestep')
 
-**Sell Commodity Source Term**, :math:`\varrho_{vct}`, ``e_co_sell``, kW : The variable :math:`\varrho_{vct}` represents the energy amount in [kW] that is being used by the system of commodity :math:`c` from type sell (:math:`\forall c \in C_\text{sell}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+**Sell Commodity Source Term**, :math:`\varrho_{vct}`, ``e_co_sell``, MW : The variable :math:`\varrho_{vct}` represents the energy amount in [MW] that is being used by the system of commodity :math:`c` from type sell (:math:`\forall c \in C_\text{sell}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
 In script ``urbs.py`` this variable is defined by the variable ``e_co_sell`` and initialized by the following code fragment: ::
 
     m.e_co_sell = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Use of sell commodity source (kW) per timestep')
+        doc='Use of sell commodity source (MW) per timestep')
 
-**Buy Commodity Source Term**, :math:`\psi_{vct}`, ``e_co_buy``, kW : The variable :math:`\psi_{vct}` represents the energy amount in [kW] that is being used by the system of commodity :math:`c` from type buy (:math:`\forall c \in C_\text{buy}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+**Buy Commodity Source Term**, :math:`\psi_{vct}`, ``e_co_buy``, MW : The variable :math:`\psi_{vct}` represents the energy amount in [MW] that is being used by the system of commodity :math:`c` from type buy (:math:`\forall c \in C_\text{buy}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
 In script ``urbs.py`` this variable is defined by the variable ``e_co_buy`` and initialized by the following code fragment: ::
 
     m.e_co_buy = pyomo.Var(
        m.tm, m.com_tuples,
        within=pyomo.NonNegativeReals,
-       doc='Use of buy commodity source (kW) per timestep')
+       doc='Use of buy commodity source (MW) per timestep')
 
 Process Variables
 ^^^^^^^^^^^^^^^^^
@@ -712,13 +712,15 @@ Technical Parameters
 	+-----------------------------------+----+--------------------------------------------+
 	|:math:`\overline{K}_{vp}`          |MW  |Process Capacity Upper Bound                |
 	+-----------------------------------+----+--------------------------------------------+
+	|:math:`\overline{PG}_{vp}`         |1/h |Process Maximal Power Gradient (relative)   |
+	+-----------------------------------+----+--------------------------------------------+
 	|:math:`r_{pc}^\text{in}`           | _  |Process Input Ratio                         |
 	+-----------------------------------+----+--------------------------------------------+
 	|:math:`r_{pc}^\text{out}`          | _  |Process Output Ratio                        |
 	+-----------------------------------+----+--------------------------------------------+
 	|**Storage Technical Parameters**                                                     |
 	+-----------------------------------+----+--------------------------------------------+
-	|:math:`I_{vs}`                     | 1  |Initial and Final Storage Content(relative) |
+	|:math:`I_{vs}`                     | 1  |Initial and Final Storage Content (relative)|
 	+-----------------------------------+----+--------------------------------------------+
 	|:math:`e_{vs}^\text{in}`           | _  |Storage Efficiency During Charge            |
 	+-----------------------------------+----+--------------------------------------------+
@@ -753,7 +755,7 @@ General Technical Parameters
 ::
 
     m.weight = pyomo.Param(
-        initialize=float(8760) / (len(m.t) * dt),
+        initialize=float(8760) / (len(m.tm) * dt),
         doc='Pre-factor for variable costs and emissions for an annual result')
 		
 
@@ -786,7 +788,6 @@ Commodity Technical Parameters
 
 **Maximum Buy Limit Per Time Step**, :math:`\overline{b}_{vc}`, ``m.commodity.loc[sit,com,com_type][`maxperstep`]``: The parameter :math:`\overline{b}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy per time step. The unit of this parameter is MW. This parameter applies to every timestep and does not vary for each timestep :math:`t`. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the sixth column of buy commodity tuples in this sheet with the header label "maxperstep" represents the parameter :math:`\overline{b}_{vc}`. If there is no desired restriction of a sell commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
-
 **Maximum Annual Buy Limit**, :math:`\overline{B}_{vc}`, ``m.commodity.loc[sit,com,com_type][`max`]``: The parameter :math:`\overline{B}_{vc}` represents the maximum energy amount of a buy commodity tuple :math:`c_{vq}` (:math:`\forall v \in V , q = "Buy"`) that energy model is allowed to buy annually. The unit of this parameter is MW. This parameter is to be provided by the user and to be entered in spreadsheet. The related section for this parameter in the spreadsheet can be found under the ``Commodity`` sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fifth column of buy commodity tuples in this sheet with the header label "max" represents the parameter :math:`\overline{B}_{vc}`. If there is no desired restriction of a buy commodity tuple usage per timestep, the corresponding cell can be set to "inf" to ignore this parameter. 
 
 **Maximum Global Annual CO**:math:`_\textbf{2}` **Emission Limit**, :math:`\overline{L}_{CO_2}`, ``m.hack.loc['Global CO2 Limit','Value']``: The parameter :math:`\overline{L}_{CO_2}` represents the maximum total energy amount of all environmental commodities that energy model is allowed to produce and release to environment annually. The unit of this parameter is MW. This parameter is optional. If the user desires to set a maximum annual limit to total :math:`CO_2` emission of the whole energy model, this can be done by entering the desired value to the related spreadsheet. The related section for this parameter can be found under the sheet "hacks". Here the the cell where the "Global CO2 limit" row and "value" column intersects stands for the parameter :math:`\overline{L}_{CO_2}`. If the user wants to disable this parameter and restriction it provides, this cell can be set to "inf" or simply be deleted. 
@@ -798,12 +799,13 @@ Process Technical Parameters
 
 **Process Capacity Installed**, :math:`K_{vp}`, ``m.process.loc[sit,pro]['inst-cap']``: The parameter :math:`K_{vp}` represents the amount of power output capacity of a process :math:`p` in a site :math:`v`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the third column with the header label "inst-cap" represents the parameters :math:`K_{vp}` belonging to the corresponding process :math:`p` and site :math:`v` combinations.
 
-**Process Capacity Upper Bound**, :math:`\overline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-up']``: The parameter :math:`\overline{K}_{vp}` represents the maximum amount of power output capacity of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the fifth column with the header label "cap-up" represents the parameters :math:`\underline{K}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired maximum limit for the process capacities, this parameter can be simply set to an unrealistic high value, to ignore this parameter.
+**Process Capacity Upper Bound**, :math:`\overline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-up']``: The parameter :math:`\overline{K}_{vp}` represents the maximum amount of power output capacity of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the fifth column with the header label "cap-up" represents the parameters :math:`\overline{K}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired maximum limit for the process capacities, this parameter can be simply set to an unrealistic high value, to ignore this parameter.
+
+**Process Maximal Gradient**, :math:`\overline{PG}_{vp}`, ``m.process.loc[sit,pro]['max-grad']``: The parameter :math:`\overline{PG}_{vp}` represents the maximal power gradient of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is 1/h. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the sixth column with the header label "max-grad" represents the parameters :math:`\overline{PG}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired maximum limit for the process power gradient, this parameter can be simply set to an unrealistic high value, to ignore this parameter.
 
 **Process Input Ratio**, :math:`r_{pc}^\text{in}`, ``m.r_in.loc[pro,co]``: The parameter :math:`r_{pc}^\text{in}` represents the normalized ratio of the amount of a commodity :math:`c` that goes into a process :math:`p` as an input commodity. The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
 
 **Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out.loc[pro,co]``: The parameter :math:`r_{pc}^\text{out}` represents the normlized ratio of the amount of a commodity :math:`c`, that comes out of a process :math:`p` as an output commodity.  The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
-
 
 Basically these ratios show how much of which commodity is consumed and generated by a process :math:`p` in a site :math:`v`.
 
@@ -951,15 +953,15 @@ Commodity Economical Parameters
 Process Economical Parameters
 -----------------------------
 
-**Weighted Average Cost of Capital for Process**, :math:`i_{vp}`, : The parameter :math:`i_{vp}` represents the weighted average cost of capital for a process technology :math:`p` in a site :math:`v`. The weighted average cost of capital gives the interest rate (%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "wacc" represents the parameters :math:`i_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%
+**Weighted Average Cost of Capital for Process**, :math:`i_{vp}`, : The parameter :math:`i_{vp}` represents the weighted average cost of capital for a process technology :math:`p` in a site :math:`v`. The weighted average cost of capital gives the interest rate (%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the tenth column with the header label "wacc" represents the parameters :math:`i_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%
 
-**Process Depreciation Period**, :math:`z_{vp}`, (a): The parameter :math:`z_{vp}` represents the depreciation period of a process :math:`p` in a site :math:`v`. The depreciation period gives the economic lifetime (more conservative than technical lifetime) of a process investment. The unit of this parameter is "a", where "a" represents a year of 8760 hours. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the tenth column with the header label "depreciation" represents the parameters :math:`z_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
+**Process Depreciation Period**, :math:`z_{vp}`, (a): The parameter :math:`z_{vp}` represents the depreciation period of a process :math:`p` in a site :math:`v`. The depreciation period gives the economic lifetime (more conservative than technical lifetime) of a process investment. The unit of this parameter is "a", where "a" represents a year of 8760 hours. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the eleventh column with the header label "depreciation" represents the parameters :math:`z_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
-**Annualised Process Capacity Investment Costs**, :math:`k_{vp}^\text{inv}`, ``m.process.loc[p]['inv-cost'] * m.process.loc[p]['annuity-factor']``: The parameter :math:`k_{vp}^\text{inv}` represents the annualised investment cost for adding one unit new capacity of a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/(MW a). This parameter is derived by the product of annuity factor :math:`AF` and the process capacity investment cost for a given process tuple. The process capacity investment cost is to be given as an input by the user. The related section for the process capacity investment cost in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the sixth column with the header label "inv-cost" represents the process capacity investment costs of the corresponding process :math:`p` and site :math:`v` combinations.
+**Annualised Process Capacity Investment Costs**, :math:`k_{vp}^\text{inv}`, ``m.process.loc[p]['inv-cost'] * m.process.loc[p]['annuity-factor']``: The parameter :math:`k_{vp}^\text{inv}` represents the annualised investment cost for adding one unit new capacity of a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/(MW a). This parameter is derived by the product of annuity factor :math:`AF` and the process capacity investment cost for a given process tuple. The process capacity investment cost is to be given as an input by the user. The related section for the process capacity investment cost in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the seventh column with the header label "inv-cost" represents the process capacity investment costs of the corresponding process :math:`p` and site :math:`v` combinations.
 
-**Process Capacity Fixed Costs**, :math:`k_{vp}^\text{fix}`, ``m.process.loc[p]['fix-cost']``: The parameter :math:`k_{vp}^\text{fix}` represents the fix cost per one unit capacity :math:`\kappa_{vp}` of a process technology :math:`p` in a site :math:`v`, that is charged annually. The unit of this parameter is €/(MW a). The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the seventh column with the header label "fix-cost" represents the parameters :math:`k_{vp}^\text{fix}` of the corresponding process :math:`p` and site :math:`v` combinations. 
+**Process Capacity Fixed Costs**, :math:`k_{vp}^\text{fix}`, ``m.process.loc[p]['fix-cost']``: The parameter :math:`k_{vp}^\text{fix}` represents the fix cost per one unit capacity :math:`\kappa_{vp}` of a process technology :math:`p` in a site :math:`v`, that is charged annually. The unit of this parameter is €/(MW a). The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the eighth column with the header label "fix-cost" represents the parameters :math:`k_{vp}^\text{fix}` of the corresponding process :math:`p` and site :math:`v` combinations. 
 
-**Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``: The parameter :math:`k_{vp}^\text{var}` represents the variable cost per one unit energy throughput :math:`\tau_{vpt}` through a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the eighth column with the header label "var-cost" represents the parameters :math:`k_{vp}^\text{var}` of the corresponding process :math:`p` and site :math:`v` combinations. 
+**Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``: The parameter :math:`k_{vp}^\text{var}` represents the variable cost per one unit energy throughput :math:`\tau_{vpt}` through a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "var-cost" represents the parameters :math:`k_{vp}^\text{var}` of the corresponding process :math:`p` and site :math:`v` combinations. 
 
 Storage Economical Parameters
 -----------------------------
@@ -1710,6 +1712,35 @@ In script ``urbs.py`` the constraint process throughput by capacity rule is defi
 
 	def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
 		return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
+
+**Process Throughput Gradient Rule**: The constraint process throughput gradient rule limits the process power gradient :math:`\{PG}_{vpt}`. This constraint prevents processes from exceeding their maximal possible power gradient. The constraint states that absolute power gradient must be less than or equal to the maximal power gradient :math:`\overline{PG}_{vp}`. In mathematical notation this is expressed as:
+
+.. math::
+
+	\forall v\in V, p\in P, t\in T_m\colon \qquad & \qquad \{PG}_{vpt} &\leq \overline{PG}_{vp}
+
+In script ``urbs.py`` the constraint process throughput gradient rule is defined and calculated by the following code fragment:
+::
+
+    m.res_process_throughput_gradient = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=res_process_throughput_gradient_rule,
+        doc='process throughput gradient <= maximal gradient')
+
+::
+
+    def res_process_throughput_gradient_rule(m, t, sit, pro):
+        if m.process.loc[sit, pro]['max-grad'] < 1/m.dt.value:
+            if m.cap_pro[sit, pro].value is None:
+                return pyomo.Constraint.Skip
+            else:
+                return (m.tau_pro[t-1, sit, pro] - m.cap_pro[sit, pro] *
+                            m.process.loc[sit, pro]['max-grad'] * m.dt,
+                        m.tau_pro[t, sit, pro],
+                        m.tau_pro[t-1, sit, pro] + m.cap_pro[sit, pro] *
+                            m.process.loc[sit, pro]['max-grad'] * m.dt)
+        else:
+            return pyomo.Constraint.Skip
 
 **Process Capacity Limit Rule**: The constraint process capacity limit rule limits the variable total process capacity :math:`\kappa_{vp}`. This constraint restricts a process :math:`p` in a site :math:`v` from having more total power output capacity than an upper bound and having less than a lower bound. The constraint states that the variable total process capacity :math:`\kappa_{vp}` must be greater than or equal to the parameter process capacity lower bound :math:`\underline{K}_{vp}` and less than or equal to the parameter process capacity upper bound :math:`\overline{K}_{vp}`. In mathematical notation this is expressed as:
 

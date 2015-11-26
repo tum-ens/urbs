@@ -1615,6 +1615,33 @@ def report(instance, filename, commodities=None, sites=None):
                     timeseries[(co, sit)].to_excel(writer, sheet_name)
 
 
+def sort_plot_elements(elements):
+    """Sort timeseries for plotting
+
+    Sorts the timeseries (created, consumed) ascending with variance.
+    It places base load at the bottom and peak load at the top.
+    This enhances clearity and readability of the plots.
+
+    Args:
+        elements: timeseries of created or consumed
+
+    Returns:
+        elements_sorted: sorted timeseries of created or consumed
+    """
+    if len(elements.columns) > 1:
+        # calculate standard deviation
+        std = pd.DataFrame(np.zeros_like(elements.tail(1)),
+                           index=elements.index[-1:]+1, columns=elements.columns)
+        for col in std.columns:
+            std[col] = np.std(elements[col])
+        # sort created/consumed ascencing with std i.e. base load first
+        elements = elements.append(std)
+        new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
+        elements_sorted = elements[new_columns][:-1]
+
+    return elements_sorted
+
+
 def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     """Plot a stacked timeseries of commodity balance and storage.
 
@@ -1673,17 +1700,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
                 created.pop(col)
 
     # sorting plot elements
-    for elements in [created,consumed]:
-        if len(elements.columns) > 1:
-            # calculate standard deviation
-            std = pd.DataFrame(np.zeros_like(elements.tail(1)),
-                               index=elements.index[-1:]+1, columns=elements.columns)
-            for col in std.columns:
-                std[col] = np.std(elements[col])
-            # sort created/consumed ascencing with std i.e. base load first
-            elements = elements.append(std)
-            new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
-            elements = elements[new_columns][:-1]
+    created = sort_plot_elements(created)
+    consumed = sort_plot_elements(consumed)
 
     # PLOT CREATED
     ax0 = plt.subplot(gs[0])

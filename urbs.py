@@ -1628,16 +1628,19 @@ def sort_plot_elements(elements):
     Returns:
         elements_sorted: sorted timeseries of created or consumed
     """
-    if len(elements.columns) > 1:
-        # calculate standard deviation
-        std = pd.DataFrame(np.zeros_like(elements.tail(1)),
-                           index=elements.index[-1:]+1, columns=elements.columns)
-        for col in std.columns:
-            std[col] = np.std(elements[col])
-        # sort created/consumed ascencing with std i.e. base load first
-        elements = elements.append(std)
-        new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
-        elements_sorted = elements[new_columns][:-1]
+    # no need of sorting the columns if there's only one
+    if len(elements.columns) < 2:
+        return elements
+
+    # calculate standard deviation
+    std = pd.DataFrame(np.zeros_like(elements.tail(1)),
+                       index=elements.index[-1:]+1, columns=elements.columns)
+    for col in std.columns:
+        std[col] = np.std(elements[col])
+    # sort created/consumed ascencing with std i.e. base load first
+    elements = elements.append(std)
+    new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
+    elements_sorted = elements[new_columns][:-1]
 
     return elements_sorted
 

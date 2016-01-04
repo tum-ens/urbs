@@ -1,10 +1,15 @@
-import coopr.environ
+try:
+    import pyomo.environ
+    from pyomo.opt.base import SolverFactory
+    PYOMO3 = False
+except ImportError:
+    import coopr.environ
+    from coopr.opt.base import SolverFactory
+    PYOMO3 = True
 import os
 import shutil
 import urbs
-from coopr.opt.base import SolverFactory
 from datetime import datetime
-
 
 # SCENARIOS
 def scenario_base(data):
@@ -94,8 +99,9 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     data = scenario(data)
 
     # create model
-    model = urbs.create_model(data, timesteps)
-    prob = model.create()
+    prob = urbs.create_model(data, timesteps)
+    if PYOMO3:
+        prob = prob.create()
 
     # refresh time stamp string and create filename for logfile
     now = prob.created
@@ -105,7 +111,10 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
-    prob.load(result)
+    if PYOMO3:
+        prob.load(result)
+    else:
+        prob.solutions.load_from(result)
 
     # copy input file in result directory
     cdir = os.getcwd()
@@ -152,7 +161,7 @@ if __name__ == '__main__':
         'South': (230, 200, 200),
         'Mid': (200, 230, 200),
         'North': (200, 200, 230)}
-    for country, color in my_colors.iteritems():
+    for country, color in my_colors.items():
         urbs.COLORS[country] = color
 
     # select scenarios to be run

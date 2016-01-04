@@ -9,7 +9,15 @@ transporting commodities between sites and storage for saving/retrieving
 commodities.
 
 """
-import coopr.pyomo as pyomo
+import warnings
+try:
+    import pyomo.core as pyomo
+except ImportError:
+    import coopr.pyomo as pyomo
+    warnings.warn("Support for Pyomo 3.x is now deprecated and will be removed"
+                  "removed with the next release. Please upgrade to Pyomo 4.",
+                  FutureWarning, stacklevel=2)
+
 import math
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -1800,8 +1808,6 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
 
     # set limits and ticks for both axes
     for ax in [ax0, ax1]:
-        # ax.set_axis_bgcolor((0, 0, 0, 0))
-        plt.setp(ax.spines.values(), color=to_color('Decoration'))
         ax.set_frame_on(False)
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)

@@ -32,7 +32,7 @@ There are 2 ways to get all required packages under Windows. I recommend using t
        1. During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
   2. **Coopr/Pyomo**
        1. Launch a new command prompt (Win+R, type "cmd", Enter)
-       2. Type `pip install coopr==3.5.8787`, hit Enter. (As of 2015-01-16, coopr 4.0 on PYPI is not working yet.) 
+       2. Type `pip install pyomo`, hit Enter. (As of 2016, Pyomo 3 is still supported, but upgrading to Pyomo 4 is now recommended, as Pyomo 3 support will be dropped with future updates.) 
   3. **GLPK**
        1. Download the latest version (e.g. GLPK-4.55) of [WinGLPK](http://sourceforge.net/projects/winglpk/files/winglpk/)
        2. Extract the contents to a folder, e.g. `C:\GLPK`
@@ -54,7 +54,7 @@ For all packages, best take the latest release or release candidate version. Bot
       3. [matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). 
       4. As a test, you can try start `ipython` and have a MATLAB-style command line with plotting capabilities. If you receive message about "ipython could not be found", check if the `C:\Python27\Scripts` is added to the "Path" system variable as described in step 2.i. above.
   5. **[pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output. Its capabilities are exploited to write short analysis scripts in `runme.py` and `comp.py`, as well as in the functions `urbs.plot` and `urbs.report`.
-  6. **[Coopr](https://software.sandia.gov/trac/coopr/downloader/)**: minimum version 3.5 or the VOTD (Version of the Day) installer. As of 2014-08-01, only the latter is available for Windows users.
+  6. **Pyomo**: execute `pip install pyomo` in a command prompt.
   7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). 
       1. Simply unzip the latest version somewhere, e.g. `C:\GLPK`. 
       2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2.i.), so that the `glpsol` command is available on the command prompt.
@@ -103,7 +103,7 @@ and look at the new files `result/mimo-example-20150401/comp.xlsx` and `result/m
   
 ## Copyright
 
-Copyright (C) 2014  TUM ENS
+Copyright (C) 2014-2016  TUM ENS
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

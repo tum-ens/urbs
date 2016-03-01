@@ -82,6 +82,7 @@ def read_excel(filename):
         demand = xls.parse('Demand').set_index(['t'])
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
+        dsm = xls.parse('DSM').set_index(['Constant Name']) #Demand Side Management
         try:
             hacks = xls.parse('Hacks').set_index(['Name'])
         except XLRDError:
@@ -110,7 +111,8 @@ def read_excel(filename):
         'storage': storage,
         'demand': demand,
         'supim': supim,
-        'buy_sell_price': buy_sell_price}
+        'buy_sell_price': buy_sell_price,
+        'dsm': dsm} #Demand Side Management
     if hacks is not None:
         data['hacks'] = hacks
 
@@ -157,12 +159,20 @@ def create_model(data, timesteps=None, dt=1):
     m.demand = data['demand']
     m.supim = data['supim']
     m.buy_sell_price = data['buy_sell_price']
+    m.dsm = data['dsm']  #Demand Side Management
     m.timesteps = timesteps
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
 
+	# extra input for demand side management
+    m.L = int(data['dsm'].loc['L', 'Value'])
+    m.n = float(data['dsm'].loc['n', 'Value'])
+    m.R = int(data['dsm'].loc['R', 'Value'])
+    m.Cdo = float(data['dsm'].loc['Cdo', 'Value'])
+    m.Cup = float(data['dsm'].loc['Cup', 'Value'])
+	
     # Sets
     # ====
     # Syntax: m.{name} = Set({domain}, initialize={values})
@@ -182,7 +192,12 @@ def create_model(data, timesteps=None, dt=1):
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of modelled timesteps')
-
+	
+	# modelled Demand Side Management time steps
+    m.Tm = pyomo.Set(
+		within=m.t, 
+		initialize=m.timesteps[1:],
+		ordered=True)
     # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Site').unique(),
@@ -297,8 +312,21 @@ def create_model(data, timesteps=None, dt=1):
         doc='Time step duration (in hours), default: 1')
 
     # Variables
-
-    # costs
+	
+	# demand side management		
+    m.DSMup = pyomo.Var(
+		m.tm, m.sit,
+		initialize=0, 
+		within=pyomo.NonNegativeReals,
+		doc='DSM Decreaser')
+    m.DSMdo = pyomo.Var(
+		m.tm, 
+		m.Tm, m.sit,
+		initialize=0, 
+		within=pyomo.NonNegativeReals,
+		doc='DSM Increaser')
+    
+	# costs
     m.costs = pyomo.Var(
         m.cost_type,
         within=pyomo.Reals,
@@ -535,6 +563,28 @@ def create_model(data, timesteps=None, dt=1):
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
 
+	# demand side management
+    m.dsmupdoConstraint = pyomo.Constraint(
+		m.tm, m.sit, 
+		rule=dsmupdo_constraint_rule,
+		doc='Equation 1')	
+    m.dsmupConstraint = pyomo.Constraint(
+		m.tm, m.sit,
+		rule=dsmup_constraint_rule,
+		doc='Equation 2')
+    m.dsmdoConstraint = pyomo.Constraint(
+		m.Tm, m.sit,
+		rule=dsmdo_constraint_rule,
+		doc='Equation 3')
+    m.C2Constraint = pyomo.Constraint(
+		m.Tm, m.sit,
+		rule=C2_constraint_rule,
+		doc='Equation 4')
+    m.dsmup2Constraint = pyomo.Constraint(
+		m.tm, m.sit,
+		rule=dsmup2_constraint_rule,
+		doc='Equation 5')
+	
     # possibly: add hack features
     if 'hacks' in data:
         m = add_hacks(m, data['hacks'])
@@ -583,12 +633,71 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # if com is a demand commodity, the power_surplus is reduced by the
     # demand value; no scaling by m.dt or m.weight is needed here, as this
     # constraint is about power (MW), not energy (MWh)
+    # added demand side management
     if com in m.com_demand:
         try:
-            power_surplus -= m.demand.loc[tm][sit, com]
+                if tm <= m.timesteps[0] + m.L:
+                    power_surplus -= m.demand.loc[tm][sit, com] \
+				+ m.DSMup[tm,sit] - sum(m.DSMdo[T,tm,sit] for T in range(m.timesteps[0] + 1, tm+m.L+1))
+                elif tm >= m.timesteps[0] + 1 + m.L and tm <= m.timesteps[-1] - m.L:
+                    power_surplus -= m.demand.loc[tm][sit, com] \
+                       + m.DSMup[tm,sit] - sum(m.DSMdo[T,tm,sit] for T in range(tm-m.L, tm+1+m.L))
+                else:
+                    power_surplus -= m.demand.loc[tm][sit, com] \
+				+ m.DSMup[tm,sit] - sum(m.DSMdo[T,tm,sit] for T in range(tm-m.L, m.timesteps[-1] + 1))   
         except KeyError:
             pass
     return power_surplus == 0
+
+# demand side management constraints
+# equation 1
+def dsmupdo_constraint_rule(m, tm, sit):
+	if tm <= m.timesteps[0] + m.L:
+		return sum(m.DSMdo[tm,T,sit] for T in range(m.timesteps[0] + 1, tm+1+m.L)) \
+		== m.DSMup[tm,sit] * m.n
+	elif tm >= m.timesteps[0] + 1 + m.L and tm <= m.timesteps[-1] - m.L:
+		return sum(m.DSMdo[tm,T,sit] for T in range(tm-m.L, tm+1+m.L)) \
+		== m.DSMup[tm,sit] * m.n
+	else:
+		return sum(m.DSMdo[tm,T,sit] for T in range(tm-m.L, m.timesteps[-1] + 1)) \
+		== m.DSMup[tm,sit] * m.n
+
+# equation 2		
+def dsmup_constraint_rule(m, tm, sit):
+	return m.DSMup[tm,sit] <= m.Cup
+
+# equation 3	
+def dsmdo_constraint_rule(m, Tm, sit):
+	if Tm <= m.timesteps[0] + m.L:
+		return sum(m.DSMdo[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.L)) \
+		<= m.Cdo
+	elif Tm >= m.timesteps[0] + 1 + m.L and Tm <= m.timesteps[-1] - m.L:
+		return sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, Tm+1+m.L)) \
+		<= m.Cdo
+	else:
+		return sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, m.timesteps[-1] + 1)) \
+		<= m.Cdo
+
+# equation 4
+def C2_constraint_rule(m, Tm, sit):
+	if Tm <= m.timesteps[0] + m.L:
+		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
+		sum(m.DSMdo[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.L))
+	elif Tm >= m.timesteps[0] + 1 + m.L and Tm <= m.timesteps[-1] - m.L:
+		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
+		sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, Tm+1+m.L))
+	else:
+		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
+		sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, m.timesteps[-1] + 1))
+
+# equation 5
+def dsmup2_constraint_rule(m, tm, sit):
+	if tm + m.R <= m.timesteps[-1] + 1:
+		return sum(m.DSMup[tm,sit] for t in range(tm, tm+m.R)) \
+		<= m.Cup * m.L
+	else:
+		return sum(m.DSMup[tm,sit] for t in range(tm, m.timesteps[-1] + 1)) \
+		<= m.Cup * m.L
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);

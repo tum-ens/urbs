@@ -564,26 +564,26 @@ def create_model(data, timesteps=None, dt=1):
         doc='minimize(cost = sum of all cost types)')
 
 	# demand side management
-    m.dsmupdoConstraint = pyomo.Constraint(
+    m.def_dsm_variables = pyomo.Constraint(
 		m.tm, m.sit, 
-		rule=dsmupdo_constraint_rule,
-		doc='Equation 1')	
-    m.dsmupConstraint = pyomo.Constraint(
+		rule=def_dsm_variables_rule,
+		doc='DSMup == DSMdo * efficiency factor n')	
+    m.res_dsm_upward = pyomo.Constraint(
 		m.tm, m.sit,
-		rule=dsmup_constraint_rule,
-		doc='Equation 2')
-    m.dsmdoConstraint = pyomo.Constraint(
+		rule=res_dsm_upward_rule,
+		doc='DSMup <= Cup (threshold capacity of DSMup)')
+    m.res_dsm_downward = pyomo.Constraint(
 		m.Tm, m.sit,
-		rule=dsmdo_constraint_rule,
-		doc='Equation 3')
-    m.C2Constraint = pyomo.Constraint(
+		rule=res_dsm_downward_rule,
+		doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
+    m.res_dsm_maximum = pyomo.Constraint(
 		m.Tm, m.sit,
-		rule=C2_constraint_rule,
-		doc='Equation 4')
-    m.dsmup2Constraint = pyomo.Constraint(
+		rule=res_dsm_maximum_rule,
+		doc='DSMup + DSMdo <= max(Cup,Cdo)')
+    m.res_dsm_recovery = pyomo.Constraint(
 		m.tm, m.sit,
-		rule=dsmup2_constraint_rule,
-		doc='Equation 5')
+		rule=res_dsm_recovery_rule,
+		doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
 	
     # possibly: add hack features
     if 'hacks' in data:
@@ -650,8 +650,8 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     return power_surplus == 0
 
 # demand side management constraints
-# equation 1
-def dsmupdo_constraint_rule(m, tm, sit):
+# DSMup == DSMdo * efficiency factor n
+def def_dsm_variables_rule(m, tm, sit):
 	if tm <= m.timesteps[0] + m.L:
 		return sum(m.DSMdo[tm,T,sit] for T in range(m.timesteps[0] + 1, tm+1+m.L)) \
 		== m.DSMup[tm,sit] * m.n
@@ -662,12 +662,12 @@ def dsmupdo_constraint_rule(m, tm, sit):
 		return sum(m.DSMdo[tm,T,sit] for T in range(tm-m.L, m.timesteps[-1] + 1)) \
 		== m.DSMup[tm,sit] * m.n
 
-# equation 2		
-def dsmup_constraint_rule(m, tm, sit):
+# DSMup <= Cup (threshold capacity of DSMup)		
+def res_dsm_upward_rule(m, tm, sit):
 	return m.DSMup[tm,sit] <= m.Cup
 
-# equation 3	
-def dsmdo_constraint_rule(m, Tm, sit):
+# DSMdo <= Cdo (threshold capacity of DSMdo)	
+def res_dsm_downward_rule(m, Tm, sit):
 	if Tm <= m.timesteps[0] + m.L:
 		return sum(m.DSMdo[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.L)) \
 		<= m.Cdo
@@ -678,8 +678,8 @@ def dsmdo_constraint_rule(m, Tm, sit):
 		return sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, m.timesteps[-1] + 1)) \
 		<= m.Cdo
 
-# equation 4
-def C2_constraint_rule(m, Tm, sit):
+# DSMup + DSMdo <= max(Cup,Cdo)
+def res_dsm_maximum_rule(m, Tm, sit):
 	if Tm <= m.timesteps[0] + m.L:
 		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
 		sum(m.DSMdo[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.L))
@@ -690,8 +690,8 @@ def C2_constraint_rule(m, Tm, sit):
 		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
 		sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, m.timesteps[-1] + 1))
 
-# equation 5
-def dsmup2_constraint_rule(m, tm, sit):
+# DSMup(t, t + recovery time R) <= Cup * delay time L  
+def res_dsm_recovery_rule(m, tm, sit):
 	if tm + m.R <= m.timesteps[-1] + 1:
 		return sum(m.DSMup[tm,sit] for t in range(tm, tm+m.R)) \
 		<= m.Cup * m.L

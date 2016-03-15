@@ -31,17 +31,22 @@ COLORS = {
     'Biomass plant': (0, 122, 55),
     'Coal plant': (100, 100, 100),
     'Gas plant': (237, 227, 0),
+    'Gud plant': (153, 153, 0),
     'Hydro plant': (198, 188, 240),
     'Lignite plant': (116, 66, 65),
     'Photovoltaics': (243, 174, 0),
     'Slack powerplant': (163, 74, 130),
     'Wind park': (122, 179, 225),
     'Decoration': (128, 128, 128),  # plot labels
-    'Demand': (25, 25, 25),  # thick demand line
+    'Demand': (130, 130, 130),  # thick demand line
+    'Shifted demand': (25, 25, 25), # thick shifted demand line
+    'Demand delta': (130, 130, 130), # dashed demand delta
     'Grid': (128, 128, 128),  # background grid
     'Overproduction': (190, 0, 99),  # excess power
     'Storage': (60, 36, 154),  # storage area
-    'Stock': (222, 222, 222)}  # stock commodity power
+    'Stock': (222, 222, 222),  # stock commodity power
+    'Purchase': (0, 153, 153),
+    'Feed-in': (255, 204, 153)}
 
 
 def read_excel(filename):
@@ -112,7 +117,7 @@ def read_excel(filename):
         'demand': demand,
         'supim': supim,
         'buy_sell_price': buy_sell_price,
-        'dsm': dsm} #Demand Side Management
+        'dsm': dsm}
     if hacks is not None:
         data['hacks'] = hacks
 
@@ -159,21 +164,21 @@ def create_model(data, timesteps=None, dt=1):
     m.demand = data['demand']
     m.supim = data['supim']
     m.buy_sell_price = data['buy_sell_price']
-    m.dsm = data['dsm']  #Demand Side Management
     m.timesteps = timesteps
+    m.dsm = data['dsm']  #Demand Side Management
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
-
-	# extra input for demand side management
-    m.L = int(data['dsm'].loc['L', 'Value'])
-    m.n = float(data['dsm'].loc['n', 'Value'])
-    m.R = int(data['dsm'].loc['R', 'Value'])
-    m.Cdo = float(data['dsm'].loc['Cdo', 'Value'])
-    m.Cup = float(data['dsm'].loc['Cup', 'Value'])
-	
-    # Sets
+    
+    # demand side management input
+    m.delay = int(data['dsm'].loc['Delay time', 'Value'])
+    m.efficiency = float(data['dsm'].loc['Efficiency', 'Value'])
+    m.recovery = int(data['dsm'].loc['Recovery time', 'Value'])
+    m.cap_do = float(data['dsm'].loc['Downshift capacity', 'Value'])
+    m.cap_up = float(data['dsm'].loc['Upshift capacity', 'Value'])
+    
+	# Sets
     # ====
     # Syntax: m.{name} = Set({domain}, initialize={values})
     # where name: set name
@@ -192,12 +197,15 @@ def create_model(data, timesteps=None, dt=1):
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of modelled timesteps')
-	
-	# modelled Demand Side Management time steps
-    m.Tm = pyomo.Set(
-		within=m.t, 
-		initialize=m.timesteps[1:],
-		ordered=True)
+		
+    # modelled Demand Side Management time steps (downshift):
+    # downshift effective in tt to compensate for upshift in t
+    m.tt = pyomo.Set(
+        within=m.t, 
+        initialize=m.timesteps[1:],
+        ordered=True,
+        doc='Set of additional DSM time steps')
+
     # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Site').unique(),
@@ -312,21 +320,8 @@ def create_model(data, timesteps=None, dt=1):
         doc='Time step duration (in hours), default: 1')
 
     # Variables
-	
-	# demand side management		
-    m.DSMup = pyomo.Var(
-		m.tm, m.sit,
-		initialize=0, 
-		within=pyomo.NonNegativeReals,
-		doc='DSM Decreaser')
-    m.DSMdo = pyomo.Var(
-		m.tm, 
-		m.Tm, m.sit,
-		initialize=0, 
-		within=pyomo.NonNegativeReals,
-		doc='DSM Increaser')
-    
-	# costs
+	    
+    # costs
     m.costs = pyomo.Var(
         m.cost_type,
         within=pyomo.Reals,
@@ -415,6 +410,18 @@ def create_model(data, timesteps=None, dt=1):
         m.t, m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
+        
+    # demand side management		
+    m.dsm_up = pyomo.Var(
+        m.tm, m.sit,
+        initialize=0, 
+        within=pyomo.NonNegativeReals,
+        doc='DSM upshift')
+    m.dsm_down = pyomo.Var(
+        m.tm, m.tt, m.sit,
+        initialize=0, 
+        within=pyomo.NonNegativeReals,
+        doc='DSM downshift')
 
     # Equation declarations
     # equation bodies are defined in separate functions, referred to here by 
@@ -562,24 +569,28 @@ def create_model(data, timesteps=None, dt=1):
         rule=obj_rule,
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
-
+    
 	# demand side management
     m.def_dsm_variables = pyomo.Constraint(
 		m.tm, m.sit, 
 		rule=def_dsm_variables_rule,
 		doc='DSMup == DSMdo * efficiency factor n')	
+
     m.res_dsm_upward = pyomo.Constraint(
 		m.tm, m.sit,
 		rule=res_dsm_upward_rule,
 		doc='DSMup <= Cup (threshold capacity of DSMup)')
+
     m.res_dsm_downward = pyomo.Constraint(
 		m.Tm, m.sit,
 		rule=res_dsm_downward_rule,
 		doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
+
     m.res_dsm_maximum = pyomo.Constraint(
 		m.Tm, m.sit,
 		rule=res_dsm_maximum_rule,
 		doc='DSMup + DSMdo <= max(Cup,Cdo)')
+
     m.res_dsm_recovery = pyomo.Constraint(
 		m.tm, m.sit,
 		rule=res_dsm_recovery_rule,
@@ -636,15 +647,15 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # added demand side management
     if com in m.com_demand:
         try:
-                if tm <= m.timesteps[0] + m.L:
+                if tm <= m.timesteps[0] + m.delay:
                     power_surplus -= m.demand.loc[tm][sit, com] \
-				+ m.DSMup[tm,sit] - sum(m.DSMdo[T,tm,sit] for T in range(m.timesteps[0] + 1, tm+m.L+1))
-                elif tm >= m.timesteps[0] + 1 + m.L and tm <= m.timesteps[-1] - m.L:
+				+ m.dsm_up[tm,sit] - sum(m.dsm_down[T,tm,sit] for T in range(m.timesteps[0] + 1, tm+m.delay+1))
+                elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
                     power_surplus -= m.demand.loc[tm][sit, com] \
-                       + m.DSMup[tm,sit] - sum(m.DSMdo[T,tm,sit] for T in range(tm-m.L, tm+1+m.L))
+                       + m.dsm_up[tm,sit] - sum(m.dsm_down[T,tm,sit] for T in range(tm-m.delay, tm+1+m.delay))
                 else:
                     power_surplus -= m.demand.loc[tm][sit, com] \
-				+ m.DSMup[tm,sit] - sum(m.DSMdo[T,tm,sit] for T in range(tm-m.L, m.timesteps[-1] + 1))   
+				+ m.dsm_up[tm,sit] - sum(m.dsm_down[T,tm,sit] for T in range(tm-m.delay, m.timesteps[-1] + 1))   
         except KeyError:
             pass
     return power_surplus == 0
@@ -652,52 +663,52 @@ def res_vertex_rule(m, tm, sit, com, com_type):
 # demand side management constraints
 # DSMup == DSMdo * efficiency factor n
 def def_dsm_variables_rule(m, tm, sit):
-	if tm <= m.timesteps[0] + m.L:
-		return sum(m.DSMdo[tm,T,sit] for T in range(m.timesteps[0] + 1, tm+1+m.L)) \
-		== m.DSMup[tm,sit] * m.n
-	elif tm >= m.timesteps[0] + 1 + m.L and tm <= m.timesteps[-1] - m.L:
-		return sum(m.DSMdo[tm,T,sit] for T in range(tm-m.L, tm+1+m.L)) \
-		== m.DSMup[tm,sit] * m.n
+	if tm <= m.timesteps[0] + m.delay:
+		return sum(m.dsm_down[tm,T,sit] for T in range(m.timesteps[0] + 1, tm+1+m.delay)) \
+		== m.dsm_up[tm,sit] * m.efficiency
+	elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
+		return sum(m.dsm_down[tm,T,sit] for T in range(tm-m.delay, tm+1+m.delay)) \
+		== m.dsm_up[tm,sit] * m.efficiency
 	else:
-		return sum(m.DSMdo[tm,T,sit] for T in range(tm-m.L, m.timesteps[-1] + 1)) \
-		== m.DSMup[tm,sit] * m.n
+		return sum(m.dsm_down[tm,T,sit] for T in range(tm-m.delay, m.timesteps[-1] + 1)) \
+		== m.dsm_up[tm,sit] * m.efficiency
 
 # DSMup <= Cup (threshold capacity of DSMup)		
 def res_dsm_upward_rule(m, tm, sit):
-	return m.DSMup[tm,sit] <= m.Cup
+	return m.dsm_up[tm,sit] <= m.cap_up
 
-# DSMdo <= Cdo (threshold capacity of DSMdo)	
-def res_dsm_downward_rule(m, Tm, sit):
-	if Tm <= m.timesteps[0] + m.L:
-		return sum(m.DSMdo[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.L)) \
-		<= m.Cdo
-	elif Tm >= m.timesteps[0] + 1 + m.L and Tm <= m.timesteps[-1] - m.L:
-		return sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, Tm+1+m.L)) \
-		<= m.Cdo
+# DSMdo <= Cdo (threshold capacity of DSMdo)
+def res_dsm_downward_rule((m, Tm, sit):
+	if Tm <= m.timesteps[0] + m.delay:
+		return sum(m.dsm_down[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.delay)) \
+		<= m.cap_do
+	elif Tm >= m.timesteps[0] + 1 + m.delay and Tm <= m.timesteps[-1] - m.delay:
+		return sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, Tm+1+m.delay)) \
+		<= m.cap_do
 	else:
-		return sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, m.timesteps[-1] + 1)) \
-		<= m.Cdo
+		return sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, m.timesteps[-1] + 1)) \
+		<= m.cap_do
 
 # DSMup + DSMdo <= max(Cup,Cdo)
 def res_dsm_maximum_rule(m, Tm, sit):
-	if Tm <= m.timesteps[0] + m.L:
-		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
-		sum(m.DSMdo[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.L))
-	elif Tm >= m.timesteps[0] + 1 + m.L and Tm <= m.timesteps[-1] - m.L:
-		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
-		sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, Tm+1+m.L))
+	if Tm <= m.timesteps[0] + m.delay:
+		return max(m.cap_up, m.cap_do) >= m.dsm_up[Tm,sit] + \
+		sum(m.dsm_down[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.delay))
+	elif Tm >= m.timesteps[0] + 1 + m.delay and Tm <= m.timesteps[-1] - m.delay:
+		return max(m.cap_up, m.cap_do) >= m.dsm_up[Tm,sit] + \
+		sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, Tm+1+m.delay))
 	else:
-		return max(m.Cup, m.Cdo) >= m.DSMup[Tm,sit] + \
-		sum(m.DSMdo[t,Tm,sit] for t in range(Tm-m.L, m.timesteps[-1] + 1))
+		return max(m.cap_up, m.cap_do) >= m.dsm_up[Tm,sit] + \
+		sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, m.timesteps[-1] + 1))
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit):
-	if tm + m.R <= m.timesteps[-1] + 1:
-		return sum(m.DSMup[tm,sit] for t in range(tm, tm+m.R)) \
-		<= m.Cup * m.L
+	if tm + m.recovery <= m.timesteps[-1] + 1:
+		return sum(m.dsm_up[tm,sit] for t in range(tm, tm+m.recovery)) \
+		<= m.cap_up * m.delay
 	else:
-		return sum(m.DSMup[tm,sit] for t in range(tm, m.timesteps[-1] + 1)) \
-		<= m.Cup * m.L
+		return sum(m.dsm_up[tm,sit] for t in range(tm, m.timesteps[-1] + 1)) \
+		<= m.cap_up * m.delay
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -1593,6 +1604,25 @@ def get_timeseries(instance, com, sit, timesteps=None):
         stock = pd.Series(0, index=timesteps)
     stock.name = 'Stock'
 
+    # DEMAND SIDE MANAGEMENT (load shifting)
+    dsmup = get_entities(instance, ['dsm_up'])
+    dsmdo = get_entities(instance, ['dsm_down'])
+    #dsmup = instance.dsm_up.loc[timesteps][sit, com]
+    dsmup = dsmup.xs(sit, level = 'sit')
+    # Create series
+    dsmup = dsmup['dsm_up']
+    #dsmdo = instance.dsm_down.loc[timesteps][sit, com]
+    dsmdo = dsmdo.xs(sit, level = 'sit')
+    # Create series by summing the first time step
+    dsmdo = dsmdo['dsm_down'].unstack().sum(axis=0)
+    # Rename index names
+    dsmdo.index.names = ['t']
+    demanddelta = dsmup - dsmdo
+    shifted = demand + demanddelta
+
+    shifted.name = 'Shifted Demand'
+    demanddelta.name = 'Delta of Demand to shifted Demand'
+
     # PROCESS
     # select all entries of created and consumed desired commodity com and site
     # sit. Keep only entries with non-zero values and unstack process column.
@@ -1656,6 +1686,8 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # show demand as consumed
     consumed = consumed.join(demand)
+    consumed = consumed.join(shifted)
+    consumed = consumed.join(demanddelta)
 
     return created, consumed, stored, imported, exported, derivative
 
@@ -1704,7 +1736,7 @@ def report(instance, filename, commodities=None, sites=None):
                     [created, consumed, stored, imported, exported, overprod, derivative],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'Derivative'])
+                          'Export to', 'Balance', 'Derivative', 'Shifted Demand', 'Demand Delta'])
                 timeseries[(co, sit)] = tableau.copy()
 
                 # timeseries sums
@@ -1752,10 +1784,21 @@ def sort_plot_elements(elements):
     # calculate standard deviation
     std = pd.DataFrame(np.zeros_like(elements.tail(1)),
                        index=elements.index[-1:]+1, columns=elements.columns)
+    # calculate mean
+    mean = pd.DataFrame(np.zeros_like(elements.tail(1)),
+                        index=elements.index[-1:]+1, columns=elements.columns)
+    # calculate quotient
+    quotient = pd.DataFrame(np.zeros_like(elements.tail(1)),
+                        index=elements.index[-1:]+1, columns=elements.columns)      
+                  
     for col in std.columns:
         std[col] = np.std(elements[col])
-    # sort created/consumed ascencing with std i.e. base load first
-    elements = elements.append(std)
+        mean[col] = np.mean(elements[col])
+        quotient[col] = std[col] / mean[col]
+    # fill nan values (due to division by 0)
+    quotient = quotient.fillna(0)
+    # sort created/consumed ascencing with quotient i.e. base load first
+    elements = elements.append(quotient)
     new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
     elements_sorted = elements[new_columns][:-1]
 
@@ -1787,8 +1830,9 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
         timesteps = sorted(get_entity(prob, 'tm').index)
 
     # FIGURE
-    fig = plt.figure(figsize=(16, 8))
-    gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2, 1])
+    fig = plt.figure(figsize=(16, 12))
+    gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1])
+    #, height_ratios=[2, 1]
 
     created, consumed, stored, imported, exported, derivative = get_timeseries(
         prob, com, sit, timesteps)
@@ -1811,7 +1855,9 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
 
     # move demand to its own plot
     demand = consumed.pop('Demand')
-
+    shifted = consumed.pop('Shifted Demand')
+    deltademand = consumed.pop('Delta of Demand to shifted Demand')
+	
     # remove all columns from created which are all-zeros in both created and
     # consumed (except the last one, to prevent a completely empty frame)
     for col in created.columns:
@@ -1822,80 +1868,100 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     # sorting plot elements
     created = sort_plot_elements(created)
     consumed = sort_plot_elements(consumed)
-
-    # PLOT CREATED
+    
+    # STACKPLOT
     ax0 = plt.subplot(gs[0])
-    sp0 = ax0.stackplot(created.index, created.as_matrix().T, linewidth=0.15)
-
-    # Unfortunately, stackplot does not support multi-colored legends itself.
-    # Therefore, a so-called proxy artist - invisible objects that have the
-    # correct color for the legend entry - must be created. Here, Rectangle
-    # objects of size (0,0) are used. The technique is explained at
-    # http://stackoverflow.com/a/22984060/2375855
-    proxy_artists = []
-    for k, commodity in enumerate(created.columns):
-        commodity_color = to_color(commodity)
-
-        sp0[k].set_facecolor(commodity_color)
-        sp0[k].set_edgecolor(to_color('Decoration'))
-
-        proxy_artists.append(mpl.patches.Rectangle(
-            (0, 0), 0, 0, facecolor=commodity_color))
-
-    # label
-    ax0.set_title('Energy balance of {} in {}'.format(com, sit))
-    ax0.set_ylabel('Power ({})'.format(power_unit))
-
-    # legend
-    # add "only" consumed commodities to the legend
-    lg_items = tuple(created.columns)
-    for item in consumed.columns:
-        # if item not in created add to legend, except items
-        # from consumed which are all-zeros
-        if item in created.columns or not consumed[item].any():
-            pass
-        else:
-            # add item/commodity is not consumed
-            commodity_color = to_color(item)
-            proxy_artists.append(mpl.patches.Rectangle(
-                (0, 0), 0, 0, facecolor=commodity_color))
-            lg_items = lg_items + (item,)
-
-    lg = ax0.legend(proxy_artists,
-                    lg_items,
-                    frameon=False,
-                    ncol=len(proxy_artists),
-                    loc='upper center',
-                    bbox_to_anchor=(0.5, -0.01))
-    plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
-             linewidth=0.15)
-    plt.setp(ax0.get_xticklabels(), visible=False)
 
     # PLOT CONSUMED
-    sp00 = ax0.stackplot(consumed.index, -consumed.as_matrix().T,
+    sp00 = ax0.stackplot(consumed.index, -consumed.as_matrix().T, labels = tuple(consumed.columns),
                          linewidth=0.15)
-
+                
+    
     # color
     for k, commodity in enumerate(consumed.columns):
         commodity_color = to_color(commodity)
 
         sp00[k].set_facecolor(commodity_color)
         sp00[k].set_edgecolor((.5, .5, .5))
+    
+    # PLOT CREATED
+    sp0 = ax0.stackplot(created.index, created.as_matrix().T, labels = tuple(created.columns), linewidth=0.15)
 
-    # PLOT DEMAND
-    ax0.plot(demand.index, demand.values, linewidth=1.2,
+    for k, commodity in enumerate(created.columns):
+        commodity_color = to_color(commodity)
+
+        sp0[k].set_facecolor(commodity_color)
+        sp0[k].set_edgecolor(to_color('Decoration'))
+
+
+    # label
+    ax0.set_title('Energy balance of {} in {}'.format(com, sit))
+    ax0.set_ylabel('Power ({})'.format(power_unit))
+
+    #lg_items = tuple(created.columns)
+    #lg_items = ()
+
+    
+
+    # legend
+    handles, labels = ax0.get_legend_handles_labels()
+
+    # add "only" consumed commodities to the legend
+    for item in consumed.columns[::-1]:
+        # if item not in created add to legend, except items
+        # from consumed which are all-zeros
+        if item in created.columns or consumed[item].any():
+            pass
+        else:
+            # remove item/commodity is not consumed
+            item_index = labels.index(item)
+            handles.pop(item_index)
+            labels.pop(item_index)
+
+    for item in labels:
+        if labels.count(item) > 1:
+            item_index = labels.index(item)
+            handles.pop(item_index)
+            labels.pop(item_index)
+    
+   
+    lg = ax0.legend(handles=handles[::-1],
+                    labels=labels[::-1],
+                    frameon=False,
+                    loc='upper right',
+                    bbox_to_anchor=(1.2, 1))
+    plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
+             linewidth=0.15)
+    plt.setp(ax0.get_xticklabels(), visible=False)    
+    
+	# PLOT DEMAND
+    ax0.plot(demand.index, demand.values, linewidth=0.8,
              color=to_color('Demand'))
+             
+    ax0.plot(shifted.index, shifted.values, linewidth=1.2,
+             color=to_color('Shifted demand'))
 
     # PLOT STORAGE
     ax1 = plt.subplot(gs[1], sharex=ax0)
     sp1 = ax1.stackplot(stored.index, stored.values, linewidth=0.15)
+    plt.setp(ax1.get_xticklabels(), visible=False)
+    
+    # PLOT DEMAND SIDE MANAGEMENT
+    ax2 = plt.subplot(gs[2], sharex=ax1)
+    ax2.bar(deltademand.index, deltademand.values, 
+                  color=to_color('Demand delta'), edgecolor='none')
+    #ax2.plot(demand.index, demand.values, linewidth=0.8,
+             #color=to_color('Demand'))       
+    #ax2.plot(shifted.index, shifted.values, linewidth=1.2,
+             #color=to_color('Shifted demand'))
 
     # color
     sp1[0].set_facecolor(to_color('Storage'))
     sp1[0].set_edgecolor(to_color('Decoration'))
 
     # labels & y-limits
-    ax1.set_xlabel('Time in year (h)')
+    ax2.set_xlabel('Time in year (h)')
+    ax2.set_ylabel('Energy ({})'.format(energy_unit))
     ax1.set_ylabel('Energy ({})'.format(energy_unit))
     try:
         ax1.set_ylim((0, 0.5 + csto.loc[sit, :, com]['C Total'].sum()))
@@ -1915,8 +1981,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
         steps_between_ticks = 3
     xticks = timesteps[::steps_between_ticks]
 
-    # set limits and ticks for both axes
-    for ax in [ax0, ax1]:
+    # set limits and ticks for all axes
+    for ax in [ax0, ax1, ax2]:
         ax.set_frame_on(False)
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)

@@ -1897,10 +1897,6 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     # label
     ax0.set_title('Energy balance of {} in {}'.format(com, sit))
     ax0.set_ylabel('Power ({})'.format(power_unit))
-
-    #lg_items = tuple(created.columns)
-    #lg_items = ()
-
     
 
     # legend

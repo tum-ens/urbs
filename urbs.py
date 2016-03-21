@@ -582,12 +582,12 @@ def create_model(data, timesteps=None, dt=1):
 		doc='DSMup <= Cup (threshold capacity of DSMup)')
 
     m.res_dsm_downward = pyomo.Constraint(
-		m.Tm, m.sit,
+		m.tm, m.sit,
 		rule=res_dsm_downward_rule,
 		doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
 
     m.res_dsm_maximum = pyomo.Constraint(
-		m.Tm, m.sit,
+		m.tm, m.sit,
 		rule=res_dsm_maximum_rule,
 		doc='DSMup + DSMdo <= max(Cup,Cdo)')
 
@@ -678,28 +678,28 @@ def res_dsm_upward_rule(m, tm, sit):
 	return m.dsm_up[tm,sit] <= m.cap_up
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
-def res_dsm_downward_rule((m, Tm, sit):
-	if Tm <= m.timesteps[0] + m.delay:
-		return sum(m.dsm_down[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.delay)) \
+def res_dsm_downward_rule(m, tm, sit):
+	if tm <= m.timesteps[0] + m.delay:
+		return sum(m.dsm_down[t,tm,sit] for t in range(m.timesteps[0] + 1, tm+1+m.delay)) \
 		<= m.cap_do
-	elif Tm >= m.timesteps[0] + 1 + m.delay and Tm <= m.timesteps[-1] - m.delay:
-		return sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, Tm+1+m.delay)) \
+	elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
+		return sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, tm+1+m.delay)) \
 		<= m.cap_do
 	else:
-		return sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, m.timesteps[-1] + 1)) \
+		return sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, m.timesteps[-1] + 1)) \
 		<= m.cap_do
 
 # DSMup + DSMdo <= max(Cup,Cdo)
-def res_dsm_maximum_rule(m, Tm, sit):
-	if Tm <= m.timesteps[0] + m.delay:
-		return max(m.cap_up, m.cap_do) >= m.dsm_up[Tm,sit] + \
-		sum(m.dsm_down[t,Tm,sit] for t in range(m.timesteps[0] + 1, Tm+1+m.delay))
-	elif Tm >= m.timesteps[0] + 1 + m.delay and Tm <= m.timesteps[-1] - m.delay:
-		return max(m.cap_up, m.cap_do) >= m.dsm_up[Tm,sit] + \
-		sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, Tm+1+m.delay))
+def res_dsm_maximum_rule(m, tm, sit):
+	if tm <= m.timesteps[0] + m.delay:
+		return max(m.cap_up, m.cap_do) >= m.dsm_up[tm,sit] + \
+		sum(m.dsm_down[t,tm,sit] for t in range(m.timesteps[0] + 1, tm+1+m.delay))
+	elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
+		return max(m.cap_up, m.cap_do) >= m.dsm_up[tm,sit] + \
+		sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, tm+1+m.delay))
 	else:
-		return max(m.cap_up, m.cap_do) >= m.dsm_up[Tm,sit] + \
-		sum(m.dsm_down[t,Tm,sit] for t in range(Tm-m.delay, m.timesteps[-1] + 1))
+		return max(m.cap_up, m.cap_do) >= m.dsm_up[tm,sit] + \
+		sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, m.timesteps[-1] + 1))
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit):

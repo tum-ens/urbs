@@ -22,16 +22,24 @@ Imports
 
 ::
 
-    import coopr.environ
+    try:
+        import pyomo.environ
+        from pyomo.opt.base import SolverFactory
+        PYOMO3 = False
+    except ImportError:
+        import coopr.environ
+        from coopr.opt.base import SolverFactory
+        PYOMO3 = True
     import os
+    import shutil
     import urbs
-    from coopr.opt.base import SolverFactory
     from datetime import datetime
+
    
 Several packages are included.
 
-* `coopr.environ` is not used, but required for compatibility with future 
-  releases of `coopr`_.
+* the try-except block checks for the version of Coopr/Pyomo installed and imports
+the necessary packages for the model creation and solution.
 
 * `os`_ is a builtin Python module, included here for its `os.path`_ submodule
   that offers operating system independent path manipulation routines. The 
@@ -48,7 +56,7 @@ Several packages are included.
   are :func:`read_excel`, :func:`create_model`, :func:`report` and
   :func:`plot`. More functions can be found in the document :ref:`API`.
 
-* `coopr.opt.base`_ is a utility package by `coopr`_ and provides the function
+* `pyomo.opt.base`_ is a utility package by `pyomo`_ and provides the function
   ``SolverFactory`` that allows creating a ``solver`` object. This objects 
   hides the differences in input/output formats among solvers from the user.
   More on that in section `Solving`_ below.
@@ -223,12 +231,23 @@ Solving
 
 ::
 
-    # create model, solve it, read results
-    model = urbs.create_model(data, timesteps)
-    prob = model.create()
+    # create model
+    prob = urbs.create_model(data, timesteps)
+    if PYOMO3:
+        prob = prob.create()
+
+    # refresh time stamp string and create filename for logfile
+    now = prob.created
+    log_filename = os.path.join(result_dir, '{}.log').format(sce)
+
+    # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
-    prob.load(result)
+    if PYOMO3:
+        prob.load(result)
+    else:
+        prob.solutions.load_from(result)
 
 This section is the "work horse", where most computation and time is spent. The
 optimization problem is first defined (:func:`create_model`), then filled with
@@ -270,7 +289,7 @@ Plotting
         'South': (230, 200, 200),
         'Mid': (200, 230, 200),
         'North': (200, 200, 230)}
-    for country, color in my_colors.iteritems():
+    for country, color in my_colors.items():
         urbs.COLORS[country] = color
    
 First, the use of the module constant :data:`COLORS` for customising plot

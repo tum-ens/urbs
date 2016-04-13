@@ -683,9 +683,13 @@ def res_dsm_downward_rule(m, tm, sit, com):
 
 # DSMup + DSMdo <= max(Cup,Cdo)
 def res_dsm_maximum_rule(m, tm, sit, com):
-    return max(m.dsm.loc[sit,com]['cap-max-up'], m.dsm.loc[sit,com]['cap-max-do']) \
-    >= m.dsm_up[tm,sit,com] + \
-    sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
+    dsm_down_sum = 0
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+        dsm_down_sum += m.dsm_down[t,tm,sit,com]
+
+    max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
+                          m.dsm.loc[sit,com]['cap-max-do'])
+    return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit, com):
@@ -1398,6 +1402,7 @@ def get_entity(instance, name):
         else:
             results = pd.DataFrame(entity.iteritems())
     else:
+        # create DataFrameds
         # create DataFrame
         if entity.dim() > 1:
             # concatenate index tuples with value if entity has
@@ -1658,14 +1663,16 @@ def get_timeseries(instance, com, sit, timesteps=None):
     stock.name = 'Stock'
 
     # DEMAND SIDE MANAGEMENT (load shifting)
-    dsmup = get_entities(instance, ['dsm_up'])
-    dsmdo = get_entities(instance, ['dsm_down'])
+    dsmup = get_entity(instance, 'dsm_up')
+    dsmdo = get_entity(instance, 'dsm_down')
     #dsmup = instance.dsm_up.loc[timesteps][sit, com]
     dsmup = dsmup.xs(sit, level = 'sit')
+    dsmup = dsmup.xs(com, level = 'com')
     # Create series
     dsmup = dsmup['dsm_up']
     #dsmdo = instance.dsm_down.loc[timesteps][sit, com]
     dsmdo = dsmdo.xs(sit, level = 'sit')
+    dsmdo = dsmdo.xs(com, level = 'com')
     # Create series by summing the first time step
     dsmdo = dsmdo['dsm_down'].unstack().sum(axis=0)
     # Rename index names

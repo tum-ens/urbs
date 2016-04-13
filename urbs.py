@@ -663,14 +663,6 @@ def res_vertex_rule(m, tm, sit, com, com_type):
         try:
                 power_surplus -= m.demand.loc[tm][sit,com] \
 				+ m.dsm_up[tm,sit,com] - sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
-                # if tm <= m.timesteps[0] + m.dsm.loc[sit,com]['delay']:
-                    # power_surplus -= m.demand.loc[tm][sit, com] \
-				# + m.dsm_up[tm,sit,com] - sum(m.dsm_down[T,tm,sit,com] for T in range(m.timesteps[0] + 1, tm+m.dsm.loc[sit,com]['delay']+1))
-                # elif tm >= m.timesteps[0] + 1 + m.dsm.loc[sit,com]['delay'] and tm <= m.timesteps[-1] - m.dsm.loc[sit,com]['delay']:
-                       # + m.dsm_up[tm,sit,com] - sum(m.dsm_down[T,tm,sit,com] for T in range(tm-m.dsm.loc[sit,com]['delay'], tm+1+m.dsm.loc[sit,com]['delay']))
-                # else:
-                    # power_surplus -= m.demand.loc[tm][sit, com] \
-				# + m.dsm_up[tm,sit,com] - sum(m.dsm_down[T,tm,sit,com] for T in range(tm-m.dsm.loc[sit,com]['delay'], m.timesteps[-1] + 1))   
         except KeyError:
             pass
     return power_surplus == 0
@@ -679,15 +671,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
 # DSMup == DSMdo * efficiency factor n
 def def_dsm_variables_rule(m, tm, sit, com):
     return sum(m.dsm_down[tm,tt,sit,com] for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay'])) == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
-	# if tm <= m.timesteps[0] + m.dsm.loc[sit,com]['delay']:
-		# return sum(m.dsm_down[tm,T,sit,com] for T in range(m.timesteps[0] + 1, tm+1+m.dsm.loc[sit,com]['delay'])) \
-		# == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
-	# elif tm >= m.timesteps[0] + 1 + m.dsm.loc[sit,com]['delay'] and tm <= m.timesteps[-1] - m.dsm.loc[sit,com]['delay']:
-		# return sum(m.dsm_down[tm,T,sit,com] for T in range(tm-m.dsm.loc[sit,com]['delay'], tm+1+m.dsm.loc[sit,com]['delay'])) \
-		# == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
-	# else:
-		# return sum(m.dsm_down[tm,T,sit,com] for T in range(tm-m.dsm.loc[sit,com]['delay'], m.timesteps[-1] + 1)) \
-		# == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
+
 
 # DSMup <= Cup (threshold capacity of DSMup)		
 def res_dsm_upward_rule(m, tm, sit, com):
@@ -696,30 +680,12 @@ def res_dsm_upward_rule(m, tm, sit, com):
 # DSMdo <= Cdo (threshold capacity of DSMdo)
 def res_dsm_downward_rule(m, tm, sit, com):
     return sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay'])) <= m.dsm.loc[sit,com]['cap-max-do']
-	# if tm <= m.timesteps[0] + m.dsm.loc[sit,com]['delay']:
-		# return sum(m.dsm_down[t,tm,sit,com] for t in range(m.timesteps[0] + 1, tm+1+m.dsm.loc[sit,com]['delay'])) \
-		# <= m.dsm.loc[sit,com]['cap-max-do']
-	# elif tm >= m.timesteps[0] + 1 + m.dsm.loc[sit,com]['delay'] and tm <= m.timesteps[-1] - m.dsm.loc[sit,com]['delay']:
-		# return sum(m.dsm_down[t,tm,sit,com] for t in range(tm-m.dsm.loc[sit,com]['delay'], tm+1+m.dsm.loc[sit,com]['delay'])) \
-		# <= m.dsm.loc[sit,com]['cap-max-do']
-	# else:
-		# return sum(m.dsm_down[t,tm,sit,com] for t in range(tm-m.dsm.loc[sit,com]['delay'], m.timesteps[-1] + 1)) \
-		# <= m.dsm.loc[sit,com]['cap-max-do']
 
 # DSMup + DSMdo <= max(Cup,Cdo)
 def res_dsm_maximum_rule(m, tm, sit, com):
     return max(m.dsm.loc[sit,com]['cap-max-up'], m.dsm.loc[sit,com]['cap-max-do']) \
     >= m.dsm_up[tm,sit,com] + \
     sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
-	# if tm <= m.timesteps[0] + m.dsm.loc[sit,com]['delay']:
-		# return max(m.dsm.loc[sit,com]['cap-max-up'], m.dsm.loc[sit,com]['cap-max-do']) >= m.dsm_up[tm,sit,com] + \
-		# sum(m.dsm_down[t,tm,sit,com] for t in range(m.timesteps[0] + 1, tm+1+m.dsm.loc[sit,com]['delay']))
-	# elif tm >= m.timesteps[0] + 1 + m.dsm.loc[sit,com]['delay'] and tm <= m.timesteps[-1] - m.dsm.loc[sit,com]['delay']:
-		# return max(m.dsm.loc[sit,com]['cap-max-up'], m.dsm.loc[sit,com]['cap-max-do']) >= m.dsm_up[tm,sit,com] + \
-		# sum(m.dsm_down[t,tm,sit,com] for t in range(tm-m.dsm.loc[sit,com]['delay'], tm+1+m.dsm.loc[sit,com]['delay']))
-	# else:
-		# return max(m.dsm.loc[sit,com]['cap-max-up'], m.dsm.loc[sit,com]['cap-max-do']) >= m.dsm_up[tm,sit,com] + \
-		# sum(m.dsm_down[t,tm,sit,com] for t in range(tm-m.dsm.loc[sit,com]['delay'], m.timesteps[-1] + 1))
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit, com):

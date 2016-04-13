@@ -1184,9 +1184,9 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
     """ Dictionary for the two time instances of DSM_down
 
     Args:
-        time: Pandas DataFrame - Modelled time steps from excel
+        time: list with time indices
         sit_com_tuple: a list of (site, commodity) tuples
-        dsm_data: dsm data from excel input file
+        m: model instance
 
     Returns:
         A list of possible time tuples depending on site and commodity
@@ -1208,13 +1208,15 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
     return time_list
     
 def dsm_time_tuples(timestep, time, delay):
-    """ Dictionary for the two time instances of DSM_down
+    """ Tuples for the two time instances of DSM_down
 
     Args:
-        TODO
+        timestep: current timestep
+        time: list with time indices
+        delay: allowed dsm delay in particular site and commodity
 
     Returns:
-        A list of possible time tuples depending on site and commodity
+        A list of possible time tuples of a current time step in a specific site and commodity
     """
         
     ub = max(time)
@@ -1227,24 +1229,6 @@ def dsm_time_tuples(timestep, time, delay):
             time_list.append(step)
     
     return time_list
-    
-# def dsm_up_time_tuples(time, sit_com_tuple, dsm_data):
-    # """ Dictionary for the two time instances of DSM_down
-
-    # Args:
-        # time: Pandas DataFrame - Modelled time steps from excel
-        # sit_com_tuple: a list of (site, commodity) tuples
-    # Returns:
-        # A list of possible time tuples depending on site and commodity
-    # """
-    
-    # time_list = list()
-    
-    # for (site, commodity) in sit_com_tuple:
-        # for step in time.iteritems():
-            # time_list.append((step, site, commodity))
-    
-    # return time_list
     
 
 def commodity_subset(com_tuples, type_name):
@@ -1665,12 +1649,12 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # DEMAND SIDE MANAGEMENT (load shifting)
     dsmup = get_entity(instance, 'dsm_up')
     dsmdo = get_entity(instance, 'dsm_down')
-    #dsmup = instance.dsm_up.loc[timesteps][sit, com]
+    # Extract site and commodity timeseries
     dsmup = dsmup.xs(sit, level = 'sit')
     dsmup = dsmup.xs(com, level = 'com')
     # Create series
     dsmup = dsmup['dsm_up']
-    #dsmdo = instance.dsm_down.loc[timesteps][sit, com]
+    # Extract site and commodity timeseries
     dsmdo = dsmdo.xs(sit, level = 'sit')
     dsmdo = dsmdo.xs(com, level = 'com')
     # Create series by summing the first time step

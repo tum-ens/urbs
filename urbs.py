@@ -670,7 +670,10 @@ def res_vertex_rule(m, tm, sit, com, com_type):
 # demand side management constraints
 # DSMup == DSMdo * efficiency factor n
 def def_dsm_variables_rule(m, tm, sit, com):
-    return sum(m.dsm_down[tm,tt,sit,com] for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay'])) == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
+    dsm_down_sum = 0
+    for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+        dsm_down_sum += m.dsm_down[tm,tt,sit,com]
+    return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
 
 
 # DSMup <= Cup (threshold capacity of DSMup)		
@@ -679,7 +682,10 @@ def res_dsm_upward_rule(m, tm, sit, com):
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
 def res_dsm_downward_rule(m, tm, sit, com):
-    return sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay'])) <= m.dsm.loc[sit,com]['cap-max-do']
+    dsm_down_sum = 0
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+        dsm_down_sum += m.dsm_down[t,tm,sit,com]
+    return dsm_down_sum <= m.dsm.loc[sit,com]['cap-max-do']
 
 # DSMup + DSMdo <= max(Cup,Cdo)
 def res_dsm_maximum_rule(m, tm, sit, com):
@@ -1182,6 +1188,7 @@ def split_columns(columns, sep='.'):
     
 def dsm_down_time_tuples(time, sit_com_tuple, m):
     """ Dictionary for the two time instances of DSM_down
+
 
     Args:
         time: list with time indices

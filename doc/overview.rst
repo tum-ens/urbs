@@ -11,7 +11,7 @@ Commodity
 Commodities are goods that can be generated, stored, transmitted and consumed.
 By convention, they are represented by their energy content (in MWh), but can
 be changed (to J, kW, t, kg) by simply using different (consistent) units for
-all input data. Each commodity must be exactly one of following four types:
+all input data. Each commodity must be exactly one of the following four types:
 
   * Stock: Buyable at any time for a given price. Supply can be limited
     per timestep or for a whole year. Examples are coal, gas, uranium
@@ -27,7 +27,7 @@ all input data. Each commodity must be exactly one of following four types:
   * Env: The special commodity CO2 is of this type and represents the
     amount (in tons) of greenhouse gas emissions from processes. Its
     total amount can be limited, to investigate the effect of policies
-    on the.
+    on the model.
 
 Stock commodities have three numeric attributes that represent their price,
 total annual and per timestep supply. Environmental commodities (i.e. CO2) have
@@ -41,13 +41,13 @@ Iceland.
 Process
 ^^^^^^^
 Processes describe conversion technologies from one commodity to another. They
-can be visualised like a black box with one input (commodity) and one output
-(commodity). A fixed conversion efficiency between input and output is the main
-technical parameter. Fixed costs for investment and maintenance (per capacity)
-and variable costs for operation (per output) are the economic parameters.
+can be visualised like a black box with input(s) (commodity) and output(s)
+(commodity). Process input and output ratios are the main technical parameters
+for processes. Fixed costs for investment and maintenance (per capacity)
+and variable costs for operation (per output) are the economical parameters.
 
 Processes are defined over two tuples. The first tuple ``(site, process)``
-specifies the location of a named process. E.g. ``(Iceland, turbine)`` would
+specifies the location of a given process e.g. ``(Iceland, turbine)`` would
 locate a process ``turbine`` at site ``Iceland``. The second tuple ``(process,
 commodity, direction)`` then specifies the inputs and outputs for that process.
 For example, ``(turbine, geothermal, In)`` and ``(turbine, electricity, Out)``
@@ -57,7 +57,7 @@ and the single output ``electricity``.
 
 Transmission
 ^^^^^^^^^^^^
-Transmission allows transporting commodities between sites without delay. It is
+Transmission allows instantaneous transportation of commodities between sites. It is
 characterised by an efficiency and costs, just like processes. Transmission is
 defined over the tuple ``(site in, site out, transmission, commodity)``. For
 example, ``(Iceland, Norway, undersea cable, electricity)`` would represent an
@@ -65,15 +65,15 @@ undersea cable for electricity between Iceland and Norway.
 
 Storage
 ^^^^^^^
-Storage describes the possibility to deposit a deliberate amount of energy in
-form of one commodity at one time step, and later retrieving it. Efficiencies
+Storage describes the possibility to deposit a deliberate amount of energy in the 
+form of one commodity at one time step; with the purpose of retrieving it later. Efficiencies
 for charging/discharging depict losses during input/output. A self-discharge
 term is **not** included at the moment, but could be added trivially (one
 column, one modification of the storage state equation). Storage is
-characterised by capcities both for energy content (in MWh) and
+characterised by capacities both for energy content (in MWh) and
 charge/discharge power (in MW). Both capacities have independent sets of
 investment, fixed and variable cost parameters to allow for a very flexible
-parametrization of various storage technologies from batteries to hot water
+parametrization of various storage technologies; ranging from batteries to hot water
 tanks.
 
 Storage is defined over the tuple ``(site, storage, stored commodity)``. For
@@ -90,7 +90,7 @@ Demand
 Each combination ``(site, demand commidty)`` may have one timeseries,
 describing the (average) power demand (MWh/h) per timestep. They are a crucial
 input parameter, as the whole optimisation aims to satisfy these demands with
-minimal costs from the given technologies (process, storage, transmission).
+minimal costs by the given technologies (process, storage, transmission).
 
 Intermittent Supply
 """""""""""""""""""

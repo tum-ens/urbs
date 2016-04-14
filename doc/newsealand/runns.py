@@ -1,7 +1,7 @@
-import coopr.environ
+import pyomo.environ
 import os
 import urbs
-from coopr.opt.base import SolverFactory
+from pyomo.opt.base import SolverFactory
 from datetime import datetime
 
 
@@ -74,11 +74,10 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
     data = scenario(data)
 
     # create model, solve it, read results
-    model = urbs.create_model(data, timesteps)
-    prob = model.create()
+    prob = urbs.create_model(data, timesteps)
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     result = optim.solve(prob, tee=True)
-    prob.load(result)
+    prob.solutions.load_from(result)
     
     # refresh time stamp string
     now = prob.created
@@ -100,7 +99,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir):
         'Stryworf Key': (200, 230, 200),
         'Qlyph Archipelago': (200, 200, 230),
         'Jepid Island': (215,215,215)}
-    for country, color in my_colors.iteritems():
+    for country, color in my_colors.items():
         urbs.COLORS[country] = color
     
     # create timeseries plot for each demand (site, commodity) timeseries

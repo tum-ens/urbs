@@ -197,7 +197,7 @@ def create_model(data, timesteps=None, dt=1):
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of modelled timesteps')
-		
+
     # modelled Demand Side Management time steps (downshift):
     # downshift effective in tt to compensate for upshift in t
     m.tt = pyomo.Set(
@@ -267,11 +267,7 @@ def create_model(data, timesteps=None, dt=1):
         initialize=[(t, tt, site, commodity)
                     for (t,tt, site, commodity) in dsm_down_time_tuples(m.timesteps[1:], m.dsm_site_tuples, m)],
         doc='Combinations of possible dsm_down combinations, e.g. (5001,5003,Mid,Elec)')
-    # m.dsm_up_tuples = pyomo.Set(
-        # within=m.tm*m.sit*m.com,
-        # initialize=[(t, site, commodity)
-                    # for (t, site, commodity) in dsm_up_time_tuples(m.timesteps[1:], m.dsm_site_tuples)],
-        # doc='Combinations of possible dsm_up combinations, e.g. (5001,Mid,Elec)')
+
 
     # process input/output
     m.pro_input_tuples = pyomo.Set(
@@ -334,7 +330,7 @@ def create_model(data, timesteps=None, dt=1):
         doc='Time step duration (in hours), default: 1')
 
     # Variables
-	    
+
     # costs
     m.costs = pyomo.Var(
         m.cost_type,
@@ -425,15 +421,13 @@ def create_model(data, timesteps=None, dt=1):
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
         
-    # demand side management		
+    # demand side management
     m.dsm_up = pyomo.Var(
         m.tm, m.dsm_site_tuples,
-    #    initialize=0, 
         within=pyomo.NonNegativeReals,
         doc='DSM upshift')
     m.dsm_down = pyomo.Var(
         m.dsm_down_tuples,
-    #    initialize=0, 
         within=pyomo.NonNegativeReals,
         doc='DSM downshift')
 
@@ -584,32 +578,32 @@ def create_model(data, timesteps=None, dt=1):
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
     
-	# demand side management
+    # demand side management
     m.def_dsm_variables = pyomo.Constraint(
-		m.tm, m.dsm_site_tuples, 
-		rule=def_dsm_variables_rule,
-		doc='DSMup == DSMdo * efficiency factor n')	
+        m.tm, m.dsm_site_tuples, 
+        rule=def_dsm_variables_rule,
+        doc='DSMup == DSMdo * efficiency factor n')	
 
     m.res_dsm_upward = pyomo.Constraint(
-		m.tm, m.dsm_site_tuples, 
-		rule=res_dsm_upward_rule,
-		doc='DSMup <= Cup (threshold capacity of DSMup)')
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_upward_rule,
+        doc='DSMup <= Cup (threshold capacity of DSMup)')
 
     m.res_dsm_downward = pyomo.Constraint(
-		m.tm, m.dsm_site_tuples, 
-		rule=res_dsm_downward_rule,
-		doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_downward_rule,
+        doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
 
     m.res_dsm_maximum = pyomo.Constraint(
-		m.tm, m.dsm_site_tuples, 
-		rule=res_dsm_maximum_rule,
-		doc='DSMup + DSMdo <= max(Cup,Cdo)')
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_maximum_rule,
+        doc='DSMup + DSMdo <= max(Cup,Cdo)')
 
     m.res_dsm_recovery = pyomo.Constraint(
-		m.tm, m.dsm_site_tuples, 
-		rule=res_dsm_recovery_rule,
-		doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
-	
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_recovery_rule,
+        doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
+
     # possibly: add hack features
     if 'hacks' in data:
         m = add_hacks(m, data['hacks'])
@@ -662,7 +656,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     if com in m.com_demand:
         try:
                 power_surplus -= m.demand.loc[tm][sit,com] \
-				+ m.dsm_up[tm,sit,com] - sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
+                + m.dsm_up[tm,sit,com] - sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
         except KeyError:
             pass
     return power_surplus == 0
@@ -678,7 +672,7 @@ def def_dsm_variables_rule(m, tm, sit, com):
 
 # DSMup <= Cup (threshold capacity of DSMup)		
 def res_dsm_upward_rule(m, tm, sit, com):
-	return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
+    return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
 
@@ -701,12 +695,12 @@ def res_dsm_maximum_rule(m, tm, sit, com):
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit, com):
-	if tm + m.dsm.loc[sit,com]['recov'] <= m.timesteps[-1] + 1:
-		return sum(m.dsm_up[tm,sit,com] for t in range(tm, tm+m.dsm.loc[sit,com]['recov'])) \
-		<= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
-	else:
-		return sum(m.dsm_up[tm,sit,com] for t in range(tm, m.timesteps[-1] + 1)) \
-		<= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
+    if tm + m.dsm.loc[sit,com]['recov'] <= m.timesteps[-1] + 1:
+        return sum(m.dsm_up[tm,sit,com] for t in range(tm, tm+m.dsm.loc[sit,com]['recov'])) \
+        <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
+    else:
+        return sum(m.dsm_up[tm,sit,com] for t in range(tm, m.timesteps[-1] + 1)) \
+        <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -1910,7 +1904,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     demand = consumed.pop('Demand')
     shifted = consumed.pop('Shifted Demand')
     deltademand = consumed.pop('Delta of Demand to shifted Demand')
-	
+
     # remove all columns from created which are all-zeros in both created and
     # consumed (except the last one, to prevent a completely empty frame)
     for col in created.columns:
@@ -1983,7 +1977,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
              linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)    
     
-	# PLOT DEMAND
+    # PLOT DEMAND
     ax0.plot(demand.index, demand.values, linewidth=0.8,
              color=to_color('Demand'))
              

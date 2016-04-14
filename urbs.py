@@ -681,6 +681,7 @@ def res_dsm_upward_rule(m, tm, sit, com):
 	return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
+
 def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
@@ -696,6 +697,7 @@ def res_dsm_maximum_rule(m, tm, sit, com):
     max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
                           m.dsm.loc[sit,com]['cap-max-do'])
     return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
+
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit, com):

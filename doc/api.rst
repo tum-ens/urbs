@@ -11,17 +11,16 @@ the optimization object `prob`, and how the various :mod:`urbs` module
 functions create it, modify it and process it.::
 
     import urbs
-    from coopr.opt.base import SolverFactory
+    from pyomo.opt.base import SolverFactory
     
     # read input, create optimisation problem
     data = urbs.read_excel('mimo-example.xlsx')
-    model = urbs.create_model(data)
-    prob = model.create()
-    
+    prob = urbs.create_model(data)
+
     # solve problem, read results
     optim = SolverFactory('glpk')
     result = optim.solve(prob)
-    prob.load(result)
+    prob.solutions.load_from(result)
     
     # save problem instance (incl. input and result) for later analyses
     urbs.save(prob, 'mimo-example.pgz')
@@ -55,8 +54,7 @@ Create model
   
 .. function:: create_model(data, timesteps)
 
-  Returns a Pyomo `ConcreteModel` object, which has still to be converted to a
-  problem instance using its method ``create``.
+  Returns a Pyomo `ConcreteModel` object.
   
   :param dict data: input like created by :func:`read_excel`
   :param list timesteps: consecutive list of modelled timesteps
@@ -293,5 +291,5 @@ Helper functions
           'South': (230, 200, 200),
           'Mid': (200, 230, 200),
           'North': (200, 200, 230)}
-      for country, color in my_colors.iteritems():
+      for country, color in my_colors.items():
           urbs.COLORS[country] = color

@@ -695,12 +695,10 @@ def res_dsm_maximum_rule(m, tm, sit, com):
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit, com):
-    if tm + m.dsm.loc[sit,com]['recov'] <= m.timesteps[-1] + 1:
-        return sum(m.dsm_up[tm,sit,com] for t in range(tm, tm+m.dsm.loc[sit,com]['recov'])) \
-        <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
-    else:
-        return sum(m.dsm_up[tm,sit,com] for t in range(tm, m.timesteps[-1] + 1)) \
-        <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
+    dsm_up_sum = 0
+    for t in range(tm, tm+m.dsm.loc[sit,com]['recov']):
+        dsm_up_sum += m.dsm.up[t,sit,com]
+    return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit.com]['delay']
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);

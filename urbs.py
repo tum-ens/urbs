@@ -87,7 +87,7 @@ def read_excel(filename):
         demand = xls.parse('Demand').set_index(['t'])
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
-        dsm = xls.parse('DSM').set_index(['Constant Name']) #Demand Side Management
+        dsm = xls.parse('DSM').set_index(['Site', 'Commodity']) #Demand Side Management
         try:
             hacks = xls.parse('Hacks').set_index(['Name'])
         except XLRDError:
@@ -172,11 +172,11 @@ def create_model(data, timesteps=None, dt=1):
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
     
     # demand side management input
-    m.delay = int(data['dsm'].loc['Delay time', 'Value'])
-    m.efficiency = float(data['dsm'].loc['Efficiency', 'Value'])
-    m.recovery = int(data['dsm'].loc['Recovery time', 'Value'])
-    m.cap_do = float(data['dsm'].loc['Downshift capacity', 'Value'])
-    m.cap_up = float(data['dsm'].loc['Upshift capacity', 'Value'])
+    # m.dsm.loc[sit,com]['delay'] = int(data['dsm'].loc['delay', 'Value'])
+    # m.dsm.loc[sit,com]['eff'] = float(data['dsm'].loc['eff', 'Value'])
+    # m.dsm.loc[sit,com]['recov'] = int(data['dsm'].loc['recov', 'Value'])
+    # m.dsm.loc[sit,com]['cap-max-do'] = float(data['dsm'].loc['cap-max-do', 'Value'])
+    # m.dsm.loc[sit,com]['cap-max-up'] = float(data['dsm'].loc['cap-max-up', 'Value'])
     
 	# Sets
     # ====
@@ -197,7 +197,7 @@ def create_model(data, timesteps=None, dt=1):
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of modelled timesteps')
-		
+
     # modelled Demand Side Management time steps (downshift):
     # downshift effective in tt to compensate for upshift in t
     m.tt = pyomo.Set(
@@ -258,6 +258,16 @@ def create_model(data, timesteps=None, dt=1):
         within=m.sit*m.sto*m.com,
         initialize=m.storage.index,
         doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
+    m.dsm_site_tuples = pyomo.Set(
+        within=m.sit*m.com,
+        initialize=m.dsm.index,
+        doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
+    m.dsm_down_tuples = pyomo.Set(
+        within=m.tm*m.tm*m.sit*m.com,
+        initialize=[(t, tt, site, commodity)
+                    for (t,tt, site, commodity) in dsm_down_time_tuples(m.timesteps[1:], m.dsm_site_tuples, m)],
+        doc='Combinations of possible dsm_down combinations, e.g. (5001,5003,Mid,Elec)')
+
 
     # process input/output
     m.pro_input_tuples = pyomo.Set(
@@ -320,7 +330,7 @@ def create_model(data, timesteps=None, dt=1):
         doc='Time step duration (in hours), default: 1')
 
     # Variables
-	    
+
     # costs
     m.costs = pyomo.Var(
         m.cost_type,
@@ -411,15 +421,13 @@ def create_model(data, timesteps=None, dt=1):
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
         
-    # demand side management		
+    # demand side management
     m.dsm_up = pyomo.Var(
-        m.tm, m.sit,
-        initialize=0, 
+        m.tm, m.dsm_site_tuples,
         within=pyomo.NonNegativeReals,
         doc='DSM upshift')
     m.dsm_down = pyomo.Var(
-        m.tm, m.tt, m.sit,
-        initialize=0, 
+        m.dsm_down_tuples,
         within=pyomo.NonNegativeReals,
         doc='DSM downshift')
 
@@ -570,32 +578,32 @@ def create_model(data, timesteps=None, dt=1):
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
     
-	# demand side management
+    # demand side management
     m.def_dsm_variables = pyomo.Constraint(
-		m.tm, m.sit, 
-		rule=def_dsm_variables_rule,
-		doc='DSMup == DSMdo * efficiency factor n')	
+        m.tm, m.dsm_site_tuples, 
+        rule=def_dsm_variables_rule,
+        doc='DSMup == DSMdo * efficiency factor n')	
 
     m.res_dsm_upward = pyomo.Constraint(
-		m.tm, m.sit,
-		rule=res_dsm_upward_rule,
-		doc='DSMup <= Cup (threshold capacity of DSMup)')
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_upward_rule,
+        doc='DSMup <= Cup (threshold capacity of DSMup)')
 
     m.res_dsm_downward = pyomo.Constraint(
-		m.tm, m.sit,
-		rule=res_dsm_downward_rule,
-		doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_downward_rule,
+        doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
 
     m.res_dsm_maximum = pyomo.Constraint(
-		m.tm, m.sit,
-		rule=res_dsm_maximum_rule,
-		doc='DSMup + DSMdo <= max(Cup,Cdo)')
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_maximum_rule,
+        doc='DSMup + DSMdo <= max(Cup,Cdo)')
 
     m.res_dsm_recovery = pyomo.Constraint(
-		m.tm, m.sit,
-		rule=res_dsm_recovery_rule,
-		doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
-	
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_recovery_rule,
+        doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
+
     # possibly: add hack features
     if 'hacks' in data:
         m = add_hacks(m, data['hacks'])
@@ -647,68 +655,52 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # added demand side management
     if com in m.com_demand:
         try:
-                if tm <= m.timesteps[0] + m.delay:
-                    power_surplus -= m.demand.loc[tm][sit, com] \
-				+ m.dsm_up[tm,sit] - sum(m.dsm_down[T,tm,sit] for T in range(m.timesteps[0] + 1, tm+m.delay+1))
-                elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
-                    power_surplus -= m.demand.loc[tm][sit, com] \
-                       + m.dsm_up[tm,sit] - sum(m.dsm_down[T,tm,sit] for T in range(tm-m.delay, tm+1+m.delay))
-                else:
-                    power_surplus -= m.demand.loc[tm][sit, com] \
-				+ m.dsm_up[tm,sit] - sum(m.dsm_down[T,tm,sit] for T in range(tm-m.delay, m.timesteps[-1] + 1))   
+                power_surplus -= m.demand.loc[tm][sit,com] \
+                + m.dsm_up[tm,sit,com] - sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
         except KeyError:
             pass
     return power_surplus == 0
 
 # demand side management constraints
 # DSMup == DSMdo * efficiency factor n
-def def_dsm_variables_rule(m, tm, sit):
-	if tm <= m.timesteps[0] + m.delay:
-		return sum(m.dsm_down[tm,T,sit] for T in range(m.timesteps[0] + 1, tm+1+m.delay)) \
-		== m.dsm_up[tm,sit] * m.efficiency
-	elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
-		return sum(m.dsm_down[tm,T,sit] for T in range(tm-m.delay, tm+1+m.delay)) \
-		== m.dsm_up[tm,sit] * m.efficiency
-	else:
-		return sum(m.dsm_down[tm,T,sit] for T in range(tm-m.delay, m.timesteps[-1] + 1)) \
-		== m.dsm_up[tm,sit] * m.efficiency
+def def_dsm_variables_rule(m, tm, sit, com):
+    dsm_down_sum = 0
+    for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+        dsm_down_sum += m.dsm_down[tm,tt,sit,com]
+    return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
+
 
 # DSMup <= Cup (threshold capacity of DSMup)		
-def res_dsm_upward_rule(m, tm, sit):
-	return m.dsm_up[tm,sit] <= m.cap_up
+def res_dsm_upward_rule(m, tm, sit, com):
+    return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
-def res_dsm_downward_rule(m, tm, sit):
-	if tm <= m.timesteps[0] + m.delay:
-		return sum(m.dsm_down[t,tm,sit] for t in range(m.timesteps[0] + 1, tm+1+m.delay)) \
-		<= m.cap_do
-	elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
-		return sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, tm+1+m.delay)) \
-		<= m.cap_do
-	else:
-		return sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, m.timesteps[-1] + 1)) \
-		<= m.cap_do
+
+def res_dsm_downward_rule(m, tm, sit, com):
+    dsm_down_sum = 0
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+        dsm_down_sum += m.dsm_down[t,tm,sit,com]
+    return dsm_down_sum <= m.dsm.loc[sit,com]['cap-max-do']
 
 # DSMup + DSMdo <= max(Cup,Cdo)
-def res_dsm_maximum_rule(m, tm, sit):
-	if tm <= m.timesteps[0] + m.delay:
-		return max(m.cap_up, m.cap_do) >= m.dsm_up[tm,sit] + \
-		sum(m.dsm_down[t,tm,sit] for t in range(m.timesteps[0] + 1, tm+1+m.delay))
-	elif tm >= m.timesteps[0] + 1 + m.delay and tm <= m.timesteps[-1] - m.delay:
-		return max(m.cap_up, m.cap_do) >= m.dsm_up[tm,sit] + \
-		sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, tm+1+m.delay))
-	else:
-		return max(m.cap_up, m.cap_do) >= m.dsm_up[tm,sit] + \
-		sum(m.dsm_down[t,tm,sit] for t in range(tm-m.delay, m.timesteps[-1] + 1))
+def res_dsm_maximum_rule(m, tm, sit, com):
+    dsm_down_sum = 0
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+        dsm_down_sum += m.dsm_down[t,tm,sit,com]
+
+    max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
+                          m.dsm.loc[sit,com]['cap-max-do'])
+    return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
+
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
-def res_dsm_recovery_rule(m, tm, sit):
-	if tm + m.recovery <= m.timesteps[-1] + 1:
-		return sum(m.dsm_up[tm,sit] for t in range(tm, tm+m.recovery)) \
-		<= m.cap_up * m.delay
-	else:
-		return sum(m.dsm_up[tm,sit] for t in range(tm, m.timesteps[-1] + 1)) \
-		<= m.cap_up * m.delay
+def res_dsm_recovery_rule(m, tm, sit, com):
+    if tm + m.dsm.loc[sit,com]['recov'] <= m.timesteps[-1] + 1:
+        return sum(m.dsm_up[tm,sit,com] for t in range(tm, tm+m.dsm.loc[sit,com]['recov'])) \
+        <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
+    else:
+        return sum(m.dsm_up[tm,sit,com] for t in range(tm, m.timesteps[-1] + 1)) \
+        <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -1189,6 +1181,58 @@ def split_columns(columns, sep='.'):
     """
     column_tuples = [tuple(col.split('.')) for col in columns]
     return pd.MultiIndex.from_tuples(column_tuples)
+    
+def dsm_down_time_tuples(time, sit_com_tuple, m):
+    """ Dictionary for the two time instances of DSM_down
+
+
+    Args:
+        time: list with time indices
+        sit_com_tuple: a list of (site, commodity) tuples
+        m: model instance
+
+    Returns:
+        A list of possible time tuples depending on site and commodity
+    """
+    
+    delay =  m.dsm.loc[:,:]['delay']
+    
+    ub = max(time)
+    lb = min(time)
+    
+    time_list = list()
+    
+    for (site, commodity) in sit_com_tuple:
+        for step1 in time:
+            for step2 in range(step1-delay[site,commodity], step1+delay[site,commodity]+1):
+                if step2 >= lb and step2 <= ub:
+                    time_list.append((step1,step2, site, commodity))
+    
+    return time_list
+    
+def dsm_time_tuples(timestep, time, delay):
+    """ Tuples for the two time instances of DSM_down
+
+    Args:
+        timestep: current timestep
+        time: list with time indices
+        delay: allowed dsm delay in particular site and commodity
+
+    Returns:
+        A list of possible time tuples of a current time step in a specific site and commodity
+    """
+        
+    ub = max(time)
+    lb = min(time)
+    
+    time_list = list()
+    
+    for step in range(timestep-delay, timestep+delay+1):
+        if step > lb and step < ub:
+            time_list.append(step)
+    
+    return time_list
+    
 
 def commodity_subset(com_tuples, type_name):
     """ Unique list of commodity names for given type. 
@@ -1233,7 +1277,7 @@ def get_com_price(instance, tuples):
             price = factor * instance.buy_sell_price.loc[(instance.tm,) + (c[1],)]
             com_price[c] = pd.Series(price, index=com_price.index)
         else:
-            # same commdoity price for each hour
+            # same commodity price for each hour
             price = instance.commodity.loc[c]['price']
             com_price[c] = pd.Series(price, index=com_price.index)
     return com_price
@@ -1345,6 +1389,7 @@ def get_entity(instance, name):
         else:
             results = pd.DataFrame(entity.iteritems())
     else:
+        # create DataFrameds
         # create DataFrame
         if entity.dim() > 1:
             # concatenate index tuples with value if entity has
@@ -1605,14 +1650,16 @@ def get_timeseries(instance, com, sit, timesteps=None):
     stock.name = 'Stock'
 
     # DEMAND SIDE MANAGEMENT (load shifting)
-    dsmup = get_entities(instance, ['dsm_up'])
-    dsmdo = get_entities(instance, ['dsm_down'])
-    #dsmup = instance.dsm_up.loc[timesteps][sit, com]
+    dsmup = get_entity(instance, 'dsm_up')
+    dsmdo = get_entity(instance, 'dsm_down')
+    # Extract site and commodity timeseries
     dsmup = dsmup.xs(sit, level = 'sit')
+    dsmup = dsmup.xs(com, level = 'com')
     # Create series
     dsmup = dsmup['dsm_up']
-    #dsmdo = instance.dsm_down.loc[timesteps][sit, com]
+    # Extract site and commodity timeseries
     dsmdo = dsmdo.xs(sit, level = 'sit')
+    dsmdo = dsmdo.xs(com, level = 'com')
     # Create series by summing the first time step
     dsmdo = dsmdo['dsm_down'].unstack().sum(axis=0)
     # Rename index names
@@ -1857,7 +1904,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     demand = consumed.pop('Demand')
     shifted = consumed.pop('Shifted Demand')
     deltademand = consumed.pop('Delta of Demand to shifted Demand')
-	
+
     # remove all columns from created which are all-zeros in both created and
     # consumed (except the last one, to prevent a completely empty frame)
     for col in created.columns:
@@ -1930,7 +1977,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
              linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)    
     
-	# PLOT DEMAND
+    # PLOT DEMAND
     ax0.plot(demand.index, demand.values, linewidth=0.8,
              color=to_color('Demand'))
              

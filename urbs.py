@@ -697,9 +697,8 @@ def res_dsm_maximum_rule(m, tm, sit, com):
 def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
     for t in range(tm, tm+m.dsm.loc[sit,com]['recov']):
-        dsm_up_sum += m_dsm_up[t,sit,com]
-        dsm_up_sum += m_dsm_up[t,sit,com]
-    return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit.com]['delay']
+        dsm_up_sum += m.dsm_up[t,sit,com]
+    return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);

@@ -472,6 +472,12 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content           |
 	+------------------------------------+------+----------------------------------+
+	| **Demand Side Management Variables                                           |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\delta_{vct}^\text{up}`     | MW   | DSM Upshift                      |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\delta_{vct,tt}^\text{down}`| MW   | DSM Downshift                    |
+	+------------------------------------+------+----------------------------------+
 
 
 	
@@ -682,6 +688,23 @@ In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_p
         m.t, m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
+        
+Demand Side Management Variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**DSM Upshift**, :math:`\delta_{vct}^\text{up}`, ``dsm_up``, MW: The variable :math:`\delta_{vct}^\text{up}` represents the DSM upshift in time step :math:`t` in site :math:`v` for commodity :math:`c`. It is only defined for all ``dsm_site_tuples``. The following code fragment shows the definition of the variable:
+::
+
+    m.dsm_up = pyomo.Var(
+        m.tm, m.dsm_site_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='DSM upshift')
+        
+**DSM Downshift**, :math:`\delta_{vct,tt}^\text{down}`, ``dsm_down``, MW: The variable :math:`\delta_{vct,tt}^\text{down}` represents the DSM downshift in timestepp :math:`tt` caused by the upshift in time :math:`t` in site :math:`v` for commodity :math:`c`. The special combinations of timesteps :math:`t` and :math:`tt` for each site and commodity combination is created by the ``dsm_down_tuples``. The definition of the variable is shown in the code fragment:
+::
+    m.dsm_down = pyomo.Var(
+        m.dsm_down_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='DSM downshift')
 
 Parameters
 ==========

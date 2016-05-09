@@ -652,13 +652,16 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # if com is a demand commodity, the power_surplus is reduced by the
     # demand value; no scaling by m.dt or m.weight is needed here, as this
     # constraint is about power (MW), not energy (MWh)
-    # added demand side management
     if com in m.com_demand:
         try:
-                power_surplus -= m.demand.loc[tm][sit,com] \
-                + m.dsm_up[tm,sit,com] - sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
+                power_surplus -= m.demand.loc[tm][sit,com]
         except KeyError:
             pass
+    # if sit com is a dsm tuple, the power surplus is decreased by the
+    # upshifted demand and increased by the downshifted demand.
+    if (sit, com) in m.dsm_site_tuples:
+        power_surplus -= m.dsm_up[tm,sit,com]
+        power_surplus += sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
     return power_surplus == 0
 
 # demand side management constraints
@@ -1155,6 +1158,12 @@ def commodity_balance(m, tm, sit, com):
         if site == sit and commodity == com:
             balance += m.e_sto_in[(tm, site, storage, com)]
             balance -= m.e_sto_out[(tm, site, storage, com)]
+    for site, commodity in m.dsm_site_tuples:
+        # upshifted demand increases demand
+        # downshifted demand decreses demand
+        if site == sit and commodity == com:
+            balance += m.dsm_up[tm,sit,com]
+            balance -= sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
     return balance
 
 

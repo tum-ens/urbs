@@ -314,6 +314,28 @@ This set is defined as ``pro_output_tuples`` and given by the code fragment:
 		
 Where: ``r_out`` represents the process output ratio.
 
+Demand Side Management Tuples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There are two kinds of demand side management (DSM) tuples in the model: DSM site tuples and DSM down tuples.
+The first kind represents all possible combinations of site :math:`v` and commodity :math:`c` of the DSM sheet. It is given by the code fragment:
+
+::
+
+    m.dsm_site_tuples = pyomo.Set(
+        within=m.sit*m.com,
+        initialize=m.dsm.index,
+        doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
+        
+The second kind refers to all possible DSM downshift possibilities. It is defined to overcome the difficulty caused by the two time indices of the DSM downshift variable. Dependend on site :math:`v`and commodity :math:`c` the tuples contain two time indices. For example `(5001, 5003, Mid, Elec)` is intepreted as the downshift in timestep `5003`, which was caused by the upshift of timestep `5001` in site `Mid` for commodity `Elec`. The tuples are given by the following code fragment:
+
+::
+
+    m.dsm_down_tuples = pyomo.Set(
+        within=m.tm*m.tm*m.sit*m.com,
+        initialize=[(t, tt, site, commodity)
+                    for (t,tt, site, commodity) in dsm_down_time_tuples(m.timesteps[1:], m.dsm_site_tuples, m)],
+        doc='Combinations of possible dsm_down combinations, e.g. (5001,5003,Mid,Elec)')
+
 Commodity Type Subsets
 ======================
 

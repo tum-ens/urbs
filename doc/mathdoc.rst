@@ -1384,7 +1384,7 @@ Commodity Constraints
 .. math::
 	\forall v\in V, c\in C_\text{buy}, t\in T_m\colon \qquad & \qquad  - \mathrm{CB}(v,c,t) + \psi_{vct} &\geq 0
 
-* Demand commodities :math:`C_\text{dem}`: For demand commodities, the possible imbalance of the commodity must supply the demand :math:`d_{vct}` of demand commodities :math:`c \C_\text{dem}`. In other words, the parameter demand for commodity subtracted :math:`d_{vct}` from the minus commodity balance :math:`-\mathrm{CB}(v,c,t)` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as: 
+* Demand commodities :math:`C_\text{dem}`: For demand commodities, the possible imbalance of the commodity must supply the demand :math:`d_{vct}` of demand commodities :math:`c \in C_\text{dem}`. In other words, the parameter demand for commodity subtracted :math:`d_{vct}` from the minus commodity balance :math:`-\mathrm{CB}(v,c,t)` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as: 
 
 .. math::
 	\forall v\in V, c\in C_\text{dem}, t\in T_m\colon \qquad & \qquad  - \mathrm{CB}(v,c,t) - d_{vct} &\geq 0

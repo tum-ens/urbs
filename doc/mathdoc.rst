@@ -314,6 +314,28 @@ This set is defined as ``pro_output_tuples`` and given by the code fragment:
 		
 Where: ``r_out`` represents the process output ratio.
 
+Demand Side Management Tuples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There are two kinds of demand side management (DSM) tuples in the model: DSM site tuples :math:`D_{vc}` and DSM down tuples :math:`D_{vct,tt}^\text{down}`.
+The first kind :math:`D_{vc}` represents all possible combinations of site :math:`v` and commodity :math:`c` of the DSM sheet. It is given by the code fragment:
+
+::
+
+    m.dsm_site_tuples = pyomo.Set(
+        within=m.sit*m.com,
+        initialize=m.dsm.index,
+        doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
+        
+The second kind :math:`D_{vct,tt}^\text{down}` refers to all possible DSM downshift possibilities. It is defined to overcome the difficulty caused by the two time indices of the DSM downshift variable. Dependend on site :math:`v`and commodity :math:`c` the tuples contain two time indices. For example `(5001, 5003, Mid, Elec)` is intepreted as the downshift in timestep `5003`, which was caused by the upshift of timestep `5001` in site `Mid` for commodity `Elec`. The tuples are given by the following code fragment:
+
+::
+
+    m.dsm_down_tuples = pyomo.Set(
+        within=m.tm*m.tm*m.sit*m.com,
+        initialize=[(t, tt, site, commodity)
+                    for (t,tt, site, commodity) in dsm_down_time_tuples(m.timesteps[1:], m.dsm_site_tuples, m)],
+        doc='Combinations of possible dsm_down combinations, e.g. (5001,5003,Mid,Elec)')
+
 Commodity Type Subsets
 ======================
 
@@ -449,6 +471,12 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	| :math:`\epsilon_{vst}^\text{out}`  | MW   | Storage Power Flow (Output)      |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content           |
+	+------------------------------------+------+----------------------------------+
+	| **Demand Side Management Variables                                           |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\delta_{vct}^\text{up}`     | MW   | DSM Upshift                      |
+	+------------------------------------+------+----------------------------------+
+	| :math:`\delta_{vct,tt}^\text{down}`| MW   | DSM Downshift                    |
 	+------------------------------------+------+----------------------------------+
 
 
@@ -660,6 +688,23 @@ In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_p
         m.t, m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
+        
+Demand Side Management Variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**DSM Upshift**, :math:`\delta_{vct}^\text{up}`, ``dsm_up``, MW: The variable :math:`\delta_{vct}^\text{up}` represents the DSM upshift in time step :math:`t` in site :math:`v` for commodity :math:`c`. It is only defined for all ``dsm_site_tuples``. The following code fragment shows the definition of the variable:
+::
+
+    m.dsm_up = pyomo.Var(
+        m.tm, m.dsm_site_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='DSM upshift')
+        
+**DSM Downshift**, :math:`\delta_{vct,tt}^\text{down}`, ``dsm_down``, MW: The variable :math:`\delta_{vct,tt}^\text{down}` represents the DSM downshift in timestepp :math:`tt` caused by the upshift in time :math:`t` in site :math:`v` for commodity :math:`c`. The special combinations of timesteps :math:`t` and :math:`tt` for each site and commodity combination is created by the ``dsm_down_tuples``. The definition of the variable is shown in the code fragment:
+::
+    m.dsm_down = pyomo.Var(
+        m.dsm_down_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='DSM downshift')
 
 Parameters
 ==========
@@ -671,83 +716,95 @@ Technical Parameters
 
 .. table:: *Table: Technical Model Parameters*
 
-	+-----------------------------------+----+--------------------------------------------+
-	|Parameter                          |Unit|Description                                 |
-	+===================================+====+============================================+
-	|**General Technical Parameters**                                                     |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`w`                          | _  |Weight                                      |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\Delta t`                   | h  |Timestep Duration                           |
-	+-----------------------------------+----+--------------------------------------------+
-	|**Commodity Technical Parameters**                                                   |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`d_{vct}`                    |MW  |Demand for Commodity                        |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`s_{vct}`                    | _  |Intermittent Supply Capacity Factor         |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{l}_{vc}`          |MW  |Maximum Stock Supply Limit Per Time Step    |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{L}_{vc}`          |MW  |Maximum Annual Stock Supply Limit Per Vertex|
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{m}_{vc}`          | t  |Maximum Environmental Output Per Time Step  |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{M}_{vc}`          | t  |Maximum Annual Environmental Output         |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{g}_{vc}`          |MW  |Maximum Sell Limit Per Time Step            |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{G}_{vc}`          |MW  |Maximum Annual Sell Limit                   |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{b}_{vc}`          |MW  |Maximum Buy Limit Per Time Step             |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{B}_{vc}`          |MW  |Maximum Annual Buy Limit                    |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{L}_{CO_2}`        | t  |Maximum Global Annual CO2 Emission Limit    |
-	+-----------------------------------+----+--------------------------------------------+
-	|**Process Technical Parameters**                                                     |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\underline{K}_{vp}`         |MW  |Process Capacity Lower Bound                |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`K_{vp}`                     |MW  |Process Capacity Installed                  |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{K}_{vp}`          |MW  |Process Capacity Upper Bound                |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{PG}_{vp}`         |1/h |Process Maximal Power Gradient (relative)   |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`r_{pc}^\text{in}`           | _  |Process Input Ratio                         |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`r_{pc}^\text{out}`          | _  |Process Output Ratio                        |
-	+-----------------------------------+----+--------------------------------------------+
-	|**Storage Technical Parameters**                                                     |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`I_{vs}`                     | 1  |Initial and Final State of Charge           |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`e_{vs}^\text{in}`           | _  |Storage Efficiency During Charge            |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`e_{vs}^\text{out}`          | _  |Storage Efficiency During Discharge         |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\underline{K}_{vs}^\text{c}`|MWh |Storage Content Lower Bound                 |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`K_{vs}^\text{c}`            |MWh |Storage Content Installed                   |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{K}_{vs}^\text{c}` |MWh |Storage Content Upper Bound                 |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\underline{K}_{vs}^\text{p}`|MW  |Storage Power Lower Bound                   |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`K_{vs}^\text{p}`            |MW  |Storage Power Installed                     |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{K}_{vs}^\text{p}` |MW  |Storage Power Upper Bound                   |
-	+-----------------------------------+----+--------------------------------------------+
-	|**Transmission Technical Parameters**                                                |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`e_{af}`                     | _  |Transmission Efficiency                     |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\underline{K}_{af}`         |MW  |Tranmission Capacity Lower Bound            |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`K_{af}`                     |MW  |Tranmission Capacity Installed              |
-	+-----------------------------------+----+--------------------------------------------+
-	|:math:`\overline{K}_{af}`          |MW  |Tranmission Capacity Upper Bound            |
-	+-----------------------------------+----+--------------------------------------------+
+	+-------------------------------------+----+--------------------------------------------+
+	|Parameter                            |Unit|Description                                 |
+	+=====================================+====+============================================+
+	|**General Technical Parameters**                                                       |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`w`                            | _  |Weight                                      |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\Delta t`                     | h  |Timestep Duration                           |
+	+-------------------------------------+----+--------------------------------------------+
+	|**Commodity Technical Parameters**                                                     |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`d_{vct}`                      |MW  |Demand for Commodity                        |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`s_{vct}`                      | _  |Intermittent Supply Capacity Factor         |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{l}_{vc}`            |MW  |Maximum Stock Supply Limit Per Time Step    |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{L}_{vc}`            |MW  |Maximum Annual Stock Supply Limit Per Vertex|
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{m}_{vc}`            | t  |Maximum Environmental Output Per Time Step  |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{M}_{vc}`            | t  |Maximum Annual Environmental Output         |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{g}_{vc}`            |MW  |Maximum Sell Limit Per Time Step            |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{G}_{vc}`            |MW  |Maximum Annual Sell Limit                   |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{b}_{vc}`            |MW  |Maximum Buy Limit Per Time Step             |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{B}_{vc}`            |MW  |Maximum Annual Buy Limit                    |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{L}_{CO_2}`          | t  |Maximum Global Annual CO2 Emission Limit    |
+	+-------------------------------------+----+--------------------------------------------+
+	|**Process Technical Parameters**                                                       |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{vp}`           |MW  |Process Capacity Lower Bound                |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`K_{vp}`                       |MW  |Process Capacity Installed                  |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vp}`            |MW  |Process Capacity Upper Bound                |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{PG}_{vp}`           |1/h |Process Maximal Power Gradient (relative)   |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`r_{pc}^\text{in}`             | _  |Process Input Ratio                         |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`r_{pc}^\text{out}`            | _  |Process Output Ratio                        |
+	+-------------------------------------+----+--------------------------------------------+
+	|**Storage Technical Parameters**                                                       |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`I_{vs}`                       | 1  |Initial and Final State of Charge           |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`e_{vs}^\text{in}`             | _  |Storage Efficiency During Charge            |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`e_{vs}^\text{out}`            | _  |Storage Efficiency During Discharge         |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{vs}^\text{c}`  |MWh |Storage Content Lower Bound                 |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`K_{vs}^\text{c}`              |MWh |Storage Content Installed                   |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vs}^\text{c}`   |MWh |Storage Content Upper Bound                 |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{vs}^\text{p}`  |MW  |Storage Power Lower Bound                   |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`K_{vs}^\text{p}`              |MW  |Storage Power Installed                     |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vs}^\text{p}`   |MW  |Storage Power Upper Bound                   |
+	+-------------------------------------+----+--------------------------------------------+
+	|**Transmission Technical Parameters**                                                  |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`e_{af}`                       | _  |Transmission Efficiency                     |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\underline{K}_{af}`           |MW  |Tranmission Capacity Lower Bound            |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`K_{af}`                       |MW  |Tranmission Capacity Installed              |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{af}`            |MW  |Tranmission Capacity Upper Bound            |
+	+-------------------------------------+----+--------------------------------------------+
+    |**Demand Side Management Parameters**                                                  |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`e_{vc}`                       | _  |DSM Efficiency                              |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`y_{vc}`                       | _  |DSM Delay Time                              |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`o_{vc}`                       | _  |DSM Recovery Time                           |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vc}^\text{up}`  |MW  |DSM Maximal Upshift Capacity                |
+	+-------------------------------------+----+--------------------------------------------+
+	|:math:`\overline{K}_{vc}^\text{down}`|MW  |DSM Maximal Downshift Capacity              |
+	+-------------------------------------+----+--------------------------------------------+
 
 General Technical Parameters
 ----------------------------
@@ -837,11 +894,23 @@ Transmission Technical Parameters
 
 **Transmission Efficiency**, :math:`e_{af}`, ``m.transmission.loc[sin,sout,tra,com]['eff']``: The parameter :math:`e_{af}` represents the energy efficiency of a transmission :math:`f` that transfers a commodity :math:`c` through an arc :math:`a`. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The ratio of the output energy amount to input energy amount, gives the energy efficiency of a transmission process. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The fifth column with the header label "eff" represents the parameters :math:`e_{af}` of the corresponding combinations.
 
-**Tranmission Capacity Lower Bound**, :math:`\underline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-lo']``: The parameter :math:`\underline{K}_{af}` represents the minimum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "cap-lo" represents the parameters :math:`\underline{K}_{af}` of the corresponding combinations. 
+**Transmission Capacity Lower Bound**, :math:`\underline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-lo']``: The parameter :math:`\underline{K}_{af}` represents the minimum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "cap-lo" represents the parameters :math:`\underline{K}_{af}` of the corresponding combinations. 
 
-**Tranmission Capacity Installed**, :math:`K_{af}`, ``m.transmission.loc[sin,sout,tra,com]['inst-cap']``: The parameter :math:`K_{af}` represents the amount of power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "inst-cap" represents the parameters :math:`K_{af}` of the corresponding combinations.
+**Transmission Capacity Installed**, :math:`K_{af}`, ``m.transmission.loc[sin,sout,tra,com]['inst-cap']``: The parameter :math:`K_{af}` represents the amount of power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission,site in, site out, commodity combination. The tenth column with the header label "inst-cap" represents the parameters :math:`K_{af}` of the corresponding combinations.
 
-**Tranmission Capacity Upper Bound**, :math:`\overline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-up']``: The parameter :math:`\overline{K}_{af}` represents the maximum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission, site in, site out, commodity combination. The tenth column with the header label "cap-up" represents the parameters :math:`\overline{K}_{af}` of the corresponding combinations. 
+**Transmission Capacity Upper Bound**, :math:`\overline{K}_{af}`, ``m.transmission.loc[sin,sout,tra,com]['cap-up']``: The parameter :math:`\overline{K}_{af}` represents the maximum power output capacity of a transmission :math:`f` transferring a commodity :math:`c` through an arc :math:`a`, that the energy system model is allowed to have. Here an arc :math:`a` defines the connection line from an origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission, site in, site out, commodity combination. The tenth column with the header label "cap-up" represents the parameters :math:`\overline{K}_{af}` of the corresponding combinations.
+
+Demand Side Management Technical Parameters
+-------------------------------------------
+**DSM Efficiency**, :math:`e_{vc}`: The parameter :math:`e_{vc}` represents the efficiency of the DSM upshift process. Which means losses of the DSM up- or downshift have to be taken into account by this factor.
+
+**DSM Delay Time**, :math:`y_{vc}`: The delay time :math:`y_{vc}` restricts how long the time delta between an upshift and its corresponding downshifts may be.
+
+**DSM Recovery Time**, :math:`o_{vc}`: The recovery time :math:`o_{vc}` prevents the DSM system to continously shift demand. During the recovery time, all upshifts may not exceed a predfined value.
+
+**DSM Maximal Upshift Capacity**, :math:`\overline{K}_{vc}^\text{up}`, MW: The DSM upshift capacity :math:`\overline{K}_{vc}`^\text{up} limits the total upshift in one time step.
+
+**DSM Maximal Downshift Capacity**, :math:`\overline{K}_{vc}`^\text{down}, MW: Correspondingly, the DSM downshift capacity :math:`\overline{K}_{vc}^\text{down}` limits the total downshift in one time step.
 
 Economical Parameters
 ^^^^^^^^^^^^^^^^^^^^^
@@ -990,13 +1059,13 @@ Transmission Economical Parameters
 
 **Weighted Average Cost of Capital for Transmission**, :math:`i_{vf}`, : The parameter :math:`i_{vf}` represents the weighted average cost of capital for a transmission :math:`f` transferring commodities through an arc :math:`a`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the twelfth column with the header label "wacc" represents the parameters :math:`i_{vf}` of the corresponding transmission :math:`f` and arc :math:`a` combinations. The parameter is given as a percentage, where "0,07" means 7%.
 
-**Tranmission Depreciation Period**, :math:`z_{af}`, (a): The parameter :math:`z_{af}` represents the depreciation period of a transmission :math:`f` transferring commodities through an arc :math:`a`. The depreciation period of gives the economic lifetime (more conservative than technical lifetime) of a transmission investment. The unit of this parameter is €/ (MW a). The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the thirteenth column with the header label "depreciation" represents the parameters :math:`z_{af}` of the corresponding transmission :math:`f` and arc :math:`a` combinations.
+**Transmission Depreciation Period**, :math:`z_{af}`, (a): The parameter :math:`z_{af}` represents the depreciation period of a transmission :math:`f` transferring commodities through an arc :math:`a`. The depreciation period of gives the economic lifetime (more conservative than technical lifetime) of a transmission investment. The unit of this parameter is €/ (MW a). The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the thirteenth column with the header label "depreciation" represents the parameters :math:`z_{af}` of the corresponding transmission :math:`f` and arc :math:`a` combinations.
 
 **Annualised Transmission Capacity Investment Costs**, :math:`k_{af}^\text{inv}`, ``m.transmission.loc[t]['inv-cost'] * m.transmission.loc[t]['annuity-factor']``: The parameter :math:`k_{af}^\text{inv}` represents the annualised investment cost for adding one unit new transmission capacity to a transmission :math:`f` transferring commodities through an arc :math:`a`. This parameter is derived by the product of annuity factor :math:`AF` and the investment cost for one unit of new transmission capacity of a transmission :math:`f` running through an arc :math:`a`, which is to be given as an input parameter by the user. The unit of this parameter is €/(MW a). The related section for the transmission capacity investment cost in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the sixth column with the header label "inv-cost" represents the transmission capacity investment cost of the corresponding transmission :math:`f` and arc :math:`a` combinations. 
 
 **Annual Transmission Capacity Fixed Costs**, :math:`k_{af}^\text{fix}`, ``m.transmission.loc[t]['fix-cost']``: The parameter :math:`k_{af}^\text{fix}` represents the fix cost per one unit capacity of a transmission :math:`f` transferring commodities through an arc :math:`a`, that is charged annually. The unit of this parameter is €/(MWh a). The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the seventh column with the header label "fix-cost" represents the parameters :math:`k_{af}^\text{fix}` of the corresponding transmission :math:`f` and arc :math:`a` combinations. 
 
-**Tranmission Usage Variable Costs**, :math:`k_{af}^\text{var}`, ``m.transmission.loc[t]['var-cost']``: The parameter :math:`k_{af}^\text{var}` represents the variable cost per unit energy, that is transferred with a transmissiom :math:`f` through an arc :math:`a`. The unit of this parameter is €/ MWh. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the eighth column with the header label "var-cost" represents the parameters :math:`k_{af}^\text{var}` of the corresponding transmission :math:`f` and arc :math:`a` combinations.
+**Transmission Usage Variable Costs**, :math:`k_{af}^\text{var}`, ``m.transmission.loc[t]['var-cost']``: The parameter :math:`k_{af}^\text{var}` represents the variable cost per unit energy, that is transferred with a transmissiom :math:`f` through an arc :math:`a`. The unit of this parameter is €/ MWh. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the eighth column with the header label "var-cost" represents the parameters :math:`k_{af}^\text{var}` of the corresponding transmission :math:`f` and arc :math:`a` combinations.
 
 Equations
 =========
@@ -1339,10 +1408,15 @@ Commodity Constraints
 .. math::
 	\forall v\in V, c\in C_\text{buy}, t\in T_m\colon \qquad & \qquad  - \mathrm{CB}(v,c,t) + \psi_{vct} &\geq 0
 
-* Demand commodities :math:`C_\text{dem}`: For demand commodities, the possible imbalance of the commodity must supply the demand :math:`d_{vct}` of demand commodities :math:`c \C_\text{dem}`. In other words, the parameter demand for commodity subtracted :math:`d_{vct}` from the minus commodity balance :math:`-\mathrm{CB}(v,c,t)` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as: 
+* Demand commodities :math:`C_\text{dem}`: For demand commodities, the possible imbalance of the commodity must supply the demand :math:`d_{vct}` of demand commodities :math:`c \in C_\text{dem}`. In other words, the parameter demand for commodity subtracted :math:`d_{vct}` from the minus commodity balance :math:`-\mathrm{CB}(v,c,t)` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as: 
 
 .. math::
 	\forall v\in V, c\in C_\text{dem}, t\in T_m\colon \qquad & \qquad  - \mathrm{CB}(v,c,t) - d_{vct} &\geq 0
+    
+* Demand Side Management commodities and sites: For any combination of commodity and site for which demand side management is defined, the upshift is substracted and the downshift added to the negative commodity balance :math:`-\mathrm{CB}(v,c,t)`.
+
+.. math::
+	\forall (v,c) in D_{vc}, t\in T_m\colon \qquad & \qquad  - \mathrm{CB}(v,c,t) - \delta_{vct}^\text{up}` + \sum_{tt \in D_{vct,tt}^\text{down}} \delta_{vct,tt}^\text{down}` &\geq 0
 
 In script ``urbs.py`` the constraint vertex rule is defined and calculated by the following code fragments:
 
@@ -1394,6 +1468,11 @@ In script ``urbs.py`` the constraint vertex rule is defined and calculated by th
 				power_surplus -= m.demand.loc[tm][sit, com]
 			except KeyError:
 				pass
+        # if sit com is a dsm tuple, the power surplus is decreased by the
+        # upshifted demand and increased by the downshifted demand.
+        if (sit, com) in m.dsm_site_tuples:
+            power_surplus -= m.dsm_up[tm,sit,com]
+            power_surplus += sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
 		return power_surplus == 0
 
 **Stock Per Step Rule**: The constraint stock per step rule applies only for commodities of type "Stock" ( :math:`c \in C_\text{st}`). This constraint limits the amount of stock commodity :math:`c \in C_\text{st}`, that can be used by the energy system in the site :math:`v` at the timestep :math:`t`. The limited amount is defined by the parameter maximum stock supply limit per time step :math:`\overline{l}_{vc}`. To satisfy this constraint, the value of the variable stock commodity source term :math:`\rho_{vct}` must be less than or equal to the value of the parameter maximum stock supply limit per time step :math:`\overline{l}_{vc}`. In mathematical notation this is expressed as:
@@ -2101,6 +2180,124 @@ In script ``urbs.py`` the constraint initial and final storage state rule is def
 		else:
 			return pyomo.Constraint.Skip
 
+Demand Side Management Constraints
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The DSM equations are taken from the Paper of Zerrahn and Schill "On the representation of demand-side management in power system models", DOI: 10.1016/j.energy.2015.03.037.
+
+**DSM Variables Rule**: The DSM variables rule defines the relation between upshift and downshift. An upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` can be compensated during a certain time interval :math:`[t-y, t+y]` by multiple downshifts :math:`\delta_{vct,tt}^\text{down}`. Depending on the efficiency :math:`e_{vc}`, less downshifts have to be made. This is given by:
+
+.. math::
+    \forall (v,c) \in D_{vc}, t\in T\colon \qquad & \qquad \delta_{vct}^\text{up} e_{vc} = \sum_{tt = t-y}^{t+y} \delta_{vct,tt}^\text{down}
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.def_dsm_variables = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=def_dsm_variables_rule,
+        doc='DSMup == DSMdo * efficiency factor n')	
+
+::
+
+    def def_dsm_variables_rule(m, tm, sit, com):
+        dsm_down_sum = 0
+        for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+            dsm_down_sum += m.dsm_down[tm,tt,sit,com]
+        return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
+        
+        
+**DSM Upward Rule**: The DSM upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \delta_{vct}^\text{up} <= \overline{K}_{vc}^\text{up}
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_upward = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_upward_rule,
+        doc='DSMup <= Cup (threshold capacity of DSMup)')
+
+::
+
+    def res_dsm_upward_rule(m, tm, sit, com):
+        return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
+        
+**DSM Downward Rule**: The DSM downshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} <= \overline{K}_{vc}^\text{down}
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_downward = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_downward_rule,
+        doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
+
+::
+
+    def res_dsm_downward_rule(m, tm, sit, com):
+        dsm_down_sum = 0
+        for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+            dsm_down_sum += m.dsm_down[t,tm,sit,com]
+        return dsm_down_sum <= m.dsm.loc[sit,com]['cap-max-do']
+        
+
+**DSM Maximum Rule**: The DSM maximum rule limits the shift of one DSM unit in site :math:`v` of commodity :math:`c` in time step :math:`t`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \delta_{vct}^\text{up} + \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} <= \max \left\lbrace \overline{K}_{vc}^\text{up}, \overline{K}_{vc}^\text{down} \right\rbrace
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_maximum = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_maximum_rule,
+        doc='DSMup + DSMdo <= max(Cup,Cdo)')
+
+::
+
+    def res_dsm_maximum_rule(m, tm, sit, com):
+        dsm_down_sum = 0
+        for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+            dsm_down_sum += m.dsm_down[t,tm,sit,com]
+
+        max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
+                              m.dsm.loc[sit,com]['cap-max-do'])
+        return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
+
+**DSM Recovery Rule**: The DSM recovery rule limits the upshift in site :math:`v` of commodity :math:`c` during a set recovery period :math:`o_{vc}`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \sum_{tt = t}^{t+o_{vc}-1} \delta_{vctt}^\text{up} <= \overline{K}_{vc}^\text{up} y
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_recovery = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_recovery_rule,
+        doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
+
+::
+
+    def res_dsm_recovery_rule(m, tm, sit, com):
+        dsm_up_sum = 0
+        for t in range(tm, tm+m.dsm.loc[sit,com]['recov']):
+            dsm_up_sum += m.dsm_up[t,sit,com]
+        return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']       
+  
+        
+            
 Environmental Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

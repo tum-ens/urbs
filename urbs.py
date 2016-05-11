@@ -582,7 +582,7 @@ def create_model(data, timesteps=None, dt=1):
     m.def_dsm_variables = pyomo.Constraint(
         m.tm, m.dsm_site_tuples, 
         rule=def_dsm_variables_rule,
-        doc='DSMup == DSMdo * efficiency factor n')	
+        doc='DSMup * efficiency factor n == DSMdo')	
 
     m.res_dsm_upward = pyomo.Constraint(
         m.tm, m.dsm_site_tuples, 

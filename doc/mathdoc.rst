@@ -2180,6 +2180,124 @@ In script ``urbs.py`` the constraint initial and final storage state rule is def
 		else:
 			return pyomo.Constraint.Skip
 
+Demand Side Management Constraints
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The DSM equations are taken from the Paper of Zerrahn and Schill "On the representation of demand-side management in power system models", DOI: 10.1016/j.energy.2015.03.037.
+
+**DSM Variables Rule**: The DSM variables rule defines the relation between upshift and downshift. An upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` can be compensated during a certain time interval :math:`[t-y, t+y]` by multiple downshifts :math:`\delta_{vct,tt}^\text{down}`. Depending on the efficiency :math:`e_{vc}`, less downshifts have to be made. This is given by:
+
+.. math::
+    \forall (v,c) \in D_{vc}, t\in T\colon \qquad & \qquad \delta_{vct}^\text{up} e_{vc} = \sum_{tt = t-y}^{t+y} \delta_{vct,tt}^\text{down}
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.def_dsm_variables = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=def_dsm_variables_rule,
+        doc='DSMup == DSMdo * efficiency factor n')	
+
+::
+
+    def def_dsm_variables_rule(m, tm, sit, com):
+        dsm_down_sum = 0
+        for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+            dsm_down_sum += m.dsm_down[tm,tt,sit,com]
+        return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
+        
+        
+**DSM Upward Rule**: The DSM upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \delta_{vct}^\text{up} <= \overline{K}_{vc}^\text{up}
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_upward = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_upward_rule,
+        doc='DSMup <= Cup (threshold capacity of DSMup)')
+
+::
+
+    def res_dsm_upward_rule(m, tm, sit, com):
+        return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
+        
+**DSM Downward Rule**: The DSM downshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} <= \overline{K}_{vc}^\text{down}
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_downward = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_downward_rule,
+        doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
+
+::
+
+    def res_dsm_downward_rule(m, tm, sit, com):
+        dsm_down_sum = 0
+        for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+            dsm_down_sum += m.dsm_down[t,tm,sit,com]
+        return dsm_down_sum <= m.dsm.loc[sit,com]['cap-max-do']
+        
+
+**DSM Maximum Rule**: The DSM maximum rule limits the shift of one DSM unit in site :math:`v` of commodity :math:`c` in time step :math:`t`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \delta_{vct}^\text{up} + \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} <= \max \left\lbrace \overline{K}_{vc}^\text{up}, \overline{K}_{vc}^\text{down} \right\rbrace
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_maximum = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_maximum_rule,
+        doc='DSMup + DSMdo <= max(Cup,Cdo)')
+
+::
+
+    def res_dsm_maximum_rule(m, tm, sit, com):
+        dsm_down_sum = 0
+        for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+            dsm_down_sum += m.dsm_down[t,tm,sit,com]
+
+        max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
+                              m.dsm.loc[sit,com]['cap-max-do'])
+        return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
+
+**DSM Recovery Rule**: The DSM recovery rule limits the upshift in site :math:`v` of commodity :math:`c` during a set recovery period :math:`o_{vc}`. In mathematical terms, this is written as:
+
+.. math::
+    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \sum_{tt = t}^{t+o_{vc}-1} \delta_{vctt}^\text{up} <= \overline{K}_{vc}^\text{up} y
+    
+The definition of the constraint and its corresponding rule is defined by the following code:
+
+::
+
+    m.res_dsm_recovery = pyomo.Constraint(
+        m.tm, m.dsm_site_tuples, 
+        rule=res_dsm_recovery_rule,
+        doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
+
+::
+
+    def res_dsm_recovery_rule(m, tm, sit, com):
+        dsm_up_sum = 0
+        for t in range(tm, tm+m.dsm.loc[sit,com]['recov']):
+            dsm_up_sum += m.dsm_up[t,sit,com]
+        return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']       
+  
+        
+            
 Environmental Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

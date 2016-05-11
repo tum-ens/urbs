@@ -472,7 +472,7 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content           |
 	+------------------------------------+------+----------------------------------+
-	| **Demand Side Management Variables                                           |
+	| **Demand Side Management Variables**                                         |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\delta_{vct}^\text{up}`     | MW   | DSM Upshift                      |
 	+------------------------------------+------+----------------------------------+

@@ -2210,7 +2210,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
 **DSM Upward Rule**: The DSM upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
 
 .. math::
-    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \delta_{vct}^\text{up} <= \overline{K}_{vc}^\text{up}
+    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \delta_{vct}^\text{up} \leq \overline{K}_{vc}^\text{up}
     
 The definition of the constraint and its corresponding rule is defined by the following code:
 
@@ -2229,7 +2229,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
 **DSM Downward Rule**: The DSM downshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
 
 .. math::
-    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} <= \overline{K}_{vc}^\text{down}
+    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} \leq \overline{K}_{vc}^\text{down}
     
 The definition of the constraint and its corresponding rule is defined by the following code:
 
@@ -2252,7 +2252,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
 **DSM Maximum Rule**: The DSM maximum rule limits the shift of one DSM unit in site :math:`v` of commodity :math:`c` in time step :math:`t`. In mathematical terms, this is written as:
 
 .. math::
-    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \delta_{vct}^\text{up} + \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} <= \max \left\lbrace \overline{K}_{vc}^\text{up}, \overline{K}_{vc}^\text{down} \right\rbrace
+    \forall (v,c) \in D_{vc}, tt\in T \colon \qquad & \qquad \delta_{vct}^\text{up} + \sum_{t = tt-y}^{tt+y} \delta_{vct,tt}^\text{down} \leq \max \left\lbrace \overline{K}_{vc}^\text{up}, \overline{K}_{vc}^\text{down} \right\rbrace
     
 The definition of the constraint and its corresponding rule is defined by the following code:
 
@@ -2277,7 +2277,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
 **DSM Recovery Rule**: The DSM recovery rule limits the upshift in site :math:`v` of commodity :math:`c` during a set recovery period :math:`o_{vc}`. In mathematical terms, this is written as:
 
 .. math::
-    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \sum_{tt = t}^{t+o_{vc}-1} \delta_{vctt}^\text{up} <= \overline{K}_{vc}^\text{up} y
+    \forall (v,c) \in D_{vc}, t\in T \colon \qquad & \qquad \sum_{tt = t}^{t+o_{vc}-1} \delta_{vctt}^\text{up} \leq \overline{K}_{vc}^\text{up} y
     
 The definition of the constraint and its corresponding rule is defined by the following code:
 

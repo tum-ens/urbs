@@ -326,7 +326,7 @@ The first kind :math:`D_{vc}` represents all possible combinations of site :math
         initialize=m.dsm.index,
         doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
         
-The second kind :math:`D_{vct,tt}^\text{down}` refers to all possible DSM downshift possibilities. It is defined to overcome the difficulty caused by the two time indices of the DSM downshift variable. Dependend on site :math:`v`and commodity :math:`c` the tuples contain two time indices. For example `(5001, 5003, Mid, Elec)` is intepreted as the downshift in timestep `5003`, which was caused by the upshift of timestep `5001` in site `Mid` for commodity `Elec`. The tuples are given by the following code fragment:
+The second kind :math:`D_{vct,tt}^\text{down}` refers to all possible DSM downshift possibilities. It is defined to overcome the difficulty caused by the two time indices of the DSM downshift variable. Dependend on site :math:`v` and commodity :math:`c` the tuples contain two time indices. For example `(5001, 5003, Mid, Elec)` is intepreted as the downshift in timestep `5003`, which was caused by the upshift of timestep `5001` in site `Mid` for commodity `Elec`. The tuples are given by the following code fragment:
 
 ::
 
@@ -852,7 +852,7 @@ Commodity Technical Parameters
 Process Technical Parameters
 ----------------------------
 
-**Process Capacity Lower Bound**, :math:`\underline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-lo]``: The parameter :math:`\underline{K}_{vp}` represents the minimum amount of power output capacity of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the fourth column with the header label "cap-lo" represents the parameters :math:`\underline{K}_{vp}` belonging to the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired minimum limit for the process capacities, this parameter can be simply set to "0", to ignore this parameter. 
+**Process Capacity Lower Bound**, :math:`\underline{K}_{vp}`, ``m.process.loc[sit,pro]['cap-lo']``: The parameter :math:`\underline{K}_{vp}` represents the minimum amount of power output capacity of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the fourth column with the header label "cap-lo" represents the parameters :math:`\underline{K}_{vp}` belonging to the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired minimum limit for the process capacities, this parameter can be simply set to "0", to ignore this parameter. 
 
 **Process Capacity Installed**, :math:`K_{vp}`, ``m.process.loc[sit,pro]['inst-cap']``: The parameter :math:`K_{vp}` represents the amount of power output capacity of a process :math:`p` in a site :math:`v`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the third column with the header label "inst-cap" represents the parameters :math:`K_{vp}` belonging to the corresponding process :math:`p` and site :math:`v` combinations.
 
@@ -908,9 +908,9 @@ Demand Side Management Technical Parameters
 
 **DSM Recovery Time**, :math:`o_{vc}`: The recovery time :math:`o_{vc}` prevents the DSM system to continously shift demand. During the recovery time, all upshifts may not exceed a predfined value.
 
-**DSM Maximal Upshift Capacity**, :math:`\overline{K}_{vc}^\text{up}`, MW: The DSM upshift capacity :math:`\overline{K}_{vc}`^\text{up} limits the total upshift in one time step.
+**DSM Maximal Upshift Capacity**, :math:`\overline{K}_{vc}^\text{up}`, MW: The DSM upshift capacity :math:`\overline{K}_{vc}^\text{up}` limits the total upshift in one time step.
 
-**DSM Maximal Downshift Capacity**, :math:`\overline{K}_{vc}`^\text{down}, MW: Correspondingly, the DSM downshift capacity :math:`\overline{K}_{vc}^\text{down}` limits the total downshift in one time step.
+**DSM Maximal Downshift Capacity**, :math:`\overline{K}_{vc}^\text{down}`, MW: Correspondingly, the DSM downshift capacity :math:`\overline{K}_{vc}^\text{down}` limits the total downshift in one time step.
 
 Economical Parameters
 ^^^^^^^^^^^^^^^^^^^^^

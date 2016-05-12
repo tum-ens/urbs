@@ -2182,12 +2182,12 @@ In script ``urbs.py`` the constraint initial and final storage state rule is def
 
 Demand Side Management Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The DSM equations are taken from the Paper of Zerrahn and Schill "On the representation of demand-side management in power system models", DOI: 10.1016/j.energy.2015.03.037.
+The DSM equations are taken from the Paper of Zerrahn and Schill "On the representation of demand-side management in power system models", DOI: `10.1016/j.energy.2015.03.037 <http://dx.doi.org/10.1016/j.energy.2015.03.037>`.
 
-**DSM Variables Rule**: The DSM variables rule defines the relation between upshift and downshift. An upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` can be compensated during a certain time interval :math:`[t-y, t+y]` by multiple downshifts :math:`\delta_{vct,tt}^\text{down}`. Depending on the efficiency :math:`e_{vc}`, less downshifts have to be made. This is given by:
+**DSM Variables Rule**: The DSM variables rule defines the relation between upshift and downshift. An upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` can be compensated during a certain time interval :math:`[t-y_{vc}, t+y_{vc}]` by multiple downshifts :math:`\delta_{vct,tt}^\text{down}`. Depending on the efficiency :math:`e_{vc}`, less downshifts have to be made. This is given by:
 
 .. math::
-    \forall (v,c) \in D_{vc}, t\in T\colon \qquad & \qquad \delta_{vct}^\text{up} e_{vc} = \sum_{tt = t-y}^{t+y} \delta_{vct,tt}^\text{down}
+    \forall (v,c) \in D_{vc}, t\in T\colon \qquad & \qquad \delta_{vct}^\text{up} e_{vc} = \sum_{tt = t-y_{vc}}^{t+y_{vc}} \delta_{vct,tt}^\text{down}
     
 The definition of the constraint and its corresponding rule is defined by the following code:
 

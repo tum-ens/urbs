@@ -902,15 +902,15 @@ Transmission Technical Parameters
 
 Demand Side Management Technical Parameters
 -------------------------------------------
-**DSM Efficiency**, :math:`e_{vc}`: The parameter :math:`e_{vc}` represents the efficiency of the DSM upshift process. Which means losses of the DSM up- or downshift have to be taken into account by this factor.
+**DSM Efficiency**, :math:`e_{vc}`, ``m.dsm.loc[sit,com]['eff']``: The parameter :math:`e_{vc}` represents the efficiency of the DSM upshift process. Which means losses of the DSM up- or downshift have to be taken into account by this factor.
 
-**DSM Delay Time**, :math:`y_{vc}`: The delay time :math:`y_{vc}` restricts how long the time delta between an upshift and its corresponding downshifts may be.
+**DSM Delay Time**, :math:`y_{vc}`, ``m.dsm.loc[sit,com]['delay']``: The delay time :math:`y_{vc}` restricts how long the time delta between an upshift and its corresponding downshifts may be.
 
-**DSM Recovery Time**, :math:`o_{vc}`: The recovery time :math:`o_{vc}` prevents the DSM system to continously shift demand. During the recovery time, all upshifts may not exceed a predfined value.
+**DSM Recovery Time**, :math:`o_{vc}`, ``m.dsm.loc[sit,com]['recov']``: The recovery time :math:`o_{vc}` prevents the DSM system to continously shift demand. During the recovery time, all upshifts may not exceed a predfined value.
 
-**DSM Maximal Upshift Capacity**, :math:`\overline{K}_{vc}^\text{up}`, MW: The DSM upshift capacity :math:`\overline{K}_{vc}^\text{up}` limits the total upshift in one time step.
+**DSM Maximal Upshift Capacity**, :math:`\overline{K}_{vc}^\text{up}`, MW, ``m.dsm.loc[sit,com]['cap-max-up']``: The DSM upshift capacity :math:`\overline{K}_{vc}^\text{up}` limits the total upshift in one time step.
 
-**DSM Maximal Downshift Capacity**, :math:`\overline{K}_{vc}^\text{down}`, MW: Correspondingly, the DSM downshift capacity :math:`\overline{K}_{vc}^\text{down}` limits the total downshift in one time step.
+**DSM Maximal Downshift Capacity**, :math:`\overline{K}_{vc}^\text{down}`, MW, ``m.dsm.loc[sit,com]['cap-max-down']``: Correspondingly, the DSM downshift capacity :math:`\overline{K}_{vc}^\text{down}` limits the total downshift in one time step.
 
 Economical Parameters
 ^^^^^^^^^^^^^^^^^^^^^

@@ -34,8 +34,8 @@ There are 2 ways to get all required packages under Windows. I recommend using t
   2. **Pyomo**
        1. Launch a new command prompt (Win+R, type "cmd", Enter)
        2. Type `pip3 install pyomo`, hit Enter. (Pyomo 3, i.e. `coopr.pyomo`, is still supported, but will be dropped with the next release.)
-  3. **GLPK**
-       1. Download the latest version (e.g. GLPK-4.57) of [WinGLPK](http://sourceforge.net/projects/winglpk/files/winglpk/)
+  3. **GLPK** (thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), only version 4.57 or older is supported at the moment [May 2016])
+       1. Download <del>the latest</del> version <ins>4.57</ins> of [WinGLPK](http://sourceforge.net/projects/winglpk/files/winglpk/)
        2. Extract the contents to a folder, e.g. `C:\GLPK`
        3. Add the subfolder `w64` to your system path, e.g. `C:\GLPK\w64` ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)).
 
@@ -56,7 +56,7 @@ For all packages, best take the latest release or release candidate version. Bot
       4. As a test, you can try start `ipython3` and have a MATLAB-style command line with plotting capabilities. If you receive message about "ipython could not be found", check if the `C:\Python35\Scripts` is added to the "Path" system variable as described in step 2.i. above.
   5. **[pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output. Its capabilities are exploited to write short analysis scripts in `runme.py` and `comp.py`, as well as in the functions `urbs.plot` and `urbs.report`.
   6. **Pyomo**: execute `pip3 install pyomo` in a command prompt.
-  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/). 
+  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/).  (thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), only version 4.57 or older is supported at the moment [May 2016])
       1. Simply unzip the latest version somewhere, e.g. `C:\GLPK`. 
       2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2.i.), so that the `glpsol` command is available on the command prompt.
   8. **Excel** reading/writing: `pip3 install xlrd xlwt openpyxl`
@@ -69,6 +69,8 @@ Use your Linux distribution's package manager to get all the packages listed in 
 
   1. **Python and base packages**: `sudo apt-get install python3 python3-pip python3-numpy python3-scipy python3-matplotlib python3-ipython python3-notebook python3-sympy glpk-utils`
   2. **Up-to-date Python packages**: `sudo pip3 install pandas pyomo xlwt xlrd openpyxl`
+
+(Thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), solver GLPK only version 4.57 or older is supported at the moment [May 2016]. Please check the version that your distribution installs with `glpk-utils` and downgrade or use another supported solver.)
 
 Continue at [Get Started](#get-started).
 

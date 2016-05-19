@@ -23,7 +23,12 @@ urbs: A linear optimisation model for distributed energy systems
 Contents
 --------
 
-This documentation contains the following pages:
+User's manual
+^^^^^^^^^^^^^
+
+These documents give a general overview and help you getting started from after
+the installation (which is covered in the `README.md`_ file on GitHub) to you
+first running model.
 
 .. toctree::
    :maxdepth: 1
@@ -32,8 +37,12 @@ This documentation contains the following pages:
    tutorial
    workflow
    
-More technical documents deal with the internal workings:   
-   
+Technical documentation
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Continue here if you want to automate the scripting further, understand the
+model equations or extend the model yourself.
+
 .. toctree::
    :maxdepth: 1
    
@@ -111,8 +120,9 @@ generation and storage levels in one site over 10 days (240 time steps):
    :width: 95%
    :align: center
    
-A comparison script ``comp.py`` how one can create automated cross-scenario
-analyses. This figure shows costs and generated electricity by source for 5
+An exemplary comparison script ``comp.py`` shows how one can create automated 
+cross-scenario analyses with very few lines of `pandas`_ code. This resulting 
+figure shows system costs and generated electricity by energy source over five 
 scenarios: 
    
 .. image:: img/comparison.*
@@ -123,16 +133,20 @@ scenarios:
 Dependencies
 ------------
 
+* `Python`_ versions 2.7 or 3.x are both supported.
 * `pyomo`_ for model equations and as the interface to optimisation solvers 
-  (CPLEX, GLPK, Gurobi, ...). At least one supported solver must be installed.
-* `matplotlib`_ for plotting
+  (CPLEX, GLPK, Gurobi, ...). Version 4 recommended, as version 3 support
+  (a.k.a. as coopr.pyomo) will be dropped soon.
+* `matplotlib`_ for plotting due to its capability to customise everything.
 * `pandas`_ for input and result data handling, report generation 
-
+* Any solver supported by pyomo; suggestion: `GLPK`_
    
+.. _glpk: https://www.gnu.org/software/glpk/
 .. _Institute for Renewable and Sustainable Energy Systems: http://www.ens.ei.tum.de/
 .. _matplotlib: http://matplotlib.org
 .. _pandas: http://pandas.pydata.org
 .. _pyomo: http://www.pyomo.org
-.. _readme.md: https://github.com/tum-ens/urbs/blob/master/README.md
+.. _python: https://www.python.org/
+.. _readme.md: https://github.com/tum-ens/urbs/blob/master/README.md#installation
 .. _urbs: https://github.com/tum-ens/urbs
 

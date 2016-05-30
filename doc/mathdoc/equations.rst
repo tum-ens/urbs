@@ -10,7 +10,7 @@ The variable total system cost :math:`\zeta` is calculated by the cost function.
 
 .. math::
 
-	\zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur}
+	\zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur} + \zeta_\text{startup}
 
 The calculation of the variable total system cost is given in ``urbs.py`` by the following code fragment.  
 
@@ -257,6 +257,38 @@ In script ``urbs.py`` the value of the total purchase cost is calculated by the 
         return m.costs['Purchase'] == sum(
             m.e_co_buy[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
             for tm in m.tm for c in buy_tuples)
+
+
+Startup Costs
+--------------
+
+The variable startup costs :math:`\zeta_\text{startup}` represents the total annual expenses that are required for the startup procedures of processes :math:`c \in C_\text{buy}`. The calculation of the variable total annual purchase cost :math:`\zeta_\text{pur}` is expressed by the following mathematical notation:
+
+.. math::
+
+	\zeta_\text{startup} =  w \sum_{t \in T_\text{m}} \sum_{\substack{v \in V\\ p \in P}} \tau_{vpt} k_{vp}^\text{var} \Delta t + 
+	\sum_{\substack{a \in a\\ f \in F}} \pi_{af}^\text{in} k_{af}^\text{var} \Delta t +  
+	\right.\nonumber \\
+	&\left.\phantom{\Big(} % invisible left parenthesis for horizontal alignment
+	\sum_{\substack{v \in V\\ s \in S}} \left[ 
+	\epsilon_{vst}^\text{con} k_{vs}^\text{c,var} + \left(
+	\epsilon_{vst}^\text{in} + \epsilon_{vst}^\text{out} 
+	\right) k_{vs}^\text{p,var} \Delta t 
+	\right] 
+	\right)
+
+
+In script ``urbs.py`` the value of the total purchase cost is calculated by the following code fragment:
+::
+
+    elif cost_type == 'Purchase':
+        buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
+        com_prices = get_com_price(m, buy_tuples)
+
+        return m.costs['Purchase'] == sum(
+            m.e_co_buy[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
+            for tm in m.tm for c in buy_tuples)
+
 
 Commodity Balance
 ^^^^^^^^^^^^^^^^^

@@ -1,4 +1,4 @@
-.. module:: urbs
+﻿.. module:: urbs
 
 Variables
 =========
@@ -31,6 +31,8 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                   |
 	+------------------------------------+------+----------------------------------+
+	| :math:`\zeta_\text{startup}`       | €/a  | Startup Costs                    |
+	+------------------------------------+------+----------------------------------+
 	| **Commodity Variables**                                                      |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
@@ -50,6 +52,12 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	| :math:`\epsilon_{vcpt}^\text{in}`  | MW   | Process Input Commodity Flow     |
 	+------------------------------------+------+----------------------------------+
 	| :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
+        +------------------------------------+------+----------------------------------+
+	| :math:`\omicron_{vpt}`             |      | Process Online Status            |
+        +------------------------------------+------+----------------------------------+
+	| :math:`\kappa'_{vpt}`              | MW   | Piecewise Process Capacity       |
+        +------------------------------------+------+----------------------------------+
+	| :math:`\chi_{vpt}^text{startup}`   | MW   | Process Startup Cost Factor      |
 	+------------------------------------+------+----------------------------------+
 	| **Transmission Variables**                                                   |
 	+------------------------------------+------+----------------------------------+

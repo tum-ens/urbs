@@ -1,5 +1,4 @@
 """urbs: A linear optimisation model for distributed energy systems
-ff
 urbs minimises total cost for providing energy in form of desired commodities
 (usually electricity) to satisfy a given demand in form of timeseries. The
 model contains commodities (electricity, fossil fuels, renewable energy

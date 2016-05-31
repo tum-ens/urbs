@@ -53,7 +53,7 @@ Technical Parameters
 	+-------------------------------------+----+--------------------------------------------+
 	|:math:`\overline{PG}_{vp}`           |1/h |Process Maximal Power Gradient (relative)   |
 	+-------------------------------------+----+--------------------------------------------+
-	|:math:`\overline{P}_{vp}`            | _  |Process Minimum Part Load Fraction          |
+	|:math:`\underline{P}_{vp}`           | _  |Process Minimum Part Load Fraction          |
 	+-------------------------------------+----+--------------------------------------------+
 	|:math:`r_{pc}^\text{in}`             | _  |Process Input Ratio                         |
 	+-------------------------------------+----+--------------------------------------------+
@@ -156,6 +156,8 @@ Process Technical Parameters
 
 **Process Maximal Gradient**, :math:`\overline{PG}_{vp}`, ``m.process.loc[sit,pro]['max-grad']``: The parameter :math:`\overline{PG}_{vp}` represents the maximal power gradient of a process :math:`p` at a site :math:`v`, that energy model is allowed to have. The unit of this parameter is 1/h. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the sixth column with the header label "max-grad" represents the parameters :math:`\overline{PG}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. If there is no desired maximum limit for the process power gradient, this parameter can be simply set to an unrealistic high value, to ignore this parameter.
 
+**Process Minimum Part Load Fraction**, :math:`\underline{P}_{vp}`, ``m.process.loc[sit,pro]['partial']``: The parameter :math:`\underline{P}_{vp}` represents the minimum allowable part load of a process :math:`p` at a site :math:`v` as a fraction of the total process capacity. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the twelfth column with the header label "partial" represents the parameters :math:`\underline{P}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
+
 **Process Input Ratio**, :math:`r_{pc}^\text{in}`, ``m.r_in.loc[pro,co]``: The parameter :math:`r_{pc}^\text{in}` represents the ratio of the input amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep. The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
 
 **Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out.loc[pro,co]``: The parameter :math:`r_{pc}^\text{out}` represents the ratio of the output amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep.  The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
@@ -235,6 +237,8 @@ Economical Parameters
 	|:math:`k_{vp}^\text{fix}`  |€/(MW a) |Process Capacity Fixed Costs                     |
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`k_{vp}^\text{var}`  |€/MWh    |Process Variable Costs                           |
+	+---------------------------+---------+-------------------------------------------------+
+	|:math:`k_{vp}^\text{st}`   |€        |Process Startup Costs                            |
 	+---------------------------+---------+-------------------------------------------------+
 	|**Storage Economical Parameters**                                                      |
 	+---------------------------+---------+-------------------------------------------------+
@@ -330,6 +334,8 @@ Process Economical Parameters
 
 **Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``: The parameter :math:`k_{vp}^\text{var}` represents the variable cost per one unit energy throughput :math:`\tau_{vpt}` through a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "var-cost" represents the parameters :math:`k_{vp}^\text{var}` of the corresponding process :math:`p` and site :math:`v` combinations. 
 
+**Process Startup Costs**, :math:`k_{vp}^\text{st}`, ``m.process.loc[p]['startup']``: The parameter :math:`k_{vp}^\text{st}` represents the startup cost per "startup occurence" of a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the thirteenth column with the header label "startup" represents the parameters :math:`k_{vp}^\text{st}` of the corresponding process :math:`p` and site :math:`v` combinations. 
+
 Storage Economical Parameters
 -----------------------------
 
@@ -344,7 +350,6 @@ Storage Economical Parameters
 **Storage Power Variable Costs**, :math:`k_{vs}^\text{p,var}`, ``m.storage.loc[s]['var-cost-p']``: The parameter :math:`k_{vs}^\text{p,var}` represents the variable cost per unit energy, that is stored in or retrieved from a storage technology :math:`s` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the sixteenth column with the header label "var-cost-p" represents the parameters :math:`k_{vs}^\text{p,var}` of the corresponding storage :math:`s` and site :math:`v` combinations.
 
 **Annualised Storage Size Investment Costs**, :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``: The parameter :math:`k_{vs}^\text{c,inv}` represents the annualised investment cost for adding one unit new storage capacity to a storage technology :math:`s` in a site :math:`v`. The unit of this parameter is €/(MWh a). This parameter is derived by the product of annuity factor :math:`AF` and the investment cost for one unit of new storage capacity of a storage :math:`s` in a site :math:`v`, which is to be given as an input parameter by the user. The related section for the storage content capacity investment cost in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the thirteenth column with the header label "inv-cost-c" represents the storage content capacity investment cost of the corresponding storage :math:`s` and site :math:`v` combinations. 
-
 
 **Annual Storage Size Fixed Costs**, :math:`k_{vs}^\text{c,fix}`, ``m.storage.loc[s]['fix-cost-c']``: The parameter :math:`k_{vs}^\text{c,fix}` represents the fix cost per one unit storage content capacity of a storage technology :math:`s` in a site :math:`v`, that is charged annually. The unit of this parameter is €/(MWh a). The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the fifteenth column with the header label "fix-cost-c" represents the parameters :math:`k_{vs}^\text{c,fix}` of the corresponding storage :math:`s` and site :math:`v` combinations.
 

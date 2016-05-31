@@ -53,11 +53,11 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 	+------------------------------------+------+----------------------------------+
 	| :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
         +------------------------------------+------+----------------------------------+
-	| :math:`\omicron_{vpt}`             |      | Process Online Status            |
+	| :math:`\omicron_{vpt}`             | _    | Process Online Status            |
         +------------------------------------+------+----------------------------------+
 	| :math:`\kappa'_{vpt}`              | MW   | Piecewise Process Capacity       |
         +------------------------------------+------+----------------------------------+
-	| :math:`\chi_{vpt}^text{startup}`   | MW   | Process Startup Cost Factor      |
+	| :math:`\chi_{vpt}^text{startup}`   | _    | Process Startup Cost Factor      |
 	+------------------------------------+------+----------------------------------+
 	| **Transmission Variables**                                                   |
 	+------------------------------------+------+----------------------------------+
@@ -132,6 +132,9 @@ These cost types are as following;
 		
 	**Purchase Costs** :math:`\zeta_\text{pur}` : The variable :math:`\zeta_\text{pur}` represents the annualised total purchase costs.
 		Purchase costs is defined for the costs that occures by buying the buy commodities ( :math:`\forall c \in C_\text{buy}` ).
+
+	**Startup Costs** :math:`\zeta_\text{startup}` : The variable :math:`\zeta_\text{startup}` represents the annualised total startup costs.
+		Startup costs are reliant on the yearly startup occurences of the processes.
 		
 	For more information on calculation of these variables see `Cost Function`_ section.
 
@@ -207,6 +210,35 @@ In script ``urbs.py`` this variable is defined by the model variable ``e_pro_out
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Flow of commodity out of process per timestep')
+
+**Process Online Status**, :math:`\omicron_{vpt}`, ``onlinestatus``: The boolean variable :math:`\omicron_{vpt}` returns 1 for non-zero throughput and 0 for zero throughput of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). 
+In script ``urbs.py`` this variable is defined by the model variable ``onlinestatus`` and initialized by the following code fragment: ::
+
+    m.onlinestatus = pyomo.Var(
+        m.t, 
+        m.pro_tuples,
+        within=pyomo.Boolean,
+        doc='Boolean variable which returns 1 for non-zero throughput \
+        and 0 for zero throughput')      
+
+**Piecewise Process Capacity**, :math:`\kappa'_{vpt}`, ``cap_pro_piecewise``: The piecewise variable :math:`\kappa'_{vpt}` returns 0 for zero throughput and ``cap_pro`` for non-zero throughput of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). 
+In script ``urbs.py`` this variable is defined by the model variable ``cap_pro_piecewise`` and initialized by the following code fragment: ::
+
+    m.cap_pro_piecewise = pyomo.Var(
+        m.tm,
+        m.pro_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Piecewise variable which returns 0 for zero m.onlinestatus \
+        and m.cap_pro for non-zero m.onlinestatus')  
+
+**Process Startup Cost Factor**, :math:`\chi_{vpt}^text{startup}`, ``startupcostfactor``: The boolean variable :math:`\chi_{vpt}^text{startup}` is an indicator for a "startup occurence" for a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`) and assumes 1 for a startup occurence and 0 otherwise. 
+In script ``urbs.py`` this variable is defined by the model variable ``startupcostfactor`` and initialized by the following code fragment: ::
+
+    m.startupcostfactor = pyomo.Var(
+        m.t,
+        m.pro_tuples,
+        within=pyomo.Boolean,
+        doc='Boolean variable which assumes 1 in case of a process start-up')       
 
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^

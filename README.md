@@ -25,19 +25,15 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ### Windows
 
-There are 2 ways to get all required packages under Windows. I recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python (version 3 **recommended**, 2.7 is supported as well) installation, you can also download the required packages one by one.
+There are 2 ways to get all required packages under Windows. I recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python (version 3.5 **recommended**, 2.7 is supported as well) installation, you can also download the required packages by yourself..
 
 #### Anaconda (recommended)
 
-  1. **[Anaconda (Python 3.5)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.
-       1. During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
-  2. **Pyomo**
-       1. Launch a new command prompt (Win+R, type "cmd", Enter)
-       2. Type `pip3 install pyomo`, hit Enter. (Pyomo 3, i.e. `coopr.pyomo`, is still supported, but will be dropped with the next release.)
-  3. **GLPK** (thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), only version 4.57 or older is supported at the moment [May 2016])
-       1. Download <del>the latest</del> version <ins>4.57</ins> of [WinGLPK](http://sourceforge.net/projects/winglpk/files/winglpk/)
-       2. Extract the contents to a folder, e.g. `C:\GLPK`
-       3. Add the subfolder `w64` to your system path, e.g. `C:\GLPK\w64` ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)).
+  1. **[Anaconda (Python 3.5)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.  
+     During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
+  2. **Pyomo** and **GLPK**
+     1. Launch a new command prompt (Win+R, type "cmd", Enter)
+     2. Type `conda install -c conda-forge pyomo glpk`, hit Enter.
 
 Continue at [Get Started](#get-started).
 
@@ -47,19 +43,19 @@ For all packages, best take the latest release or release candidate version. Bot
 
   1. **[Python 3.5](https://python.org/download)**. Python 2.7 is also supported.
   2. **[pip3](https://pip.pypa.io/en/latest/installing.html)**.The Python package manager. It allows to install many Python packages with a simple command. 
-      1. After installation, add `C:\Python35\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip3` command becomes available on the command prompt.
-  3. **IPython**: execute `pip3 install ipython3` in a command prompt.
+      1. After installation, add `C:\Python35\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
+  3. **IPython**: execute `pip install ipython3` in a command prompt.
   4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/). *How to select the correct file:* Download the newest stable version of each package, whose filename suffix matches both "bitness" (32 bit or 64 bit) and Python version (i.e. 3.5).  
       1. [NumPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
       2. [SciPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
       3. [matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). 
-      4. As a test, you can try start `ipython3` and have a MATLAB-style command line with plotting capabilities. If you receive message about "ipython could not be found", check if the `C:\Python35\Scripts` is added to the "Path" system variable as described in step 2.i. above.
+      4. As a test, you can try start `ipython` and have a MATLAB-style command line with plotting capabilities. If you receive message about "ipython could not be found", check if the `C:\Python35\Scripts` is added to the "Path" system variable as described in step 2.i. above.
   5. **[pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output. Its capabilities are exploited to write short analysis scripts in `runme.py` and `comp.py`, as well as in the functions `urbs.plot` and `urbs.report`.
-  6. **Pyomo**: execute `pip3 install pyomo` in a command prompt.
+  6. **Pyomo**: execute `pip install pyomo` in a command prompt.
   7. **Solver**: [GLPK](http://winglpk.sourceforge.net/).  (thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), only version 4.57 or older is supported at the moment [May 2016])
       1. Simply unzip the latest version somewhere, e.g. `C:\GLPK`. 
       2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2.i.), so that the `glpsol` command is available on the command prompt.
-  8. **Excel** reading/writing: `pip3 install xlrd xlwt openpyxl`
+  8. **Excel** reading/writing: `pip install xlrd xlwt openpyxl`
 
 Continue at [Get Started](#get-started).
   

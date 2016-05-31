@@ -1,5 +1,4 @@
 """urbs: A linear optimisation model for distributed energy systems
-
 urbs minimises total cost for providing energy in form of desired commodities
 (usually electricity) to satisfy a given demand in form of timeseries. The
 model contains commodities (electricity, fossil fuels, renewable energy
@@ -336,12 +335,7 @@ def create_model(data, timesteps=None, dt=1):
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
-
-    m.startupcostaux = pyomo.Var(
-        m.t,
-        m.pro_tuples,
-        within=pyomo.Boolean,
-        doc='Auxiliary variable for startup check')    
+ 
     # commodity
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
@@ -376,18 +370,25 @@ def create_model(data, timesteps=None, dt=1):
     m.e_pro_out = pyomo.Var(
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
-        doc='Power flow out of process (MW) per timestep')
-
-    m.onstatus = pyomo.Var(
+        doc='Power flow out of process (MW) per timestep')       
+    m.onlinestatus = pyomo.Var(
         m.t, 
         m.pro_tuples,
         within=pyomo.Boolean,
-        doc='On-status of a process')
-    m.onstatusaux= pyomo.Var(
+        doc='Boolean variable which returns 1 for non-zero throughput \
+        and 0 for zero throughput')      
+    m.cap_pro_piecewise = pyomo.Var(
         m.tm,
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Auxiliary variable for on-status')
+        doc='Piecewise variable which returns 0 for zero m.onlinestatus \
+        and m.cap_pro for non-zero m.onlinestatus')   
+    m.startupcostfactor = pyomo.Var(
+        m.t,
+        m.pro_tuples,
+        within=pyomo.Boolean,
+        doc='Boolean variable which assumes 1 in case of a process start-up')  
+        
     # transmission
     m.cap_tra = pyomo.Var(
         m.tra_tuples,
@@ -405,7 +406,7 @@ def create_model(data, timesteps=None, dt=1):
         m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of transmission line (MW) per timestep')
-
+        
     # storage
     m.cap_sto_c = pyomo.Var(
         m.sto_tuples,
@@ -522,27 +523,40 @@ def create_model(data, timesteps=None, dt=1):
         rule=res_sell_buy_symmetry_rule,
         doc='total power connection capacity must be symmetric in both directions')
 
-    m.res_onstatus1 = pyomo.Constraint(
+    m.res_process_throughput_by_partial_1 = pyomo.Constraint(
         m.tm, m.pro_tuples,
-        rule=onstatus_rule1,
-        doc='confining tau to capacity and minimum part load')
-    m.res_onstatus2 = pyomo.Constraint(
+        rule=res_process_throughput_by_partial_1_rule,
+        doc='partial * (process_capacity or 0) <= process throughput ')
+    m.res_process_throughput_by_partial_2 = pyomo.Constraint(
         m.tm, m.pro_tuples,
-        rule=onstatus_rule2,
-        doc='confining tau to capacity and minimum part load')        
-    m.res_onstatusaux1= pyomo.Constraint(
+        rule=res_process_throughput_by_partial_2_rule,
+        doc='process throughput <= (process_capacity or 0) ') 
+    m.def_cap_pro_piecewise_1 = pyomo.Constraint(
         m.tm, m.pro_tuples,
-        rule=onstatusaux_rule1,
-        doc='defining onstatusaux')
-    m.res_onstatusaux2= pyomo.Constraint(
+        rule=def_cap_pro_piecewise_1_rule,
+        doc='process piecewise capacity <= process capacity')
+    m.def_cap_pro_piecewise_2 = pyomo.Constraint(
         m.tm, m.pro_tuples,
-        rule=onstatusaux_rule2,
-        doc='defining onstatusaux')
-    m.res_onstatusaux3= pyomo.Constraint(
+        rule=def_cap_pro_piecewise_2_rule,
+        doc='process piecewise capacity <= process.cap-up * online status')
+    m.def_cap_pro_piecewise_3 = pyomo.Constraint(
         m.tm, m.pro_tuples,
-        rule=onstatusaux_rule3,
-        doc='defining onstatusaux')
-                
+        rule=def_cap_pro_piecewise_3_rule,
+        doc='process piecewise capacity >= process capacity - \
+        process.cap-up * (1 - online status)')
+    m.def_startupcostfactor_1 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_startupcostfactor_1_rule,
+        doc='rule 1 for startupcostfactor')
+    m.def_startupcostfactor_2 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_startupcostfactor_2_rule,
+        doc='rule 2 for startupcostfactor')
+    m.def_startupcostfactor_3 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_startupcostfactor_3_rule,
+        doc='rule 3 for startupcostfactor')                        
+
     # transmission
     m.def_transmission_capacity = pyomo.Constraint(
         m.tra_tuples,
@@ -615,18 +629,7 @@ def create_model(data, timesteps=None, dt=1):
         doc='minimize(cost = sum of all cost types)')
     
     # startup auxiliary variable rules
-    m.res_startupcostaux1 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=startupcostaux_rule1,
-        doc='rule 1 for startopcostaux')       
-    m.res_startupcostaux2 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=startupcostaux_rule2,
-        doc='rule 2 for startopcostaux')
-    m.res_startupcostaux3 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=startupcostaux_rule3,
-        doc='rule 3 for startopcostaux')   
+ 
         
     # demand side management
     m.def_dsm_variables = pyomo.Constraint(
@@ -893,23 +896,43 @@ def res_process_throughput_gradient_rule(m, t, sit, pro):
                         m.process.loc[sit, pro]['max-grad'] * m.dt)
     else:
         return pyomo.Constraint.Skip
-def onstatus_rule1(m, tm, sit, pro):
-    return (m.process.loc[sit,pro]['partial']*m.onstatusaux[tm,sit,pro]<=m.tau_pro[tm,sit,pro])  
-def onstatus_rule2(m, tm, sit, pro):
-    return (m.tau_pro[tm,sit,pro]<=m.onstatusaux[tm,sit,pro])
-def onstatusaux_rule1(m, tm, sit, pro):
-    return (m.onstatusaux[tm,sit,pro] <= m.cap_pro[sit,pro])
-def onstatusaux_rule2(m, tm, sit, pro):
-    return (m.onstatusaux[tm,sit,pro] <= 1000000000000*m.onstatus[tm,sit,pro])
-def onstatusaux_rule3(m, tm, sit, pro):
-    return (m.onstatusaux[tm,sit,pro] >= m.cap_pro[sit,pro] - 1000000000000*(1-m.onstatus[tm,sit,pro]))
-    
-def startupcostaux_rule1(m, tm, sit, pro):
-    return (m.startupcostaux[tm,sit,pro] <= m.onstatus[tm,sit,pro])
-def startupcostaux_rule2(m, tm, sit, pro):
-    return (m.startupcostaux[tm,sit,pro] >= m.onstatus[tm,sit,pro] - 2 * m.onstatus[(tm-1),sit,pro]) 
-def startupcostaux_rule3(m, tm, sit, pro):
-    return (m.startupcostaux[tm,sit,pro] <= (3 * m.onstatus[tm,sit,pro] - m.onstatus[(tm-1),sit,pro] + 1) / 4)    
+
+
+# minimum partial load * process capacity <= throughput <= process capacity
+# or throughput = 0
+def res_process_throughput_by_partial_1_rule(m, tm, sit, pro):
+    return (m.process.loc[sit,pro]['partial']*m.cap_pro_piecewise[tm,sit,pro] <=
+            m.tau_pro[tm,sit,pro])
+def res_process_throughput_by_partial_2_rule(m, tm, sit, pro):
+    return (m.tau_pro[tm,sit,pro] <=
+            m.cap_pro_piecewise[tm,sit,pro])
+# cap_pro_piecewise <= process capacity
+# cap_pro_piecewise <= cap-up * online status
+# cap_pro_piecewise >= process capacity - cap-up * (1 - online status)  
+def def_cap_pro_piecewise_1_rule(m, tm, sit, pro):
+    return (m.cap_pro_piecewise[tm, sit, pro] <= m.cap_pro[sit,pro])
+def def_cap_pro_piecewise_2_rule(m, tm, sit, pro):
+    return (m.cap_pro_piecewise[tm, sit, pro] <= 
+            m.process.loc[sit,pro]['cap-up'] * m.onlinestatus[tm, sit, pro])
+def def_cap_pro_piecewise_3_rule(m, tm, sit, pro):
+    return (m.cap_pro_piecewise[tm, sit, pro] >=
+            m.cap_pro[sit,pro] - m.process.loc[sit,pro]['cap-up'] *
+                (1 - m.onlinestatus[tm, sit, pro]))
+
+# following rules construct desired values for m.startupcostfactor, that is
+# 1 if m.onlinestatus[t-1] == 0 and m.onlinestatus[t] == 1,
+# 0 otherwise
+def def_startupcostfactor_1_rule(m, tm, sit, pro):
+    return (m.startupcostfactor[tm, sit, pro] <= m.onlinestatus[tm, sit, pro])
+def def_startupcostfactor_2_rule(m, tm, sit, pro):
+    return (m.startupcostfactor[tm, sit, pro] >= m.onlinestatus[tm, sit, pro]-
+            2 * m.onlinestatus[(tm-1), sit, pro])
+def def_startupcostfactor_3_rule(m, tm, sit, pro):
+    return (m.startupcostfactor[tm, sit, pro] <= 
+            (3 * m.onlinestatus[tm, sit, pro] - 
+                m.onlinestatus[(tm-1), sit, pro] +1) / 4)
+                
+# lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
     return (m.process.loc[sit, pro]['cap-lo'],
             m.cap_pro[sit, pro],
@@ -1110,16 +1133,11 @@ def def_costs_rule(m, cost_type):
             for tm in m.tm for c in buy_tuples)
             
     elif cost_type == 'Startup':
-        # startupcostcounter=0
-        # for tm in m.tm: 
-            # for p in m.pro_tuples:
-                    # startupcostcounter+=m.process.loc[p]['startup']*m.cap_pro[p]*m.weight
-        return m.costs['Startup'] == sum(m.startupcostaux[(tm,)+p] * m.process.loc[p]['startup'] * m.weight for tm in m.tm for p in m.pro_tuples)
-        # startupcostcounter=0
-        # for tm in m.tm: 
-            # for p in m.pro_tuples:
-                    # startupcostcounter +=  m.startupcostaux[(tm,)+p] * m.process.loc[p]['startup'] * m.cap_pro[p] * m.weight
-        # return (m.costs['Startup'] == startupcostcounter)                 
+
+        return m.costs['Startup'] == sum(
+            m.startupcostfactor[(tm,)+p] * m.process.loc[p]['startup'] * 
+            m.weight for tm in m.tm for p in m.pro_tuples)
+
     else:
         raise NotImplementedError("Unknown cost type.")
 

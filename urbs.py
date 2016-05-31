@@ -1789,13 +1789,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
         consumed = consumed.loc[timesteps].fillna(0)
     except KeyError:
         consumed = pd.DataFrame(index=timesteps)
-    getsth = get_entities(instance, ['onstatus'])
-    getsth = getsth.xs(sit, level='sit')
-    try:
-        onoroff = getsth['onstatus'].unstack(level='pro')
-        onoroff = onoroff.loc[timesteps].fillna(0)
-    except KeyError:
-        onoroff = pd.DataFrame(index=timesteps)
+
 
     # TRANSMISSION
     etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])
@@ -1839,13 +1833,13 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # show stock as created
     created = created.join(stock)
-    onoroff = onoroff.join(stock)
+    
     # show demand as consumed
     consumed = consumed.join(demand)
     consumed = consumed.join(shifted)
     consumed = consumed.join(demanddelta)
 
-    return created, consumed, stored, imported, exported, derivative, onoroff
+    return created, consumed, stored, imported, exported, derivative
 
 
 def report(instance, filename, commodities=None, sites=None):
@@ -1879,7 +1873,7 @@ def report(instance, filename, commodities=None, sites=None):
         # collect timeseries data
         for co in commodities:
             for sit in sites:
-                created, consumed, stored, imported, exported, derivative, onoroff = get_timeseries(
+                created, consumed, stored, imported, exported, derivative = get_timeseries(
                     instance, co, sit)
 
                 overprod = pd.DataFrame(
@@ -1892,7 +1886,7 @@ def report(instance, filename, commodities=None, sites=None):
                     [created, consumed, stored, imported, exported, overprod, derivative, onoroff],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'Derivative', 'On-status', 'Demand Delta'])
+                          'Export to', 'Balance', 'Derivative', 'Shifted Demand', 'Demand Delta'])
                 timeseries[(co, sit)] = tableau.copy()
 
                 # timeseries sums

@@ -57,7 +57,7 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
         +------------------------------------+------+----------------------------------+
 	| :math:`\kappa'_{vpt}`              | MW   | Piecewise Process Capacity       |
         +------------------------------------+------+----------------------------------+
-	| :math:`\chi_{vpt}^text{startup}`   | _    | Process Startup Cost Factor      |
+	| :math:`\chi_{vpt}^\text{startup}`  | _    | Process Startup Cost Factor      |
 	+------------------------------------+------+----------------------------------+
 	| **Transmission Variables**                                                   |
 	+------------------------------------+------+----------------------------------+

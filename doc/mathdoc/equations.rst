@@ -262,12 +262,12 @@ In script ``urbs.py`` the value of the total purchase cost is calculated by the 
 Startup Costs
 --------------
 
-The variable startup costs :math:`\zeta_\text{startup}` represents the total annual expenses that are required for the startup occurences of processes :math:`c \in C_\text{buy}`. The calculation of the variable total annual purchase cost :math:`\zeta_\text{pur}` is expressed by the following mathematical notation:
+The variable startup costs :math:`\zeta_\text{startup}` represents the total annual expenses that are required for the startup occurences of processes :math:`p \in P`. The calculation of the variable total annual startup cost :math:`\zeta_\text{startup}` is expressed by the following mathematical notation:
 
 .. math::
 
 	\zeta_\text{startup} = 
-	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad p \in P}} \chi_{vpt}^text{startup} k_{vp}^\text{st} \Delta t
+	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{ p \in P}} \chi_{vpt}^\text{startup} k_{vp}^\text{st} \Delta t
 
 
 In script ``urbs.py`` the value of the total startup cost is calculated by the following code fragment:
@@ -711,7 +711,7 @@ In script ``urbs.py`` the constraint process output rule is defined and calculat
 
 .. math::
 
-	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon \qquad & \qquad \epsilon^\text{in}_{vpct} &= \kappa_{vp} s_{vct}
+	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon \qquad & \qquad \epsilon^\text{in}_{vpct} &\leq \kappa_{vp} s_{vct}
 
 In script ``urbs.py`` the constraint intermittent supply rule is defined and calculated by the following code fragment:
 ::
@@ -824,7 +824,11 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
 		else:
 			return pyomo.Constraint.Skip
 
-**Process Throughput by Partial Rules**: These constraint process throughput by partial rules constrict the process throughput :math:`\tau_{vpt}` either between the total process capacity :math:`\kappa_{vp}` and its minimum allowable partial load (:math:`\kappa_{vp}` * :math:`\underline{P}_{vp}`), or zero. 
+**Process Throughput by Partial Rules**: These constraint process throughput by partial rules constrict the process throughput :math:`\tau_{vpt}` either between the total process capacity :math:`\kappa_{vp}` and its minimum allowable partial load (:math:`\kappa_{vp}` * :math:`\underline{P}_{vp}`), else sets it to zero. 
+
+.. math::
+
+	\forall v\in V, p\in P, t\in T_m\colon \qquad & \qquad \underline{P}_{vp} \kappa'_{vp} \leq \tau_{vpt} \leq \kappa'_{vp}
 
 In script ``urbs.py`` the constraint process throughput by partial rules are defined and calculated by the following code fragment:
 ::
@@ -840,14 +844,26 @@ In script ``urbs.py`` the constraint process throughput by partial rules are def
 
 ::
 
-def res_process_throughput_by_partial_1_rule(m, tm, sit, pro):
-    return (m.process.loc[sit,pro]['partial']*m.cap_pro_piecewise[tm,sit,pro] <=
-            m.tau_pro[tm,sit,pro])
-def res_process_throughput_by_partial_2_rule(m, tm, sit, pro):
-    return (m.tau_pro[tm,sit,pro] <=
-            m.cap_pro_piecewise[tm,sit,pro])
+	def res_process_throughput_by_partial_1_rule(m, tm, sit, pro):
+    		return (m.process.loc[sit,pro]['partial']*m.cap_pro_piecewise[tm,sit,pro] <=
+            		m.tau_pro[tm,sit,pro])
+	def res_process_throughput_by_partial_2_rule(m, tm, sit, pro):
+    		return (m.tau_pro[tm,sit,pro] <=
+            		m.cap_pro_piecewise[tm,sit,pro])
 
 **Piecewise Process Capacity Rules**: These constraint piecewise process capacity rules introduce the necessary inequalities to define the piecewise process capacity :math:`\kappa'_{vpt}` such that it assumes the intended values of 0 (for zero process throughput :math:`\tau_{vpt}`) and the value of total process capacity :math:`\kappa_{vp}` (for non-zero process throughput :math:`\tau_{vpt}`). 
+
+.. math::
+
+	\forall v\in V, p\in P, t\in T_m\colon 
+	
+	\kappa'_{vpt} \leq \kappa_{vp}
+
+	\kappa'_{vpt} \leq \overline{K}_{vp} \omicron_{vpt}
+
+	\kappa'_{vpt} \geq \kappa_{vp} - \overline{K}_{vp} (1 - \omicron_{vpt})
+
+These inequalities together ensure :math:`\kappa'_{vpt} = \kappa_{vp}` if :math:`\tau_{vpt} \neq 0` and :math:`\kappa'_{vpt} = 0` if :math:`\tau_{vpt} = 0`
 
 In script ``urbs.py`` the constraint piecewise process capacity rules are defined and calculated by the following code fragment:
 ::
@@ -868,17 +884,29 @@ In script ``urbs.py`` the constraint piecewise process capacity rules are define
 
 ::
 
-def def_cap_pro_piecewise_1_rule(m, tm, sit, pro):
-    return (m.cap_pro_piecewise[tm, sit, pro] <= m.cap_pro[sit,pro])
-def def_cap_pro_piecewise_2_rule(m, tm, sit, pro):
-    return (m.cap_pro_piecewise[tm, sit, pro] <= 
-            m.process.loc[sit,pro]['cap-up'] * m.onlinestatus[tm, sit, pro])
-def def_cap_pro_piecewise_3_rule(m, tm, sit, pro):
-    return (m.cap_pro_piecewise[tm, sit, pro] >=
-            m.cap_pro[sit,pro] - m.process.loc[sit,pro]['cap-up'] *
-                (1 - m.onlinestatus[tm, sit, pro]))
+	def def_cap_pro_piecewise_1_rule(m, tm, sit, pro):
+    		return (m.cap_pro_piecewise[tm, sit, pro] <= m.cap_pro[sit,pro])
+	def def_cap_pro_piecewise_2_rule(m, tm, sit, pro):
+    		return (m.cap_pro_piecewise[tm, sit, pro] <= 
+            		m.process.loc[sit,pro]['cap-up'] * m.onlinestatus[tm, sit, pro])
+	def def_cap_pro_piecewise_3_rule(m, tm, sit, pro):
+    		return (m.cap_pro_piecewise[tm, sit, pro] >=
+            		m.cap_pro[sit,pro] - m.process.loc[sit,pro]['cap-up'] *
+                	(1 - m.onlinestatus[tm, sit, pro]))
 
-**Process Startup Cost Factor Rules**: These constraint process startup cost factor rules introduce the necessary inequalities to define the process startup cost factor :math:`\chi_{vpt}^text{startup}` such that it assumes the intended values of 1 for a startup occurence of a process :math:`p` in a site :math:`v` and 0 otherwise.
+**Process Startup Cost Factor Rules**: These constraint process startup cost factor rules introduce the necessary inequalities to define the process startup cost factor :math:`\chi_{vpt}^\text{startup}` such that it assumes the intended values of 1 for a startup occurence of a process :math:`p` in a site :math:`v` and 0 otherwise.
+
+.. math::
+
+	\forall v\in V, p\in P, t\in T_m\colon 
+	
+	\chi_{vpt}^\text{startup} \leq \omicron_{vpt}(t)
+
+	\chi_{vpt}^\text{startup} \geq \omicron_{vpt}(t) - 2* \omicron_{vpt}(t-1)
+
+	\chi_{vpt}^\text{startup} \leq \frac{3*\omicron_{vpt}(t) - \omicron_{vpt}(t-1) + 1}{4}
+
+These inequalities together ensure :math:`\chi_{vpt}^\text{startup} = 1` if :math:`\omicron_{vpt}(t-1) = 0 \ \& \  \omicron_{vpt}(t) = 1` and :math:`\chi_{vpt}^\text{startup} = 0` otherwise.
 
 In script ``urbs.py`` the constraint process startup cost factor rules are defined and calculated by the following code fragment:
 ::
@@ -898,15 +926,15 @@ In script ``urbs.py`` the constraint process startup cost factor rules are defin
 
 ::
 
-def def_startupcostfactor_1_rule(m, tm, sit, pro):
-    return (m.startupcostfactor[tm, sit, pro] <= m.onlinestatus[tm, sit, pro])
-def def_startupcostfactor_2_rule(m, tm, sit, pro):
-    return (m.startupcostfactor[tm, sit, pro] >= m.onlinestatus[tm, sit, pro]-
-            2 * m.onlinestatus[(tm-1), sit, pro])
-def def_startupcostfactor_3_rule(m, tm, sit, pro):
-    return (m.startupcostfactor[tm, sit, pro] <= 
-            (3 * m.onlinestatus[tm, sit, pro] - 
-                m.onlinestatus[(tm-1), sit, pro] +1) / 4)
+	def def_startupcostfactor_1_rule(m, tm, sit, pro):
+   		return (m.startupcostfactor[tm, sit, pro] <= m.onlinestatus[tm, sit, pro])
+	def def_startupcostfactor_2_rule(m, tm, sit, pro):
+   		return (m.startupcostfactor[tm, sit, pro] >= m.onlinestatus[tm, sit, pro]-
+           		2 * m.onlinestatus[(tm-1), sit, pro])
+	def def_startupcostfactor_3_rule(m, tm, sit, pro):
+    		return (m.startupcostfactor[tm, sit, pro] <= 
+            		(3 * m.onlinestatus[tm, sit, pro] - 
+                	m.onlinestatus[(tm-1), sit, pro] +1) / 4)
 
 Transmission Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^

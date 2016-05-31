@@ -238,7 +238,7 @@ def create_model(data, timesteps=None, dt=1):
 
     # cost_type
     m.cost_type = pyomo.Set(
-        initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase'],
+        initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase','Startup'],
         doc='Set of cost types (hard-coded)')
 
     # tuple sets
@@ -337,6 +337,11 @@ def create_model(data, timesteps=None, dt=1):
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
 
+    m.startupcostaux = pyomo.Var(
+        m.t,
+        m.pro_tuples,
+        within=pyomo.Boolean,
+        doc='Auxiliary variable for startup check')    
     # commodity
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
@@ -373,6 +378,16 @@ def create_model(data, timesteps=None, dt=1):
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
 
+    m.onstatus = pyomo.Var(
+        m.t, 
+        m.pro_tuples,
+        within=pyomo.Boolean,
+        doc='On-status of a process')
+    m.onstatusaux= pyomo.Var(
+        m.tm,
+        m.pro_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Auxiliary variable for on-status')
     # transmission
     m.cap_tra = pyomo.Var(
         m.tra_tuples,
@@ -507,6 +522,27 @@ def create_model(data, timesteps=None, dt=1):
         rule=res_sell_buy_symmetry_rule,
         doc='total power connection capacity must be symmetric in both directions')
 
+    m.res_onstatus1 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=onstatus_rule1,
+        doc='confining tau to capacity and minimum part load')
+    m.res_onstatus2 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=onstatus_rule2,
+        doc='confining tau to capacity and minimum part load')        
+    m.res_onstatusaux1= pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=onstatusaux_rule1,
+        doc='defining onstatusaux')
+    m.res_onstatusaux2= pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=onstatusaux_rule2,
+        doc='defining onstatusaux')
+    m.res_onstatusaux3= pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=onstatusaux_rule3,
+        doc='defining onstatusaux')
+                
     # transmission
     m.def_transmission_capacity = pyomo.Constraint(
         m.tra_tuples,
@@ -578,6 +614,20 @@ def create_model(data, timesteps=None, dt=1):
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
     
+    # startup auxiliary variable rules
+    m.res_startupcostaux1 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=startupcostaux_rule1,
+        doc='rule 1 for startopcostaux')       
+    m.res_startupcostaux2 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=startupcostaux_rule2,
+        doc='rule 2 for startopcostaux')
+    m.res_startupcostaux3 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=startupcostaux_rule3,
+        doc='rule 3 for startopcostaux')   
+        
     # demand side management
     m.def_dsm_variables = pyomo.Constraint(
         m.tm, m.dsm_site_tuples, 
@@ -820,7 +870,7 @@ def def_process_output_rule(m, tm, sit, pro, co):
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, sit, pro, coin):
     if coin in m.com_supim:
-        return (m.e_pro_in[tm, sit, pro, coin] ==
+        return (m.e_pro_in[tm, sit, pro, coin] <=
                 m.cap_pro[sit, pro] * m.supim.loc[tm][sit, coin])
     else:
         return pyomo.Constraint.Skip
@@ -843,8 +893,23 @@ def res_process_throughput_gradient_rule(m, t, sit, pro):
                         m.process.loc[sit, pro]['max-grad'] * m.dt)
     else:
         return pyomo.Constraint.Skip
-
-# lower bound <= process capacity <= upper bound
+def onstatus_rule1(m, tm, sit, pro):
+    return (m.process.loc[sit,pro]['partial']*m.onstatusaux[tm,sit,pro]<=m.tau_pro[tm,sit,pro])  
+def onstatus_rule2(m, tm, sit, pro):
+    return (m.tau_pro[tm,sit,pro]<=m.onstatusaux[tm,sit,pro])
+def onstatusaux_rule1(m, tm, sit, pro):
+    return (m.onstatusaux[tm,sit,pro] <= m.cap_pro[sit,pro])
+def onstatusaux_rule2(m, tm, sit, pro):
+    return (m.onstatusaux[tm,sit,pro] <= 1000000000000*m.onstatus[tm,sit,pro])
+def onstatusaux_rule3(m, tm, sit, pro):
+    return (m.onstatusaux[tm,sit,pro] >= m.cap_pro[sit,pro] - 1000000000000*(1-m.onstatus[tm,sit,pro]))
+    
+def startupcostaux_rule1(m, tm, sit, pro):
+    return (m.startupcostaux[tm,sit,pro] <= m.onstatus[tm,sit,pro])
+def startupcostaux_rule2(m, tm, sit, pro):
+    return (m.startupcostaux[tm,sit,pro] >= m.onstatus[tm,sit,pro] - 2 * m.onstatus[(tm-1),sit,pro]) 
+def startupcostaux_rule3(m, tm, sit, pro):
+    return (m.startupcostaux[tm,sit,pro] <= (3 * m.onstatus[tm,sit,pro] - m.onstatus[(tm-1),sit,pro] + 1) / 4)    
 def res_process_capacity_rule(m, sit, pro):
     return (m.process.loc[sit, pro]['cap-lo'],
             m.cap_pro[sit, pro],
@@ -1043,7 +1108,18 @@ def def_costs_rule(m, cost_type):
         return m.costs['Purchase'] == sum(
             m.e_co_buy[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
             for tm in m.tm for c in buy_tuples)
-
+            
+    elif cost_type == 'Startup':
+        # startupcostcounter=0
+        # for tm in m.tm: 
+            # for p in m.pro_tuples:
+                    # startupcostcounter+=m.process.loc[p]['startup']*m.cap_pro[p]*m.weight
+        return m.costs['Startup'] == sum(m.startupcostaux[(tm,)+p] * m.process.loc[p]['startup'] * m.weight for tm in m.tm for p in m.pro_tuples)
+        # startupcostcounter=0
+        # for tm in m.tm: 
+            # for p in m.pro_tuples:
+                    # startupcostcounter +=  m.startupcostaux[(tm,)+p] * m.process.loc[p]['startup'] * m.cap_pro[p] * m.weight
+        # return (m.costs['Startup'] == startupcostcounter)                 
     else:
         raise NotImplementedError("Unknown cost type.")
 
@@ -1683,6 +1759,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # Finally, slice to the desired timesteps.
     epro = get_entities(instance, ['e_pro_in', 'e_pro_out'])
     epro = epro.xs(sit, level='sit').xs(com, level='com')
+   
     try:
         created = epro[epro['e_pro_out'] > 0]['e_pro_out'].unstack(level='pro')
         created = created.loc[timesteps].fillna(0)
@@ -1694,6 +1771,13 @@ def get_timeseries(instance, com, sit, timesteps=None):
         consumed = consumed.loc[timesteps].fillna(0)
     except KeyError:
         consumed = pd.DataFrame(index=timesteps)
+    getsth = get_entities(instance, ['onstatus'])
+    getsth = getsth.xs(sit, level='sit')
+    try:
+        onoroff = getsth['onstatus'].unstack(level='pro')
+        onoroff = onoroff.loc[timesteps].fillna(0)
+    except KeyError:
+        onoroff = pd.DataFrame(index=timesteps)
 
     # TRANSMISSION
     etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])
@@ -1737,13 +1821,13 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # show stock as created
     created = created.join(stock)
-
+    onoroff = onoroff.join(stock)
     # show demand as consumed
     consumed = consumed.join(demand)
     consumed = consumed.join(shifted)
     consumed = consumed.join(demanddelta)
 
-    return created, consumed, stored, imported, exported, derivative
+    return created, consumed, stored, imported, exported, derivative, onoroff
 
 
 def report(instance, filename, commodities=None, sites=None):
@@ -1777,7 +1861,7 @@ def report(instance, filename, commodities=None, sites=None):
         # collect timeseries data
         for co in commodities:
             for sit in sites:
-                created, consumed, stored, imported, exported, derivative = get_timeseries(
+                created, consumed, stored, imported, exported, derivative, onoroff = get_timeseries(
                     instance, co, sit)
 
                 overprod = pd.DataFrame(
@@ -1787,10 +1871,10 @@ def report(instance, filename, commodities=None, sites=None):
                     stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
-                    [created, consumed, stored, imported, exported, overprod, derivative],
+                    [created, consumed, stored, imported, exported, overprod, derivative, onoroff],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'Derivative', 'Shifted Demand', 'Demand Delta'])
+                          'Export to', 'Balance', 'Derivative', 'On-status', 'Demand Delta'])
                 timeseries[(co, sit)] = tableau.copy()
 
                 # timeseries sums
@@ -1888,7 +1972,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1])
     #, height_ratios=[2, 1]
 
-    created, consumed, stored, imported, exported, derivative = get_timeseries(
+    created, consumed, stored, imported, exported, derivative, onoroff = get_timeseries(
         prob, com, sit, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)

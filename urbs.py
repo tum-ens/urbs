@@ -1,4 +1,5 @@
 """urbs: A linear optimisation model for distributed energy systems
+
 urbs minimises total cost for providing energy in form of desired commodities
 (usually electricity) to satisfy a given demand in form of timeseries. The
 model contains commodities (electricity, fossil fuels, renewable energy
@@ -335,7 +336,7 @@ def create_model(data, timesteps=None, dt=1):
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
- 
+
     # commodity
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
@@ -370,7 +371,8 @@ def create_model(data, timesteps=None, dt=1):
     m.e_pro_out = pyomo.Var(
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
-        doc='Power flow out of process (MW) per timestep')       
+        doc='Power flow out of process (MW) per timestep')
+        
     m.onlinestatus = pyomo.Var(
         m.t, 
         m.pro_tuples,
@@ -388,7 +390,7 @@ def create_model(data, timesteps=None, dt=1):
         m.pro_tuples,
         within=pyomo.Boolean,
         doc='Boolean variable which assumes 1 in case of a process start-up')  
-        
+
     # transmission
     m.cap_tra = pyomo.Var(
         m.tra_tuples,
@@ -627,10 +629,7 @@ def create_model(data, timesteps=None, dt=1):
         rule=obj_rule,
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
-    
-    # startup auxiliary variable rules
- 
-        
+
     # demand side management
     m.def_dsm_variables = pyomo.Constraint(
         m.tm, m.dsm_site_tuples, 
@@ -897,7 +896,6 @@ def res_process_throughput_gradient_rule(m, t, sit, pro):
     else:
         return pyomo.Constraint.Skip
 
-
 # minimum partial load * process capacity <= throughput <= process capacity
 # or throughput = 0
 def res_process_throughput_by_partial_1_rule(m, tm, sit, pro):
@@ -1133,7 +1131,6 @@ def def_costs_rule(m, cost_type):
             for tm in m.tm for c in buy_tuples)
             
     elif cost_type == 'Startup':
-
         return m.costs['Startup'] == sum(
             m.startupcostfactor[(tm,)+p] * m.process.loc[p]['startup'] * 
             m.weight for tm in m.tm for p in m.pro_tuples)
@@ -1777,7 +1774,6 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # Finally, slice to the desired timesteps.
     epro = get_entities(instance, ['e_pro_in', 'e_pro_out'])
     epro = epro.xs(sit, level='sit').xs(com, level='com')
-   
     try:
         created = epro[epro['e_pro_out'] > 0]['e_pro_out'].unstack(level='pro')
         created = created.loc[timesteps].fillna(0)
@@ -1789,7 +1785,6 @@ def get_timeseries(instance, com, sit, timesteps=None):
         consumed = consumed.loc[timesteps].fillna(0)
     except KeyError:
         consumed = pd.DataFrame(index=timesteps)
-
 
     # TRANSMISSION
     etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])
@@ -1833,7 +1828,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # show stock as created
     created = created.join(stock)
-    
+
     # show demand as consumed
     consumed = consumed.join(demand)
     consumed = consumed.join(shifted)

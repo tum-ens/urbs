@@ -176,13 +176,13 @@ There are 6 different types of costs. Each one has different features and are de
 different instances. Set of **cost types** is hardcoded, which means they are not considered to be
 fixed or changed  by the user.
 The Set :math:`R` defines the Cost Types, each member :math:`r` of this set :math:`R` represents a unique cost type name.
-The cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``.
+The cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``, ``Startup`` .
 In script ``urbs.py`` this set is defined as ``cost_type`` and initialized by the code fragment:
 
 ::
 
     m.cost_type = pyomo.Set(
-        initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase'],
+        initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase','Startup'],
         doc='Set of cost types (hard-coded)')
 		
 

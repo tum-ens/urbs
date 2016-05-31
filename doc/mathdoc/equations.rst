@@ -10,7 +10,7 @@ The variable total system cost :math:`\zeta` is calculated by the cost function.
 
 .. math::
 
-	\zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur}
+	\zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur} + \zeta_\text{startup}
 
 The calculation of the variable total system cost is given in ``urbs.py`` by the following code fragment.  
 
@@ -257,6 +257,28 @@ In script ``urbs.py`` the value of the total purchase cost is calculated by the 
         return m.costs['Purchase'] == sum(
             m.e_co_buy[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
             for tm in m.tm for c in buy_tuples)
+
+
+Startup Costs
+--------------
+
+The variable startup costs :math:`\zeta_\text{startup}` represents the total annual expenses that are required for the startup occurences of processes :math:`p \in P`. The calculation of the variable total annual startup cost :math:`\zeta_\text{startup}` is expressed by the following mathematical notation:
+
+.. math::
+
+	\zeta_\text{startup} = 
+	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{ p \in P}} \chi_{vpt}^\text{startup} k_{vp}^\text{st} \Delta t
+
+
+In script ``urbs.py`` the value of the total startup cost is calculated by the following code fragment:
+::
+
+    elif cost_type == 'Startup':
+
+        return m.costs['Startup'] == sum(
+            m.startupcostfactor[(tm,)+p] * m.process.loc[p]['startup'] * 
+            m.weight for tm in m.tm for p in m.pro_tuples)
+
 
 Commodity Balance
 ^^^^^^^^^^^^^^^^^
@@ -689,7 +711,7 @@ In script ``urbs.py`` the constraint process output rule is defined and calculat
 
 .. math::
 
-	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon \qquad & \qquad \epsilon^\text{in}_{vpct} &= \kappa_{vp} s_{vct}
+	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon \qquad & \qquad \epsilon^\text{in}_{vpct} &\leq \kappa_{vp} s_{vct}
 
 In script ``urbs.py`` the constraint intermittent supply rule is defined and calculated by the following code fragment:
 ::
@@ -703,7 +725,7 @@ In script ``urbs.py`` the constraint intermittent supply rule is defined and cal
 
 	def def_intermittent_supply_rule(m, tm, sit, pro, coin):
 		if coin in m.com_supim:
-			return (m.e_pro_in[tm, sit, pro, coin] ==
+			return (m.e_pro_in[tm, sit, pro, coin] <=
 					m.cap_pro[sit, pro] * m.supim.loc[tm][sit, coin])
 		else:
 			return pyomo.Constraint.Skip
@@ -801,6 +823,118 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
 							m.cap_pro[sit_in, sell_pro])
 		else:
 			return pyomo.Constraint.Skip
+
+**Process Throughput by Partial Rules**: These constraint process throughput by partial rules constrict the process throughput :math:`\tau_{vpt}` either between the total process capacity :math:`\kappa_{vp}` and its minimum allowable partial load (:math:`\kappa_{vp}` * :math:`\underline{P}_{vp}`), else sets it to zero. 
+
+.. math::
+
+	\forall v\in V, p\in P, t\in T_m\colon \qquad & \qquad \underline{P}_{vp} \kappa'_{vp} \leq \tau_{vpt} \leq \kappa'_{vp}
+
+In script ``urbs.py`` the constraint process throughput by partial rules are defined and calculated by the following code fragment:
+::
+
+    m.res_process_throughput_by_partial_1 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=res_process_throughput_by_partial_1_rule,
+        doc='partial * (process_capacity or 0) <= process throughput ')
+    m.res_process_throughput_by_partial_2 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=res_process_throughput_by_partial_2_rule,
+        doc='process throughput <= (process_capacity or 0) ') 
+
+::
+
+	def res_process_throughput_by_partial_1_rule(m, tm, sit, pro):
+    		return (m.process.loc[sit,pro]['partial']*m.cap_pro_piecewise[tm,sit,pro] <=
+            		m.tau_pro[tm,sit,pro])
+	def res_process_throughput_by_partial_2_rule(m, tm, sit, pro):
+    		return (m.tau_pro[tm,sit,pro] <=
+            		m.cap_pro_piecewise[tm,sit,pro])
+
+**Piecewise Process Capacity Rules**: These constraint piecewise process capacity rules introduce the necessary inequalities to define the piecewise process capacity :math:`\kappa'_{vpt}` such that it assumes the intended values of 0 (for zero process throughput :math:`\tau_{vpt}`) and the value of total process capacity :math:`\kappa_{vp}` (for non-zero process throughput :math:`\tau_{vpt}`). 
+
+.. math::
+
+	\forall v\in V, p\in P, t\in T_m\colon 
+	
+	\kappa'_{vpt} \leq \kappa_{vp}
+
+	\kappa'_{vpt} \leq \overline{K}_{vp} \omicron_{vpt}
+
+	\kappa'_{vpt} \geq \kappa_{vp} - \overline{K}_{vp} (1 - \omicron_{vpt})
+
+These inequalities together ensure :math:`\kappa'_{vpt} = \kappa_{vp}` if :math:`\tau_{vpt} \neq 0` and :math:`\kappa'_{vpt} = 0` if :math:`\tau_{vpt} = 0`
+
+In script ``urbs.py`` the constraint piecewise process capacity rules are defined and calculated by the following code fragment:
+::
+
+    m.def_cap_pro_piecewise_1 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_cap_pro_piecewise_1_rule,
+        doc='process piecewise capacity <= process capacity')
+    m.def_cap_pro_piecewise_2 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_cap_pro_piecewise_2_rule,
+        doc='process piecewise capacity <= process.cap-up * online status')
+    m.def_cap_pro_piecewise_3 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_cap_pro_piecewise_3_rule,
+        doc='process piecewise capacity >= process capacity - \
+        process.cap-up * (1 - online status)')
+
+::
+
+	def def_cap_pro_piecewise_1_rule(m, tm, sit, pro):
+    		return (m.cap_pro_piecewise[tm, sit, pro] <= m.cap_pro[sit,pro])
+	def def_cap_pro_piecewise_2_rule(m, tm, sit, pro):
+    		return (m.cap_pro_piecewise[tm, sit, pro] <= 
+            		m.process.loc[sit,pro]['cap-up'] * m.onlinestatus[tm, sit, pro])
+	def def_cap_pro_piecewise_3_rule(m, tm, sit, pro):
+    		return (m.cap_pro_piecewise[tm, sit, pro] >=
+            		m.cap_pro[sit,pro] - m.process.loc[sit,pro]['cap-up'] *
+                	(1 - m.onlinestatus[tm, sit, pro]))
+
+**Process Startup Cost Factor Rules**: These constraint process startup cost factor rules introduce the necessary inequalities to define the process startup cost factor :math:`\chi_{vpt}^\text{startup}` such that it assumes the intended values of 1 for a startup occurence of a process :math:`p` in a site :math:`v` and 0 otherwise.
+
+.. math::
+
+	\forall v\in V, p\in P, t\in T_m\colon 
+	
+	\chi_{vpt}^\text{startup} \leq \omicron_{vpt}(t)
+
+	\chi_{vpt}^\text{startup} \geq \omicron_{vpt}(t) - 2* \omicron_{vpt}(t-1)
+
+	\chi_{vpt}^\text{startup} \leq \frac{3*\omicron_{vpt}(t) - \omicron_{vpt}(t-1) + 1}{4}
+
+These inequalities together ensure :math:`\chi_{vpt}^\text{startup} = 1` if :math:`\omicron_{vpt}(t-1) = 0 \ \& \  \omicron_{vpt}(t) = 1` and :math:`\chi_{vpt}^\text{startup} = 0` otherwise.
+
+In script ``urbs.py`` the constraint process startup cost factor rules are defined and calculated by the following code fragment:
+::
+
+    m.def_startupcostfactor_1 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_startupcostfactor_1_rule,
+        doc='rule 1 for startupcostfactor')
+    m.def_startupcostfactor_2 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_startupcostfactor_2_rule,
+        doc='rule 2 for startupcostfactor')
+    m.def_startupcostfactor_3 = pyomo.Constraint(
+        m.tm, m.pro_tuples,
+        rule=def_startupcostfactor_3_rule,
+        doc='rule 3 for startupcostfactor')  
+
+::
+
+	def def_startupcostfactor_1_rule(m, tm, sit, pro):
+   		return (m.startupcostfactor[tm, sit, pro] <= m.onlinestatus[tm, sit, pro])
+	def def_startupcostfactor_2_rule(m, tm, sit, pro):
+   		return (m.startupcostfactor[tm, sit, pro] >= m.onlinestatus[tm, sit, pro]-
+           		2 * m.onlinestatus[(tm-1), sit, pro])
+	def def_startupcostfactor_3_rule(m, tm, sit, pro):
+    		return (m.startupcostfactor[tm, sit, pro] <= 
+            		(3 * m.onlinestatus[tm, sit, pro] - 
+                	m.onlinestatus[(tm-1), sit, pro] +1) / 4)
 
 Transmission Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^

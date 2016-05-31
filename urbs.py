@@ -1883,7 +1883,7 @@ def report(instance, filename, commodities=None, sites=None):
                     stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
-                    [created, consumed, stored, imported, exported, overprod, derivative, onoroff],
+                    [created, consumed, stored, imported, exported, overprod, derivative],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
                           'Export to', 'Balance', 'Derivative', 'Shifted Demand', 'Demand Delta'])
@@ -1984,7 +1984,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1])
     #, height_ratios=[2, 1]
 
-    created, consumed, stored, imported, exported, derivative, onoroff = get_timeseries(
+    created, consumed, stored, imported, exported, derivative = get_timeseries(
         prob, com, sit, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)

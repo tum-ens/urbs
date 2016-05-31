@@ -627,20 +627,7 @@ def create_model(data, timesteps=None, dt=1):
         rule=obj_rule,
         sense=pyomo.minimize,
         doc='minimize(cost = sum of all cost types)')
-    
-    # startup auxiliary variable rules
-    m.res_startupcostaux1 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=startupcostaux_rule1,
-        doc='rule 1 for startopcostaux')       
-    m.res_startupcostaux2 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=startupcostaux_rule2,
-        doc='rule 2 for startopcostaux')
-    m.res_startupcostaux3 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=startupcostaux_rule3,
-        doc='rule 3 for startopcostaux')   
+   
         
     # demand side management
     m.def_dsm_variables = pyomo.Constraint(

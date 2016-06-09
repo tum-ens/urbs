@@ -706,7 +706,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # constraint is about power (MW), not energy (MWh)
     if com in m.com_demand:
         try:
-                power_surplus -= m.demand.loc[tm][sit,com]
+            power_surplus -= m.demand.loc[tm][sit,com]
         except KeyError:
             pass
     # if sit com is a dsm tuple, the power surplus is decreased by the

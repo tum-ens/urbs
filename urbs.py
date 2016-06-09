@@ -709,14 +709,17 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # upshifted demand and increased by the downshifted demand.
     if (sit, com) in m.dsm_site_tuples:
         power_surplus -= m.dsm_up[tm,sit,com]
-        power_surplus += sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
+        power_surplus += sum(m.dsm_down[t,tm,sit,com] 
+                             for t in dsm_time_tuples(
+                                 tm, m.timesteps[1:], 
+                                 m.dsm['delay'].loc[sit,com]))
     return power_surplus == 0
 
 # demand side management constraints
 # DSMup == DSMdo * efficiency factor n
 def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+    for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit,com]):
         dsm_down_sum += m.dsm_down[tm,tt,sit,com]
     return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
 
@@ -729,14 +732,14 @@ def res_dsm_upward_rule(m, tm, sit, com):
 
 def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit,com]):
         dsm_down_sum += m.dsm_down[t,tm,sit,com]
     return dsm_down_sum <= m.dsm.loc[sit,com]['cap-max-do']
 
 # DSMup + DSMdo <= max(Cup,Cdo)
 def res_dsm_maximum_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit,com]):
         dsm_down_sum += m.dsm_down[t,tm,sit,com]
 
     max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
@@ -749,7 +752,7 @@ def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
     for t in range(tm, tm+m.dsm.loc[sit,com]['recov']):
         dsm_up_sum += m.dsm_up[t,sit,com]
-    return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']
+    return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm['delay'].loc[sit,com]
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -1255,7 +1258,10 @@ def commodity_balance(m, tm, sit, com):
         # downshifted demand decreses demand
         if site == sit and commodity == com:
             balance += m.dsm_up[tm,sit,com]
-            balance -= sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
+            balance -= sum(m.dsm_down[t,tm,sit,com] 
+                           for t in dsm_time_tuples(
+                               tm, m.timesteps[1:], 
+                               m.dsm['delay'].loc[sit,com]))
     return balance
 
 

@@ -171,12 +171,12 @@ def create_model(data, timesteps=None, dt=1):
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
     
-    # demand side management input
-    # m.dsm.loc[sit,com]['delay'] = int(data['dsm'].loc['delay', 'Value'])
-    # m.dsm.loc[sit,com]['eff'] = float(data['dsm'].loc['eff', 'Value'])
-    # m.dsm.loc[sit,com]['recov'] = int(data['dsm'].loc['recov', 'Value'])
-    # m.dsm.loc[sit,com]['cap-max-do'] = float(data['dsm'].loc['cap-max-do', 'Value'])
-    # m.dsm.loc[sit,com]['cap-max-up'] = float(data['dsm'].loc['cap-max-up', 'Value'])
+    # input ratios for partial efficiencies
+    # only keep those entries whose values are
+    # a) positive and 
+    # b) numeric (implicitely, as NaN or NV compare false against 0) 
+    m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')['ratio-min']
+    m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
     
 	# Sets
     # ====
@@ -284,6 +284,23 @@ def create_model(data, timesteps=None, dt=1):
                     for (pro, commodity) in m.r_out.index
                     if process == pro],
         doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
+    
+    # process tuples for startup & partial feature
+    m.pro_partial_tuples = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=[(site, process)
+                    for (site, process) in m.pro_tuples
+                    for (pro, _) in m.r_in_min_fraction.index
+                    if process == pro],
+        doc='Processes with partial input')
+    
+    m.pro_partial_input_tuples = pyomo.Set(
+        within=m.sit*m.pro*m.com,
+        initialize=[(site, process, commodity)
+                    for (site, process) in m.pro_partial_tuples
+                    for (pro, commodity) in m.r_in_min_fraction.index
+                    if process == pro],
+        doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,Coal)')
 
     # commodity type subsets
     m.com_supim = pyomo.Set(
@@ -361,7 +378,7 @@ def create_model(data, timesteps=None, dt=1):
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
     m.tau_pro = pyomo.Var(
-        m.tm, m.pro_tuples,
+        m.t, m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow (MW) through process')
     m.e_pro_in = pyomo.Var(
@@ -373,23 +390,14 @@ def create_model(data, timesteps=None, dt=1):
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
         
-    m.onlinestatus = pyomo.Var(
-        m.t, 
-        m.pro_tuples,
-        within=pyomo.Boolean,
-        doc='Boolean variable which returns 1 for non-zero throughput \
-        and 0 for zero throughput')      
-    m.cap_pro_piecewise = pyomo.Var(
-        m.tm,
-        m.pro_tuples,
+    m.cap_online = pyomo.Var(
+        m.t, m.pro_partial_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Piecewise variable which returns 0 for zero m.onlinestatus \
-        and m.cap_pro for non-zero m.onlinestatus')   
-    m.startupcostfactor = pyomo.Var(
-        m.t,
-        m.pro_tuples,
-        within=pyomo.Boolean,
-        doc='Boolean variable which assumes 1 in case of a process start-up')  
+        doc='Online capacity (MW) of process per timestep')
+    m.startup_pro = pyomo.Var(
+        m.tm, m.pro_partial_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Started capacity (MW) of process per timestep')
 
     # transmission
     m.cap_tra = pyomo.Var(
@@ -497,7 +505,7 @@ def create_model(data, timesteps=None, dt=1):
         rule=def_process_capacity_rule,
         doc='total process capacity = inst-cap + new capacity')
     m.def_process_input = pyomo.Constraint(
-        m.tm, m.pro_input_tuples,
+        m.tm, m.pro_input_tuples - m.pro_partial_input_tuples,
         rule=def_process_input_rule,
         doc='process input = process throughput * input ratio')
     m.def_process_output = pyomo.Constraint(
@@ -525,39 +533,27 @@ def create_model(data, timesteps=None, dt=1):
         rule=res_sell_buy_symmetry_rule,
         doc='total power connection capacity must be symmetric in both directions')
 
-    m.res_process_throughput_by_partial_1 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=res_process_throughput_by_partial_1_rule,
-        doc='partial * (process_capacity or 0) <= process throughput ')
-    m.res_process_throughput_by_partial_2 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=res_process_throughput_by_partial_2_rule,
-        doc='process throughput <= (process_capacity or 0) ') 
-    m.def_cap_pro_piecewise_1 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=def_cap_pro_piecewise_1_rule,
-        doc='process piecewise capacity <= process capacity')
-    m.def_cap_pro_piecewise_2 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=def_cap_pro_piecewise_2_rule,
-        doc='process piecewise capacity <= process.cap-up * online status')
-    m.def_cap_pro_piecewise_3 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=def_cap_pro_piecewise_3_rule,
-        doc='process piecewise capacity >= process capacity - \
-        process.cap-up * (1 - online status)')
-    m.def_startupcostfactor_1 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=def_startupcostfactor_1_rule,
-        doc='rule 1 for startupcostfactor')
-    m.def_startupcostfactor_2 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=def_startupcostfactor_2_rule,
-        doc='rule 2 for startupcostfactor')
-    m.def_startupcostfactor_3 = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=def_startupcostfactor_3_rule,
-        doc='rule 3 for startupcostfactor')                        
+    m.res_throughput_by_online_capacity_min = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=res_throughput_by_online_capacity_min_rule,
+        doc='cap_online * min-fraction <= tau_pro')
+    m.res_throughput_by_online_capacity_max = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=res_throughput_by_online_capacity_max_rule,
+        doc='tau_pro <= cap_online')
+    m.def_partial_process_input = pyomo.Constraint(
+        m.tm, m.pro_partial_input_tuples,
+        rule=def_partial_process_input_rule,
+        doc='e_pro_in = cap_online * min_fraction * (r - R) / (1 - min_fraction)'
+                        '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
+    m.res_cap_online_by_cap_pro = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=res_cap_online_by_cap_pro_rule,
+        doc='online capacity <= process capacity')
+    m.def_startup_capacity = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=def_startup_capacity_rule,
+        doc='startup_capacity[t] >= cap_online[t] - cap_online[t-1]')
 
     # transmission
     m.def_transmission_capacity = pyomo.Constraint(
@@ -896,39 +892,32 @@ def res_process_throughput_gradient_rule(m, t, sit, pro):
     else:
         return pyomo.Constraint.Skip
 
-# minimum partial load * process capacity <= throughput <= process capacity
-# or throughput = 0
-def res_process_throughput_by_partial_1_rule(m, tm, sit, pro):
-    return (m.process.loc[sit,pro]['partial']*m.cap_pro_piecewise[tm,sit,pro] <=
-            m.tau_pro[tm,sit,pro])
-def res_process_throughput_by_partial_2_rule(m, tm, sit, pro):
-    return (m.tau_pro[tm,sit,pro] <=
-            m.cap_pro_piecewise[tm,sit,pro])
-# cap_pro_piecewise <= process capacity
-# cap_pro_piecewise <= cap-up * online status
-# cap_pro_piecewise >= process capacity - cap-up * (1 - online status)  
-def def_cap_pro_piecewise_1_rule(m, tm, sit, pro):
-    return (m.cap_pro_piecewise[tm, sit, pro] <= m.cap_pro[sit,pro])
-def def_cap_pro_piecewise_2_rule(m, tm, sit, pro):
-    return (m.cap_pro_piecewise[tm, sit, pro] <= 
-            m.process.loc[sit,pro]['cap-up'] * m.onlinestatus[tm, sit, pro])
-def def_cap_pro_piecewise_3_rule(m, tm, sit, pro):
-    return (m.cap_pro_piecewise[tm, sit, pro] >=
-            m.cap_pro[sit,pro] - m.process.loc[sit,pro]['cap-up'] *
-                (1 - m.onlinestatus[tm, sit, pro]))
 
-# following rules construct desired values for m.startupcostfactor, that is
-# 1 if m.onlinestatus[t-1] == 0 and m.onlinestatus[t] == 1,
-# 0 otherwise
-def def_startupcostfactor_1_rule(m, tm, sit, pro):
-    return (m.startupcostfactor[tm, sit, pro] <= m.onlinestatus[tm, sit, pro])
-def def_startupcostfactor_2_rule(m, tm, sit, pro):
-    return (m.startupcostfactor[tm, sit, pro] >= m.onlinestatus[tm, sit, pro]-
-            2 * m.onlinestatus[(tm-1), sit, pro])
-def def_startupcostfactor_3_rule(m, tm, sit, pro):
-    return (m.startupcostfactor[tm, sit, pro] <= 
-            (3 * m.onlinestatus[tm, sit, pro] - 
-                m.onlinestatus[(tm-1), sit, pro] +1) / 4)
+def res_throughput_by_online_capacity_min_rule(m, tm, sit, pro):
+    return (m.tau_pro[tm, sit, pro] >= m.cap_online[tm, sit, pro] *
+                                       m.process.loc[sit, pro]['min-fraction'])
+
+def res_throughput_by_online_capacity_max_rule(m, tm, sit, pro):
+    return (m.tau_pro[tm, sit, pro] <= m.cap_online[tm, sit, pro])
+
+def def_partial_process_input_rule(m, tm, sit, pro, coin):
+    R = m.r_in.loc[pro, coin] # input ratio at maximum operation point
+    r = m.r_in_min_fraction[pro, coin]  # input ratio at lowest operation point
+    min_fraction = m.process.loc[sit, pro]['min-fraction']
+    
+    online_factor = min_fraction * (r - R) / (1 - min_fraction) 
+    throughput_factor =  (R - min_fraction * r) / (1 - min_fraction)
+    
+    return (m.e_pro_in[tm, sit, pro, coin] == 
+            m.cap_online[tm, sit, pro] * online_factor + 
+            m.tau_pro[tm, sit, pro] * throughput_factor)
+
+def res_cap_online_by_cap_pro_rule(m, tm, sit, pro):
+    return m.cap_online[tm, sit, pro] <= m.cap_pro[sit, pro]
+    
+def def_startup_capacity_rule(m, tm, sit, pro):
+    return (m.startup_pro[tm, sit, pro] >= m.cap_online[tm, sit, pro] -
+                                           m.cap_online[tm-1, sit, pro])
                 
 # lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
@@ -1095,16 +1084,19 @@ def def_costs_rule(m, cost_type):
             sum(m.tau_pro[(tm,) + p] * m.dt *
                 m.process.loc[p]['var-cost'] *
                 m.weight
-                for tm in m.tm for p in m.pro_tuples) + \
+                for tm in m.tm 
+                for p in m.pro_tuples) + \
             sum(m.e_tra_in[(tm,) + t] * m.dt *
                 m.transmission.loc[t]['var-cost'] *
                 m.weight
-                for tm in m.tm for t in m.tra_tuples) + \
+                for tm in m.tm 
+                for t in m.tra_tuples) + \
             sum(m.e_sto_con[(tm,) + s] *
                 m.storage.loc[s]['var-cost-c'] * m.weight +
                 (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) * m.dt *
                 m.storage.loc[s]['var-cost-p'] * m.weight
-                for tm in m.tm for s in m.sto_tuples)
+                for tm in m.tm 
+                for s in m.sto_tuples)
 
     elif cost_type == 'Fuel':
         return m.costs['Fuel'] == sum(
@@ -1119,21 +1111,30 @@ def def_costs_rule(m, cost_type):
         com_prices = get_com_price(m, sell_tuples)
 
         return m.costs['Revenue'] == -sum(
-            m.e_co_sell[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
-            for tm in m.tm for c in sell_tuples)
+            m.e_co_sell[(tm,) + c] * 
+            com_prices[c].loc[tm] * 
+            m.weight * m.dt
+            for tm in m.tm 
+            for c in sell_tuples)
 
     elif cost_type == 'Purchase':
         buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
         com_prices = get_com_price(m, buy_tuples)
 
         return m.costs['Purchase'] == sum(
-            m.e_co_buy[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
-            for tm in m.tm for c in buy_tuples)
+            m.e_co_buy[(tm,) + c] * 
+            com_prices[c].loc[tm] * 
+            m.weight * m.dt
+            for tm in m.tm 
+            for c in buy_tuples)
             
     elif cost_type == 'Startup':
         return m.costs['Startup'] == sum(
-            m.startupcostfactor[(tm,)+p] * m.process.loc[p]['startup'] * 
-            m.weight for tm in m.tm for p in m.pro_tuples)
+            m.startup_pro[(tm,) + p] * 
+            m.process.loc[p]['startup-cost'] * 
+            m.weight * m.dt 
+            for tm in m.tm 
+            for p in m.pro_partial_tuples)
 
     else:
         raise NotImplementedError("Unknown cost type.")

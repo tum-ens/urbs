@@ -68,6 +68,14 @@ Features
 Changes
 -------
 
+(Upcoming) Version 0.6
+^^^^^^^^^^^^^^^^^^^^^^
+
+* :ref:`sec-dsm-constr` added
+* :ref:`sec-partial-startup-constr` added
+* Various fixes in examples, docs and tutorials for Pyomo 4/Python 3 changes
+
+
 2016-02-16 Version 0.5
 ^^^^^^^^^^^^^^^^^^^^^^
 

@@ -3,23 +3,23 @@
 Equations
 =========
 
-Cost Function
-^^^^^^^^^^^^^
+.. _eq-cost-func:
+
+Objective
+^^^^^^^^^
 
 The variable total system cost :math:`\zeta` is calculated by the cost function. The cost function is the objective function of the optimization  model. Minimizing the value of the variable total system cost would give the most reasonable solution for the modelled energy system  The formula of the cost function expressed in mathematical notation is as following:
 
 .. math::
 
-	\zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur}
+	\zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur} + \zeta_\text{startup}
 
 The calculation of the variable total system cost is given in ``urbs.py`` by the following code fragment.  
 
-::
+.. literalinclude:: /../urbs.py
+   :pyobject: obj_rule
 
-	def obj_rule(m):
-		return pyomo.summation(m.costs)
-
-The variable total system cost :math:`\zeta` is basically calculated by the summation of every type of total costs. As previously mentioned on `Cost Types`_ these cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``. The calculation of each single cost types are listed below.
+The variable total system cost :math:`\zeta` is basically calculated by the summation of every type of total costs. As previously mentioned in section :ref:`sec-cost-types`, these cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``. The calculation of each single cost types are listed below.
 
 Investment Costs
 ----------------
@@ -258,10 +258,38 @@ In script ``urbs.py`` the value of the total purchase cost is calculated by the 
             m.e_co_buy[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
             for tm in m.tm for c in buy_tuples)
 
-Commodity Balance
-^^^^^^^^^^^^^^^^^
 
-The function commodity balance calculates the balance of a commodity :math:`c` in a site :math:`v` at a timestep :math:`t`. Commodity balance function facilitates the formulation of commodity constraints. The formula for commodity balance is expressed in mathematical notation as:
+Startup Costs
+--------------
+
+The variable startup costs :math:`\zeta_\text{startup}` represents the total annual expenses that are required for the startup occurences of processes with the partial & startup feature activated. The calculation of the total annual startup costs  is expressed by the following mathematical notation:
+
+.. math::
+
+	\zeta_\text{startup} = 
+	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{p \in P}} \phi_{vpt} k_{vp}^\text{st} \Delta t
+
+
+In script ``urbs.py`` the value of the total startup cost is calculated by the following code fragment:
+::
+
+    elif cost_type == 'Startup':
+        return m.costs['Startup'] == sum(
+            m.startup_pro[(tm,) + p] * 
+            m.process.loc[p]['startup-cost'] * 
+            m.weight * m.dt 
+            for tm in m.tm 
+            for p in m.pro_partial_tuples)
+
+
+
+Constraints
+-----------
+
+Commodity Constraints
+^^^^^^^^^^^^^^^^^^^^^
+
+**Commodity Balance** The function commodity balance calculates the balance of a commodity :math:`c` in a site :math:`v` at a timestep :math:`t`. Commodity balance function facilitates the formulation of commodity constraints. The formula for commodity balance is expressed in mathematical notation as:
 
 .. math::
 
@@ -287,39 +315,10 @@ The value of the function :math:`\mathrm{CB}` being greater than zero :math:`\ma
 
 In script ``urbs.py`` the value of the commodity balance function :math:`\mathrm{CB}(v,c,t)` is calculated by the following code fragment: 
 
-::
+.. literalinclude:: /../urbs.py
+   :pyobject: commodity_balance
 
-	def commodity_balance(m, tm, sit, com):
-		balance = 0
-		for site, process in m.pro_tuples:
-			if site == sit and com in m.r_in.loc[process].index:
-				# usage as input for process increases balance
-				balance += m.e_pro_in[(tm, site, process, com)]
-			if site == sit and com in m.r_out.loc[process].index:
-				# output from processes decreases balance
-				balance -= m.e_pro_out[(tm, site, process, com)]
-		for site_in, site_out, transmission, commodity in m.tra_tuples:
-			# exports increase balance
-			if site_in == sit and commodity == com:
-				balance += m.e_tra_in[(tm, site_in, site_out, transmission, com)]
-			# imports decrease balance
-			if site_out == sit and commodity == com:
-				balance -= m.e_tra_out[(tm, site_in, site_out, transmission, com)]
-		for site, storage, commodity in m.sto_tuples:
-			# usage as input for storage increases consumption
-			# output from storage decreases consumption
-			if site == sit and commodity == com:
-				balance += m.e_sto_in[(tm, site, storage, com)]
-				balance -= m.e_sto_out[(tm, site, storage, com)]
-		return balance
 
-Further information on this function can be found in Helper function section. :func:`commodity_balance(m, tm, sit, com)`
-
-Constraints
-===========
-
-Commodity Constraints
-^^^^^^^^^^^^^^^^^^^^^
 
 **Vertex Rule**: Vertex rule is the main constraint that has to be satisfied for every commodity. This constraint is defined differently for each commodity type. The inequality requires, that any imbalance (CB>0, CB<0) of a commodity :math:`c` in a site :math:`v` at a timestep :math:`t` to be balanced by a corresponding source term or demand.
 
@@ -361,52 +360,8 @@ In script ``urbs.py`` the constraint vertex rule is defined and calculated by th
 			doc='storage + transmission + process + source + buy - sell == demand')
 		
 
-::
-
-	def res_vertex_rule(m, tm, sit, com, com_type):
-		# environmental or supim commodities don't have this constraint (yet)
-		if com in m.com_env:
-			return pyomo.Constraint.Skip
-		if com in m.com_supim:
-			return pyomo.Constraint.Skip
-	
-		# helper function commodity_balance calculates balance from input to
-		# and output from processes, storage and transmission.
-		# if power_surplus > 0: production/storage/imports create net positive
-		#                       amount of commodity com
-		# if power_surplus < 0: production/storage/exports consume a net
-		#                       amount of the commodity com
-		power_surplus = - commodity_balance(m, tm, sit, com)
-	
-		# if com is a stock commodity, the commodity source term e_co_stock
-		# can supply a possibly negative power_surplus
-		if com in m.com_stock:
-			power_surplus += m.e_co_stock[tm, sit, com, com_type]
-	
-		# if com is a sell commodity, the commodity source term e_co_sell
-		# can supply a possibly positive power_surplus
-		if com in m.com_sell:
-			power_surplus -= m.e_co_sell[tm, sit, com, com_type]
-	
-		# if com is a buy commodity, the commodity source term e_co_buy
-		# can supply a possibly negative power_surplus
-		if com in m.com_buy:
-			power_surplus += m.e_co_buy[tm, sit, com, com_type]
-	
-		# if com is a demand commodity, the power_surplus is reduced by the
-		# demand value; no scaling by m.dt or m.weight is needed here, as this
-		# constraint is about power (MW), not energy (MWh)
-		if com in m.com_demand:
-			try:
-				power_surplus -= m.demand.loc[tm][sit, com]
-			except KeyError:
-				pass
-        # if sit com is a dsm tuple, the power surplus is decreased by the
-        # upshifted demand and increased by the downshifted demand.
-        if (sit, com) in m.dsm_site_tuples:
-            power_surplus -= m.dsm_up[tm,sit,com]
-            power_surplus += sum(m.dsm_down[t,tm,sit,com] for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']))
-		return power_surplus == 0
+.. literalinclude:: /../urbs.py
+   :pyobject: res_vertex_rule
 
 **Stock Per Step Rule**: The constraint stock per step rule applies only for commodities of type "Stock" ( :math:`c \in C_\text{st}`). This constraint limits the amount of stock commodity :math:`c \in C_\text{st}`, that can be used by the energy system in the site :math:`v` at the timestep :math:`t`. The limited amount is defined by the parameter maximum stock supply limit per time step :math:`\overline{l}_{vc}`. To satisfy this constraint, the value of the variable stock commodity source term :math:`\rho_{vct}` must be less than or equal to the value of the parameter maximum stock supply limit per time step :math:`\overline{l}_{vc}`. In mathematical notation this is expressed as:
 
@@ -423,14 +378,10 @@ In script ``urbs.py`` the constraint stock per step rule is defined and calculat
         rule=res_stock_step_rule,
         doc='stock commodity input per step <= commodity.maxperstep')
 
-::
 
-	def res_stock_step_rule(m, tm, sit, com, com_type):
-		if com not in m.com_stock:
-			return pyomo.Constraint.Skip
-		else:
-			return (m.e_co_stock[tm, sit, com, com_type] <=
-					m.commodity.loc[sit, com, com_type]['maxperstep'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_stock_step_rule
+
 
 **Total Stock Rule**: The constraint total stock rule applies only for commodities of type "Stock" (:math:`c \in C_\text{st}`). This constraint limits the amount of stock commodity :math:`c \in C_\text{st}`, that can be used annually by the energy system in the site :math:`v`. The limited amount is defined by the parameter maximum annual stock supply limit per vertex :math:`\overline{L}_{vc}`. To satisfy this constraint, the annual usage of stock commodity must be less than or equal to the value of the parameter stock supply limit per vertex :math:`\overline{L}_{vc}`. The annual usage of stock commodity is calculated by the sum of the products of the parameter weight :math:`w`, the parameter timestep duration :math:`\Delta t` and the parameter stock commodity source term :math:`\rho_{vct}` for every timestep :math:`t \in T_m`. In mathematical notation this is expressed as:
 
@@ -447,20 +398,8 @@ In script ``urbs.py`` the constraint total stock rule is defined and calculated 
         rule=res_stock_total_rule,
         doc='total stock commodity input <= commodity.max')
 
-::
-
-	def res_stock_total_rule(m, sit, com, com_type):
-		if com not in m.com_stock:
-			return pyomo.Constraint.Skip
-		else:
-			# calculate total consumption of commodity com
-			total_consumption = 0
-			for tm in m.tm:
-				total_consumption += (
-					m.e_co_stock[tm, sit, com, com_type] * m.dt)
-			total_consumption *= m.weight
-			return (total_consumption <=
-					m.commodity.loc[sit, com, com_type]['max'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_stock_total_rule
 
 
 **Sell Per Step Rule**: The constraint sell per step rule applies only for commodities of type "Sell" ( :math:`c \in C_\text{sell}`). This constraint limits the amount of sell commodity :math:`c \in C_\text{sell}`, that can be sold by the energy system in the site :math:`v` at the timestep :math:`t`. The limited amount is defined by the parameter maximum sell supply limit per time step :math:`\overline{g}_{vc}`. To satisfy this constraint, the value of the variable sell commodity source term :math:`\varrho_{vct}` must be less than or equal to the value of the parameter maximum sell supply limit per time step :math:`\overline{g}_{vc}`. In mathematical notation this is expressed as:
@@ -477,15 +416,8 @@ In script ``urbs.py`` the constraint sell per step rule is defined and calculate
        rule=res_sell_step_rule,
        doc='sell commodity output per step <= commodity.maxperstep')
 
-::
-
-	def res_sell_step_rule(m, tm, sit, com, com_type):
-		if com not in m.com_sell:
-			return pyomo.Constraint.Skip
-		else:
-			return (m.e_co_sell[tm, sit, com, com_type] <=
-					   m.commodity.loc[sit, com, com_type]['maxperstep'])
-
+.. literalinclude:: /../urbs.py
+   :pyobject: res_sell_step_rule
 
 **Total Sell Rule**: The constraint total sell rule applies only for commodities of type "Sell" ( :math:`c \in C_\text{sell}`). This constraint limits the amount of sell commodity :math:`c \in C_\text{sell}`, that can be sold annually by the energy system in the site :math:`v`. The limited amount is defined by the parameter maximum annual sell supply limit per vertex :math:`\overline{G}_{vc}`. To satisfy this constraint, the annual usage of sell commodity must be less than or equal to the value of the parameter sell supply limit per vertex :math:`\overline{G}_{vc}`. The annual usage of sell commodity is calculated by the sum of the products of the parameter weight :math:`w`, the parameter timestep duration :math:`\Delta t` and the parameter sell commodity source term :math:`\varrho_{vct}` for every timestep :math:`t \in T_m`. In mathematical notation this is expressed as:
 
@@ -501,20 +433,8 @@ In script ``urbs.py`` the constraint total sell rule is defined and calculated b
         rule=res_sell_total_rule,
         doc='total sell commodity output <= commodity.max')
 
-::
-
-	def res_sell_total_rule(m, sit, com, com_type):
-		if com not in m.com_sell:
-			return pyomo.Constraint.Skip
-		else:
-			# calculate total sale of commodity com
-			total_consumption = 0
-			for tm in m.tm:
-				total_consumption += (
-					m.e_co_sell[tm, sit, com, com_type] * m.dt)
-			total_consumption *= m.weight
-			return (total_consumption <=
-					  m.commodity.loc[sit, com, com_type]['max'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_sell_total_rule
 
 **Buy Per Step Rule**: The constraint buy per step rule applies only for commodities of type "Buy" ( :math:`c \in C_\text{buy}`). This constraint limits the amount of buy commodity :math:`c \in C_\text{buy}`, that can be bought by the energy system in the site :math:`v` at the timestep :math:`t`. The limited amount is defined by the parameter maximum buy supply limit per time step :math:`\overline{b}_{vc}`. To satisfy this constraint, the value of the variable buy commodity source term :math:`\psi_{vct}` must be less than or equal to the value of the parameter maximum buy supply limit per time step :math:`\overline{b}_{vc}`. In mathematical notation this is expressed as:
 
@@ -530,14 +450,8 @@ In script ``urbs.py`` the constraint buy per step rule is defined and calculated
         rule=res_buy_step_rule,
         doc='buy commodity output per step <= commodity.maxperstep')
 
-::
-
-	def res_buy_step_rule(m, tm, sit, com, com_type):
-		if com not in m.com_buy:
-			return pyomo.Constraint.Skip
-		else:
-			return (m.e_co_buy[tm, sit, com, com_type] <=
-					   m.commodity.loc[sit, com, com_type]['maxperstep'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_buy_step_rule
 
 **Total Buy Rule**: The constraint total buy rule applies only for commodities of type "Buy" ( :math:`c \in C_\text{buy}`). This constraint limits the amount of buy commodity :math:`c \in C_\text{buy}`, that can be bought annually by the energy system in the site :math:`v`. The limited amount is defined by the parameter maximum annual buy supply limit per vertex :math:`\overline{B}_{vc}`. To satisfy this constraint, the annual usage of buy commodity must be less than or equal to the value of the parameter buy supply limit per vertex :math:`\overline{B}_{vc}`. The annual usage of buy commodity is calculated by the sum of the products of the parameter weight :math:`w`, the parameter timestep duration :math:`\Delta t` and the parameter buy commodity source term :math:`\psi_{vct}` for every timestep :math:`t \in T_m`. In mathematical notation this is expressed as:
 
@@ -553,20 +467,9 @@ In script ``urbs.py`` the constraint total buy rule is defined and calculated by
        rule=res_buy_total_rule,
        doc='total buy commodity output <= commodity.max')
 
-::
+.. literalinclude:: /../urbs.py
+   :pyobject: res_buy_total_rule
 
-	def res_buy_total_rule(m, sit, com, com_type):
-		if com not in m.com_buy:
-			return pyomo.Constraint.Skip
-		else:
-			# calculate total sale of commodity com
-			total_consumption = 0
-			for tm in m.tm:
-				total_consumption += (
-					m.e_co_buy[tm, sit, com, com_type] * m.dt)
-			total_consumption *= m.weight
-			return (total_consumption <=
-					  m.commodity.loc[sit, com, com_type]['max'])
 
 **Environmental Output Per Step Rule**: The constraint environmental output per step rule applies only for commodities of type "Env" ( :math:`c \in C_\text{env}`). This constraint limits the amount of environmental commodity :math:`c \in C_\text{env}`, that can be released to environment by the energy system in the site :math:`v` at the timestep :math:`t`. The limited amount is defined by the parameter maximum environmental output per time step :math:`\overline{m}_{vc}`. To satisfy this constraint, the negative value of the commodity balance for the given environmental commodity :math:`c \in C_\text{env}` must be less than or equal to the value of the parameter maximum environmental output per time step :math:`\overline{m}_{vc}`. In mathematical notation this is expressed as:
 
@@ -582,15 +485,9 @@ In script ``urbs.py`` the constraint environmental output per step rule is defin
         rule=res_env_step_rule,
         doc='environmental output per step <= commodity.maxperstep')
 
-::
+.. literalinclude:: /../urbs.py
+   :pyobject: res_env_step_rule
 
-	def res_env_step_rule(m, tm, sit, com, com_type):
-		if com not in m.com_env:
-			return pyomo.Constraint.Skip
-		else:
-			environmental_output = - commodity_balance(m, tm, sit, com)
-			return (environmental_output <=
-					m.commodity.loc[sit, com, com_type]['maxperstep'])
 
 **Total Environmental Output Rule**: The constraint total environmental output rule applies only for commodities of type "Env" ( :math:`c \in C_\text{env}`). This constraint limits the amount of environmental commodity :math:`c \in C_\text{env}`, that can be released to environment annually by the energy system in the site :math:`v`. The limited amount is defined by the parameter maximum annual environmental output limit per vertex :math:`\overline{M}_{vc}`. To satisfy this constraint, the annual release of environmental commodity must be less than or equal to the value of the parameter maximum annual environmental output :math:`\overline{M}_{vc}`. The annual release of environmental commodity is calculated by the sum of the products of the parameter weight :math:`w`, the parameter timestep duration :math:`\Delta t` and the negative value of commodity balance function, for every timestep :math:`t \in T_m`. In mathematical notation this is expressed as:
 
@@ -607,19 +504,9 @@ In script ``urbs.py`` the constraint total environmental output rule is defined 
         doc='total environmental commodity output <= commodity.max')
 
 In script ``urbs.py`` the constraint total environmental output rule is defined and calculated by the following code fragment:
-::
 
-	def res_env_total_rule(m, sit, com, com_type):
-		if com not in m.com_env:
-			return pyomo.Constraint.Skip
-		else:
-			# calculate total creation of environmental commodity com
-			env_output_sum = 0
-			for tm in m.tm:
-				env_output_sum += (- commodity_balance(m, tm, sit, com) * m.dt)
-			env_output_sum *= m.weight
-			return (env_output_sum <=
-					m.commodity.loc[sit, com, com_type]['max'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_env_total_rule
 
 Process Constraints
 ^^^^^^^^^^^^^^^^^^^
@@ -638,12 +525,8 @@ In script ``urbs.py`` the constraint process capacity rule is defined and calcul
         rule=def_process_capacity_rule,
         doc='total process capacity = inst-cap + new capacity')
 
-::
-
-	def def_process_capacity_rule(m, sit, pro):
-		return (m.cap_pro[sit, pro] ==
-				m.cap_pro_new[sit, pro] +
-				m.process.loc[sit, pro]['inst-cap'])
+.. literalinclude:: /../urbs.py
+   :pyobject: def_process_capacity_rule
 
 **Process Input Rule**: The constraint process input rule defines the variable process input commodity flow :math:`\epsilon_{vcpt}^\text{in}`. The variable process input commodity flow is defined by the constraint as the product of the variable process throughput :math:`\tau_{vpt}` and the parameter process input ratio :math:`r_{pc}^\text{in}`. In mathematical notation this is expressed as:
 
@@ -655,15 +538,12 @@ In script ``urbs.py`` the constraint process input rule is defined and calculate
 ::
 
     m.def_process_input = pyomo.Constraint(
-        m.tm, m.pro_input_tuples,
+        m.tm, m.pro_input_tuples - m.pro_partial_input_tuples,
         rule=def_process_input_rule,
         doc='process input = process throughput * input ratio')
 
-::
-
-	def def_process_input_rule(m, tm, sit, pro, co):
-		return (m.e_pro_in[tm, sit, pro, co] ==
-				m.tau_pro[tm, sit, pro] * m.r_in.loc[pro, co])
+.. literalinclude:: /../urbs.py
+   :pyobject: def_process_input_rule
 
 **Process Output Rule**: The constraint process output rule defines the variable process output commodity flow :math:`\epsilon_{vcpt}^\text{out}`. The variable process output commodity flow is defined by the constraint as the product of the variable process throughput :math:`\tau_{vpt}` and the parameter process output ratio :math:`r_{pc}^\text{out}`. In mathematical notation this is expressed as:
 
@@ -679,11 +559,8 @@ In script ``urbs.py`` the constraint process output rule is defined and calculat
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
 
-::
-
-	def def_process_output_rule(m, tm, sit, pro, co):
-		return (m.e_pro_out[tm, sit, pro, co] ==
-				m.tau_pro[tm, sit, pro] * m.r_out.loc[pro, co])
+.. literalinclude:: /../urbs.py
+   :pyobject: def_process_output_rule
 
 **Intermittent Supply Rule**: The constraint intermittent supply rule defines the variable process input commodity flow :math:`\epsilon_{vcpt}^\text{in}` for processes :math:`p` that use a supply intermittent commodity :math:`c \in C_\text{sup}` as input. Therefore this constraint only applies if a commodity is an intermittent supply commodity :math:`c \in C_\text{sup}`. The variable process input commodity flow is defined by the constraint as the product of the variable total process capacity :math:`\kappa_{vp}` and the parameter intermittent supply capacity factor :math:`s_{vct}`. In mathematical notation this is expressed as:
 
@@ -699,14 +576,8 @@ In script ``urbs.py`` the constraint intermittent supply rule is defined and cal
         rule=def_intermittent_supply_rule,
         doc='process output = process capacity * supim timeseries')
 
-::
-
-	def def_intermittent_supply_rule(m, tm, sit, pro, coin):
-		if coin in m.com_supim:
-			return (m.e_pro_in[tm, sit, pro, coin] ==
-					m.cap_pro[sit, pro] * m.supim.loc[tm][sit, coin])
-		else:
-			return pyomo.Constraint.Skip
+.. literalinclude:: /../urbs.py
+   :pyobject: def_intermittent_supply_rule
 
 **Process Throughput By Capacity Rule**: The constraint process throughput by capacity rule limits the variable process throughput :math:`\tau_{vpt}`. This constraint prevents processes from exceeding their capacity. The constraint states that the variable process throughput must be less than or equal to the variable total process capacity :math:`\kappa_{vp}`. In mathematical notation this is expressed as:
 
@@ -722,10 +593,8 @@ In script ``urbs.py`` the constraint process throughput by capacity rule is defi
         rule=res_process_throughput_by_capacity_rule,
         doc='process throughput <= total process capacity')
 
-::
-
-	def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
-		return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_process_throughput_by_capacity_rule
 
 **Process Throughput Gradient Rule**: The constraint process throughput gradient rule limits the process power gradient :math:`\left| \tau_{vpt} - \tau_{vp(t-1)} \right|`. This constraint prevents processes from exceeding their maximal possible change in activity from one time step to the next. The constraint states that absolute power gradient must be less than or equal to the maximal power gradient :math:`\overline{PG}_{vp}` parameter (scaled to capacity and by time step duration). In mathematical notation this is expressed as:
 
@@ -741,20 +610,8 @@ In script ``urbs.py`` the constraint process throughput gradient rule is defined
         rule=res_process_throughput_gradient_rule,
         doc='process throughput gradient <= maximal gradient')
 
-::
-
-    def res_process_throughput_gradient_rule(m, t, sit, pro):
-        if m.process.loc[sit, pro]['max-grad'] < 1/m.dt.value:
-            if m.cap_pro[sit, pro].value is None:
-                return pyomo.Constraint.Skip
-            else:
-                return (m.tau_pro[t-1, sit, pro] - m.cap_pro[sit, pro] *
-                            m.process.loc[sit, pro]['max-grad'] * m.dt,
-                        m.tau_pro[t, sit, pro],
-                        m.tau_pro[t-1, sit, pro] + m.cap_pro[sit, pro] *
-                            m.process.loc[sit, pro]['max-grad'] * m.dt)
-        else:
-            return pyomo.Constraint.Skip
+.. literalinclude:: /../urbs.py
+   :pyobject: res_process_throughput_gradient_rule
 
 **Process Capacity Limit Rule**: The constraint process capacity limit rule limits the variable total process capacity :math:`\kappa_{vp}`. This constraint restricts a process :math:`p` in a site :math:`v` from having more total capacity than an upper bound and having less than a lower bound. The constraint states that the variable total process capacity :math:`\kappa_{vp}` must be greater than or equal to the parameter process capacity lower bound :math:`\underline{K}_{vp}` and less than or equal to the parameter process capacity upper bound :math:`\overline{K}_{vp}`. In mathematical notation this is expressed as:
 
@@ -770,12 +627,8 @@ In script ``urbs.py`` the constraint process capacity limit rule is defined and 
         rule=res_process_capacity_rule,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
 
-::
-
-	def res_process_capacity_rule(m, sit, pro):
-		return (m.process.loc[sit, pro]['cap-lo'],
-				m.cap_pro[sit, pro],
-				m.process.loc[sit, pro]['cap-up'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_process_capacity_rule
 
 **Sell Buy Symmetry Rule**: The constraint sell buy symmetry rule defines the total process capacity :math:`\kappa_{vp}` of a process :math:`p` in a site :math:`v` that uses either sell or buy commodities ( :math:`c \in C_\text{sell} \vee C_\text{buy}`), therefore this constraint only applies to processes that use sell or buy commodities. The constraint states that the total process capacities :math:`\kappa_{vp}` of processes that use complementary buy and sell commodities must be equal. Buy and sell commodities are complementary, when a commodity :math:`c` is an output of a process where the buy commodity is an input, and at the same time the commodity :math:`c` is an input commodity of a process where the sell commodity is an output.
 
@@ -787,21 +640,86 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
         rule=res_sell_buy_symmetry_rule,
         doc='total power connection capacity must be symmetric in both directions')
 
+.. literalinclude:: /../urbs.py
+   :pyobject: res_sell_buy_symmetry_rule
+
+
+.. _sec-partial-startup-constr:
+
+Partial & Startup Process Constraints
+-------------------------------------
+
+Start
+
+**Throughput by Online Capacity Min Rule**
+
 ::
 
-	def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
-	# constraint only for sell and buy processes
-	# and the processes must be in the same site
-		if coin in m.com_buy:
-			sell_pro = search_sell_buy_tuple(m, sit_in, pro_in, coin)
-			if sell_pro is None:
-				return pyomo.Constraint.Skip
-			else:
-				return (m.cap_pro[sit_in, pro_in] ==
-							m.cap_pro[sit_in, sell_pro])
-		else:
-			return pyomo.Constraint.Skip
+    m.res_throughput_by_online_capacity_min = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=res_throughput_by_online_capacity_min_rule,
+        doc='cap_online * min-fraction <= tau_pro')
+        
+.. literalinclude:: /../urbs.py
+   :pyobject: res_throughput_by_online_capacity_min_rule
 
+
+**Throughput by Online Capacity Max Rule**
+   
+::
+
+    m.res_throughput_by_online_capacity_max = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=res_throughput_by_online_capacity_max_rule,
+        doc='tau_pro <= cap_online')
+        
+.. literalinclude:: /../urbs.py
+   :pyobject: res_throughput_by_online_capacity_max_rule
+
+   
+
+**Partial Process Input Rule**
+   
+::
+
+    m.def_partial_process_input = pyomo.Constraint(
+        m.tm, m.pro_partial_input_tuples,
+        rule=def_partial_process_input_rule,
+        doc='e_pro_in = cap_online * min_fraction * (r - R) / (1 - min_fraction)'
+                        '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
+
+.. literalinclude:: /../urbs.py
+   :pyobject: def_partial_process_input_rule
+
+
+**Online Capacity By Process Capacity** limits the value of the online capacity :math:`\omega_{vpt}` by the total installed process capacity :math:`\kappa_{vp}`:
+
+
+.. math::
+
+	\forall \left.v\in V, p\in P\right|_{(v,p)\in PP},t\in T_m\colon\quad 
+	\omega_{vpt} \leq \kappa_{vp}
+   
+::
+
+    m.res_cap_online_by_cap_pro = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=res_cap_online_by_cap_pro_rule,
+        doc='online capacity <= process capacity')
+
+.. literalinclude:: /../urbs.py
+   :pyobject: res_cap_online_by_cap_pro_rule 
+
+::
+
+    m.def_startup_capacity = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=def_startup_capacity_rule,
+        doc='startup_capacity[t] >= cap_online[t] - cap_online[t-1]')
+
+.. literalinclude:: /../urbs.py
+   :pyobject: def_startup_capacity_rule
+        
 Transmission Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -819,12 +737,8 @@ In script ``urbs.py`` the constraint transmission capacity rule is defined and c
         rule=def_transmission_capacity_rule,
         doc='total transmission capacity = inst-cap + new capacity')
 
-::
-
-	def def_transmission_capacity_rule(m, sin, sout, tra, com):
-		return (m.cap_tra[sin, sout, tra, com] ==
-				m.cap_tra_new[sin, sout, tra, com] +
-				m.transmission.loc[sin, sout, tra, com]['inst-cap'])
+.. literalinclude:: /../urbs.py
+   :pyobject: def_transmission_capacity_rule
 
 **Transmission Output Rule**: The constraint transmission output rule defines the variable transmission power flow (output) :math:`\pi_{aft}^\text{out}`. The variable transmission power flow (output) is defined by the constraint as the product of the variable transmission power flow (input) :math:`\pi_{aft}^\text{in}` and the parameter transmission efficiency :math:`e_{af}`. In mathematical notation this is expressed as:
 
@@ -840,12 +754,8 @@ In script ``urbs.py`` the constraint transmission output rule is defined and cal
         rule=def_transmission_output_rule,
         doc='transmission output = transmission input * efficiency')
 
-::
-
-	def def_transmission_output_rule(m, tm, sin, sout, tra, com):
-		return (m.e_tra_out[tm, sin, sout, tra, com] ==
-				m.e_tra_in[tm, sin, sout, tra, com] *
-				m.transmission.loc[sin, sout, tra, com]['eff'])
+.. literalinclude:: /../urbs.py
+   :pyobject: def_transmission_output_rule
 
 **Transmission Input By Capacity Rule**: The constraint transmission input by capacity rule limits the variable transmission power flow (input) :math:`\pi_{aft}^\text{in}`. This constraint prevents  transmissions from exceeding their possible power input capacity. The constraint states that the variable transmission power flow (input) :math:`\pi_{aft}^\text{in}` must be less than or equal to the variable total transmission capacity :math:`\kappa_{af}`. In mathematical notation this is expressed as:
 
@@ -861,11 +771,8 @@ In script ``urbs.py`` the constraint transmission input by capacity rule is defi
         rule=res_transmission_input_by_capacity_rule,
         doc='transmission input <= total transmission capacity')
 
-::
-
-	def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
-		return (m.e_tra_in[tm, sin, sout, tra, com] <=
-				m.cap_tra[sin, sout, tra, com])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_transmission_input_by_capacity_rule
 
 **Transmission Capacity Limit Rule**: The constraint transmission capacity limit rule limits the variable total transmission capacity :math:`\kappa_{af}`. This constraint restricts a transmission :math:`f` through an arc :math:`a` from having more total power output capacity than an upper bound and having less than a lower bound. The constraint states that the variable total transmission capacity :math:`\kappa_{af}` must be greater than or equal to the parameter transmission capacity lower bound :math:`\underline{K}_{af}` and less than or equal to the parameter transmission capacity upper bound :math:`\overline{K}_{af}`. In mathematical notation this is expressed as:
 
@@ -882,12 +789,8 @@ In script ``urbs.py`` the constraint transmission capacity limit rule is defined
         doc='transmission.cap-lo <= total transmission capacity <= '
             'transmission.cap-up')
 
-::
-
-	def res_transmission_capacity_rule(m, sin, sout, tra, com):
-		return (m.transmission.loc[sin, sout, tra, com]['cap-lo'],
-				m.cap_tra[sin, sout, tra, com],
-				m.transmission.loc[sin, sout, tra, com]['cap-up'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_transmission_capacity_rule
 
 **Transmission Symmetry Rule**: The constraint transmission symmetry rule defines the power output capacities of incoming and outgoing arcs :math:`a , a'` of a transmission :math:`f`. The constraint states that the power output capacities :math:`\kappa_{af}` of the incoming arc :math:`a` and the complementary outgoing arc :math:`a'` between two sites must be equal. In mathematical notation this is expressed as:
 
@@ -903,10 +806,8 @@ In script ``urbs.py`` the constraint transmission symmetry rule is defined and c
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
 
-::
-
-	def res_transmission_symmetry_rule(m, sin, sout, tra, com):
-		return m.cap_tra[sin, sout, tra, com] == m.cap_tra[sout, sin, tra, com]
+.. literalinclude:: /../urbs.py
+   :pyobject: res_transmission_symmetry_rule
 
 Storage Constraints
 ^^^^^^^^^^^^^^^^^^^
@@ -926,15 +827,8 @@ In script ``urbs.py`` the constraint storage state rule is defined and calculate
         rule=def_storage_state_rule,
         doc='storage[t] = storage[t-1] + input - output')
 
-::
-
-	def def_storage_state_rule(m, t, sit, sto, com):
-		return (m.e_sto_con[t, sit, sto, com] ==
-				m.e_sto_con[t-1, sit, sto, com] +
-				m.e_sto_in[t, sit, sto, com] *
-				m.storage.loc[sit, sto, com]['eff-in'] * m.dt -
-				m.e_sto_out[t, sit, sto, com] /
-				m.storage.loc[sit, sto, com]['eff-out'] * m.dt)
+.. literalinclude:: /../urbs.py
+   :pyobject: def_storage_state_rule
 
 **Storage Power Rule**: The constraint storage power rule defines the variable total storage power :math:`\kappa_{vs}^\text{p}`. The variable total storage power is defined by the constraint as the sum of the parameter storage power installed :math:`K_{vs}^\text{p}` and the variable new storage power :math:`\hat{\kappa}_{vs}^\text{p}`. In mathematical notation this is expressed as:
 
@@ -950,12 +844,8 @@ In script ``urbs.py`` the constraint storage power rule is defined and calculate
         rule=def_storage_power_rule,
         doc='storage power = inst-cap + new power')
 
-::
-
-	def def_storage_power_rule(m, sit, sto, com):
-		return (m.cap_sto_p[sit, sto, com] ==
-				m.cap_sto_p_new[sit, sto, com] +
-				m.storage.loc[sit, sto, com]['inst-cap-p'])
+.. literalinclude:: /../urbs.py
+   :pyobject: def_storage_power_rule
 
 **Storage Capacity Rule**: The constraint storage capacity rule defines the variable total storage size :math:`\kappa_{vs}^\text{c}`. The variable total storage size is defined by the constraint as the sum of the parameter storage content installed :math:`K_{vs}^\text{c}` and the variable new storage size :math:`\hat{\kappa}_{vs}^\text{c}`. In mathematical notation this is expressed as:
 
@@ -971,12 +861,8 @@ In script ``urbs.py`` the constraint storage capacity rule is defined and calcul
         rule=def_storage_capacity_rule,
         doc='storage capacity = inst-cap + new capacity')
 
-::
-
-	def def_storage_capacity_rule(m, sit, sto, com):
-		return (m.cap_sto_c[sit, sto, com] ==
-				m.cap_sto_c_new[sit, sto, com] +
-				m.storage.loc[sit, sto, com]['inst-cap-c'])
+.. literalinclude:: /../urbs.py
+   :pyobject: def_storage_capacity_rule
 
 **Storage Input By Power Rule**: The constraint storage input by power rule limits the variable storage input power flow :math:`\epsilon_{vst}^\text{in}`. This constraint restricts a storage :math:`s` in a site :math:`v` at a timestep :math:`t` from having more input power than the storage power capacity. The constraint states that the variable :math:`\epsilon_{vst}^\text{in}` must be less than or equal to the variable total storage power :math:`\kappa_{vs}^\text{p}`. In mathematical notation this is expressed as:
 
@@ -992,10 +878,8 @@ In script ``urbs.py`` the constraint storage input by power rule is defined and 
         rule=res_storage_input_by_power_rule,
         doc='storage input <= storage power')
 
-::
-
-	def res_storage_input_by_power_rule(m, t, sit, sto, com):
-		return m.e_sto_in[t, sit, sto, com] <= m.cap_sto_p[sit, sto, com]
+.. literalinclude:: /../urbs.py
+   :pyobject: res_storage_input_by_power_rule
 
 **Storage Output By Power Rule**: The constraint storage output by power rule limits the variable storage output power flow :math:`\epsilon_{vst}^\text{out}`. This constraint restricts a storage :math:`s` in a site :math:`v` at a timestep :math:`t` from having more output power than the storage power capacity. The constraint states that the variable :math:`\epsilon_{vst}^\text{out}` must be less than or equal to the variable total storage power :math:`\kappa_{vs}^\text{p}`. In mathematical notation this is expressed as:
 
@@ -1011,10 +895,8 @@ In script ``urbs.py`` the constraint storage output by power rule is defined and
         rule=res_storage_output_by_power_rule,
         doc='storage output <= storage power')
 
-::
-
-	def res_storage_output_by_power_rule(m, t, sit, sto, co):
-		return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co]
+.. literalinclude:: /../urbs.py
+   :pyobject: res_storage_output_by_power_rule
 
 **Storage State By Capacity Rule**: The constraint storage state by capacity rule limits the variable storage energy content :math:`\epsilon_{vst}^\text{con}`. This constraint restricts a storage :math:`s` in a site :math:`v` at a timestep :math:`t` from having more storage content than the storage content capacity. The constraint states that the variable :math:`\epsilon_{vst}^\text{con}` must be less than or equal to the variable total storage size :math:`\kappa_{vs}^\text{c}`. In mathematical notation this is expressed as:
 
@@ -1030,10 +912,8 @@ In script ``urbs.py`` the constraint storage state by capacity rule is defined a
         rule=res_storage_state_by_capacity_rule,
         doc='storage content <= storage capacity')
 
-::
-
-	def res_storage_state_by_capacity_rule(m, t, sit, sto, com):
-		return m.e_sto_con[t, sit, sto, com] <= m.cap_sto_c[sit, sto, com]
+.. literalinclude:: /../urbs.py
+   :pyobject: res_storage_state_by_capacity_rule
 
 **Storage Power Limit Rule**: The constraint storage power limit rule limits the variable total storage power :math:`\kappa_{vs}^\text{p}`. This contraint restricts a storage :math:`s` in a site :math:`v` from having more total power output capacity than an upper bound and having less than a lower bound. The constraint states that the variable total storage power :math:`\kappa_{vs}^\text{p}` must be greater than or equal to the parameter storage power lower bound :math:`\underline{K}_{vs}^\text{p}` and less than or equal to the parameter storage power upper bound :math:`\overline{K}_{vs}^\text{p}`. In mathematical notation this is expressed as:
 
@@ -1049,12 +929,8 @@ In script ``urbs.py`` the constraint storage power limit rule is defined and cal
         rule=res_storage_power_rule,
         doc='storage.cap-lo-p <= storage power <= storage.cap-up-p')
 
-::
-
-	def res_storage_power_rule(m, sit, sto, com):
-		return (m.storage.loc[sit, sto, com]['cap-lo-p'],
-				m.cap_sto_p[sit, sto, com],
-				m.storage.loc[sit, sto, com]['cap-up-p'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_storage_power_rule
 
 **Storage Capacity Limit Rule**: The constraint storage capacity limit rule limits the variable total storage size :math:`\kappa_{vs}^\text{c}`. This contraint restricts a storage :math:`s` in a site :math:`v` from having more total storage content capacity than an upper bound and having less than a lower bound. The constraint states that the variable total storage size :math:`\kappa_{vs}^\text{c}` must be greater than or equal to the parameter storage content lower bound :math:`\underline{K}_{vs}^\text{c}` and less than or equal to the parameter storage content upper bound :math:`\overline{K}_{vs}^\text{c}`. In mathematical notation this is expressed as:
 
@@ -1070,12 +946,8 @@ In script ``urbs.py`` the constraint storage capacity limit rule is defined and 
         rule=res_storage_capacity_rule,
         doc='storage.cap-lo-c <= storage capacity <= storage.cap-up-c')
 
-::
-
-	def res_storage_capacity_rule(m, sit, sto, com):
-		return (m.storage.loc[sit, sto, com]['cap-lo-c'],
-				m.cap_sto_c[sit, sto, com],
-				m.storage.loc[sit, sto, com]['cap-up-c'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_storage_capacity_rule
 
 **Initial And Final Storage State Rule**: The constraint initial and final storage state rule defines and restricts the variable storage energy content :math:`\epsilon_{vst}^\text{con}` of a storage :math:`s` in a site :math:`v` at the initial timestep :math:`t_1` and at the final timestep :math:`t_N`.  
 
@@ -1099,22 +971,15 @@ In script ``urbs.py`` the constraint initial and final storage state rule is def
         rule=res_initial_and_final_storage_state_rule,
         doc='storage content initial == and final >= storage.init * capacity')
 
-::
+.. literalinclude:: /../urbs.py
+   :pyobject: res_initial_and_final_storage_state_rule
 
-	def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
-		if t == m.t[1]:  # first timestep (Pyomo uses 1-based indexing)
-			return (m.e_sto_con[t, sit, sto, com] ==
-					m.cap_sto_c[sit, sto, com] *
-					m.storage.loc[sit, sto, com]['init'])
-		elif t == m.t[len(m.t)]:  # last timestep
-			return (m.e_sto_con[t, sit, sto, com] >=
-					m.cap_sto_c[sit, sto, com] *
-					m.storage.loc[sit, sto, com]['init'])
-		else:
-			return pyomo.Constraint.Skip
+			
+.. _sec-dsm-constr:
 
 Demand Side Management Constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The DSM equations are taken from the Paper of Zerrahn and Schill "On the representation of demand-side management in power system models", DOI: `10.1016/j.energy.2015.03.037 <http://dx.doi.org/10.1016/j.energy.2015.03.037>`_.
 
 **DSM Variables Rule**: The DSM variables rule defines the relation between upshift and downshift. An upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` can be compensated during a certain time interval :math:`[t-y_{vc}, t+y_{vc}]` by multiple downshifts :math:`\delta_{vct,tt}^\text{down}`. Depending on the efficiency :math:`e_{vc}`, less downshifts have to be made. This is given by:
@@ -1131,13 +996,8 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=def_dsm_variables_rule,
         doc='DSMup == DSMdo * efficiency factor n')	
 
-::
-
-    def def_dsm_variables_rule(m, tm, sit, com):
-        dsm_down_sum = 0
-        for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
-            dsm_down_sum += m.dsm_down[tm,tt,sit,com]
-        return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
+.. literalinclude:: /../urbs.py
+   :pyobject: def_dsm_variables_rule
         
         
 **DSM Upward Rule**: The DSM upshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
@@ -1154,10 +1014,8 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_upward_rule,
         doc='DSMup <= Cup (threshold capacity of DSMup)')
 
-::
-
-    def res_dsm_upward_rule(m, tm, sit, com):
-        return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
+.. literalinclude:: /../urbs.py
+   :pyobject: res_dsm_upward_rule
         
 **DSM Downward Rule**: The DSM downshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
 
@@ -1173,13 +1031,8 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_downward_rule,
         doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
 
-::
-
-    def res_dsm_downward_rule(m, tm, sit, com):
-        dsm_down_sum = 0
-        for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
-            dsm_down_sum += m.dsm_down[t,tm,sit,com]
-        return dsm_down_sum <= m.dsm.loc[sit,com]['cap-max-do']
+.. literalinclude:: /../urbs.py
+   :pyobject: res_dsm_downward_rule
         
 
 **DSM Maximum Rule**: The DSM maximum rule limits the shift of one DSM unit in site :math:`v` of commodity :math:`c` in time step :math:`t`. In mathematical terms, this is written as:
@@ -1196,16 +1049,8 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_maximum_rule,
         doc='DSMup + DSMdo <= max(Cup,Cdo)')
 
-::
-
-    def res_dsm_maximum_rule(m, tm, sit, com):
-        dsm_down_sum = 0
-        for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm.loc[sit,com]['delay']):
-            dsm_down_sum += m.dsm_down[t,tm,sit,com]
-
-        max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
-                              m.dsm.loc[sit,com]['cap-max-do'])
-        return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
+.. literalinclude:: /../urbs.py
+   :pyobject: res_dsm_maximum_rule
 
 **DSM Recovery Rule**: The DSM recovery rule limits the upshift in site :math:`v` of commodity :math:`c` during a set recovery period :math:`o_{vc}`. In mathematical terms, this is written as:
 
@@ -1221,13 +1066,8 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_recovery_rule,
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
 
-::
-
-    def res_dsm_recovery_rule(m, tm, sit, com):
-        dsm_up_sum = 0
-        for t in range(tm, tm+m.dsm.loc[sit,com]['recov']):
-            dsm_up_sum += m.dsm_up[t,sit,com]
-        return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm.loc[sit,com]['delay']       
+.. literalinclude:: /../urbs.py
+   :pyobject: res_dsm_recovery_rule     
   
         
             
@@ -1241,47 +1081,9 @@ Environmental Constraints
 	w \sum_{t\in T_\text{m}} \sum_{v \in V} \mathrm{-CB}(v,CO_{2},t) \leq \overline{L}_{CO_{2}}
 
 In script ``urbs.py`` the constraint global CO2 limit rule is defined and calculated by the following code fragment:
-::
 
-	def add_hacks(model, hacks):
-		""" add hackish features to model object
+.. literalinclude:: /../urbs.py
+   :pyobject: add_hacks
 
-		This function is reserved for corner cases/features that still lack a
-		satisfyingly general solution that could become part of create_model.
-		Use hack features sparingly and think about how to incorporate into main
-		model function before adding here. Otherwise, these features might become
-		a maintenance burden.
-
-		"""
-
-		# Store hack data
-		model.hacks = hacks
-
-		# Global CO2 limit
-		try:
-			global_co2_limit = hacks.loc['Global CO2 limit', 'Value']
-		except KeyError:
-			global_co2_limit = float('inf')
-
-		# only add constraint if limit is finite
-		if not math.isinf(global_co2_limit):
-			model.res_global_co2_limit = pyomo.Constraint(
-				rule=res_global_co2_limit_rule,
-				doc='total co2 commodity output <= hacks.Glocal CO2 limit')
-
-		return model
-
-::
-
-	def res_global_co2_limit_rule(m):
-		co2_output_sum = 0
-		for tm in m.tm:
-			for sit in m.sit:
-				# minus because negative commodity_balance represents creation of 
-				# that commodity.
-				co2_output_sum += (- commodity_balance(m, tm, sit, 'CO2') * m.dt)
-
-		# scaling to annual output (cf. definition of m.weight)
-		co2_output_sum *= m.weight
-		return (co2_output_sum <= m.hacks.loc['Global CO2 limit', 'Value'])
-
+.. literalinclude:: /../urbs.py
+   :pyobject: res_global_co2_limit_rule

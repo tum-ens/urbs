@@ -11,87 +11,85 @@ Variables of this optimization model can be seperated into sections by their are
 These Sections are Cost, Commodity, Process, Transmission and Storage.
 
 .. table:: *Table: Model Variables*
-
-	+------------------------------------+------+----------------------------------+
-	| Variable                           | Unit | Description                      |
-	+====================================+======+==================================+
-	| **Cost  Variables**                                                          |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta`                      | €/a  | Total System Cost                |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta_\text{inv}`           | €/a  | Investment Costs                 |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta_\text{fix}`           | €/a  | Fix Costs                        |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta_\text{var}`           | €/a  | Variable Costs                   |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta_\text{fuel}`          | €/a  | Fuel Costs                       |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta_\text{rev}`           | €/a  | Revenue Costs                    |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                   |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\zeta_\text{startup}`       | €/a  | Startup Costs                    |
-	+------------------------------------+------+----------------------------------+
-	| **Commodity Variables**                                                      |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\varrho_{vct}`              | MW   | Sell Commodity Source Term       |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\psi_{vct}`                 | MW   | Buy Commodity Source Term        |
-	+------------------------------------+------+----------------------------------+
-	| **Process Variables**                                                        |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\kappa_{vp}`                | MW   | Total Process Capacity           |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\hat{\kappa}_{vp}`          | MW   | New Process Capacity             |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\tau_{vpt}`                 | MW   | Process Throughput               |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vcpt}^\text{in}`  | MW   | Process Input Commodity Flow     |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
-        +------------------------------------+------+----------------------------------+
-	| :math:`\omicron_{vpt}`             | _    | Process Online Status            |
-        +------------------------------------+------+----------------------------------+
-	| :math:`\kappa'_{vpt}`              | MW   | Piecewise Process Capacity       |
-        +------------------------------------+------+----------------------------------+
-	| :math:`\chi_{vpt}^text{startup}`   | _    | Process Startup Cost Factor      |
-	+------------------------------------+------+----------------------------------+
-	| **Transmission Variables**                                                   |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\kappa_{af}`                | MW   | Total transmission Capacity      |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\hat{\kappa}_{af}`          | MW   | New Transmission Capacity        |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\pi_{aft}^\text{in}`        | MW   | Transmission Power Flow (Input)  |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\pi_{aft}^\text{out}`       | MW   | Transmission Power Flow (Output) |
-	+------------------------------------+------+----------------------------------+
-	| **Storage Variables**                                                        |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\kappa_{vs}^\text{c}`       | MWh  | Total Storage Size               |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\hat{\kappa}_{vs}^\text{c}` | MWh  | New Storage Size                 |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\kappa_{vs}^\text{p}`       | MW   | Total Storage Power              |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\hat{\kappa}_{vs}^\text{p}` | MW   | New Storage Power                |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vst}^\text{in}`   | MW   | Storage Power Flow (Input)       |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vst}^\text{out}`  | MW   | Storage Power Flow (Output)      |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content           |
-	+------------------------------------+------+----------------------------------+
-	| **Demand Side Management Variables**                                         |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\delta_{vct}^\text{up}`     | MW   | DSM Upshift                      |
-	+------------------------------------+------+----------------------------------+
-	| :math:`\delta_{vct,tt}^\text{down}`| MW   | DSM Downshift                    |
-	+------------------------------------+------+----------------------------------+
-
+    
+    +------------------------------------+------+----------------------------------+
+    | Variable                           | Unit | Description                      |
+    +====================================+======+==================================+
+    | **Cost  Variables**                                                          |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta`                      | €/a  | Total System Cost                |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta_\text{inv}`           | €/a  | Investment Costs                 |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta_\text{fix}`           | €/a  | Fix Costs                        |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta_\text{var}`           | €/a  | Variable Costs                   |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta_\text{fuel}`          | €/a  | Fuel Costs                       |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta_\text{rev}`           | €/a  | Revenue Costs                    |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                   |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\zeta_\text{startup}`       | €/a  | Startup Costs                    |
+    +------------------------------------+------+----------------------------------+
+    | **Commodity Variables**                                                      |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\varrho_{vct}`              | MW   | Sell Commodity Source Term       |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\psi_{vct}`                 | MW   | Buy Commodity Source Term        |
+    +------------------------------------+------+----------------------------------+
+    | **Process Variables**                                                        |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\kappa_{vp}`                | MW   | Total Process Capacity           |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\hat{\kappa}_{vp}`          | MW   | New Process Capacity             |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\tau_{vpt}`                 | MW   | Process Throughput               |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\epsilon_{vcpt}^\text{in}`  | MW   | Process Input Commodity Flow     |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\omega_{vpt}`               | MW   | Process Online Capacity          |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\phi_{vpt}`                 | MW   | Process Startup Capacity         |
+    +------------------------------------+------+----------------------------------+
+    | **Transmission Variables**                                                   |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\kappa_{af}`                | MW   | Total transmission Capacity      |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\hat{\kappa}_{af}`          | MW   | New Transmission Capacity        |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\pi_{aft}^\text{in}`        | MW   | Transmission Power Flow (Input)  |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\pi_{aft}^\text{out}`       | MW   | Transmission Power Flow (Output) |
+    +------------------------------------+------+----------------------------------+
+    | **Storage Variables**                                                        |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\kappa_{vs}^\text{c}`       | MWh  | Total Storage Size               |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\hat{\kappa}_{vs}^\text{c}` | MWh  | New Storage Size                 |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\kappa_{vs}^\text{p}`       | MW   | Total Storage Power              |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\hat{\kappa}_{vs}^\text{p}` | MW   | New Storage Power                |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\epsilon_{vst}^\text{in}`   | MW   | Storage Power Flow (Input)       |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\epsilon_{vst}^\text{out}`  | MW   | Storage Power Flow (Output)      |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content           |
+    +------------------------------------+------+----------------------------------+
+    | **Demand Side Management Variables**                                         |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\delta_{vct}^\text{up}`     | MW   | DSM Upshift                      |
+    +------------------------------------+------+----------------------------------+
+    | :math:`\delta_{vct,tt}^\text{down}`| MW   | DSM Downshift                    |
+    +------------------------------------+------+----------------------------------+
+    
 
 	
 Cost Variables
@@ -107,7 +105,7 @@ This is calculated by the sum total of all costs by type(:math:`\zeta_r`, :math:
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
 
-More information on calculation of this variable is available at the `Cost Function`_ section.
+More information on calculation of this variable is available at the section :ref:`eq-cost-func`.
 
 Total System costs by type: System costs are divided into 6 cost types by their meaning and purpose.
 The separation of costs by type, facilitates business planning and provides calculation accuracy
@@ -136,7 +134,7 @@ These cost types are as following;
 	**Startup Costs** :math:`\zeta_\text{startup}` : The variable :math:`\zeta_\text{startup}` represents the annualised total startup costs.
 		Startup costs are reliant on the yearly startup occurences of the processes.
 		
-	For more information on calculation of these variables see `Cost Function`_ section.
+	For more information on calculation of these variables see section :ref:`eq-cost-func`.
 
 Commodity Variables
 ^^^^^^^^^^^^^^^^^^^
@@ -211,34 +209,19 @@ In script ``urbs.py`` this variable is defined by the model variable ``e_pro_out
         within=pyomo.NonNegativeReals,
         doc='Flow of commodity out of process per timestep')
 
-**Process Online Status**, :math:`\omicron_{vpt}`, ``onlinestatus``: The boolean variable :math:`\omicron_{vpt}` returns 1 for non-zero throughput and 0 for zero throughput of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). 
-In script ``urbs.py`` this variable is defined by the model variable ``onlinestatus`` and initialized by the following code fragment: ::
+**Process Online Capacity**, :math:`\omega_{vpt}`, ``cap_online``: This variable is the time-dependent version of the usual process capacity :math:`\kappa_{vp}`. It is defined for partial process tuples, i.e. those processes that have the parameter input ratio ``ratio-min`` set. of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T`). In script ``urbs.py`` this variable is defined by the model variable ``onlinestatus`` and initialized by the following code fragment: ::
 
-    m.onlinestatus = pyomo.Var(
-        m.t, 
-        m.pro_tuples,
-        within=pyomo.Boolean,
-        doc='Boolean variable which returns 1 for non-zero throughput \
-        and 0 for zero throughput')      
-
-**Piecewise Process Capacity**, :math:`\kappa'_{vpt}`, ``cap_pro_piecewise``: The piecewise variable :math:`\kappa'_{vpt}` returns 0 for zero throughput and ``cap_pro`` for non-zero throughput of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). 
-In script ``urbs.py`` this variable is defined by the model variable ``cap_pro_piecewise`` and initialized by the following code fragment: ::
-
-    m.cap_pro_piecewise = pyomo.Var(
-        m.tm,
-        m.pro_tuples,
+    m.cap_online = pyomo.Var(
+        m.t, m.pro_partial_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Piecewise variable which returns 0 for zero m.onlinestatus \
-        and m.cap_pro for non-zero m.onlinestatus')  
+        doc='Online capacity (MW) of process per timestep')     
 
-**Process Startup Cost Factor**, :math:`\chi_{vpt}^text{startup}`, ``startupcostfactor``: The boolean variable :math:`\chi_{vpt}^text{startup}` is an indicator for a "startup occurence" for a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`) and assumes 1 for a startup occurence and 0 otherwise. 
-In script ``urbs.py`` this variable is defined by the model variable ``startupcostfactor`` and initialized by the following code fragment: ::
+**Process Startup Capacity**, :math:`\phi'_{vpt}`, ``startup_pro``: This variable indicates every rise in the *process online capacity*. This indicator is then used to determine startup costs for all partial process tuples. The variable is defined by the following code fragment: ::
 
-    m.startupcostfactor = pyomo.Var(
-        m.t,
-        m.pro_tuples,
-        within=pyomo.Boolean,
-        doc='Boolean variable which assumes 1 in case of a process start-up')       
+    m.startup_pro = pyomo.Var(
+        m.tm, m.pro_partial_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Started capacity (MW) of process per timestep') 
 
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^

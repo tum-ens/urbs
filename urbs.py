@@ -750,7 +750,7 @@ def res_dsm_maximum_rule(m, tm, sit, com):
 # DSMup(t, t + recovery time R) <= Cup * delay time L  
 def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
-    for t in range(tm, tm+m.dsm.loc[sit,com]['recov']):
+    for t in range(tm, tm+m.dsm['recov'].loc[sit,com]):
         dsm_up_sum += m.dsm_up[t,sit,com]
     return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm['delay'].loc[sit,com]
 

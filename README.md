@@ -75,17 +75,17 @@ Continue at [Get Started](#get-started).
 
 Once installation is complete, finally [install git (for version control)](http://git-scm.com/). **Remark:** at step "Adjusting your PATH environment", select "Run Git from the Windows Command Prompt".
 
-Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux): 
+Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux). (Under Linux, you most likely need to call `python3` instead of `python`.): 
 
     git clone https://github.com/tum-ens/urbs.git
     cd urbs
-    python3 runme.py
+    python runme.py
 
-About a minute later, the subfolder `result` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definitions are contained in the run script (watch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
+Some minutes later, the subfolder `result` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definitions are contained in the run script (watch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
 
-    python3 comp.py
+    python comp.py
 
-and look at the new files `result/mimo-example-20160101T1234/comp.xlsx` and `result/mimo-example-20160101T1234/comp.png` for a quick comparison. This script parses the summary spreadsheets for all scenarios.
+and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-example-.../comp.png` for a quick comparison. This script parses the summary spreadsheets for all scenarios.
 
 ## Next steps
 

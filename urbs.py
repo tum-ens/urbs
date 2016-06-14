@@ -1904,9 +1904,9 @@ def report(instance, filename, commodities=None, sites=None):
 
         # write timeseries data (if any)
         if timeseries:
-            # concatenate energy sums
+            # concatenate Commodity sums
             energy = pd.concat(energies, axis=1).fillna(0)
-            energy.to_excel(writer, 'Energy sums')
+            energy.to_excel(writer, 'Commodity sums')
     
             # write timeseries to individual sheets
             for co in commodities:

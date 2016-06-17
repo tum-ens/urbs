@@ -2,7 +2,7 @@
 
 urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
 
-[![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](https://urbs.readthedocs.org/en/latest/)
+[![Documentation Status](https://readthedocs.io/projects/urbs/badge/?version=latest)](https://urbs.readthedocs.io/en/latest/)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.46118.svg)](http://dx.doi.org/10.5281/zenodo.46118)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/tum-ens/urbs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
@@ -89,7 +89,7 @@ and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-e
 
 ## Next steps
 
-  1. Head over to the tutorial at http://urbs.readthedocs.org, which goes through runme.py step by step. 
+  1. Head over to the tutorial at http://urbs.readthedocs.io, which goes through runme.py step by step. 
   2. Read the source code of `runme.py` and `comp.py`. 
   3. Quickly scan through `urbs.py`, read docstrings.
   4. Try adding/modifying scenarios in `runme.py` and see their effect on results.

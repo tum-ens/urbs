@@ -6,7 +6,7 @@ Storage Constraints
 
 .. math::
 
-	\forall v\in V, \forall s\in S, t\in T_\text{m}\colon \qquad & \qquad \epsilon_{vst}^\text{con} = \epsilon_{vs(t-1)}^\text{con}  + \epsilon_{vst}^\text{in} \cdot e_{vs}^\text{in} - \epsilon_{vst}^\text{out} / e_{vs}^\text{out}
+	\forall v\in V, \forall s\in S, t\in T_\text{m}\colon\ \epsilon_{vst}^\text{con} = \epsilon_{vs(t-1)}^\text{con}  + \epsilon_{vst}^\text{in} \cdot e_{vs}^\text{in} - \epsilon_{vst}^\text{out} / e_{vs}^\text{out}
 
 In script ``urbs.py`` the constraint storage state rule is defined and calculated by the following code fragment:
 
@@ -24,7 +24,7 @@ In script ``urbs.py`` the constraint storage state rule is defined and calculate
 
 .. math::
 
-	\forall v\in V, s\in S\colon \qquad & \qquad \kappa_{vs}^\text{p} = K_{vs}^\text{p} + \hat{\kappa}_{vs}^\text{p}
+	\forall v\in V, s\in S\colon\ \kappa_{vs}^\text{p} = K_{vs}^\text{p} + \hat{\kappa}_{vs}^\text{p}
 
 In script ``urbs.py`` the constraint storage power rule is defined and calculated by the following code fragment:
 ::
@@ -41,7 +41,7 @@ In script ``urbs.py`` the constraint storage power rule is defined and calculate
 
 .. math::
 
-	\forall v\in V, s\in S\colon \qquad & \qquad \kappa_{vs}^\text{c} = K_{vs}^\text{c} + \hat{\kappa}_{vs}^\text{c}
+	\forall v\in V, s\in S\colon\ \kappa_{vs}^\text{c} = K_{vs}^\text{c} + \hat{\kappa}_{vs}^\text{c}
 
 In script ``urbs.py`` the constraint storage capacity rule is defined and calculated by the following code fragment:
 ::
@@ -58,7 +58,7 @@ In script ``urbs.py`` the constraint storage capacity rule is defined and calcul
 
 .. math::
 
-	\forall v\in V, s\in S, t\in T_m\colon \qquad & \qquad \epsilon_{vst}^\text{in} \leq \kappa_{vs}^\text{p}
+	\forall v\in V, s\in S, t\in T_m\colon\ \epsilon_{vst}^\text{in} \leq \kappa_{vs}^\text{p}
 
 In script ``urbs.py`` the constraint storage input by power rule is defined and calculated by the following code fragment:
 ::
@@ -75,7 +75,7 @@ In script ``urbs.py`` the constraint storage input by power rule is defined and 
 
 .. math::
 
-	 \forall v\in V, s\in S, t\in T\colon \qquad & \qquad \epsilon_{vst}^\text{out} \leq \kappa_{vs}^\text{p}
+	 \forall v\in V, s\in S, t\in T\colon\ \epsilon_{vst}^\text{out} \leq \kappa_{vs}^\text{p}
 
 In script ``urbs.py`` the constraint storage output by power rule is defined and calculated by the following code fragment:
 ::
@@ -92,7 +92,7 @@ In script ``urbs.py`` the constraint storage output by power rule is defined and
 
 .. math::
 
-	\forall v\in V, s\in S, t\in T\colon \qquad & \qquad \epsilon_{vst}^\text{con} \leq \kappa_{vs}^\text{c}
+	\forall v\in V, s\in S, t\in T\colon\ \epsilon_{vst}^\text{con} \leq \kappa_{vs}^\text{c}
 
 In script ``urbs.py`` the constraint storage state by capacity rule is defined and calculated by the following code fragment.
 ::
@@ -109,7 +109,7 @@ In script ``urbs.py`` the constraint storage state by capacity rule is defined a
 
 .. math::
 
-	\forall v\in V, s\in S\colon \qquad & \qquad \underline{K}_{vs}^\text{p} \leq \kappa_{vs}^\text{p} \leq \overline{K}_{vs}^\text{p}
+	\forall v\in V, s\in S\colon\ \underline{K}_{vs}^\text{p} \leq \kappa_{vs}^\text{p} \leq \overline{K}_{vs}^\text{p}
 
 In script ``urbs.py`` the constraint storage power limit rule is defined and calculated by the following code fragment: 
 ::
@@ -126,7 +126,7 @@ In script ``urbs.py`` the constraint storage power limit rule is defined and cal
 
 .. math::
 
-	\forall v\in V, s\in S\colon \qquad & \qquad \underline{K}_{vs}^\text{c} \leq \kappa_{vs}^\text{c} \leq \overline{K}_{vs}^\text{c}
+	\forall v\in V, s\in S\colon\ \underline{K}_{vs}^\text{c} \leq \kappa_{vs}^\text{c} \leq \overline{K}_{vs}^\text{c}
 
 In script ``urbs.py`` the constraint storage capacity limit rule is defined and calculated by the following code fragment:
 ::
@@ -145,13 +145,13 @@ Initial Storage:  Initial storage represents how much energy is installed in a s
 
 .. math::
 
-	\forall v\in V, s\in S\colon \qquad & \qquad \epsilon_{vst_1}^\text{con} = \kappa_{vs}^\text{c} I_{vs}
+	\forall v\in V, s\in S\colon\ \epsilon_{vst_1}^\text{con} = \kappa_{vs}^\text{c} I_{vs}
 
 Final Storage: Final storage represents how much energy is installed in a storage at the end of the simulation. The variable storage energy content :math:`\epsilon_{vst}^\text{con}` at the final timestep :math:`t_N` is restricted by this constraint. The constraint states that the variable :math:`\epsilon_{vst_N}^\text{con}` must be greater than or equal to the product of the parameters storage content installed :math:`K_{vs}^\text{c}` and  initial and final state of charge :math:`I_{vs}`. In mathematical notation this is expressed as:
 
 .. math::
 
-	\forall v\in V, s\in S\colon \qquad & \qquad \epsilon_{vst_N}^\text{con} \geq \kappa_{vs}^\text{c} I_{vs}
+	\forall v\in V, s\in S\colon\ \epsilon_{vst_N}^\text{con} \geq \kappa_{vs}^\text{c} I_{vs}
 
 In script ``urbs.py`` the constraint initial and final storage state rule is defined and calculated by the following code fragment:
 ::

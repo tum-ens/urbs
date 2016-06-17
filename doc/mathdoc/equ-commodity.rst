@@ -41,28 +41,28 @@ In script ``urbs.py`` the value of the commodity balance function :math:`\mathrm
 * Stock commodities :math:`C_\text{st}`: For stock commodities, the possible imbalance of the commodity must be supplied by the stock commodity purchases. In other words, commodity balance :math:`\mathrm{CB}(v,c,t)` subtracted from the variable stock commodity source term :math:`\rho_{vct}` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as:
 
 .. math::
-	\forall v\in V, c\in C_\text{st}, t\in T_m\colon\  - \mathrm{CB}(v,c,t) + \rho_{vct} \geq 0
+	\forall v\in V, c\in C_\text{st}, t\in T_m\colon\ - \mathrm{CB}(v,c,t) + \rho_{vct} \geq 0
 
 
 * Sell commodities :math:`C_\text{sell}`: For sell commodities, the possible imbalance of the commodity must be supplied by the sell commodity trades. In other words, commodity balance :math:`\mathrm{CB}(v,c,t)` subtracted from minus the variable sell commodity source term :math:`\varrho_{vct}` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as:
 
 .. math::
-	\forall v\in V, c\in C_\text{sell}, t\in T_m\colon\   - \mathrm{CB}(v,c,t) - \varrho_{vct} \geq 0
+	\forall v\in V, c\in C_\text{sell}, t\in T_m\colon\ - \mathrm{CB}(v,c,t) - \varrho_{vct} \geq 0
 
 * Buy commodities :math:`C_\text{buy}`: For buy commodities, the possible imbalance of the commodity must be supplied by the buy commodity purchases. In other words, commodity balance :math:`\mathrm{CB}(v,c,t)` subtracted from the variable buy commodity source term :math:`\psi_{vct}` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as:
 
 .. math::
-	\forall v\in V, c\in C_\text{buy}, t\in T_m\colon\   - \mathrm{CB}(v,c,t) + \psi_{vct} \geq 0
+	\forall v\in V, c\in C_\text{buy}, t\in T_m\colon\ - \mathrm{CB}(v,c,t) + \psi_{vct} \geq 0
 
 * Demand commodities :math:`C_\text{dem}`: For demand commodities, the possible imbalance of the commodity must supply the demand :math:`d_{vct}` of demand commodities :math:`c \in C_\text{dem}`. In other words, the parameter demand for commodity subtracted :math:`d_{vct}` from the minus commodity balance :math:`-\mathrm{CB}(v,c,t)` must be greater than or equal to 0 to satisfy this constraint. In mathematical notation this is expressed as: 
 
 .. math::
-	\forall v\in V, c\in C_\text{dem}, t\in T_m\colon\   - \mathrm{CB}(v,c,t) - d_{vct} \geq 0
+	\forall v\in V, c\in C_\text{dem}, t\in T_m\colon\ - \mathrm{CB}(v,c,t) - d_{vct} \geq 0
     
 * Demand Side Management commodities and sites: For any combination of commodity and site for which demand side management is defined, the upshift is substracted and the downshift added to the negative commodity balance :math:`-\mathrm{CB}(v,c,t)`.
 
 .. math::
-	\forall (v,c) in D_{vc}, t\in T_m\colon\   - \mathrm{CB}(v,c,t) - \delta_{vct}^\text{up}` + \sum_{tt \in D_{vct,tt}^\text{down}} \delta_{vct,tt}^\text{down}` \geq 0
+	\forall (v,c) in D_{vc}, t\in T_m\colon\ - \mathrm{CB}(v,c,t) - \delta_{vct}^\text{up}` + \sum_{tt \in D_{vct,tt}^\text{down}} \delta_{vct,tt}^\text{down}` \geq 0
 
 In script ``urbs.py`` the constraint vertex rule is defined and calculated by the following code fragments:
 
@@ -101,7 +101,7 @@ In script ``urbs.py`` the constraint stock per step rule is defined and calculat
 
 .. math::
 
-	\forall v\in V, c\in C_\text{st}\colon\   w \sum_{t\in T_m} \Delta t\, \rho_{vct} \leq \overline{L}_{vc}
+	\forall v\in V, c\in C_\text{st}\colon\ w \sum_{t\in T_m} \Delta t\, \rho_{vct} \leq \overline{L}_{vc}
 
 In script ``urbs.py`` the constraint total stock rule is defined and calculated by the following code fragment:
 
@@ -137,7 +137,7 @@ In script ``urbs.py`` the constraint sell per step rule is defined and calculate
 
 .. math::
 
-	\forall v\in V, c\in C_\text{sell}\colon\   w \sum_{t\in T_m} \Delta t\, \varrho_{vct} \leq \overline{G}_{vc}
+	\forall v\in V, c\in C_\text{sell}\colon\ w \sum_{t\in T_m} \Delta t\, \varrho_{vct} \leq \overline{G}_{vc}
 
 In script ``urbs.py`` the constraint total sell rule is defined and calculated by the following code fragment:
 ::
@@ -171,7 +171,7 @@ In script ``urbs.py`` the constraint buy per step rule is defined and calculated
 
 .. math::
 
-	\forall v\in V, c\in C_\text{buy}\colon\   w \sum_{t\in T_m} \Delta t\, \psi_{vct} \leq \overline{B}_{vc}
+	\forall v\in V, c\in C_\text{buy}\colon\ w \sum_{t\in T_m} \Delta t\, \psi_{vct} \leq \overline{B}_{vc}
 
 In script ``urbs.py`` the constraint total buy rule is defined and calculated by the following code fragment:
 ::
@@ -207,7 +207,7 @@ In script ``urbs.py`` the constraint environmental output per step rule is defin
 
 .. math::
 
-	\forall v\in V, c\in C_\text{env}\colon\   - w \sum_{t\in T_m} \Delta t\, \mathrm{CB}(v,c,t) \leq \overline{M}_{vc}
+	\forall v\in V, c\in C_\text{env}\colon\ - w \sum_{t\in T_m} \Delta t\, \mathrm{CB}(v,c,t) \leq \overline{M}_{vc}
 
 In script ``urbs.py`` the constraint total environmental output rule is defined and calculated by the following code fragment:
 ::

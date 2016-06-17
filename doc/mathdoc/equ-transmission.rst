@@ -4,7 +4,7 @@ Transmission Constraints
 **Transmission Capacity Rule**: The constraint transmission capacity rule defines the variable total transmission capacity :math:`\kappa_{af}`. The variable total transmission capacity is defined by the constraint as the sum of the variable transmission capacity installed :math:`K_{af}` and the variable new transmission capacity :math:`\hat{\kappa}_{af}`. In mathematical notation this is expressed as:
 
 .. math::
-    \forall a\in A, f\in F\colon \qquad & \qquad \kappa_{af} &= K_{af} + \hat{\kappa}_{af}
+    \forall a\in A, f\in F\colon\ \kappa_{af} = K_{af} + \hat{\kappa}_{af}
 
 In script ``urbs.py`` the constraint transmission capacity rule is defined and calculated by the following code fragment:
 ::
@@ -20,7 +20,7 @@ In script ``urbs.py`` the constraint transmission capacity rule is defined and c
 **Transmission Output Rule**: The constraint transmission output rule defines the variable transmission power flow (output) :math:`\pi_{aft}^\text{out}`. The variable transmission power flow (output) is defined by the constraint as the product of the variable transmission power flow (input) :math:`\pi_{aft}^\text{in}` and the parameter transmission efficiency :math:`e_{af}`. In mathematical notation this is expressed as:
 
 .. math::
-    \forall a\in A, f\in F, t\in T_m\colon \qquad & \qquad \pi^\text{out}_{aft} &= \pi^\text{in}_{aft} e_{af}
+    \forall a\in A, f\in F, t\in T_m\colon\ \pi^\text{out}_{aft} = \pi^\text{in}_{aft} e_{af}
 
 In script ``urbs.py`` the constraint transmission output rule is defined and calculated by the following code fragment:
 ::
@@ -36,7 +36,7 @@ In script ``urbs.py`` the constraint transmission output rule is defined and cal
 **Transmission Input By Capacity Rule**: The constraint transmission input by capacity rule limits the variable transmission power flow (input) :math:`\pi_{aft}^\text{in}`. This constraint prevents  transmissions from exceeding their possible power input capacity. The constraint states that the variable transmission power flow (input) :math:`\pi_{aft}^\text{in}` must be less than or equal to the variable total transmission capacity :math:`\kappa_{af}`. In mathematical notation this is expressed as:
 
 .. math::
-    \forall a\in A, f\in F, t\in T_m\colon \qquad & \qquad \pi^\text{in}_{aft} &\leq \kappa_{af}
+    \forall a\in A, f\in F, t\in T_m\colon\ \pi^\text{in}_{aft} \leq \kappa_{af}
 
 In script ``urbs.py`` the constraint transmission input by capacity rule is defined and calculated by the following code fragment:
 ::
@@ -52,7 +52,7 @@ In script ``urbs.py`` the constraint transmission input by capacity rule is defi
 **Transmission Capacity Limit Rule**: The constraint transmission capacity limit rule limits the variable total transmission capacity :math:`\kappa_{af}`. This constraint restricts a transmission :math:`f` through an arc :math:`a` from having more total power output capacity than an upper bound and having less than a lower bound. The constraint states that the variable total transmission capacity :math:`\kappa_{af}` must be greater than or equal to the parameter transmission capacity lower bound :math:`\underline{K}_{af}` and less than or equal to the parameter transmission capacity upper bound :math:`\overline{K}_{af}`. In mathematical notation this is expressed as:
 
 .. math::
-    \forall a\in A, f\in F\colon \qquad & \qquad \underline{K}_{af} &\leq \kappa_{af} \leq \overline{K}_{af}
+    \forall a\in A, f\in F\colon\ \underline{K}_{af} \leq \kappa_{af} \leq \overline{K}_{af}
 
 In script ``urbs.py`` the constraint transmission capacity limit rule is defined and calculated by the following code fragment:
 ::

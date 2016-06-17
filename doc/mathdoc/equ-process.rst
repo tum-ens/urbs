@@ -7,7 +7,7 @@ Process Constraints
 
 .. math::
 
-	\forall v\in V, p\in P\colon \qquad & \qquad \kappa_{vp} = K_{vp} + \hat{\kappa}_{vp}
+	\forall v\in V, p\in P\colon\ \kappa_{vp} = K_{vp} + \hat{\kappa}_{vp}
 
 In script ``urbs.py`` the constraint process capacity rule is defined and calculated by the following code fragment:
 ::
@@ -24,7 +24,7 @@ In script ``urbs.py`` the constraint process capacity rule is defined and calcul
 
 .. math::
 
-	\forall v\in V, p\in P, t\in T_m\colon \qquad & \qquad \epsilon^\text{in}_{vcpt} &= \tau_{vpt} r^\text{in}_{pc}
+	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{in}_{vcpt} = \tau_{vpt} r^\text{in}_{pc}
 
 In script ``urbs.py`` the constraint process input rule is defined and calculated by the following code fragment:
 ::
@@ -41,7 +41,7 @@ In script ``urbs.py`` the constraint process input rule is defined and calculate
 
 .. math::
 
-	\forall v\in V, p\in P, t\in T_m\colon \qquad & \qquad \epsilon^\text{out}_{vpct} &= \tau_{vpt} r^\text{out}_{pc}
+	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{out}_{vpct} = \tau_{vpt} r^\text{out}_{pc}
 
 In script ``urbs.py`` the constraint process output rule is defined and calculated by the following code fragment:
 ::
@@ -58,7 +58,7 @@ In script ``urbs.py`` the constraint process output rule is defined and calculat
 
 .. math::
 
-	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon \qquad & \qquad \epsilon^\text{in}_{vpct} &= \kappa_{vp} s_{vct}
+	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon\ \epsilon^\text{in}_{vpct} = \kappa_{vp} s_{vct}
 
 In script ``urbs.py`` the constraint intermittent supply rule is defined and calculated by the following code fragment:
 ::
@@ -75,7 +75,7 @@ In script ``urbs.py`` the constraint intermittent supply rule is defined and cal
 
 .. math::
 
-    \forall v\in V, p\in P, t\in T_m\colon \qquad & \qquad \tau_{vpt} &\leq \kappa_{vp}
+    \forall v\in V, p\in P, t\in T_m\colon\ \tau_{vpt} \leq \kappa_{vp}
 
 In script ``urbs.py`` the constraint process throughput by capacity rule is defined and calculated by the following code fragment:
 ::
@@ -92,7 +92,7 @@ In script ``urbs.py`` the constraint process throughput by capacity rule is defi
 
 .. math::
 
-    \forall v\in V, p\in P, t\in T_m\colon \qquad & \qquad \left| \tau_{vpt} - \tau_{vp(t-1)} \right| &\leq  \kappa_{vp} \overline{PG}_{vp} \Delta t
+    \forall v\in V, p\in P, t\in T_m\colon\ \left| \tau_{vpt} - \tau_{vp(t-1)} \right| \leq  \kappa_{vp} \overline{PG}_{vp} \Delta t
 
 In script ``urbs.py`` the constraint process throughput gradient rule is defined and calculated by the following code fragment:
 ::
@@ -109,7 +109,7 @@ In script ``urbs.py`` the constraint process throughput gradient rule is defined
 
 .. math::
 
-    \forall v\in V, p\in P\colon \qquad & \qquad  \underline{K}_{vp} \leq \kappa_{vp} \leq \overline{K}_{vp}
+    \forall v\in V, p\in P\colon\  \underline{K}_{vp} \leq \kappa_{vp} \leq \overline{K}_{vp}
 
 In script ``urbs.py`` the constraint process capacity limit rule is defined and calculated by the following code fragment:
 ::

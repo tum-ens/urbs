@@ -45,13 +45,11 @@ Total annual investment cost is calculated by the sum of three main summands, th
     \sum_{\substack{v \in V\\ p \in P}} \hat{\kappa}_{vp} k_p^\text{inv}
 
 2. The second summand of the formula calculates the required investment expenses to install additional power output capacity and storage content capacity to storage technologies for every member of the set storage tuples ( :math:`\forall s_{vc} \in S_{vc}`). This summand consists of two products:
+ * The first product calculates the required annual investment expenses to install an additional storage content capacity to a given storage tuple . This is calculated by the product of the variable new storage size ( :math:`\hat{\kappa}_{vs}^\text{c}`, ``cap_sto_c_new``) and the parameter annualised storage size investment costs ( :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``).
+ * The second product calculates the required annual investment expenses to install an additional power output capacity to a given storage tuple. This is calculated by the product of the variable new storage power ( :math:`\hat{\kappa}_{vs}^\text{p}`, ``cap_sto_p_new``) and the parameter annualised storage power investment costs ( :math:`k_{vs}^\text{p,inv}`, ``m.storage.loc[s]['inv-cost-p'] * m.storage.loc[s]['annuity-factor']``).
+ These two products for a given storage tuple are than added up. The calculation of investment costs for a given storage tuple is than repeated for every single storage tuple and summed up to calculate the total investment costs for storage technologies. In mathematical notation this summand is expressed as:
 
-    * The first product calculates the required annual investment expenses to install an additional storage content capacity to a given storage tuple . This is calculated by the product of the variable new storage size ( :math:`\hat{\kappa}_{vs}^\text{c}`, ``cap_sto_c_new``) and the parameter annualised storage size investment costs ( :math:`k_{vs}^\text{c,inv}`, ``m.storage.loc[s]['inv-cost-c'] * m.storage.loc[s]['annuity-factor']``).
-    * The second product calculates the required annual investment expenses to install an additional power output capacity to a given storage tuple. This is calculated by the product of the variable new storage power ( :math:`\hat{\kappa}_{vs}^\text{p}`, ``cap_sto_p_new``) and the parameter annualised storage power investment costs ( :math:`k_{vs}^\text{p,inv}`, ``m.storage.loc[s]['inv-cost-p'] * m.storage.loc[s]['annuity-factor']``).
-
-   These two products for a given storage tuple are than added up. The calculation of investment costs for a given storage tuple is than repeated for every single storage tuple and summed up to calculate the total investment costs for storage technologies. In mathematical notation this summand is expressed as:
-
-.. math:: 
+.. math::
     \sum_{\substack{v \in V\\ s \in S}} ( 
         \hat{\kappa}_{vs}^\text{c} k_{vs}^\text{c,inv} +
         \hat{\kappa}_{vs}^\text{p} k_{vs}^\text{p,inv})
@@ -110,10 +108,9 @@ Total annual fix cost :math:`\zeta_\text{fix}` is calculated by the sum of three
 .. math:: \sum_{\substack{v \in V\\ p \in P}} \kappa_{vp} k_{vp}^\text{fix}
 
 2. The second summand of the formula calculates the required fix expenses to keep the power capacity and storage content capacity of storage technologies maintained. The present storage technologies comprise the members of the set storage tuples :math:`\forall s_{vc} \in S_{vc}`. This summand consists of two products:
-	* The first product calculates the required annual fix expenses to keep the storage content capacity of a given storage tuple maintained.  This is calculated by the product of the variable total storage size ( :math:`\kappa_{vs}^\text{c}`, ``cap_sto_c``) and the parameter annual storage size fixed costs ( :math:`k_{vs}^\text{c,fix}`, ``m.storage.loc[s]['fix-cost-c']``).
-	* The second product calculates the required annual fix expenses to keep the power capacity of a given storage tuple maintained. This is calculated by the product of the variable total storage power ( :math:`\kappa_{vs}^\text{p}`, ``cap_sto_p``) and the parameter annual storage power fixed costs (:math:`k_{vs}^\text{p,fix}`, ``m.storage.loc[s]['fix-cost-p']``).
-
-   These two products for a given storage tuple are than added up. The calculation of fix costs for a storage tuple is then repeated for every single storage tuple and summed up to calculate the total fix costs for storage technologies. In mathematical notation this summand is expressed as:
+ * The first product calculates the required annual fix expenses to keep the storage content capacity of a given storage tuple maintained.  This is calculated by the product of the variable total storage size ( :math:`\kappa_{vs}^\text{c}`, ``cap_sto_c``) and the parameter annual storage size fixed costs ( :math:`k_{vs}^\text{c,fix}`, ``m.storage.loc[s]['fix-cost-c']``).
+ * The second product calculates the required annual fix expenses to keep the power capacity of a given storage tuple maintained. This is calculated by the product of the variable total storage power ( :math:`\kappa_{vs}^\text{p}`, ``cap_sto_p``) and the parameter annual storage power fixed costs (:math:`k_{vs}^\text{p,fix}`, ``m.storage.loc[s]['fix-cost-p']``).
+ These two products for a given storage tuple are than added up. The calculation of fix costs for a storage tuple is then repeated for every single storage tuple and summed up to calculate the total fix costs for storage technologies. In mathematical notation this summand is expressed as:
 
 .. math:: \sum_{\substack{v \in V\\ s \in S}} (\kappa_{vs}^\text{c} k_{vs}^\text{c,fix} + \kappa_{vs}^\text{p} k_{vs}^\text{p,fix})
 
@@ -121,7 +118,7 @@ Total annual fix cost :math:`\zeta_\text{fix}` is calculated by the sum of three
 
 .. math:: \sum_{\substack{a \in A\\ f \in F}} \kappa_{af} k_{af}^\text{fix}
 
-As mentioned above the variable fix costs :math:`\zeta_\text{fix}` is calculated by the sum of these 3 summands.
+As mentioned above, the fix costs :math:`\zeta_\text{fix}` are calculated by the sum of these 3 summands.
 
 In script ``urbs.py`` the value of the total fix cost is calculated by the following code fragment:
 
@@ -181,7 +178,7 @@ The variable fuel costs :math:`\zeta_\text{fuel}` represents the total annual ex
 .. math::
 
 	\zeta_\text{fuel} = 
-	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{stock}}} \rho_{vct} k_{vc}^\text{fuel} \Delta t
+	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{c \in C_\text{stock}} \rho_{vct} k_{vc}^\text{fuel} \Delta t
 
 The variable :math:`\zeta_\text{fuel}` is calculated by the sum of all possible annual fuel costs, defined by the combinations of commodity tuples of commodity type 'Stock'( :math:`\forall c_{vq} \in C_{vq} \land q = \text{'Stock'}`) and timesteps( :math:`\forall t \in T_m`). These annual fuel costs are calculated by the product of the following elements:
 
@@ -210,7 +207,7 @@ The variable revenue costs :math:`\zeta_\text{rev}` represents the total annual 
 .. math::
 
 	\zeta_\text{rev} = 
-	-w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{sell}}} \varrho_{vct} k_{vct}^\text{bs} \Delta t
+	-w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{c \in C_\text{sell}} \varrho_{vct} k_{vct}^\text{bs} \Delta t
 
 The variable :math:`\zeta_\text{rev}` is calculated by the sum of all possible annual revenue costs, defined by the combinations of commodity tuples of commodity type 'Sell'( :math:`\forall c_{vq} \in C_{vq} \land q = \text{'Sell'}`) and timesteps (:math:`\forall t \in T_m`). These annual revenue costs are calculated by the product of the following elements:
 
@@ -241,7 +238,7 @@ The variable purchase costs :math:`\zeta_\text{pur}` represents the total annual
 .. math::
 
 	\zeta_\text{pur} = 
-	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{\ \quad c \in C_\text{buy}}} \psi_{vct} k_{vct}^\text{bs} \Delta t
+	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{c \in C_\text{buy}} \psi_{vct} k_{vct}^\text{bs} \Delta t
 
 The variable :math:`\zeta_\text{pur}` is calculated by the sum of all possible annual purchase costs, defined by the combinations of commodity tuples of commodity type 'Buy'( :math:`\forall c_{vq} \in C_{vq} \land q = \text{'Buy'}`) and timesteps (:math:`\forall t \in T_m`). These annual purchase costs are calculated by the product of the following elements:
 
@@ -270,7 +267,7 @@ The variable startup costs :math:`\zeta_\text{startup}` represents the total ann
 .. math::
 
 	\zeta_\text{startup} = 
-	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{{p \in P}} \phi_{vpt} k_{vp}^\text{st} \Delta t
+	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{p \in P} \phi_{vpt} k_{vp}^\text{st} \Delta t
 
 
 In script ``urbs.py`` the value of the total startup cost is calculated by the following code fragment:

@@ -141,15 +141,19 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
 Partial & Startup Process Constraints
 -------------------------------------
 
-
+It is important to understand that this partial load formulation can only work if its accompanied by a sensible value for both the minimum partial load fraction :math:`\underline{P}_{vp}` and the startup cost :math:`k_{vp}^\text{startup}`. Otherwise, the optimal solution yields identical operation and performance like a regular, fully proportional process with constant/flat input ratios. 
 
 **Throughput by Online Capacity Min Rule**
 
+The new variable *online capacity* forces the process throughput to always stay above its value times the minium partial load fraction. But note that there is **no** constraint that stops :math:`\omega_{vpt}` from assuming arbitrarily small values. This is only softly prohibited by the startup cost term, which acts as kind of a soft friction term that punishes too dynamic of an operation strategy.
 
 .. math::
     \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
     \tau_{vpt} \geq \omega_{vpt} \underline{P}_{vp}
 
+    
+And here as code:
+    
 ::
 
     m.res_throughput_by_online_capacity_min = pyomo.Constraint(
@@ -163,11 +167,14 @@ Partial & Startup Process Constraints
 
 **Throughput by Online Capacity Max Rule**
    
+On the other side, the *online capacity* is an upper cap on the process throughput.
 
 .. math::
     \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
     \tau_{vpt} \leq \omega_{vpt}
 
+And the code:
+    
 ::
 
     m.res_throughput_by_online_capacity_max = pyomo.Constraint(
@@ -180,29 +187,29 @@ Partial & Startup Process Constraints
 
    
 
-**Partial Process Input Rule**
-
-
+**Partial Process Input Rule** replaces the regular *Process Input Rule* for all input commodities that that are in the partial process input tuple set :math:`C_{vp}^\text{in,partial}`. The input is no longer only dependent on the throughput :math:`\tau_{vpt}`, it also depends on the amount of online capacity :math:`\omega_{vpt}`: 
 
 .. math::
     \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  
-    \epsilon_{vpct}^\text{in} = \omega_{vpt} \cdot A + \tau_{vpt} \cdot B
-
-        
-.. math::
-    A = \underline{P}_{vp} \cdot \frac{
+    \epsilon_{vpct}^\text{in} = 
+      \omega_{vpt} \cdot \frac{
           \underline{r}_{pc}^\text{in} - r_{pc}^\text{in}}{
-          1 - \underline{P}_{vp}}
-
-and
-
-.. math::
-    B = \frac{
+          1 - \underline{P}_{vp}} \cdot \underline{P}_{vp} 
+    + \tau_{vpt} \cdot \frac{
         r_{pc}^\text{in} - 
           \underline{P}_{vp} 
           \underline{r}_{pc}^\text{in}}{
         1 - \underline{P}_{vp}}
-          
+
+As it is not immediately clear what this expression accomplishes, here is visual example. It plots the value off the expression :math:`\tau_{vpt}/\epsilon_{vpct}^\text{in}` for a process with :math:`\underline{P}_{vp} = 0.35`, :math:`\underline{r}_{pc}^\text{in} = 3.33` and :math:`r_{pc}^\text{in} = 2.5` and a hypothetical capacity of :math:`1 MW`. When operating at its maximum, it yields an input efficiecny of :math:`40 \%`, whereas in partial load this drops to :math:`30 \%`.
+
+
+.. image:: ../img/partial-eff.*
+   :width: 95%
+   :align: center
+
+More discussion and a visualisation of the reverse case (partial load more efficient than full load operation) is shown in a `dedicated IPython notebook <http://nbviewer.jupyter.org/gist/ojdo/a8d26dc6abc9d22faf77d7cd2623dddc/startup-partial-ratios.ipynb>`_.
+   
 ::
 
     m.def_partial_process_input = pyomo.Constraint(
@@ -233,14 +240,14 @@ and
 .. literalinclude:: /../urbs.py
    :pyobject: res_cap_online_by_cap_pro_rule 
 
-**Startup Capacity Rule** determines the value of the startup capacity indicator variable :math:`\phi_{vpt}`, by limiting its value to at least the positive difference of subsequent online capacity states :math:`\omega_{vpt}` and :math:`\omega_{vp(t-1)}`. In other words: whenever the onlince capacity increases, 
-
+**Startup Capacity Rule** determines the value of the startup capacity indicator variable :math:`\phi_{vpt}`, by limiting its value to at least the positive difference of subsequent online capacity states :math:`\omega_{vpt}` and :math:`\omega_{vp(t-1)}`. In other words: whenever the onlince capacity increases, startup capacity :math:`\phi_{vpt}` assumes a non-zero value.
 
 .. math::
 
 	\forall (v, p)\in P_v^\text{partial},t\in T_\text{m}\colon\  
 	\phi_{vpt} \geq \omega_{vpt} - \omega_{vp(t-1)}
-   
+
+Code declaration and definition:
    
 ::
 

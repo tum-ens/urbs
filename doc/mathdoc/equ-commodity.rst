@@ -8,22 +8,23 @@ Commodity Constraints
 .. math::
 
 	\mathrm{CB}(v,c,t) = 
-          \sum_{{p|c \in C_{vp}^\text{in}}} \epsilon_{vcpt}^\text{in}
-        - \sum_{{p|c \in C_{vp}^\text{out}}} \epsilon_{vcpt}^\text{out}
+          \sum_{p|c \in C_{vp}^\text{in}} \epsilon_{vcpt}^\text{in}
+        - \sum_{p|c \in C_{vp}^\text{out}} \epsilon_{vcpt}^\text{out}
         + \sum_{{s\in S_{vc}}} \left( \epsilon_{vst}^\text{in} - \epsilon_{vst}^\text{out} \right)
         + \sum_{{\substack{a\in A_v^\text{s}\\ f \in F_{vc}^\text{exp}}}} \pi_{aft}^\text{in}
         - \sum_{{\substack{a\in A_v^\text{p}\\ f \in F_{vc}^\text{imp}}}} \pi_{aft}^\text{out}
 
 This function sums up for a given commodity :math:`c`, site :math:`v` and timestep :math:`t`;
 
-	* the consumption: Process input commodity flow 1 :math:`\epsilon_{vcpt}^\text{in}` of all process tuples using the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
-	* the export: Input transmission power flow :math:`\pi_{aft}^\text{in}` of all transmission tuples exporting the commodity :math:`c` from the origin site :math:`v` at the timestep :math:`t`.
-	* the storage input: Input power flow :math:`\epsilon_{vst}^\text{in}` of all storage tuples storing the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
+* the consumption: Process input commodity flow :math:`\epsilon_{vcpt}^\text{in}` of all process tuples using the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
+* the export: Input transmission power flow :math:`\pi_{aft}^\text{in}` of all transmission tuples exporting the commodity :math:`c` from the origin site :math:`v` at the timestep :math:`t`.
+* the storage input: Input power flow :math:`\epsilon_{vst}^\text{in}` of all storage tuples storing the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
 
 and subtracts for the same given commodity :math:`c`, site :math:`v` and timestep :math:`t`;
-	* the creation: Process output commodity flow :math:`\epsilon_{vcpt}^\text{out}` of all process tuples using the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
-	* the import: Output transmission power flow :math:`\pi_{aft}^\text{out}` of all transmission tuples importing the commodity math:`c` to the destination site :math:`v` at the timestep :math:`t`.
-	* the storage output: Output power flow :math:`\epsilon_{vst}^\text{out}` of all storage tuples storing the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
+
+* the creation: Process output commodity flow :math:`\epsilon_{vcpt}^\text{out}` of all process tuples using the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
+* the import: Output transmission power flow :math:`\pi_{aft}^\text{out}` of all transmission tuples importing the commodity math:`c` to the destination site :math:`v` at the timestep :math:`t`.
+* the storage output: Output power flow :math:`\epsilon_{vst}^\text{out}` of all storage tuples storing the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
 
 The value of the function :math:`\mathrm{CB}` being greater than zero :math:`\mathrm{CB} > 0` means that the presence of the commodity :math:`c` in the site :math:`v` at the timestep :math:`t` is getting less than before by the technologies given above. Correspondingly, the value of the function being less than zero means that the presence of the commodity in the site at the timestep is getting more than before by the technologies given above.
 

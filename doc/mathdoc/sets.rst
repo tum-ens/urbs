@@ -233,7 +233,7 @@ This set is defined as ``pro_tuples`` and given by the code fragment:
         doc='Combinations of possible processes, e.g. (North,Coal plant)')
 		
 
-A subset of these process tuples ``pro_partial_tuples`` is formed in order to identify processes that have partial & startup properties. Programmatically, they are identified by those processes, which have the parameter ``ratio-min`` set for one of their input commodities in table *Process-Commodity*. The tuple set is defined as:
+A subset of these process tuples ``pro_partial_tuples`` :math:`P_v^\text{partial}` is formed in order to identify processes that have partial & startup properties. Programmatically, they are identified by those processes, which have the parameter ``ratio-min`` set for one of their input commodities in table *Process-Commodity*. The tuple set is defined as:
         
 ::
 
@@ -306,7 +306,7 @@ This set is defined as ``pro_input_tuples`` and given by the code fragment:
 
 Where: ``r_in`` represents the process input ratio.
 
-For processes in the tuple set ``pro_partial_tuples``, the following tuple set ``pro_partial_input_tuples`` enumerates their input commodities. It is used to index the constraints that determine a process' input commodity flow (i.e. ``def_process_input`` and ``def_partial_process_input``). It is defined by the following code fragment:
+For processes in the tuple set ``pro_partial_tuples`` :math:`C_{vp}^\text{in,partial}`, the following tuple set ``pro_partial_input_tuples`` enumerates their input commodities. It is used to index the constraints that determine a process' input commodity flow (i.e. ``def_process_input`` and ``def_partial_process_input``). It is defined by the following code fragment:
 
 ::
         
@@ -369,17 +369,17 @@ Commodity Type Subsets are subsets of the sets commodity tuples
 These subsets can be obtained by fixing the commodity type :math:`q` to a desired commodity type (e.g SupIm, Stock) in the set commodity tuples :math:`C_{vq}`.
 Since there are 6 types of commodity types, there are also 6 commodity type subsets. Commodity type subsets are;
 
-	**Supply Intermittent Commodities** (``SupIm``): The set :math:`C_\text{sup}` represents all commodities :math:`c` of commodity type ``SupIm``. Commodities of this type have intermittent timeseries, in other words, availability of these commodities are not constant. These commodities might have various energy content for every timestep :math:`t`. For example solar radiation is contingent on many factors such as sun position, weather and varies permanently.
+**Supply Intermittent Commodities** (``SupIm``): The set :math:`C_\text{sup}` represents all commodities :math:`c` of commodity type ``SupIm``. Commodities of this type have intermittent timeseries, in other words, availability of these commodities are not constant. These commodities might have various energy content for every timestep :math:`t`. For example solar radiation is contingent on many factors such as sun position, weather and varies permanently.
 
-	**Stock Commodities** (``Stock``): The set :math:`C_\text{st}` represents all commodities :math:`c` of commodity type ``Stock``. Commodities of this type can be purchased at any time for a given price( :math:`k_{vc}^\text{fuel}`).
+**Stock Commodities** (``Stock``): The set :math:`C_\text{st}` represents all commodities :math:`c` of commodity type ``Stock``. Commodities of this type can be purchased at any time for a given price( :math:`k_{vc}^\text{fuel}`).
 
-	**Sell Commodities** (``Sell``): The set :math:`C_\text{sell}` represents all commodities :math:`c` of commodity type ``Sell``. Commodities that can be sold. These Commodities have a sell price ( :math:`k_{vct}^\text{bs}` ) that may vary with the given timestep :math:`t`.
+**Sell Commodities** (``Sell``): The set :math:`C_\text{sell}` represents all commodities :math:`c` of commodity type ``Sell``. Commodities that can be sold. These Commodities have a sell price ( :math:`k_{vct}^\text{bs}` ) that may vary with the given timestep :math:`t`.
 
-	**Buy Commodities** (``Buy``): The set :math:`C_\text{buy}` represents all commodities :math:`c` of commodity type ``Buy``. Commodities that can be purchased. These Commodities have a buy price ( :math:`k_{vc}^\text{bs}` ) that may vary with the given timestep :math:`t`.
+**Buy Commodities** (``Buy``): The set :math:`C_\text{buy}` represents all commodities :math:`c` of commodity type ``Buy``. Commodities that can be purchased. These Commodities have a buy price ( :math:`k_{vc}^\text{bs}` ) that may vary with the given timestep :math:`t`.
 
-	**Demand Commodities** (``Demand``): The set :math:`C_\text{dem}` represents all commodities :math:`c` of commodity type ``Demand``. Commodities of this type are the requested commodities of the energy system. They are usually the end product of the model (e.g Electricity:Elec).
+**Demand Commodities** (``Demand``): The set :math:`C_\text{dem}` represents all commodities :math:`c` of commodity type ``Demand``. Commodities of this type are the requested commodities of the energy system. They are usually the end product of the model (e.g Electricity:Elec).
 
-	**Environmental Commodities** (``Env``): The set :math:`C_\text{env}` represents all commodities :math:`c` of commodity type ``Env``. Commodities of this type are usually the undesired byproducts of processes that might be harmful for environment, optional maximum creation limits can be set to control the generation of these commodities (e.g Greenhouse Gas Emissions: :math:`\text{CO}_2`).
+**Environmental Commodities** (``Env``): The set :math:`C_\text{env}` represents all commodities :math:`c` of commodity type ``Env``. Commodities of this type are usually the undesired byproducts of processes that might be harmful for environment, optional maximum creation limits can be set to control the generation of these commodities (e.g Greenhouse Gas Emissions: :math:`\text{CO}_2`).
 
 Commodity Type Subsets are given by the code fragment:
 ::

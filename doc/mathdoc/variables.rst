@@ -112,29 +112,29 @@ The separation of costs by type, facilitates business planning and provides calc
 As mentioned before these cost types are hardcoded, which means they are not considered to be fixed or changed by the user.
 These cost types are as following;
 
-	**Investment Costs** :math:`\zeta_\text{inv}` : The variable :math:`\zeta_\text{inv}` represents the annualised total investment costs.
-		Costs for required new investments on storage, process and transmission technologies.
-	
-	**Fix Costs** :math:`\zeta_\text{fix}` : The variable :math:`\zeta_\text{fix}` represents the annualised total fix costs.
-		Fix costs for all used storage, process, and transmission technologies. Such as maintenance costs.
-		
-	**Variable Costs** :math:`\zeta_\text{var}` : The variable :math:`\zeta_\text{var}` represents the annualised total variables costs.
-		Variable costs that are reliant on the usage amount and period of the storage, process, transmission technologies.
-		
-	**Fuel Costs** :math:`\zeta_\text{fuel}` : The variable :math:`\zeta_\text{fuel}` represents the annualised total fuel costs.
-		Fuel costs are dependent on the usage of stock commodities( :math:`\forall c \in C_\text{stock}`).
-		
-	**Revenue Costs** :math:`\zeta_\text{rev}` : The variable :math:`\zeta_\text{rev}` represents the annualised total revenue costs.
-		Revenue costs is defined for the costs that occures by selling the sell commodities( :math:`\forall c \in C_\text{sell}`).
-		Since this variable is an income for the system, it is either zero or has a negative value.
-		
-	**Purchase Costs** :math:`\zeta_\text{pur}` : The variable :math:`\zeta_\text{pur}` represents the annualised total purchase costs.
-		Purchase costs is defined for the costs that occures by buying the buy commodities ( :math:`\forall c \in C_\text{buy}` ).
+**Investment Costs** :math:`\zeta_\text{inv}`: The variable :math:`\zeta_\text{inv}` represents the annualised total investment costs.
+Costs for required new investments on storage, process and transmission technologies.
 
-	**Startup Costs** :math:`\zeta_\text{startup}` : The variable :math:`\zeta_\text{startup}` represents the annualised total startup costs.
-		Startup costs are reliant on the yearly startup occurences of the processes.
-		
-	For more information on calculation of these variables see section :ref:`eq-cost-func`.
+**Fix Costs** :math:`\zeta_\text{fix}`: The variable :math:`\zeta_\text{fix}` represents the annualised total fix costs.
+Fix costs for all used storage, process, and transmission technologies. Such as maintenance costs.
+
+**Variable Costs** :math:`\zeta_\text{var}`: The variable :math:`\zeta_\text{var}` represents the annualised total variables costs.
+Variable costs that are reliant on the usage amount and period of the storage, process, transmission technologies.
+
+**Fuel Costs** :math:`\zeta_\text{fuel}`: The variable :math:`\zeta_\text{fuel}` represents the annualised total fuel costs.
+Fuel costs are dependent on the usage of stock commodities( :math:`\forall c \in C_\text{stock}`).
+
+**Revenue Costs** :math:`\zeta_\text{rev}`: The variable :math:`\zeta_\text{rev}` represents the annualised total revenue costs.
+Revenue costs is defined for the costs that occures by selling the sell commodities( :math:`\forall c \in C_\text{sell}`).
+Since this variable is an income for the system, it is either zero or has a negative value.
+
+**Purchase Costs** :math:`\zeta_\text{pur}`: The variable :math:`\zeta_\text{pur}` represents the annualised total purchase costs.
+Purchase costs is defined for the costs that occures by buying the buy commodities ( :math:`\forall c \in C_\text{buy}` ).
+
+**Startup Costs** :math:`\zeta_\text{startup}`: The variable :math:`\zeta_\text{startup}` represents the annualised total startup costs.
+Startup costs are reliant on the yearly startup occurences of the processes.
+    
+For more information on calculation of these variables see section :ref:`eq-cost-func`.
 
 Commodity Variables
 ^^^^^^^^^^^^^^^^^^^

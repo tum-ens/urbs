@@ -26,10 +26,14 @@ exclude_patterns = ['_build']
 htmlhelp_basename = 'urbsdoc'
 
 # LaTeX output
+LATEX_PREAMBLE = """
+\setcounter{tocdepth}{2}
+"""
 
 latex_elements = {
     'papersize': 'a4paper',
     'pointsize': '11pt',
+    'preamble': LATEX_PREAMBLE
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

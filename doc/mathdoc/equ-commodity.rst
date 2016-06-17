@@ -16,7 +16,7 @@ Commodity Constraints
 
 This function sums up for a given commodity :math:`c`, site :math:`v` and timestep :math:`t`;
 
-	* the consumption: Process input commodity flow  :math:`\epsilon_{vcpt}^\text{in}` of all process tuples using the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
+	* the consumption: Process input commodity flow 1 :math:`\epsilon_{vcpt}^\text{in}` of all process tuples using the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
 	* the export: Input transmission power flow :math:`\pi_{aft}^\text{in}` of all transmission tuples exporting the commodity :math:`c` from the origin site :math:`v` at the timestep :math:`t`.
 	* the storage input: Input power flow :math:`\epsilon_{vst}^\text{in}` of all storage tuples storing the commodity :math:`c` in the site :math:`v` at the timestep :math:`t`.
 
@@ -320,8 +320,8 @@ The definition of the constraint and its corresponding rule is defined by the fo
   
         
             
-Environmental Constraints
--------------------------
+Global Environmental Constraint
+-------------------------------
 
 **Global CO2 Limit Rule**: The constraint global CO2 limit rule applies to the whole energy system, that is to say it applies to every site and timestep in general. This constraints restricts the energy model from releasing more environmental commodities, namely CO2 to environment than allowed. The constraint states that the sum of released environmental commodities for every site :math:`v` and every timestep :math:`t` must be less than or equal to the parameter maximum global annual CO2 emission limit :math:`\overline{L}_{CO_{2}}`, where the amount of released enviromental commodites in a single site :math:`v` at a single timestep :math:`t` is calculated by the product of commodity balance of enviromental commodities :math:`\mathrm{CB}(v,CO_{2},t)` and the parameter weight :math:`w`. This constraint is skipped if the value of the parameter :math:`\overline{L}_{CO_{2}}` is set to ``inf``. In mathematical notation this constraint is expressed as:
 

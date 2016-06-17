@@ -48,7 +48,7 @@ Technical Parameters
     +-------------------------------------+----+--------------------------------------------+
     |:math:`\overline{PG}_{vp}`           |1/h |Process Maximal Power Gradient (relative)   |
     +-------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{a}_{vp}`           | _  |Process Minimum Part Load Fraction          |
+    |:math:`\underline{P}_{vp}`           | _  |Process Minimum Part Load Fraction          |
     +-------------------------------------+----+--------------------------------------------+
     |:math:`r_{pc}^\text{in}`             | _  |Process Input Ratio                         |
     +-------------------------------------+----+--------------------------------------------+

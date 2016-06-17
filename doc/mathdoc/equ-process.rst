@@ -141,13 +141,14 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
 Partial & Startup Process Constraints
 -------------------------------------
 
-Start
+
 
 **Throughput by Online Capacity Min Rule**
 
 
 .. math::
-    \forall
+    \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
+    \tau_{vpt} \geq \omega_{vpt} \underline{P}_{vp}
 
 ::
 
@@ -162,6 +163,11 @@ Start
 
 **Throughput by Online Capacity Max Rule**
    
+
+.. math::
+    \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
+    \tau_{vpt} \leq \omega_{vpt}
+
 ::
 
     m.res_throughput_by_online_capacity_max = pyomo.Constraint(
@@ -175,7 +181,28 @@ Start
    
 
 **Partial Process Input Rule**
-   
+
+
+
+.. math::
+    \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  
+    \epsilon_{vpct}^\text{in} = \omega_{vpt} \cdot A + \tau_{vpt} \cdot B
+
+        
+.. math::
+    A = \underline{P}_{vp} \cdot \frac{
+          \underline{r}_{pc}^\text{in} - r_{pc}^\text{in}}{
+          1 - \underline{P}_{vp}}
+
+and
+
+.. math::
+    B = \frac{
+        r_{pc}^\text{in} - 
+          \underline{P}_{vp} 
+          \underline{r}_{pc}^\text{in}}{
+        1 - \underline{P}_{vp}}
+          
 ::
 
     m.def_partial_process_input = pyomo.Constraint(
@@ -188,12 +215,12 @@ Start
    :pyobject: def_partial_process_input_rule
 
 
-**Online Capacity By Process Capacity** limits the value of the online capacity :math:`\omega_{vpt}` by the total installed process capacity :math:`\kappa_{vp}`:
+**Online Capacity By Process Capacity Rule** limits the value of the online capacity :math:`\omega_{vpt}` by the total installed process capacity :math:`\kappa_{vp}`:
 
 
 .. math::
 
-	\forall \left.v\in V, p\in P\right|_{(v,p)\in PP},t\in T_m\colon\quad 
+	\forall (v, p)\in P_v^\text{partial},t\in T_\text{m}\colon\  
 	\omega_{vpt} \leq \kappa_{vp}
    
 ::
@@ -206,6 +233,15 @@ Start
 .. literalinclude:: /../urbs.py
    :pyobject: res_cap_online_by_cap_pro_rule 
 
+**Startup Capacity Rule** determines the value of the startup capacity indicator variable :math:`\phi_{vpt}`, by limiting its value to at least the positive difference of subsequent online capacity states :math:`\omega_{vpt}` and :math:`\omega_{vp(t-1)}`. In other words: whenever the onlince capacity increases, 
+
+
+.. math::
+
+	\forall (v, p)\in P_v^\text{partial},t\in T_\text{m}\colon\  
+	\phi_{vpt} \geq \omega_{vpt} - \omega_{vp(t-1)}
+   
+   
 ::
 
     m.def_startup_capacity = pyomo.Constraint(

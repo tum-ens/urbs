@@ -1,6 +1,6 @@
-# URBS
+# urbs
 
-URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
+urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
 
 [![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](https://urbs.readthedocs.org/en/latest/)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.46118.svg)](http://dx.doi.org/10.5281/zenodo.46118)
@@ -8,7 +8,7 @@ URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ## Features
 
-  * URBS is a linear programming model for multi-commodity energy systems with a focus on optimal storage sizing and use.
+  * urbs is a linear programming model for multi-commodity energy systems with a focus on optimal storage sizing and use.
   * It finds the minimum cost energy system to satisfy given demand timeseries for possibly multiple commodities (e.g. electricity).
   * By default, operates on hourly-spaced timesteps (configurable).
   * Thanks to [Pandas](https://pandas.pydata.org), complex data analysis is easy.

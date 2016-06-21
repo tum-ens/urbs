@@ -1333,7 +1333,7 @@ def dsm_time_tuples(timestep, time, delay):
     time_list = list()
     
     for step in range(timestep-delay, timestep+delay+1):
-        if step > lb and step < ub:
+        if step >= lb and step <= ub:
             time_list.append(step)
     
     return time_list

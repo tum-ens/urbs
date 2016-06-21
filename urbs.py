@@ -1253,15 +1253,6 @@ def commodity_balance(m, tm, sit, com):
         if site == sit and commodity == com:
             balance += m.e_sto_in[(tm, site, storage, com)]
             balance -= m.e_sto_out[(tm, site, storage, com)]
-    for site, commodity in m.dsm_site_tuples:
-        # upshifted demand increases demand
-        # downshifted demand decreses demand
-        if site == sit and commodity == com:
-            balance += m.dsm_up[tm,sit,com]
-            balance -= sum(m.dsm_down[t,tm,sit,com] 
-                           for t in dsm_time_tuples(
-                               tm, m.timesteps[1:], 
-                               m.dsm['delay'].loc[sit,com]))
     return balance
 
 

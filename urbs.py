@@ -1455,14 +1455,15 @@ def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
     return None
 
 def get_entity(instance, name):
-    """ Return a DataFrame for an entity in model instance.
+    """ Retrieve values (or duals) for an entity in a model instance.
 
     Args:
         instance: a Pyomo ConcreteModel instance
         name: name of a Set, Param, Var, Constraint or Objective
 
     Returns:
-        a single-columned Pandas DataFrame with domain as index
+        a Pandas Series with domain as index and values (or 1's, for sets) of 
+        entity name. For constraints, it retrieves the dual values
     """
 
     # retrieve entity, its type and its onset names
@@ -1487,18 +1488,35 @@ def get_entity(instance, name):
             results = pd.DataFrame([v[0]+(v[1],) for v in entity.iteritems()])
         else:
             results = pd.DataFrame(entity.iteritems())
+
+    elif isinstance(entity, pyomo.Constraint):
+        if entity.dim() > 1:
+            results = pd.DataFrame(
+                [v[0]+ (instance.dual[v[1]],) for v in entity.iteritems()])
+        elif entity.dim() == 1:
+            results = pd.DataFrame(
+                [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
+        else:
+            results = pd.DataFrame(
+                [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
+            labels = ['None']
+
     else:
-        # create DataFrameds
         # create DataFrame
         if entity.dim() > 1:
             # concatenate index tuples with value if entity has
             # multidimensional indices v[0]
             results = pd.DataFrame(
                 [v[0]+(v[1].value,) for v in entity.iteritems()])
-        else:
+        elif entity.dim() == 1:
             # otherwise, create tuple from scalar index v[0]
             results = pd.DataFrame(
                 [(v[0], v[1].value) for v in entity.iteritems()])
+        else:
+            # assert(entity.dim() == 0)
+            results = pd.DataFrame(
+                [(v[0], v[1].value) for v in entity.iteritems()])
+            labels = ['None']
 
     # check for duplicate onset names and append one to several "_" to make
     # them unique, e.g. ['sit', 'sit', 'com'] becomes ['sit', 'sit_', 'com']
@@ -1510,6 +1528,9 @@ def get_entity(instance, name):
         # name columns according to labels + entity name
         results.columns = labels + [name]
         results.set_index(labels, inplace=True)
+        
+        # convert to Series
+        results = results[name]
 
     return results
 
@@ -1533,7 +1554,7 @@ def get_entities(instance, names):
         other = get_entity(instance, name)
 
         if df.empty:
-            df = other
+            df = other.to_frame()
         else:
             index_names_before = df.index.names
 
@@ -1580,8 +1601,14 @@ def list_entities(instance, entity_type):
         else:
             raise ValueError("Unknown entity_type '{}'".format(entity_type))
 
-    # iterate through all model components and keep only
-    iter_entities = instance.__dict__.iteritems()
+    # create entity iterator, using a python 2 and 3 compatible idiom:
+    # http://python3porting.com/differences.html#index-6
+    try:
+        iter_entities = instance.__dict__.iteritems()  # Python 2 compat
+    except AttributeError:
+        iter_entities = instance.__dict__.items()  # Python way
+
+    # now iterate over all entties and keep only those whose type matches
     entities = sorted(
         (name, entity.doc, _get_onset_names(entity))
         for (name, entity) in iter_entities
@@ -1620,9 +1647,17 @@ def _get_onset_names(entity):
         if entity.dimen > 1:
             # N-dimensional set tuples, possibly with nested set tuples within
             if entity.domain:
+                # retreive list of domain sets, which itself could be nested
                 domains = entity.domain.set_tuple
             else:
-                domains = entity.set_tuple
+                try:
+                    # if no domain attribute exists, some 
+                    domains = entity.set_tuple
+                except AttributeError:
+                    # if that fails, too, a constructed (union, difference, 
+                    # intersection, ...) set exists. In that case, the
+                    # attribute _setA holds the domain for the base set
+                    domains = entity._setA.domain.set_tuple
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))

@@ -9,19 +9,13 @@ transporting commodities between sites and storage for saving/retrieving
 commodities.
 
 """
-import warnings
-try:
-    import pyomo.core as pyomo
-except ImportError:
-    import coopr.pyomo as pyomo
-    warnings.warn("Support for Pyomo 3.x is now deprecated and will be removed"
-                  "removed with the next release. Please upgrade to Pyomo 4.",
-                  FutureWarning, stacklevel=2)
 
 import math
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pyomo.core as pyomo
+import warnings
 from datetime import datetime
 from operator import itemgetter
 from random import random
@@ -1274,7 +1268,7 @@ def split_columns(columns, sep='.'):
 
     Example:
         >>> split_columns(['DE.Elec', 'MA.Elec', 'NO.Wind'])
-        MultiIndex(levels=[[u'DE', u'MA', u'NO'], [u'Elec', u'Wind']],
+        MultiIndex(levels=[['DE', 'MA', 'NO'], ['Elec', 'Wind']],
                    labels=[[0, 1, 2], [0, 0, 1]])
 
     """
@@ -1348,7 +1342,7 @@ def commodity_subset(com_tuples, type_name):
         return set(com for sit, com, com_type in com_tuples
                    if com_type == type_name)
     else:
-        # type(type_name) is a class 'coopr.pyomo.base.sets.SimpleSet'
+        # type(type_name) is a class 'pyomo.base.sets.SimpleSet'
         # type_name: ('Buy')=>('Elec buy', 'Heat buy')
         return set((sit, com, com_type) for sit, com, com_type in com_tuples
                    if com in type_name)
@@ -1700,21 +1694,18 @@ def get_constants(instance):
         (costs, cpro, ctra, csto) tuple
 
     Example:
-        >>> import coopr.environ
-        >>> from coopr.opt.base import SolverFactory
+        >>> import pyomo.environ
+        >>> from pyomo.opt.base import SolverFactory
         >>> data = read_excel('mimo-example.xlsx')
-        >>> model = create_model(data, range(1,25))
-        >>> prob = model.create()
+        >>> prob = create_model(data, range(1,25))
         >>> optim = SolverFactory('glpk')
         >>> result = optim.solve(prob)
-        >>> prob.load(result)
-        True
         >>> cap_pro = get_constants(prob)[1]['Total']
         >>> cap_pro.xs('Wind park', level='Process').apply(int)
         Site
         Mid      13000
-        North    27271
-        South     2674
+        North    23258
+        South        0
         Name: Total, dtype: int64
     """
     costs = get_entity(instance, 'costs')

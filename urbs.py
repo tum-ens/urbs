@@ -1525,7 +1525,6 @@ def get_entity(instance, name):
         
         # convert to Series
         results = results[name]
-
     return results
 
 
@@ -1766,7 +1765,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
     demand.name = 'Demand'
 
     # STOCK
-    eco = get_entity(instance, 'e_co_stock')['e_co_stock'].unstack()['Stock']
+    eco = get_entity(instance, 'e_co_stock').unstack()['Stock']
     eco = eco.xs(sit, level='sit').unstack().fillna(0)
     try:
         stock = eco.loc[timesteps][com]
@@ -1777,23 +1776,21 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # DEMAND SIDE MANAGEMENT (load shifting)
     dsmup = get_entity(instance, 'dsm_up')
     dsmdo = get_entity(instance, 'dsm_down')
-    # Extract site and commodity timeseries
+
     dsmup = dsmup.xs(sit, level = 'sit')
     dsmup = dsmup.xs(com, level = 'com')
-    # Create series
-    dsmup = dsmup['dsm_up']
-    # Extract site and commodity timeseries
     dsmdo = dsmdo.xs(sit, level = 'sit')
     dsmdo = dsmdo.xs(com, level = 'com')
-    # Create series by summing the first time step
-    dsmdo = dsmdo['dsm_down'].unstack().sum(axis=0)
-    # Rename index names
+
+    #  series by summing the first time step set
+    dsmdo = dsmdo.unstack().sum(axis=0)
     dsmdo.index.names = ['t']
+
+    # derive secondary timeseries
     demanddelta = dsmup - dsmdo
     shifted = demand + demanddelta
-
-    shifted.name = 'Shifted Demand'
     demanddelta.name = 'Delta of Demand to shifted Demand'
+    shifted.name = 'Shifted Demand'
 
     # PROCESS
     # select all entries of created and consumed desired commodity com and site
@@ -1883,7 +1880,7 @@ def report(instance, filename, commodities=None, sites=None):
     with pd.ExcelWriter(filename) as writer:
 
         # write constants to spreadsheet
-        costs.to_excel(writer, 'Costs')
+        costs.to_frame().to_excel(writer, 'Costs')
         cpro.to_excel(writer, 'Process caps')
         ctra.to_excel(writer, 'Transmission caps')
         csto.to_excel(writer, 'Storage caps')

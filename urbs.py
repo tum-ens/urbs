@@ -1525,10 +1525,6 @@ def get_entity(instance, name):
         
         # convert to Series
         results = results[name]
-        
-        # if Series has MultiIndex, sort it to avoid PerformanceWarnings
-        if isinstance(results.index, pd.core.index.MultiIndex):
-            results = results.sortlevel()
     return results
 
 
@@ -1781,8 +1777,10 @@ def get_timeseries(instance, com, sit, timesteps=None):
     dsmup = get_entity(instance, 'dsm_up')
     dsmdo = get_entity(instance, 'dsm_down')
 
-    dsmup = dsmup.xs(sit, level = 'sit').xs(com, level = 'com')
-    dsmdo = dsmdo.xs(sit, level = 'sit').xs(com, level = 'com')
+    dsmup = dsmup.xs(sit, level = 'sit')
+    dsmup = dsmup.xs(com, level = 'com')
+    dsmdo = dsmdo.xs(sit, level = 'sit')
+    dsmdo = dsmdo.xs(com, level = 'com')
 
     #  series by summing the first time step set
     dsmdo = dsmdo.unstack().sum(axis=0)

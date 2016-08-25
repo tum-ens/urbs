@@ -21,7 +21,6 @@ from operator import itemgetter
 from random import random
 from xlrd import XLRDError
 
-import pdb
 
 COLORS = {
     'Biomass plant': (0, 122, 55),

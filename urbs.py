@@ -21,6 +21,8 @@ from operator import itemgetter
 from random import random
 from xlrd import XLRDError
 
+import pdb
+
 COLORS = {
     'Biomass plant': (0, 122, 55),
     'Coal plant': (100, 100, 100),
@@ -1894,18 +1896,27 @@ def report(instance, filename, commodities=None, sites=None):
             for sit in sites:
                 created, consumed, stored, imported, exported, derivative = get_timeseries(
                     instance, co, sit)
+                
+                # temporarily drop out the timeseries demand and delta, for a correct overproduction calculation
+                demand = consumed.pop('Demand')
+                demanddelta = consumed.pop('Delta of Demand to shifted Demand')
 
                 overprod = pd.DataFrame(
                     columns=['Overproduction'],
                     data=created.sum(axis=1) - consumed.sum(axis=1) +
                     imported.sum(axis=1) - exported.sum(axis=1) +
                     stored['Retrieved'] - stored['Stored'])
-
+                
+                # add timeseries demand and delta again to consumed
+                consumed = pd.concat(
+                    (consumed, demand.rename('Demand'),
+                    demanddelta.rename('Delta of Demand to shifted Demand')),
+                    axis=1)
+                
                 tableau = pd.concat(
                     [created, consumed, stored, imported, exported, overprod, derivative],
                     axis=1,
-                    keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'Derivative', 'Shifted Demand', 'Demand Delta'])
+                    keys=['Created', 'Consumed', 'Storage', 'Import from','Export to', 'Balance', 'Derivative'])
                 timeseries[(co, sit)] = tableau.copy()
 
                 # timeseries sums

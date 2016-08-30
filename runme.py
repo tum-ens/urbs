@@ -104,10 +104,8 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 
-    # copy input file in result directory
-    cdir = os.getcwd()
-    respath = os.path.join(cdir, result_dir)
-    shutil.copy(input_file,respath)
+    # copy input file to result directory
+    shutil.copyfile(input_file, os.path.join(result_dir, input_file))
 	
 	# write report to spreadsheet
     urbs.report(

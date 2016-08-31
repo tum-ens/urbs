@@ -1903,10 +1903,10 @@ def report(instance, filename, commodities=None, sites=None):
                     stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
-                    [created, consumed, stored, imported, exported, overprod, derivative],
+                    [created, consumed, stored, imported, exported, overprod, derivative, dsm],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'Derivative', 'Shifted Demand', 'Demand Delta'])
+                          'Export to', 'Balance', 'Derivative', 'DSM'])
                 timeseries[(co, sit)] = tableau.copy()
 
                 # timeseries sums

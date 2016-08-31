@@ -1854,11 +1854,12 @@ def get_timeseries(instance, com, sit, timesteps=None):
     created = created.join(stock)
 
     # show demand as consumed
-    consumed = consumed.join(demand)
-    consumed = consumed.join(shifted)
-    consumed = consumed.join(demanddelta)
+    consumed = consumed.join(shifted.rename('Demand'))
+    
+    # show dsm timeseries as dsm
+    dsm = pd.concat((demand.rename('Original Demand'), demanddelta), axis=1)
 
-    return created, consumed, stored, imported, exported, derivative
+    return created, consumed, stored, imported, exported, derivative, dsm
 
 
 def report(instance, filename, commodities=None, sites=None):
@@ -1892,7 +1893,7 @@ def report(instance, filename, commodities=None, sites=None):
         # collect timeseries data
         for co in commodities:
             for sit in sites:
-                created, consumed, stored, imported, exported, derivative = get_timeseries(
+                created, consumed, stored, imported, exported, derivative, dsm = get_timeseries(
                     instance, co, sit)
 
                 overprod = pd.DataFrame(
@@ -1914,9 +1915,10 @@ def report(instance, filename, commodities=None, sites=None):
                                   stored.sum().drop('Level'),
                                   imported.sum(),
                                   exported.sum(),
-                                  overprod.sum()], axis=0,
+                                  overprod.sum(),
+                                  dsm.sum()], axis=0,
                                  keys=['Created', 'Consumed', 'Storage',
-                                 'Import', 'Export', 'Balance'])
+                                 'Import', 'Export', 'Balance', 'DSM'])
                 energies.append(sums.to_frame("{}.{}".format(co, sit)))
 
         # write timeseries data (if any)
@@ -2003,7 +2005,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1])
     #, height_ratios=[2, 1]
 
-    created, consumed, stored, imported, exported, derivative = get_timeseries(
+    created, consumed, stored, imported, exported, derivative, dsm = get_timeseries(
         prob, com, sit, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)
@@ -2024,8 +2026,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
 
     # move demand to its own plot
     demand = consumed.pop('Demand')
-    shifted = consumed.pop('Shifted Demand')
-    deltademand = consumed.pop('Delta of Demand to shifted Demand')
+    original = dsm.pop('Original Demand')
+    deltademand = dsm.pop('Delta of Demand to shifted Demand')
 
     # remove all columns from created which are all-zeros in both created and
     # consumed (except the last one, to prevent a completely empty frame)
@@ -2100,11 +2102,11 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     plt.setp(ax0.get_xticklabels(), visible=False)    
     
     # PLOT DEMAND
-    ax0.plot(demand.index, demand.values, linewidth=0.8,
-             color=to_color('Demand'))
+    ax0.plot(original.index, original.values, linewidth=0.8,
+             color=to_color('Original Demand'))
              
-    ax0.plot(shifted.index, shifted.values, linewidth=1.2,
-             color=to_color('Shifted demand'))
+    ax0.plot(demand.index, demand.values, linewidth=1.2,
+             color=to_color('Demand'))
 
     # PLOT STORAGE
     ax1 = plt.subplot(gs[1], sharex=ax0)
@@ -2115,10 +2117,6 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     ax2 = plt.subplot(gs[2], sharex=ax1)
     ax2.bar(deltademand.index, deltademand.values, 
                   color=to_color('Demand delta'), edgecolor='none')
-    #ax2.plot(demand.index, demand.values, linewidth=0.8,
-             #color=to_color('Demand'))       
-    #ax2.plot(shifted.index, shifted.values, linewidth=1.2,
-             #color=to_color('Shifted demand'))
 
     # color
     sp1[0].set_facecolor(to_color('Storage'))

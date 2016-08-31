@@ -32,8 +32,8 @@ COLORS = {
     'Slack powerplant': (163, 74, 130),
     'Wind park': (122, 179, 225),
     'Decoration': (128, 128, 128),  # plot labels
-    'Demand': (130, 130, 130),  # thick demand line
-    'Shifted demand': (25, 25, 25), # thick shifted demand line
+    'Original Demand': (130, 130, 130),  # thick demand line
+    'Demand': (25, 25, 25), # thick shifted demand line
     'Demand delta': (130, 130, 130), # dashed demand delta
     'Grid': (128, 128, 128),  # background grid
     'Overproduction': (190, 0, 99),  # excess power

@@ -79,7 +79,7 @@ def compare_scenarios(result_files, output_filename):
     for rf in result_files:
         with pd.ExcelFile(rf) as xls:
             cost = xls.parse('Costs',index_col=[0])
-            esum = xls.parse('Energy sums')
+            esum = xls.parse('Commodity sums')
     
             # repair broken MultiIndex in the first column
             esum.reset_index(inplace=True)
@@ -148,7 +148,7 @@ def compare_scenarios(result_files, output_filename):
     
         # legend
         lg = ax.legend(frameon=False, loc='upper center',
-                       ncol=5,
+                       ncol=4,
                        bbox_to_anchor=(0.5, 1.11))
         plt.setp(lg.get_patches(), edgecolor=urbs.to_color('Decoration'),
                  linewidth=0.15)

@@ -74,8 +74,7 @@ year, which was also the beginning of the summer.
 
   
   Process,     eff, inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
-Photovoltaics
-   plant,      1.00,      0,      50000,           0,       0,          0 
+ Photovoltaics,1.00,      0,      50000,           0,       0,          0 
   Wind plant,  1.00,      0,     100000,           0,       0,          0
   Purchase,    1.00,      0,       1500,   **15/45/75**,    0,       15/45/75
   Feed-in,     1.00,      0,       1500,   **15/45/75**,    0,       15/45/75
@@ -152,8 +151,7 @@ provided by Purchase.
     :stub-columns: 1
 
     Process,     eff, inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
-  Photovoltaics
-     plant,      1.00,      0,      3000,          0,         0,            0 
+  Photovoltaics, 1.00,      0,      3000,          0,         0,            0 
     Wind plant,	 1.00,      0,     15000,          0,         0,            0
      Gas plant,  0.60,      0,         0,         27,      1.60,        28.60
     Purchase,    1.00,   1500,      1500,    **15/45/75**,    0,       15/45/75
@@ -211,8 +209,7 @@ had made a contribution to the whole electricity system of ``Mid``.
     :stub-columns: 1
 
     Process,     eff, inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
-  Photovoltaics
-         plant,  1.00,  15000,     16000,          0,         0,            0 
+  Photovoltaics, 1.00,  15000,     16000,          0,         0,            0 
     Wind plant,	 1.00,      0,     13000,          0,         0,            0
     Gas plant,   0.60,      0,      8000,         27,      1.60,        28.60
    Hydro plant,  1.00,      0,      1400,          6,       1.40,        7.40
@@ -240,7 +237,8 @@ system of ``Mid`` to constraint the commodities.
 .. note::
 
     For trial e.g. of the result of lower Demand Side Management this
-    :download:`greenland mid.xlsx <greenland/greenland mid.xlsx>`is the 
+    :download:`greenland mid.xlsx <greenland/greenland mid.xlsx>`is the
+    input file used for this scenario
 
 	
 

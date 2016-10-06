@@ -17,7 +17,7 @@ The DSM up/downshifts are closely related to commodities，
 which are given by default in the urbs with their energy content (MWh). 
 The size of the modelled market has to be considered small relative to 
 the surrounding market. To use this feature, the excel input file needs 
-an additional **Demand Side Management ** sheet with the five parameters 
+an additional **Demand Side Management** sheet with the five parameters 
 containing the columns ``delay``, ``eff``, ``recov``, ``cap-max-do`` and 
 ``cap-max-up``, which are used in DSM constraints as technical parameters. 
 For a more detailed description of the implementation have a look at the 

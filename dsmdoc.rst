@@ -155,8 +155,8 @@ provided by Purchase.
   Photovoltaics
      plant,      1.00,      0,      3000,          0,         0,            0 
     Wind plant,	 1.00,      0,     15000,          0,         0,            0
-     Gas plant,  0.60，      0,         0,         27,      1.60,        28.60
-	Purchase,    1.00,   1500,      1500,    **15/45/75**,    0,       15/45/75
+     Gas plant,  0.60,      0,         0,         27,      1.60,        28.60
+    Purchase,    1.00,   1500,      1500,    **15/45/75**,    0,       15/45/75
     Feed-in,     1.00,   2500,      2500,    **15/45/75**,    0,       15/45/75
 	
 
@@ -214,7 +214,7 @@ had made a contribution to the whole electricity system of ``Mid``.
   Photovoltaics
          plant,  1.00,  15000,     16000,          0,         0,            0 
     Wind plant,	 1.00,      0,     13000,          0,         0,            0
-     Gas plant,  0.60，      0,      8000,         27,      1.60,        28.60
+    Gas plant,   0.60,      0,      8000,         27,      1.60,        28.60
    Hydro plant,  1.00,      0,      1400,          6,       1.40,        7.40
  Lignite plant,  0.40,      0,     60000,          0,       0.60,        0.60
  Biomass plant,  0.35,      0,      5000,          6,       1.40,        7.40
@@ -241,7 +241,7 @@ system of ``Mid`` to constraint the commodities.
 
     For trial e.g. of the result of lower Demand Side Management this
     :download:`greenland mid.xlsx <greenland/greenland mid.xlsx>`is the 
-	input file used for this scenario
+
 	
 
 	

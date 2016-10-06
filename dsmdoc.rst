@@ -18,7 +18,7 @@ which are given by default in the urbs with their energy content (MWh).
 The size of the modelled market has to be considered small relative to 
 the surrounding market. To use this feature, the excel input file needs 
 an additional **Demand Side Management ** sheet with the five parameters 
-containing the columns ``delay``, ``eff``, ``recov``,``cap-max-do`` and 
+containing the columns ``delay``, ``eff``, ``recov``, ``cap-max-do`` and 
 ``cap-max-up``, which are used in DSM constraints as technical parameters. 
 For a more detailed description of the implementation have a look at the 
 Mathematical Documentation. 
@@ -33,7 +33,7 @@ This section contains prototypical scenarios illustrating the system
 behaviour with time variant DSM up/downshifts. Electricity can be moved 
 *locally* with transmission losses and *temporally* with storage losses.
 In this part there is an island as an example named ``Greenland``, which 
-composed of three parts ``Mid``,``North``, and ``South``. Between the 
+composed of three parts ``Mid``, ``North``, and ``South``. Between the 
 three parts most of the electricity from ``South`` has to be transported 
 to supply ``Mid``. The electricity of ``North`` is relatively independent 
 of the other two parts.

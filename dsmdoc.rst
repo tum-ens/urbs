@@ -48,8 +48,8 @@ the demand keeps on increasing till the peak value.
 When appears the electricity DSM downshifts in the process?
 
 - it is *possible* **and** *profitable* to constraint the whole system with 
-DSM upshifts, if the demand is lesser than the total output capacity **and
-** keeps on decreasing ceaselessly
+DSM upshifts, if the demand is lesser than the total output capacity **and** 
+keeps on decreasing ceaselessly
 
 
 

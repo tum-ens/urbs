@@ -237,7 +237,7 @@ system of ``Mid`` to constraint the commodities.
 .. note::
 
     For trial e.g. of the result of lower Demand Side Management this
-    :download:`greenland north.xlsx <greenland/greenland north.xlsx>`
+    :download:`greenland mid.xlsx <greenland/greenland mid.xlsx>`
     is the input file used for this scenario
 
 

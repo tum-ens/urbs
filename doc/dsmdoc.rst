@@ -24,8 +24,6 @@ For a more detailed description of the implementation have a look at the
 Mathematical Documentation. 
 
 
-
-
 Exemplification
 ===============
 
@@ -109,7 +107,7 @@ There was relative more volatility of electricity capacity in the seven days
 simulation than it without DSM.
  
 
-.. image:: dsm_greenland/scenario_all_together-Elec-South-sum.png
+.. image:: greenland/scenario_all_together-Elec-South-sum.png
     :width: 90%
     :align: center
 	
@@ -120,7 +118,7 @@ capacity in ``runme.py``, and just only consider the ``scenario_base``, it will 
 more clearly to show how the DSM affects the electricity commodities .
 
 
-.. image:: dsm_greenland/scenario_base-Elec-South-sum.png
+.. image:: greenland/scenario_base-Elec-South-sum.png
     :width: 90%
     :align: center
 

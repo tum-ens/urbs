@@ -1272,6 +1272,8 @@ def split_columns(columns, sep='.'):
                    labels=[[0, 1, 2], [0, 0, 1]])
 
     """
+    if len(columns) == 0:
+        return columns
     column_tuples = [tuple(col.split('.')) for col in columns]
     return pd.MultiIndex.from_tuples(column_tuples)
     
@@ -1525,6 +1527,9 @@ def get_entity(instance, name):
         
         # convert to Series
         results = results[name]
+    else:
+        # return empty Series
+        results = pd.Series(name=name)
     return results
 
 
@@ -1777,18 +1782,29 @@ def get_timeseries(instance, com, sit, timesteps=None):
     dsmup = get_entity(instance, 'dsm_up')
     dsmdo = get_entity(instance, 'dsm_down')
 
-    dsmup = dsmup.xs(sit, level = 'sit')
-    dsmup = dsmup.xs(com, level = 'com')
-    dsmdo = dsmdo.xs(sit, level = 'sit')
-    dsmdo = dsmdo.xs(com, level = 'com')
+    if dsmup.empty:
+        # if no DSM happened, the demand is not modified (demanddelta == 0)
+        demanddelta = pd.Series(0, index=timesteps)
+        
+    else:
+        # DSM happened (dsmup implies that dsmdo must be non-zero, too)
+        # so the demand will be modified by the difference of DSM up and
+        # DSM down uses
+        dsmup = dsmup.xs(sit, level = 'sit')
+        dsmup = dsmup.xs(com, level = 'com')
 
-    #  series by summing the first time step set
-    dsmdo = dsmdo.unstack().sum(axis=0)
-    dsmdo.index.names = ['t']
+        dsmdo = dsmdo.xs(sit, level = 'sit')
+        dsmdo = dsmdo.xs(com, level = 'com')
+        #  series by summing the first time step set
+        dsmdo = dsmdo.unstack().sum(axis=0)
+        dsmdo.index.names = ['t']
 
-    # derive secondary timeseries
-    demanddelta = dsmup - dsmdo
+        # derive secondary timeseries
+        demanddelta = dsmup - dsmdo
+
     shifted = demand + demanddelta
+    
+    # give sensible names to the derived timeseries
     demanddelta.name = 'Delta of Demand to shifted Demand'
     shifted.name = 'Shifted Demand'
 

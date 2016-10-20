@@ -2025,11 +2025,6 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         # default to all simulated timesteps
         timesteps = sorted(get_entity(prob, 'tm').index)
 
-    # FIGURE
-    fig = plt.figure(figsize=figure_size)
-    gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1])
-    #, height_ratios=[2, 1]
-
     created, consumed, stored, imported, exported, derivative, dsm = get_timeseries(
         prob, com, sit, timesteps)
 
@@ -2053,6 +2048,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     demand = consumed.pop('Demand')
     original = dsm.pop('Original Demand')
     deltademand = dsm.pop('Delta of Demand to shifted Demand')
+    plot_dsm = (deltademand.sum() > 0)  # True if DSM is used, False else
 
     # remove all columns from created which are all-zeros in both created and
     # consumed (except the last one, to prevent a completely empty frame)
@@ -2064,9 +2060,18 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     # sorting plot elements
     created = sort_plot_elements(created)
     consumed = sort_plot_elements(consumed)
-    
+
+    # FIGURE
+    fig = plt.figure(figsize=figure_size)
+    all_axes = []
+    if plot_dsm:
+        gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1], hspace=0.05)
+    else:
+        gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2,1], hspace=0.05)
+
     # STACKPLOT
     ax0 = plt.subplot(gs[0])
+    all_axes.append(ax0)
 
     # PLOT CONSUMED
     sp00 = ax0.stackplot(consumed.index, -consumed.as_matrix().T, labels = tuple(consumed.columns),
@@ -2135,26 +2140,32 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
 
     # PLOT STORAGE
     ax1 = plt.subplot(gs[1], sharex=ax0)
+    all_axes.append(ax1)
     sp1 = ax1.stackplot(stored.index, stored.values, linewidth=0.15)
-    plt.setp(ax1.get_xticklabels(), visible=False)
-    
-    # PLOT DEMAND SIDE MANAGEMENT
-    ax2 = plt.subplot(gs[2], sharex=ax1)
-    ax2.bar(deltademand.index, deltademand.values, 
-                  color=to_color('Demand delta'), edgecolor='none')
+    if plot_dsm:
+        # hide xtick labels only if DSM plot follows
+        plt.setp(ax1.get_xticklabels(), visible=False)
 
-    # color
+    # color & labels
     sp1[0].set_facecolor(to_color('Storage'))
     sp1[0].set_edgecolor(to_color('Decoration'))
-
-    # labels & y-limits
-    ax2.set_xlabel('Time in year (h)')
-    ax2.set_ylabel('Energy ({})'.format(energy_unit))
     ax1.set_ylabel('Energy ({})'.format(energy_unit))
+
     try:
         ax1.set_ylim((0, 0.5 + csto.loc[sit, :, com]['C Total'].sum()))
     except KeyError:
         pass
+
+    if plot_dsm:
+        # PLOT DEMAND SIDE MANAGEMENT
+        ax2 = plt.subplot(gs[2], sharex=ax0)
+        all_axes.append(ax2)
+        ax2.bar(deltademand.index, deltademand.values, 
+                      color=to_color('Demand delta'), edgecolor='none')
+        
+        # labels & y-limits
+        ax2.set_xlabel('Time in year (h)')
+        ax2.set_ylabel('Energy ({})'.format(energy_unit))
 
     # make xtick distance duration-dependent
     if len(timesteps) > 26*168:
@@ -2170,7 +2181,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     xticks = timesteps[::steps_between_ticks]
 
     # set limits and ticks for all axes
-    for ax in [ax0, ax1, ax2]:
+    for ax in all_axes:
         ax.set_frame_on(False)
         ax.set_xlim((timesteps[0], timesteps[-1]))
         ax.set_xticks(xticks)
@@ -2181,10 +2192,17 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
 
-        # group 1,000,000 with commas
-        group_thousands = mpl.ticker.FuncFormatter(
-            lambda x, pos: '{:0,d}'.format(int(x)))
-        ax.yaxis.set_major_formatter(group_thousands)
+        # group 1,000,000 with commas, but only if maximum or minimum are 
+        # sufficiently large. Otherwise, keep default tick labels
+        ymin, ymax = ax.get_ylim()
+        if ymin < -90 or ymax > 90:
+            group_thousands = mpl.ticker.FuncFormatter(
+                lambda x, pos: '{:0,d}'.format(int(x)))
+            ax.yaxis.set_major_formatter(group_thousands)
+        else:
+            skip_lowest = mpl.ticker.FuncFormatter(
+                lambda y, pos: '' if pos == 0 else y)
+            ax.yaxis.set_major_formatter(skip_lowest)
 
     return fig
 

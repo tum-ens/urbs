@@ -2000,7 +2000,8 @@ def sort_plot_elements(elements):
     return elements_sorted
 
 
-def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
+def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
+         figure_size=(16, 12)):
     """Plot a stacked timeseries of commodity balance and storage.
 
     Creates a stackplot of the energy balance of a given commodity, together
@@ -2025,7 +2026,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
         timesteps = sorted(get_entity(prob, 'tm').index)
 
     # FIGURE
-    fig = plt.figure(figsize=(16, 12))
+    fig = plt.figure(figsize=figure_size)
     gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1])
     #, height_ratios=[2, 1]
 
@@ -2119,8 +2120,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     lg = ax0.legend(handles=handles[::-1],
                     labels=labels[::-1],
                     frameon=False,
-                    loc='upper right',
-                    bbox_to_anchor=(1.2, 1))
+                    loc='upper left',
+                    bbox_to_anchor=(1, 1))
     plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
              linewidth=0.15)
     plt.setp(ax0.get_xticklabels(), visible=False)    
@@ -2129,7 +2130,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh'):
     ax0.plot(original.index, original.values, linewidth=0.8,
              color=to_color('Original Demand'))
              
-    ax0.plot(demand.index, demand.values, linewidth=1.2,
+    ax0.plot(demand.index, demand.values, linewidth=1.0,
              color=to_color('Demand'))
 
     # PLOT STORAGE

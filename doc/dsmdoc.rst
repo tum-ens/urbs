@@ -36,7 +36,7 @@ to supply ``Mid``. The electricity of ``North`` is relatively independent
 of the other two parts.
 
 
-.. image:: greenland/greenland_introduction.png
+.. image:: greenland/greenland_introduction.PNG
     :width: 90%
     :align: center
 

@@ -36,6 +36,11 @@ three parts most of the electricity from ``South`` has to be transported
 to supply ``Mid``. The electricity of ``North`` is relatively independent 
 of the other two parts.
 
+
+.. image:: greenland/greenland introduction.PNG
+    :width: 100%
+    :align: center
+
 When appears the electricity DSM downshifts in the process?
 
 - it is *necessary* to constraint the whole system with DSM downshifts, if 

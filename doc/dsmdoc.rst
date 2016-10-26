@@ -20,7 +20,7 @@ an additional **Demand Side Management** sheet with the five parameters
 containing the columns ``delay``, ``eff``, ``recov``, ``cap-max-do`` and 
 ``cap-max-up``, which are used in DSM constraints as technical parameters. 
 For a more detailed description of the implementation have a look at the 
-Mathematical Documentation. 
+nMathematical Documentation. 
 
 
 Exemplification
@@ -36,7 +36,7 @@ to supply ``Mid``. The electricity of ``North`` is relatively independent
 of the other two parts.
 
 
-.. image:: greenland/greenland introduction.png
+.. image:: greenland/greenland_introduction.png
     :width: 90%
     :align: center
 

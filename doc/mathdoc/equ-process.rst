@@ -153,9 +153,7 @@ The new variable *online capacity* forces the process throughput to always stay 
 
     
 And here as code:
-
-
-    ::
+::
 
     m.res_throughput_by_online_capacity_min = pyomo.Constraint(
         m.tm, m.pro_partial_tuples,
@@ -174,9 +172,8 @@ On the other side, the *online capacity* is an upper cap on the process throughp
     \tau_{vpt} \leq \omega_{vpt}
 
 And the code:
+::    
     
-    ::
-
     m.res_throughput_by_online_capacity_max = pyomo.Constraint(
         m.tm, m.pro_partial_tuples,
         rule=res_throughput_by_online_capacity_max_rule,

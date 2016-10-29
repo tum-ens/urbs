@@ -184,7 +184,7 @@ And the code:
 
    
 
-**Partial Process Input Rule** In energy system modelling, the simplest way to represent an energy conversion process is a linear input-output relationship with a flat efficiency parameter :math:`\eta`:
+**Partial Process Input Rule**: In energy system modelling, the simplest way to represent an energy conversion process is a linear input-output relationship with a flat efficiency parameter :math:`\eta`:
 
 .. math::
        \epsilon \text{out} = \epsilon \text{in} \cdot \eta
@@ -195,7 +195,7 @@ Which means there is only one efficiency :math:`\eta` for the whole process and 
        \epsilon_{pct}^\text{in} &= \tau_{pt} r_{pc}^\text{in}
        \epsilon_{pct}^\text{out} &= \tau_{pt} r_{pc}^\text{out}
        
-       
+In order to simplify the mathematical calculation, the output ratios can be setted to 1 sothat the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Meanwhile the        
 replaces the regular *Process Input Rule* for all input commodities that that are in the partial process input tuple set :math:`C_{vp}^\text{in,partial}`. The input is no longer only dependent on the throughput :math:`\tau_{vpt}`, it also depends on the amount of online capacity :math:`\omega_{vpt}`: 
 
 .. math::

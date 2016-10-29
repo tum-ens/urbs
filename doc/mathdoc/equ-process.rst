@@ -195,7 +195,13 @@ Which means there is only one efficiency :math:`\eta` for the whole process and 
        \epsilon_{pct}^\text{in} &= \tau_{pt} r_{pc}^\text{in}
        \epsilon_{pct}^\text{out} &= \tau_{pt} r_{pc}^\text{out}
        
-In order to simplify the mathematical calculation, the output ratios can be setted to 1 sothat the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Meanwhile the        
+In order to simplify the mathematical calculation, the output ratios can be setted to 1 sothat the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Meanwhile the process efficiency :math:`\eta` can be represented like:
+
+.. math::
+    \eta = \frac{\epsilon_{pct}^\text{out}}{\epsilon_{pct}^\text{in}} = \frac{\eta}{\epsilon_{pct}^\text{in}}
+    
+For 
+    
 replaces the regular *Process Input Rule* for all input commodities that that are in the partial process input tuple set :math:`C_{vp}^\text{in,partial}`. The input is no longer only dependent on the throughput :math:`\tau_{vpt}`, it also depends on the amount of online capacity :math:`\omega_{vpt}`: 
 
 .. math::

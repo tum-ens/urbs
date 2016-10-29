@@ -153,8 +153,7 @@ The new variable *online capacity* forces the process throughput to always stay 
 
     
 And here as code:
-    
-::
+    ::
 
     m.res_throughput_by_online_capacity_min = pyomo.Constraint(
         m.tm, m.pro_partial_tuples,
@@ -163,7 +162,6 @@ And here as code:
         
 .. literalinclude:: /../urbs.py
    :pyobject: res_throughput_by_online_capacity_min_rule
-
 
 **Throughput by Online Capacity Max Rule**
    
@@ -187,7 +185,19 @@ And the code:
 
    
 
-**Partial Process Input Rule** replaces the regular *Process Input Rule* for all input commodities that that are in the partial process input tuple set :math:`C_{vp}^\text{in,partial}`. The input is no longer only dependent on the throughput :math:`\tau_{vpt}`, it also depends on the amount of online capacity :math:`\omega_{vpt}`: 
+**Partial Process Input Rule** In energy system modelling, the simplest way to represent an energy conversion process is a linear input-output relationship with a flat efficiency parameter :math:`\eta`:
+
+.. math::
+       \epsilon \text{out} = \epsilon \text{in} \cdot \eta
+
+Which means there is only one efficiency :math:`\eta` for the whole process and it remains constant during the electricity production. But in fact, the most powerplant will not operate at one certain efficiency, the operation load varies along time. Therefore the regular single efficiency :math:`\eta` will be replaced with a set of input ratios (:math:`r^\text{in}`) and output ratios (:math:`r^\text{out}`) in urbs. And both ratios relate to the process activity :math:`\tau`:
+
+.. math::
+       \epsilon_{pct}^\text{in} &= \tau_{pt} r_{pc}^\text{in}
+       \epsilon_{pct}^\text{out} &= \tau_{pt} r_{pc}^\text{out}
+       
+       
+replaces the regular *Process Input Rule* for all input commodities that that are in the partial process input tuple set :math:`C_{vp}^\text{in,partial}`. The input is no longer only dependent on the throughput :math:`\tau_{vpt}`, it also depends on the amount of online capacity :math:`\omega_{vpt}`: 
 
 .. math::
     \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  

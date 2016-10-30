@@ -202,6 +202,15 @@ In order to simplify the mathematical calculation, the output ratios will be set
     
 Assume now a process, it has a lower input ratio :math:`\underline{r}_{pc}^\text{in}`, a upper input ratio :math:`r_{pc}^\text{in}`, the process minimum part load fraction :math:`\underline{P}_{vp}` and a start-up costs. The :math:`\tau` will be bounded by :math:`\underline{P}_{vp}` and the online capacity :math:`\omega_{vpt}`, which means the throughput can only change from :math:`\underline{P}_{vp} \cdot \omega_{vpt}` to :math:`\omega_{vpt}`. When the start-up costs is zero, the relation between the process input and the process throughout is nothing else but a straight line across the original point, but it exists almost only theoretically. Practically every powerplant has a start-up costs and it has a big influence on the effeiciency of the process. 
 
+To research the influence of start-up costs, a continouous start-up variable :math:`\chi_{pt} \in [0, \kappa_p]` is introduced and defines like:
+
+.. math::
+    \tau_{pt} &\leq \omega_{pt} \\
+    \chi_{pt} &\geq \omega_{pt} - \omega_{p(t-1)} \\
+    \zeta_\text{var} & \mathrel{+}= \sum_{t\in T} \sum_{p\in P} k_{p}^\text{startup} \chi_{pt}
+    
+The :math:`\omega_{pt}`
+
 
 .. math::
     \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  

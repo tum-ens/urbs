@@ -195,14 +195,13 @@ Which means there is only one efficiency :math:`\eta` for the whole process and 
        \epsilon_{pct}^\text{in} &= \tau_{pt} r_{pc}^\text{in}
        \epsilon_{pct}^\text{out} &= \tau_{pt} r_{pc}^\text{out}
        
-In order to simplify the mathematical calculation, the output ratios can be setted to 1 sothat the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Meanwhile the process efficiency :math:`\eta` can be represented like:
+In order to simplify the mathematical calculation, the output ratios will be setted to 1 sothat the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Meanwhile the process efficiency :math:`\eta` can be represented like:
 
 .. math::
     \eta = \frac{\epsilon_{pct}^\text{out}}{\epsilon_{pct}^\text{in}} = \frac{\eta}{\epsilon_{pct}^\text{in}}
     
-For 
-    
-replaces the regular *Process Input Rule* for all input commodities that that are in the partial process input tuple set :math:`C_{vp}^\text{in,partial}`. The input is no longer only dependent on the throughput :math:`\tau_{vpt}`, it also depends on the amount of online capacity :math:`\omega_{vpt}`: 
+Assume now a process, it has a lower input ratio :math:`\underline{r}_{pc}^\text{in}`, a upper input ratio :math:`r_{pc}^\text{in}`, the process minimum part load fraction :math:`\underline{P}_{vp}` and a start-up costs. The :math:`\tau` will be bounded by :math:`\underline{P}_{vp}` and the online capacity :math:`\omega_{vpt}`, which means the throughput can only change from :math:`\underline{P}_{vp} \cdot \omega_{vpt}` to :math:`\omega_{vpt}`. When the start-up costs is zero, the relation between the process input and the process throughout is nothing else but a straight line across the original point, but it exists almost only theoretically. Practically every powerplant has a start-up costs and the relation between  it has a big influence on the effeiciency of the process. 
+
 
 .. math::
     \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  

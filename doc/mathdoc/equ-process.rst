@@ -200,7 +200,7 @@ In order to simplify the mathematical calculation, the output ratios will be set
 .. math::
     \eta = \frac{\epsilon_{pct}^\text{out}}{\epsilon_{pct}^\text{in}} = \frac{\eta}{\epsilon_{pct}^\text{in}}
     
-Assume now a process, it has a lower input ratio :math:`\underline{r}_{pc}^\text{in}`, a upper input ratio :math:`r_{pc}^\text{in}`, the process minimum part load fraction :math:`\underline{P}_{vp}` and a start-up costs. The :math:`\tau` will be bounded by :math:`\underline{P}_{vp}` and the online capacity :math:`\omega_{vpt}`, which means the throughput can only change from :math:`\underline{P}_{vp} \cdot \omega_{vpt}` to :math:`\omega_{vpt}`. When the start-up costs is zero, the relation between the process input and the process throughout is nothing else but a straight line across the original point, but it exists almost only theoretically. Practically every powerplant has a start-up costs and the relation between  it has a big influence on the effeiciency of the process. 
+Assume now a process, it has a lower input ratio :math:`\underline{r}_{pc}^\text{in}`, a upper input ratio :math:`r_{pc}^\text{in}`, the process minimum part load fraction :math:`\underline{P}_{vp}` and a start-up costs. The :math:`\tau` will be bounded by :math:`\underline{P}_{vp}` and the online capacity :math:`\omega_{vpt}`, which means the throughput can only change from :math:`\underline{P}_{vp} \cdot \omega_{vpt}` to :math:`\omega_{vpt}`. When the start-up costs is zero, the relation between the process input and the process throughout is nothing else but a straight line across the original point, but it exists almost only theoretically. Practically every powerplant has a start-up costs and it has a big influence on the effeiciency of the process. 
 
 
 .. math::

@@ -184,34 +184,34 @@ And the code:
 
    
 
-**Partial Process Input Rule**: In energy system modelling, the simplest way to represent an energy conversion process is a linear input-output relationship with a flat efficiency parameter :math:`\eta`:
+**Partial Process Input Rule**: In energy system modelling, the simplest way to represent an energy conversion process is to assume a linear input-output relationship with a flat efficiency parameter :math:`\eta`:
 
 .. math::
        \epsilon_{out} = \epsilon_{in} \cdot \eta
 
 
-Which means there is only one efficiency :math:`\eta` for the whole process and it remains constant during the electricity production. But in fact, the most powerplant will not operate at one certain efficiency, the operation load varies along time. Therefore the regular single efficiency :math:`\eta` will be replaced with a set of input ratios (:math:`r^\text{in}`) and output ratios (:math:`r^\text{out}`) in urbs. And both ratios relate to the process activity :math:`\tau`:
+Which means there is only one efficiency :math:`\eta` during the whole process, i.e. it remains constant during the electricity production. But in fact, most of the powerplants do not operate at a certain efficiency and the operation load varies along time. Therefore the regular single efficiency :math:`\eta` will be replaced by a set of input ratios (:math:`r^\text{in}`) and output ratios (:math:`r^\text{out}`) in urbs. And both ratios relate to the process activity :math:`\tau`:
 
 .. math::
        \epsilon_{pct}^\text{in} &= \tau_{pt} r_{pc}^\text{in}
        
        \epsilon_{pct}^\text{out} &= \tau_{pt} r_{pc}^\text{out}
        
-In order to simplify the mathematical calculation, the output ratios will be setted to 1 sothat the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Meanwhile the process efficiency :math:`\eta` can be represented like:
+In order to simplify the mathematical calculation, the output ratios are set to 1 so that the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Then, the process efficiency :math:`\eta` can be represented as follows:
 
 .. math::
     \eta = \frac{\epsilon_{pct}^\text{out}}{\epsilon_{pct}^\text{in}} = \frac{\tau}{\epsilon_{pct}^\text{in}}
     
-Assume now a process, it has a lower input ratio :math:`\underline{r}_{pc}^\text{in}`, a upper input ratio :math:`r_{pc}^\text{in}`, the process minimum part load fraction :math:`\underline{P}_{vp}` and a start-up costs. The :math:`\tau` will be bounded by :math:`\underline{P}_{vp}` and the online capacity :math:`\omega_{vpt}`, which means the throughput can only change from :math:`\underline{P}_{vp} \cdot \omega_{vpt}` to :math:`\omega_{vpt}`. When the start-up costs is zero, the relation between the process input and the process throughout is nothing else but a straight line across the original point, but it exists almost only theoretically. Practically every powerplant has a start-up costs and it has a big influence on the effeiciency of the process. 
+Assume now a process, it has a lower input ratio :math:`\underline{r}_{pc}^\text{in}`, a upper input ratio :math:`r_{pc}^\text{in}`, the process minimum part load fraction :math:`\underline{P}_{vp}` and the corresponding start-up costs. The :math:`\tau` will be bounded by :math:`\underline{P}_{vp}` and the online capacity :math:`\omega_{vpt}`, which means the throughput can only vary between :math:`\underline{P}_{vp} \cdot \omega_{vpt}` and :math:`\omega_{vpt}`. When all the start-up costs are equal to zero, the relation between the process input and the process throughout is nothing else but a straight line across the original point, which exists almost only theoretically. Practically, every powerplant has a start-up cost, which has a big influence on the effeiciency of the process. 
 
-To research the influence of start-up costs, a continouous start-up variable :math:`\chi_{pt} \in [0, \kappa_p]` is introduced and defines like:
+To research the influence of the start-up costs, a continouous start-up variable :math:`\chi_{pt} \in [0, \kappa_p]` is introduced and defines as follows:
 
 .. math::
     \tau_{pt} &\leq \omega_{pt} \\
     \chi_{pt} &\geq \omega_{pt} - \omega_{p(t-1)} \\
     \zeta_\text{var} & \mathrel{+}= \sum_{t\in T} \sum_{p\in P} k_{p}^\text{startup} \chi_{pt}
     
-The :math:`\omega_{pt}` is also a new introduced variable, represents the start-up capacity (or the idle consumption). With these new variables, the urbs can detect the energy consumption of a process at the starting point and put a start-up costs on it.
+Where the :math:`\omega_{pt}` is also a new introduced variable, represents the start-up capacity (or the idle consumption). With these two variables, the urbs can detect the energy consumption of a process at the starting point and put a start-up costs on it to obtain the variable costs.
 
 
 .. math::

@@ -187,7 +187,8 @@ And the code:
 **Partial Process Input Rule**: In energy system modelling, the simplest way to represent an energy conversion process is a linear input-output relationship with a flat efficiency parameter :math:`\eta`:
 
 .. math::
-       \epsilon \text{out} = \epsilon \text{in} \cdot \eta
+       \epsilon_{out} = \epsilon_{in} \cdot \eta
+
 
 Which means there is only one efficiency :math:`\eta` for the whole process and it remains constant during the electricity production. But in fact, the most powerplant will not operate at one certain efficiency, the operation load varies along time. Therefore the regular single efficiency :math:`\eta` will be replaced with a set of input ratios (:math:`r^\text{in}`) and output ratios (:math:`r^\text{out}`) in urbs. And both ratios relate to the process activity :math:`\tau`:
 
@@ -209,7 +210,7 @@ To research the influence of start-up costs, a continouous start-up variable :ma
     \chi_{pt} &\geq \omega_{pt} - \omega_{p(t-1)} \\
     \zeta_\text{var} & \mathrel{+}= \sum_{t\in T} \sum_{p\in P} k_{p}^\text{startup} \chi_{pt}
     
-The :math:`\omega_{pt}`
+The :math:`\omega_{pt}` is also a new introduced variable, represents the start-up capacity (or the idle consumption). With these new variables, the urbs can detect the energy consumption of a process at the starting point and put a start-up costs on it.
 
 
 .. math::

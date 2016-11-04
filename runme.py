@@ -6,6 +6,7 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 
+
 # SCENARIOS
 def scenario_base(data):
     # do nothing
@@ -88,6 +89,7 @@ def setup_solver(optim, logfile='solver.log'):
               "'{}'!".format(optim.name))
     return optim
 
+
 def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     """ run an urbs model for given input, time steps and scenario
 
@@ -121,7 +123,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     # copy input file to result directory
     shutil.copyfile(input_file, os.path.join(result_dir, input_file))
 
-	# write report to spreadsheet
+    # write report to spreadsheet
     urbs.report(
         prob,
         os.path.join(result_dir, '{}.xlsx').format(sce),

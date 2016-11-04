@@ -75,7 +75,7 @@ def read_excel(filename):
                .set_index(['Process', 'Commodity', 'Direction']))
         transmission = (
             xls.parse('Transmission')
-               .set_index(['Site In', 'Site Out', 
+               .set_index(['Site In', 'Site Out',
                            'Transmission', 'Commodity']))
         storage = (
             xls.parse('Storage').set_index(['Site', 'Storage', 'Commodity']))
@@ -160,7 +160,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.supim = data['supim']
     m.buy_sell_price = data['buy_sell_price']
     m.timesteps = timesteps
-    m.dsm = data['dsm']  #Demand Side Management
+    m.dsm = data['dsm']
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
@@ -174,7 +174,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
     m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
 
-	# Sets
+    # Sets
     # ====
     # Syntax: m.{name} = Set({domain}, initialize={values})
     # where name: set name
@@ -224,7 +224,8 @@ def create_model(data, timesteps=None, dt=1, dual=False):
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
     m.tra = pyomo.Set(
-        initialize=m.transmission.index.get_level_values('Transmission').unique(),
+        initialize=m.transmission.index.get_level_values('Transmission')
+                                       .unique(),
         doc='Set of transmission technologies')
 
     # storage (e.g. hydrogen, pump storage)
@@ -269,7 +270,6 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                                             m)],
         doc='Combinations of possible dsm_down combinations, e.g. '
             '(5001,5003,Mid,Elec)')
-
 
     # process input/output
     m.pro_input_tuples = pyomo.Set(
@@ -720,7 +720,9 @@ def res_vertex_rule(m, tm, sit, com, com_type):
                                  m.dsm['delay'].loc[sit, com]))
     return power_surplus == 0
 
-# demand side management constraints
+# demand side management (DSM) constraints
+
+
 # DSMup == DSMdo * efficiency factor n
 def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
@@ -735,22 +737,27 @@ def def_dsm_variables_rule(m, tm, sit, com):
 def res_dsm_upward_rule(m, tm, sit, com):
     return m.dsm_up[tm, sit, com] <= int(m.dsm.loc[sit, com]['cap-max-up'])
 
-# DSMdo <= Cdo (threshold capacity of DSMdo)
 
+# DSMdo <= Cdo (threshold capacity of DSMdo)
 def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit, com]):
+    for t in dsm_time_tuples(tm,
+                             m.timesteps[1:],
+                             m.dsm['delay'].loc[sit, com]):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
     return dsm_down_sum <= m.dsm.loc[sit, com]['cap-max-do']
+
 
 # DSMup + DSMdo <= max(Cup,Cdo)
 def res_dsm_maximum_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit, com]):
+    for t in dsm_time_tuples(tm,
+                             m.timesteps[1:],
+                             m.dsm['delay'].loc[sit, com]):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
 
     max_dsm_limit = max(m.dsm.loc[sit, com]['cap-max-up'],
-                          m.dsm.loc[sit, com]['cap-max-do'])
+                        m.dsm.loc[sit, com]['cap-max-do'])
     return m.dsm_up[tm, sit, com] + dsm_down_sum <= max_dsm_limit
 
 
@@ -762,6 +769,7 @@ def res_dsm_recovery_rule(m, tm, sit, com):
     return dsm_up_sum <= (m.dsm.loc[sit, com]['cap-max-up'] *
                           m.dsm['delay'].loc[sit, com])
 
+
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
 # limit stock commodity use per time step
@@ -771,6 +779,7 @@ def res_stock_step_rule(m, tm, sit, com, com_type):
     else:
         return (m.e_co_stock[tm, sit, com, com_type] <=
                 m.commodity.loc[sit, com, com_type]['maxperstep'])
+
 
 # limit stock commodity use in total (scaled to annual consumption, thanks
 # to m.weight)
@@ -787,13 +796,15 @@ def res_stock_total_rule(m, sit, com, com_type):
         return (total_consumption <=
                 m.commodity.loc[sit, com, com_type]['max'])
 
+
 # limit sell commodity use per time step
 def res_sell_step_rule(m, tm, sit, com, com_type):
     if com not in m.com_sell:
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_sell[tm, sit, com, com_type] <=
-                   m.commodity.loc[sit, com, com_type]['maxperstep'])
+                m.commodity.loc[sit, com, com_type]['maxperstep'])
+
 
 # limit sell commodity use in total (scaled to annual consumption, thanks
 # to m.weight)
@@ -808,7 +819,8 @@ def res_sell_total_rule(m, sit, com, com_type):
                 m.e_co_sell[tm, sit, com, com_type] * m.dt)
         total_consumption *= m.weight
         return (total_consumption <=
-                  m.commodity.loc[sit, com, com_type]['max'])
+                m.commodity.loc[sit, com, com_type]['max'])
+
 
 # limit buy commodity use per time step
 def res_buy_step_rule(m, tm, sit, com, com_type):
@@ -816,7 +828,8 @@ def res_buy_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_buy[tm, sit, com, com_type] <=
-                   m.commodity.loc[sit, com, com_type]['maxperstep'])
+                m.commodity.loc[sit, com, com_type]['maxperstep'])
+
 
 # limit buy commodity use in total (scaled to annual consumption, thanks
 # to m.weight)
@@ -831,7 +844,8 @@ def res_buy_total_rule(m, sit, com, com_type):
                 m.e_co_buy[tm, sit, com, com_type] * m.dt)
         total_consumption *= m.weight
         return (total_consumption <=
-                  m.commodity.loc[sit, com, com_type]['max'])
+                m.commodity.loc[sit, com, com_type]['max'])
+
 
 # environmental commodity creation == - commodity_balance of that commodity
 # used for modelling emissions (e.g. CO2) or other end-of-pipe results of
@@ -844,6 +858,7 @@ def res_env_step_rule(m, tm, sit, com, com_type):
         environmental_output = - commodity_balance(m, tm, sit, com)
         return (environmental_output <=
                 m.commodity.loc[sit, com, com_type]['maxperstep'])
+
 
 # limit environmental commodity output in total (scaled to annual
 # emissions, thanks to m.weight)
@@ -860,21 +875,26 @@ def res_env_total_rule(m, sit, com, com_type):
                 m.commodity.loc[sit, com, com_type]['max'])
 
 # process
+
+
 # process capacity == new capacity + existing capacity
 def def_process_capacity_rule(m, sit, pro):
     return (m.cap_pro[sit, pro] ==
             m.cap_pro_new[sit, pro] +
             m.process.loc[sit, pro]['inst-cap'])
 
+
 # process input power == process throughput * input ratio
 def def_process_input_rule(m, tm, sit, pro, co):
     return (m.e_pro_in[tm, sit, pro, co] ==
             m.tau_pro[tm, sit, pro] * m.r_in.loc[pro, co])
 
+
 # process output power = process throughput * output ratio
 def def_process_output_rule(m, tm, sit, pro, co):
     return (m.e_pro_out[tm, sit, pro, co] ==
             m.tau_pro[tm, sit, pro] * m.r_out.loc[pro, co])
+
 
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, sit, pro, coin):
@@ -884,32 +904,37 @@ def def_intermittent_supply_rule(m, tm, sit, pro, coin):
     else:
         return pyomo.Constraint.Skip
 
+
 # process throughput <= process capacity
 def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
     return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
 
+
 # absolute process throughput gradient <= maximal gradient
 def res_process_throughput_gradient_rule(m, t, sit, pro):
-# constraint only effectively restricting if max-grad < 1/dt
+    # constraint only effectively restricting if max-grad < 1/dt
     if m.process.loc[sit, pro]['max-grad'] < 1/m.dt.value:
         if m.cap_pro[sit, pro].value is None:
             return pyomo.Constraint.Skip
         else:
             return (m.tau_pro[t-1, sit, pro] - m.cap_pro[sit, pro] *
-                        m.process.loc[sit, pro]['max-grad'] * m.dt,
+                    m.process.loc[sit, pro]['max-grad'] * m.dt,
                     m.tau_pro[t, sit, pro],
                     m.tau_pro[t-1, sit, pro] + m.cap_pro[sit, pro] *
-                        m.process.loc[sit, pro]['max-grad'] * m.dt)
+                    m.process.loc[sit, pro]['max-grad'] * m.dt)
     else:
         return pyomo.Constraint.Skip
 
 
 def res_throughput_by_online_capacity_min_rule(m, tm, sit, pro):
-    return (m.tau_pro[tm, sit, pro] >= m.cap_online[tm, sit, pro] *
-                                       m.process.loc[sit, pro]['min-fraction'])
+    return (m.tau_pro[tm, sit, pro] >=
+            m.cap_online[tm, sit, pro] *
+            m.process.loc[sit, pro]['min-fraction'])
+
 
 def res_throughput_by_online_capacity_max_rule(m, tm, sit, pro):
     return (m.tau_pro[tm, sit, pro] <= m.cap_online[tm, sit, pro])
+
 
 def def_partial_process_input_rule(m, tm, sit, pro, coin):
     R = m.r_in.loc[pro, coin]  # input ratio at maximum operation point
@@ -917,18 +942,22 @@ def def_partial_process_input_rule(m, tm, sit, pro, coin):
     min_fraction = m.process.loc[sit, pro]['min-fraction']
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
-    throughput_factor =  (R - min_fraction * r) / (1 - min_fraction)
+    throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
     return (m.e_pro_in[tm, sit, pro, coin] ==
             m.cap_online[tm, sit, pro] * online_factor +
             m.tau_pro[tm, sit, pro] * throughput_factor)
 
+
 def res_cap_online_by_cap_pro_rule(m, tm, sit, pro):
     return m.cap_online[tm, sit, pro] <= m.cap_pro[sit, pro]
 
+
 def def_startup_capacity_rule(m, tm, sit, pro):
-    return (m.startup_pro[tm, sit, pro] >= m.cap_online[tm, sit, pro] -
-                                           m.cap_online[tm-1, sit, pro])
+    return (m.startup_pro[tm, sit, pro] >=
+            m.cap_online[tm, sit, pro] -
+            m.cap_online[tm-1, sit, pro])
+
 
 # lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
@@ -936,19 +965,20 @@ def res_process_capacity_rule(m, sit, pro):
             m.cap_pro[sit, pro],
             m.process.loc[sit, pro]['cap-up'])
 
+
 # power connection capacity: Sell == Buy
 def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
-# constraint only for sell and buy processes
-# and the processes must be in the same site
+    # constraint only for sell and buy processes
+    # and the processes must be in the same site
     if coin in m.com_buy:
         sell_pro = search_sell_buy_tuple(m, sit_in, pro_in, coin)
         if sell_pro is None:
             return pyomo.Constraint.Skip
         else:
-            return (m.cap_pro[sit_in, pro_in] ==
-                        m.cap_pro[sit_in, sell_pro])
+            return (m.cap_pro[sit_in, pro_in] == m.cap_pro[sit_in, sell_pro])
     else:
         return pyomo.Constraint.Skip
+
 
 # transmission
 
@@ -958,16 +988,19 @@ def def_transmission_capacity_rule(m, sin, sout, tra, com):
             m.cap_tra_new[sin, sout, tra, com] +
             m.transmission.loc[sin, sout, tra, com]['inst-cap'])
 
+
 # transmission output == transmission input * efficiency
 def def_transmission_output_rule(m, tm, sin, sout, tra, com):
     return (m.e_tra_out[tm, sin, sout, tra, com] ==
             m.e_tra_in[tm, sin, sout, tra, com] *
             m.transmission.loc[sin, sout, tra, com]['eff'])
 
+
 # transmission input <= transmission capacity
 def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
     return (m.e_tra_in[tm, sin, sout, tra, com] <=
             m.cap_tra[sin, sout, tra, com])
+
 
 # lower bound <= transmission capacity <= upper bound
 def res_transmission_capacity_rule(m, sin, sout, tra, com):
@@ -975,9 +1008,11 @@ def res_transmission_capacity_rule(m, sin, sout, tra, com):
             m.cap_tra[sin, sout, tra, com],
             m.transmission.loc[sin, sout, tra, com]['cap-up'])
 
+
 # transmission capacity from A to B == transmission capacity from B to A
 def res_transmission_symmetry_rule(m, sin, sout, tra, com):
     return m.cap_tra[sin, sout, tra, com] == m.cap_tra[sout, sin, tra, com]
+
 
 # storage
 
@@ -992,11 +1027,13 @@ def def_storage_state_rule(m, t, sit, sto, com):
             m.e_sto_out[t, sit, sto, com] /
             m.storage.loc[sit, sto, com]['eff-out'] * m.dt)
 
+
 # storage power == new storage power + existing storage power
 def def_storage_power_rule(m, sit, sto, com):
     return (m.cap_sto_p[sit, sto, com] ==
             m.cap_sto_p_new[sit, sto, com] +
             m.storage.loc[sit, sto, com]['inst-cap-p'])
+
 
 # storage capacity == new storage capacity + existing storage capacity
 def def_storage_capacity_rule(m, sit, sto, com):
@@ -1004,17 +1041,21 @@ def def_storage_capacity_rule(m, sit, sto, com):
             m.cap_sto_c_new[sit, sto, com] +
             m.storage.loc[sit, sto, com]['inst-cap-c'])
 
+
 # storage input <= storage power
 def res_storage_input_by_power_rule(m, t, sit, sto, com):
     return m.e_sto_in[t, sit, sto, com] <= m.cap_sto_p[sit, sto, com]
+
 
 # storage output <= storage power
 def res_storage_output_by_power_rule(m, t, sit, sto, co):
     return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co]
 
+
 # storage content <= storage capacity
 def res_storage_state_by_capacity_rule(m, t, sit, sto, com):
     return m.e_sto_con[t, sit, sto, com] <= m.cap_sto_c[sit, sto, com]
+
 
 # lower bound <= storage power <= upper bound
 def res_storage_power_rule(m, sit, sto, com):
@@ -1022,11 +1063,13 @@ def res_storage_power_rule(m, sit, sto, com):
             m.cap_sto_p[sit, sto, com],
             m.storage.loc[sit, sto, com]['cap-up-p'])
 
+
 # lower bound <= storage capacity <= upper bound
 def res_storage_capacity_rule(m, sit, sto, com):
     return (m.storage.loc[sit, sto, com]['cap-lo-c'],
             m.cap_sto_c[sit, sto, com],
             m.storage.loc[sit, sto, com]['cap-up-c'])
+
 
 # initialization of storage content in first timestep t[1]
 # forced minimun  storage content in final timestep t[len(m.t)]
@@ -1042,6 +1085,7 @@ def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
                 m.storage.loc[sit, sto, com]['init'])
     else:
         return pyomo.Constraint.Skip
+
 
 # Objective
 def def_costs_rule(m, cost_type):
@@ -1159,6 +1203,7 @@ def def_costs_rule(m, cost_type):
     else:
         raise NotImplementedError("Unknown cost type.")
 
+
 def obj_rule(m):
     return pyomo.summation(m.costs)
 
@@ -1190,6 +1235,7 @@ def add_hacks(model, hacks):
             doc='total co2 commodity output <= hacks.Glocal CO2 limit')
 
     return model
+
 
 # total CO2 output <= Global CO2 limit
 def res_global_co2_limit_rule(m):
@@ -1295,6 +1341,7 @@ def split_columns(columns, sep='.'):
     column_tuples = [tuple(col.split('.')) for col in columns]
     return pd.MultiIndex.from_tuples(column_tuples)
 
+
 def dsm_down_time_tuples(time, sit_com_tuple, m):
     """ Dictionary for the two time instances of DSM_down
 
@@ -1310,7 +1357,7 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
     if m.dsm.empty:
         return []
 
-    delay =  m.dsm['delay']
+    delay = m.dsm['delay']
     ub = max(time)
     lb = min(time)
     time_list = []
@@ -1323,6 +1370,7 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
                     time_list.append((step1, step2, site, commodity))
 
     return time_list
+
 
 def dsm_time_tuples(timestep, time, delay):
     """ Tuples for the two time instances of DSM_down
@@ -1369,6 +1417,7 @@ def commodity_subset(com_tuples, type_name):
         return set((sit, com, com_type) for sit, com, com_type in com_tuples
                    if com in type_name)
 
+
 def get_com_price(instance, tuples):
     """ Calculate commodity prices for each modelled timestep.
 
@@ -1398,6 +1447,7 @@ def get_com_price(instance, tuples):
             com_price[c] = pd.Series(price, index=com_price.index)
     return com_price
 
+
 def extract_number_str(str_in):
     """ Extract first number from a given string and convert to a float number.
 
@@ -1420,30 +1470,31 @@ def extract_number_str(str_in):
         # no number in str_num
         return 1.0
     elif re.search('^(\d+|\d{1,3}(,\d{3})*)(\.\d+)?$', str_num) is not None:
-        #Commas required between powers of 1,000
-        #Can't start with "."
-        #Pass: (1,000,000), (0.001)
-        #Fail: (1000000), (1,00,00,00), (.001)
+        # Commas required between powers of 1,000
+        # Can't start with "."
+        # Pass: (1,000,000), (0.001)
+        # Fail: (1000000), (1,00,00,00), (.001)
         str_num = str_num.replace(',', '')
         return float(str_num)
     elif re.search('^(\d+|\d{1,3}(.\d{3})*)(\,\d+)?$', str_num) is not None:
-        #Dots required between powers of 1.000
-        #Can't start with ","
-        #Pass: (1.000.000), (0,001)
-        #Fail: (1000000), (1.00.00,00), (,001)
+        # Dots required between powers of 1.000
+        # Can't start with ","
+        # Pass: (1.000.000), (0,001)
+        # Fail: (1000000), (1.00.00,00), (,001)
         str_num = str_num.replace('.', '')
         return float(str_num.replace(',', '.'))
     elif re.search('^\d*\.?\d+$', str_num) is not None:
-        #No commas allowed
-        #Pass: (1000.0), (001), (.001)
-        #Fail: (1,000.0)
+        # No commas allowed
+        # Pass: (1000.0), (001), (.001)
+        # Fail: (1,000.0)
         return float(str_num)
     elif re.search('^\d*\,?\d+$', str_num) is not None:
-        #No dots allowed
-        #Pass: (1000,0), (001), (,001)
-        #Fail: (1.000,0)
+        # No dots allowed
+        # Pass: (1000,0), (001), (,001)
+        # Fail: (1.000,0)
         str_num = str_num.replace(',', '.')
         return float(str_num)
+
 
 def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
     """ Return the equivalent sell-process for a given buy-process.
@@ -1477,6 +1528,7 @@ def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
         if not(sell_in.isdisjoint(buy_out)):
             return sell_pro
     return None
+
 
 def get_entity(instance, name):
     """ Retrieve values (or duals) for an entity in a model instance.
@@ -1516,7 +1568,7 @@ def get_entity(instance, name):
     elif isinstance(entity, pyomo.Constraint):
         if entity.dim() > 1:
             results = pd.DataFrame(
-                [v[0]+ (instance.dual[v[1]],) for v in entity.iteritems()])
+                [v[0] + (instance.dual[v[1]],) for v in entity.iteritems()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
                 [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
@@ -2012,13 +2064,17 @@ def sort_plot_elements(elements):
 
     # calculate standard deviation
     std = pd.DataFrame(np.zeros_like(elements.tail(1)),
-                       index=elements.index[-1:]+1, columns=elements.columns)
+                       index=elements.index[-1:]+1,
+                       columns=elements.columns)
     # calculate mean
     mean = pd.DataFrame(np.zeros_like(elements.tail(1)),
-                        index=elements.index[-1:]+1, columns=elements.columns)
+                        index=elements.index[-1:]+1,
+                        columns=elements.columns)
     # calculate quotient
-    quotient = pd.DataFrame(np.zeros_like(elements.tail(1)),
-                        index=elements.index[-1:]+1, columns=elements.columns)
+    quotient = pd.DataFrame(
+        np.zeros_like(elements.tail(1)),
+        index=elements.index[-1:]+1,
+        columns=elements.columns)
 
     for col in std.columns:
         std[col] = np.std(elements[col])
@@ -2121,7 +2177,6 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
                          labels=tuple(consumed.columns),
                          linewidth=0.15)
 
-
     # color
     for k, commodity in enumerate(consumed.columns):
         commodity_color = to_color(commodity)
@@ -2141,11 +2196,9 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         sp0[k].set_facecolor(commodity_color)
         sp0[k].set_edgecolor(to_color('Decoration'))
 
-
     # label
     ax0.set_title('Energy balance of {} in {}'.format(com, sit))
     ax0.set_ylabel('Power ({})'.format(power_unit))
-
 
     # legend
     handles, labels = ax0.get_legend_handles_labels()
@@ -2167,7 +2220,6 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
             item_index = labels.index(item)
             handles.pop(item_index)
             labels.pop(item_index)
-
 
     lg = ax0.legend(handles=handles[::-1],
                     labels=labels[::-1],
@@ -2207,8 +2259,10 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         # PLOT DEMAND SIDE MANAGEMENT
         ax2 = plt.subplot(gs[2], sharex=ax0)
         all_axes.append(ax2)
-        ax2.bar(deltademand.index, deltademand.values,
-                      color=to_color('Demand delta'), edgecolor='none')
+        ax2.bar(deltademand.index,
+                deltademand.values,
+                color=to_color('Demand delta'),
+                edgecolor='none')
 
         # labels & y-limits
         ax2.set_xlabel('Time in year (h)')

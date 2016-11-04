@@ -2014,6 +2014,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         timesteps: optional list of  timesteps to plot; default: prob.tm
         power_unit: optional string for unit; default: 'MW'
         energy_unit: optional string for storage plot; default: 'MWh'
+        figure_size: optional tuple of (width, height) in inch; default: (16,12)
 
     Returns:
         fig: figure handle

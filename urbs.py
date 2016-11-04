@@ -75,7 +75,8 @@ def read_excel(filename):
                .set_index(['Process', 'Commodity', 'Direction']))
         transmission = (
             xls.parse('Transmission')
-               .set_index(['Site In', 'Site Out', 'Transmission','Commodity']))
+               .set_index(['Site In', 'Site Out', 
+                           'Transmission', 'Commodity']))
         storage = (
             xls.parse('Storage').set_index(['Site', 'Storage', 'Commodity']))
         demand = xls.parse('Demand').set_index(['t'])
@@ -262,7 +263,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.dsm_down_tuples = pyomo.Set(
         within=m.tm*m.tm*m.sit*m.com,
         initialize=[(t, tt, site, commodity)
-                    for (t,tt, site, commodity)
+                    for (t, tt, site, commodity)
                     in dsm_down_time_tuples(m.timesteps[1:],
                                             m.dsm_site_tuples,
                                             m)],
@@ -706,17 +707,17 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # constraint is about power (MW), not energy (MWh)
     if com in m.com_demand:
         try:
-            power_surplus -= m.demand.loc[tm][sit,com]
+            power_surplus -= m.demand.loc[tm][sit, com]
         except KeyError:
             pass
     # if sit com is a dsm tuple, the power surplus is decreased by the
     # upshifted demand and increased by the downshifted demand.
     if (sit, com) in m.dsm_site_tuples:
-        power_surplus -= m.dsm_up[tm,sit,com]
-        power_surplus += sum(m.dsm_down[t,tm,sit,com]
+        power_surplus -= m.dsm_up[tm, sit, com]
+        power_surplus += sum(m.dsm_down[t, tm, sit, com]
                              for t in dsm_time_tuples(
                                  tm, m.timesteps[1:],
-                                 m.dsm['delay'].loc[sit,com]))
+                                 m.dsm['delay'].loc[sit, com]))
     return power_surplus == 0
 
 # demand side management constraints
@@ -725,41 +726,41 @@ def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for tt in dsm_time_tuples(tm,
                               m.timesteps[1:],
-                              m.dsm['delay'].loc[sit,com]):
-        dsm_down_sum += m.dsm_down[tm,tt,sit,com]
-    return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
+                              m.dsm['delay'].loc[sit, com]):
+        dsm_down_sum += m.dsm_down[tm, tt, sit, com]
+    return dsm_down_sum == m.dsm_up[tm, sit, com] * m.dsm.loc[sit, com]['eff']
 
 
 # DSMup <= Cup (threshold capacity of DSMup)
 def res_dsm_upward_rule(m, tm, sit, com):
-    return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
+    return m.dsm_up[tm, sit, com] <= int(m.dsm.loc[sit, com]['cap-max-up'])
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
 
 def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit,com]):
-        dsm_down_sum += m.dsm_down[t,tm,sit,com]
-    return dsm_down_sum <= m.dsm.loc[sit,com]['cap-max-do']
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit, com]):
+        dsm_down_sum += m.dsm_down[t, tm, sit, com]
+    return dsm_down_sum <= m.dsm.loc[sit, com]['cap-max-do']
 
 # DSMup + DSMdo <= max(Cup,Cdo)
 def res_dsm_maximum_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit,com]):
-        dsm_down_sum += m.dsm_down[t,tm,sit,com]
+    for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit, com]):
+        dsm_down_sum += m.dsm_down[t, tm, sit, com]
 
-    max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'],
-                          m.dsm.loc[sit,com]['cap-max-do'])
-    return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
+    max_dsm_limit = max(m.dsm.loc[sit, com]['cap-max-up'],
+                          m.dsm.loc[sit, com]['cap-max-do'])
+    return m.dsm_up[tm, sit, com] + dsm_down_sum <= max_dsm_limit
 
 
 # DSMup(t, t + recovery time R) <= Cup * delay time L
 def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
-    for t in range(tm, tm+m.dsm['recov'].loc[sit,com]):
-        dsm_up_sum += m.dsm_up[t,sit,com]
-    return dsm_up_sum <= (m.dsm.loc[sit,com]['cap-max-up'] *
-                          m.dsm['delay'].loc[sit,com])
+    for t in range(tm, tm+m.dsm['recov'].loc[sit, com]):
+        dsm_up_sum += m.dsm_up[t, sit, com]
+    return dsm_up_sum <= (m.dsm.loc[sit, com]['cap-max-up'] *
+                          m.dsm['delay'].loc[sit, com])
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -1412,36 +1413,36 @@ def extract_number_str(str_in):
     """
     import re
     # deletes all char starting after the number
-    start_char = re.search('[*:!%$&?a-zA-Z]',str_in).start()
+    start_char = re.search('[*:!%$&?a-zA-Z]', str_in).start()
     str_num = str_in[:start_char]
 
-    if re.search('\d+',str_num) is None:
+    if re.search('\d+', str_num) is None:
         # no number in str_num
         return 1.0
-    elif re.search('^(\d+|\d{1,3}(,\d{3})*)(\.\d+)?$',str_num) is not None:
+    elif re.search('^(\d+|\d{1,3}(,\d{3})*)(\.\d+)?$', str_num) is not None:
         #Commas required between powers of 1,000
         #Can't start with "."
         #Pass: (1,000,000), (0.001)
         #Fail: (1000000), (1,00,00,00), (.001)
-        str_num = str_num.replace(',','')
+        str_num = str_num.replace(',', '')
         return float(str_num)
-    elif re.search('^(\d+|\d{1,3}(.\d{3})*)(\,\d+)?$',str_num) is not None:
+    elif re.search('^(\d+|\d{1,3}(.\d{3})*)(\,\d+)?$', str_num) is not None:
         #Dots required between powers of 1.000
         #Can't start with ","
         #Pass: (1.000.000), (0,001)
         #Fail: (1000000), (1.00.00,00), (,001)
-        str_num = str_num.replace('.','')
-        return float(str_num.replace(',','.'))
-    elif re.search('^\d*\.?\d+$',str_num) is not None:
+        str_num = str_num.replace('.', '')
+        return float(str_num.replace(',', '.'))
+    elif re.search('^\d*\.?\d+$', str_num) is not None:
         #No commas allowed
         #Pass: (1000.0), (001), (.001)
         #Fail: (1,000.0)
         return float(str_num)
-    elif re.search('^\d*\,?\d+$',str_num) is not None:
+    elif re.search('^\d*\,?\d+$', str_num) is not None:
         #No dots allowed
         #Pass: (1000,0), (001), (,001)
         #Fail: (1.000,0)
-        str_num = str_num.replace(',','.')
+        str_num = str_num.replace(',', '.')
         return float(str_num)
 
 def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
@@ -1460,7 +1461,7 @@ def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
     pro_input_tuples = list(instance.pro_input_tuples.value)
     # search the output commodities for the "buy" process
     # buy_out = (site,output_commodity)
-    buy_out = set([(x[0],x[2])
+    buy_out = set([(x[0], x[2])
                    for x in pro_output_tuples
                    if x[1] == pro_in])
     # search the sell process for the output_commodity from the buy process
@@ -1469,7 +1470,7 @@ def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
                           if x[2] in instance.com_sell])
     for k in range(len(sell_output_tuple)):
         sell_pro = sell_output_tuple[k][1]
-        sell_in = set([(x[0],x[2])
+        sell_in = set([(x[0], x[2])
                        for x in pro_input_tuples
                        if x[1] == sell_pro])
         # check: buy - commodity == commodity - sell; for a site
@@ -1817,11 +1818,11 @@ def get_timeseries(instance, com, sit, timesteps=None):
         # DSM happened (dsmup implies that dsmdo must be non-zero, too)
         # so the demand will be modified by the difference of DSM up and
         # DSM down uses
-        dsmup = dsmup.xs(sit, level = 'sit')
-        dsmup = dsmup.xs(com, level = 'com')
+        dsmup = dsmup.xs(sit, level='sit')
+        dsmup = dsmup.xs(com, level='com')
 
-        dsmdo = dsmdo.xs(sit, level = 'sit')
-        dsmdo = dsmdo.xs(com, level = 'com')
+        dsmdo = dsmdo.xs(sit, level='sit')
+        dsmdo = dsmdo.xs(com, level='com')
         #  series by summing the first time step set
         dsmdo = dsmdo.unstack().sum(axis=0)
         dsmdo.index.names = ['t']
@@ -1896,9 +1897,9 @@ def get_timeseries(instance, com, sit, timesteps=None):
                      columns=derivative.columns))
     # standardizing
     caps = get_entities(instance, ['cap_pro', 'cap_pro_new'])
-    caps = caps.loc[:,'cap_pro_new']
+    caps = caps.loc[:, 'cap_pro_new']
     for col in derivative.columns:
-        derivative[col] = derivative[col] / caps.loc[(sit,col)]
+        derivative[col] = derivative[col] / caps.loc[(sit, col)]
 
     # show stock as created
     created = created.join(stock)
@@ -2048,7 +2049,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         timesteps: optional list of  timesteps to plot; default: prob.tm
         power_unit: optional string for unit; default: 'MW'
         energy_unit: optional string for storage plot; default: 'MWh'
-        figure_size: optional (width, height) tuple in inch; default: (16,12)
+        figure_size: optional (width, height) tuple in inch; default: (16, 12)
 
     Returns:
         fig: figure handle
@@ -2106,9 +2107,9 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     fig = plt.figure(figsize=figure_size)
     all_axes = []
     if plot_dsm:
-        gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3,1,1], hspace=0.05)
+        gs = mpl.gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1], hspace=0.05)
     else:
-        gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2,1], hspace=0.05)
+        gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2, 1], hspace=0.05)
 
     # STACKPLOT
     ax0 = plt.subplot(gs[0])

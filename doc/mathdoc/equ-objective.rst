@@ -65,8 +65,8 @@ In script ``urbs.py`` the value of the total investment cost is calculated by th
 
 ::
 
-    if cost_type == 'Inv':
-        return m.costs['Inv'] == \
+    if cost_type == 'Invest':
+        return m.costs[cost_type] == \
             sum(m.cap_pro_new[p] *
                 m.process.loc[p]['inv-cost'] *
                 m.process.loc[p]['annuity-factor']
@@ -124,8 +124,8 @@ In script ``urbs.py`` the value of the total fix cost is calculated by the follo
 
 ::
 
-    elif cost_type == 'Fix':
-        return m.costs['Fix'] == \
+    elif cost_type == 'Fixed':
+        return m.costs[cost_type] == \
             sum(m.cap_pro[p] * m.process.loc[p]['fix-cost']
                 for p in m.pro_tuples) + \
             sum(m.cap_tra[t] * m.transmission.loc[t]['fix-cost']
@@ -153,22 +153,24 @@ Variable Costs
 
 ::
 
-    elif cost_type == 'Var':
-        return m.costs['Var'] == \
+    elif cost_type == 'Variable':
+        return m.costs[cost_type] == \
             sum(m.tau_pro[(tm,) + p] * m.dt *
                 m.process.loc[p]['var-cost'] *
                 m.weight
-                for tm in m.tm for p in m.pro_tuples) + \
+                for tm in m.tm 
+                for p in m.pro_tuples) + \
             sum(m.e_tra_in[(tm,) + t] * m.dt *
                 m.transmission.loc[t]['var-cost'] *
                 m.weight
-                for tm in m.tm for t in m.tra_tuples) + \
+                for tm in m.tm 
+                for t in m.tra_tuples) + \
             sum(m.e_sto_con[(tm,) + s] *
                 m.storage.loc[s]['var-cost-c'] * m.weight +
                 (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) * m.dt *
                 m.storage.loc[s]['var-cost-p'] * m.weight
-                for tm in m.tm for s in m.sto_tuples)
-
+                for tm in m.tm 
+                for s in m.sto_tuples)
 
 Fuel Costs
 ----------
@@ -191,7 +193,7 @@ In script ``urbs.py`` the value of the total fuel cost is calculated by the foll
 ::
 
     elif cost_type == 'Fuel':
-        return m.costs['Fuel'] == sum(
+        return m.costs[cost_type] == sum(
             m.e_co_stock[(tm,) + c] * m.dt *
             m.commodity.loc[c]['price'] *
             m.weight
@@ -225,9 +227,12 @@ In script ``urbs.py`` the value of the total revenue cost is calculated by the f
         sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
         com_prices = get_com_price(m, sell_tuples)
 
-        return m.costs['Revenue'] == -sum(
-            m.e_co_sell[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
-            for tm in m.tm for c in sell_tuples)
+        return m.costs[cost_type] == -sum(
+            m.e_co_sell[(tm,) + c] * 
+            com_prices[c].loc[tm] * 
+            m.weight * m.dt
+            for tm in m.tm 
+            for c in sell_tuples)
 
 
 Purchase Costs
@@ -254,13 +259,16 @@ In script ``urbs.py`` the value of the total purchase cost is calculated by the 
         buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
         com_prices = get_com_price(m, buy_tuples)
 
-        return m.costs['Purchase'] == sum(
-            m.e_co_buy[(tm,) + c] * com_prices[c].loc[tm] * m.weight * m.dt
-            for tm in m.tm for c in buy_tuples)
+        return m.costs[cost_type] == sum(
+            m.e_co_buy[(tm,) + c] * 
+            com_prices[c].loc[tm] * 
+            m.weight * m.dt
+            for tm in m.tm 
+            for c in buy_tuples)
 
 
 Startup Costs
---------------
+-------------
 
 The variable startup costs :math:`\zeta_\text{startup}` represents the total annual expenses that are required for the startup occurences of processes with the partial & startup feature activated. The calculation of the total annual startup costs  is expressed by the following mathematical notation:
 
@@ -274,9 +282,33 @@ In script ``urbs.py`` the value of the total startup cost is calculated by the f
 ::
 
     elif cost_type == 'Startup':
-        return m.costs['Startup'] == sum(
+        return m.costs[cost_type] == sum(
             m.startup_pro[(tm,) + p] * 
             m.process.loc[p]['startup-cost'] * 
             m.weight * m.dt 
             for tm in m.tm 
             for p in m.pro_partial_tuples)
+
+            
+Environmental Costs
+-------------------
+
+Environmental costs :math:`\zeta_\text{env}` represent the total annual taxes for created emissions/pollutions in form of environmental commodities. The total annual costs are calculated by summing the negative commodity balance :math:`\textrm{CB}` of all environmental commodities, multiplied by their respective price
+
+.. math::
+
+    \zeta_\text{env} = - 
+    w \sum_{t\in T_\text{m}} \sum_{v\in V} \sum_{c \in C_\text{env}}
+    \textrm{CB}(v,c,t) \Delta t
+    
+In script ``urbs.py`` the value of the total environmental cost is calculated by the following code fragment:
+::
+
+    elif cost_type == 'Environmental':
+        return m.costs[cost_type] == sum(
+            - commodity_balance(m, tm, sit, com) * 
+            m.weight * m.dt * 
+            m.commodity.loc[sit, com, com_type]['price']
+            for tm in m.tm 
+            for sit, com, com_type in m.com_tuples
+            if com in m.com_env)

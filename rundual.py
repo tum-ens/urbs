@@ -4,7 +4,7 @@ from pyomo.core import Constraint
 from pyomo.opt.base import SolverFactory
 
 data = urbs.read_excel('mimo-example.xlsx')
-prob = urbs.create_model(data, timesteps=range(1,8), dual=True)
+prob = urbs.create_model(data, timesteps=range(1, 8), dual=True)
 
 optim = SolverFactory('glpk')
 result = optim.solve(prob, tee=True)

@@ -261,8 +261,12 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.dsm_down_tuples = pyomo.Set(
         within=m.tm*m.tm*m.sit*m.com,
         initialize=[(t, tt, site, commodity)
-                    for (t,tt, site, commodity) in dsm_down_time_tuples(m.timesteps[1:], m.dsm_site_tuples, m)],
-        doc='Combinations of possible dsm_down combinations, e.g. (5001,5003,Mid,Elec)')
+                    for (t,tt, site, commodity) 
+                    in dsm_down_time_tuples(m.timesteps[1:], 
+                                            m.dsm_site_tuples, 
+                                            m)],
+        doc='Combinations of possible dsm_down combinations, e.g. '
+            '(5001,5003,Mid,Elec)')
 
 
     # process input/output
@@ -1297,19 +1301,20 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
     Returns:
         A list of possible time tuples depending on site and commodity
     """
-    
-    delay =  m.dsm.loc[:,:]['delay']
-    
+    if m.dsm.empty:
+        return []
+
+    delay =  m.dsm['delay']
     ub = max(time)
     lb = min(time)
-    
-    time_list = list()
+    time_list = []
     
     for (site, commodity) in sit_com_tuple:
         for step1 in time:
-            for step2 in range(step1-delay[site,commodity], step1+delay[site,commodity]+1):
-                if step2 >= lb and step2 <= ub:
-                    time_list.append((step1,step2, site, commodity))
+            for step2 in range(step1 - delay[site, commodity], 
+                               step1 + delay[site, commodity] + 1):
+                if lb <= step2 <= ub:
+                    time_list.append((step1, step2, site, commodity))
     
     return time_list
     
@@ -1322,7 +1327,8 @@ def dsm_time_tuples(timestep, time, delay):
         delay: allowed dsm delay in particular site and commodity
 
     Returns:
-        A list of possible time tuples of a current time step in a specific site and commodity
+        A list of possible time tuples of a current time step in a specific 
+        site and commodity
     """
         
     ub = max(time)
@@ -1330,7 +1336,7 @@ def dsm_time_tuples(timestep, time, delay):
     
     time_list = list()
     
-    for step in range(timestep-delay, timestep+delay+1):
+    for step in range(timestep - delay, timestep + delay + 1):
         if step >= lb and step <= ub:
             time_list.append(step)
     
@@ -2049,7 +2055,13 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     demand = consumed.pop('Demand')
     original = dsm.pop('Original Demand')
     deltademand = dsm.pop('Delta of Demand to shifted Demand')
-    plot_dsm = (deltademand.sum() > 0)  # True if DSM is used, False else
+    try:
+        # detect whether DSM could be used in this plot
+        # if so, show DSM subplot (even if deltademand == 0 for the whole time)
+        plot_dsm = prob.dsm.loc[(sit, com), 
+                                ['cap-max-do', 'cap-max-up']].sum() > 0
+    except KeyError:
+        plot_dsm = False
 
     # remove all columns from created which are all-zeros in both created and
     # consumed (except the last one, to prevent a completely empty frame)

@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 import pyomo.environ
 import shutil
 import urbs
@@ -38,6 +39,12 @@ def scenario_north_process_caps(data):
     pro = data['process']
     pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
     pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
+    return data
+    
+
+def scenario_no_dsm(data):
+    # empty the DSM dataframe completely
+    data['dsm'] = pd.DataFrame()
     return data
 
 
@@ -158,6 +165,7 @@ if __name__ == '__main__':
         scenario_stock_prices,
         scenario_co2_limit,
         scenario_co2_tax_mid,
+        scenario_no_dsm,
         scenario_north_process_caps,
         scenario_all_together]
 

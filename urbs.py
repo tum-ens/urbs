@@ -233,7 +233,8 @@ def create_model(data, timesteps=None, dt=1, dual=False):
 
     # cost_type
     m.cost_type = pyomo.Set(
-        initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase','Startup'],
+        initialize=['Invest', 'Fixed', 'Variable', 'Fuel', 'Revenue', 
+                    'Purchase', 'Startup', 'Environmental'],
         doc='Set of cost types (hard-coded)')
 
     # tuple sets
@@ -1051,8 +1052,8 @@ def def_costs_rule(m, cost_type):
       - Fuel costs for stock commodity purchase.
 
     """
-    if cost_type == 'Inv':
-        return m.costs['Inv'] == \
+    if cost_type == 'Invest':
+        return m.costs[cost_type] == \
             sum(m.cap_pro_new[p] *
                 m.process.loc[p]['inv-cost'] *
                 m.process.loc[p]['annuity-factor']
@@ -1069,8 +1070,8 @@ def def_costs_rule(m, cost_type):
                 m.storage.loc[s]['annuity-factor']
                 for s in m.sto_tuples)
 
-    elif cost_type == 'Fix':
-        return m.costs['Fix'] == \
+    elif cost_type == 'Fixed':
+        return m.costs[cost_type] == \
             sum(m.cap_pro[p] * m.process.loc[p]['fix-cost']
                 for p in m.pro_tuples) + \
             sum(m.cap_tra[t] * m.transmission.loc[t]['fix-cost']
@@ -1079,8 +1080,8 @@ def def_costs_rule(m, cost_type):
                 m.cap_sto_c[s] * m.storage.loc[s]['fix-cost-c']
                 for s in m.sto_tuples)
 
-    elif cost_type == 'Var':
-        return m.costs['Var'] == \
+    elif cost_type == 'Variable':
+        return m.costs[cost_type] == \
             sum(m.tau_pro[(tm,) + p] * m.dt *
                 m.process.loc[p]['var-cost'] *
                 m.weight
@@ -1099,7 +1100,7 @@ def def_costs_rule(m, cost_type):
                 for s in m.sto_tuples)
 
     elif cost_type == 'Fuel':
-        return m.costs['Fuel'] == sum(
+        return m.costs[cost_type] == sum(
             m.e_co_stock[(tm,) + c] * m.dt *
             m.commodity.loc[c]['price'] *
             m.weight
@@ -1110,7 +1111,7 @@ def def_costs_rule(m, cost_type):
         sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
         com_prices = get_com_price(m, sell_tuples)
 
-        return m.costs['Revenue'] == -sum(
+        return m.costs[cost_type] == -sum(
             m.e_co_sell[(tm,) + c] * 
             com_prices[c].loc[tm] * 
             m.weight * m.dt
@@ -1121,7 +1122,7 @@ def def_costs_rule(m, cost_type):
         buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
         com_prices = get_com_price(m, buy_tuples)
 
-        return m.costs['Purchase'] == sum(
+        return m.costs[cost_type] == sum(
             m.e_co_buy[(tm,) + c] * 
             com_prices[c].loc[tm] * 
             m.weight * m.dt
@@ -1129,12 +1130,21 @@ def def_costs_rule(m, cost_type):
             for c in buy_tuples)
             
     elif cost_type == 'Startup':
-        return m.costs['Startup'] == sum(
+        return m.costs[cost_type] == sum(
             m.startup_pro[(tm,) + p] * 
             m.process.loc[p]['startup-cost'] * 
             m.weight * m.dt 
             for tm in m.tm 
             for p in m.pro_partial_tuples)
+        
+    elif cost_type == 'Environmental':
+        return m.costs[cost_type] == sum(
+            - commodity_balance(m, tm, sit, com) * 
+            m.weight * m.dt * 
+            m.commodity.loc[sit, com, com_type]['price']
+            for tm in m.tm 
+            for sit, com, com_type in m.com_tuples
+            if com in m.com_env)
 
     else:
         raise NotImplementedError("Unknown cost type.")
@@ -1142,8 +1152,6 @@ def def_costs_rule(m, cost_type):
 def obj_rule(m):
     return pyomo.summation(m.costs)
 
-
-# Hacks
 
 def add_hacks(model, hacks):
     """ add hackish features to model object

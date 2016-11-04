@@ -26,6 +26,13 @@ def scenario_co2_limit(data):
     return data
 
 
+def scenario_co2_tax_mid(data):
+    # change CO2 price in Mid
+    co = data['commodity']
+    co.loc[('Mid', 'CO2', 'Env'), 'price'] = 50
+    return data
+
+
 def scenario_north_process_caps(data):
     # change maximum installable capacity
     pro = data['process']
@@ -150,6 +157,7 @@ if __name__ == '__main__':
         scenario_base,
         scenario_stock_prices,
         scenario_co2_limit,
+        scenario_co2_tax_mid,
         scenario_north_process_caps,
         scenario_all_together]
 

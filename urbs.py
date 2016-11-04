@@ -33,8 +33,8 @@ COLORS = {
     'Wind park': (122, 179, 225),
     'Decoration': (128, 128, 128),  # plot labels
     'Original Demand': (130, 130, 130),  # thick demand line
-    'Demand': (25, 25, 25), # thick shifted demand line
-    'Demand delta': (130, 130, 130), # dashed demand delta
+    'Demand': (25, 25, 25),  # thick shifted demand line
+    'Demand delta': (130, 130, 130),  # dashed demand delta
     'Grid': (128, 128, 128),  # background grid
     'Overproduction': (190, 0, 99),  # excess power
     'Storage': (60, 36, 154),  # storage area
@@ -131,14 +131,14 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         timesteps: optional list of timesteps, default: demand timeseries
         dt: timestep duration in hours (default: 1)
         dual: set True to add dual variables to model (slower); default: False
-        
+
     Returns:
         a pyomo ConcreteModel object
     """
-    m = pyomo.ConcreteModel()    
+    m = pyomo.ConcreteModel()
     m.name = 'URBS'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
-    
+
     # Optional
     if not timesteps:
         timesteps = data['demand'].index.tolist()
@@ -164,15 +164,15 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
-    
+
     # input ratios for partial efficiencies
     # only keep those entries whose values are
-    # a) positive and 
-    # b) numeric (implicitely, as NaN or NV compare false against 0) 
+    # a) positive and
+    # b) numeric (implicitely, as NaN or NV compare false against 0)
     m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')
     m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
     m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
-    
+
 	# Sets
     # ====
     # Syntax: m.{name} = Set({domain}, initialize={values})
@@ -196,7 +196,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # modelled Demand Side Management time steps (downshift):
     # downshift effective in tt to compensate for upshift in t
     m.tt = pyomo.Set(
-        within=m.t, 
+        within=m.t,
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of additional DSM time steps')
@@ -233,7 +233,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
 
     # cost_type
     m.cost_type = pyomo.Set(
-        initialize=['Invest', 'Fixed', 'Variable', 'Fuel', 'Revenue', 
+        initialize=['Invest', 'Fixed', 'Variable', 'Fuel', 'Revenue',
                     'Purchase', 'Startup', 'Environmental'],
         doc='Set of cost types (hard-coded)')
 
@@ -262,9 +262,9 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.dsm_down_tuples = pyomo.Set(
         within=m.tm*m.tm*m.sit*m.com,
         initialize=[(t, tt, site, commodity)
-                    for (t,tt, site, commodity) 
-                    in dsm_down_time_tuples(m.timesteps[1:], 
-                                            m.dsm_site_tuples, 
+                    for (t,tt, site, commodity)
+                    in dsm_down_time_tuples(m.timesteps[1:],
+                                            m.dsm_site_tuples,
                                             m)],
         doc='Combinations of possible dsm_down combinations, e.g. '
             '(5001,5003,Mid,Elec)')
@@ -285,7 +285,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                     for (pro, commodity) in m.r_out.index
                     if process == pro],
         doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
-    
+
     # process tuples for startup & partial feature
     m.pro_partial_tuples = pyomo.Set(
         within=m.sit*m.pro,
@@ -294,7 +294,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                     for (pro, _) in m.r_in_min_fraction.index
                     if process == pro],
         doc='Processes with partial input')
-    
+
     m.pro_partial_input_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
@@ -390,7 +390,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
-        
+
     m.cap_online = pyomo.Var(
         m.t, m.pro_partial_tuples,
         within=pyomo.NonNegativeReals,
@@ -417,7 +417,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of transmission line (MW) per timestep')
-        
+
     # storage
     m.cap_sto_c = pyomo.Var(
         m.sto_tuples,
@@ -447,7 +447,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.t, m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
-        
+
     # demand side management
     m.dsm_up = pyomo.Var(
         m.tm, m.dsm_site_tuples,
@@ -459,9 +459,9 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         doc='DSM downshift')
 
     # Equation declarations
-    # equation bodies are defined in separate functions, referred to here by 
+    # equation bodies are defined in separate functions, referred to here by
     # their name in the "rule" keyword.
-    
+
     # commodity
     m.res_vertex = pyomo.Constraint(
         m.tm, m.com_tuples,
@@ -630,27 +630,27 @@ def create_model(data, timesteps=None, dt=1, dual=False):
 
     # demand side management
     m.def_dsm_variables = pyomo.Constraint(
-        m.tm, m.dsm_site_tuples, 
+        m.tm, m.dsm_site_tuples,
         rule=def_dsm_variables_rule,
-        doc='DSMup * efficiency factor n == DSMdo')	
+        doc='DSMup * efficiency factor n == DSMdo')
 
     m.res_dsm_upward = pyomo.Constraint(
-        m.tm, m.dsm_site_tuples, 
+        m.tm, m.dsm_site_tuples,
         rule=res_dsm_upward_rule,
         doc='DSMup <= Cup (threshold capacity of DSMup)')
 
     m.res_dsm_downward = pyomo.Constraint(
-        m.tm, m.dsm_site_tuples, 
+        m.tm, m.dsm_site_tuples,
         rule=res_dsm_downward_rule,
         doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
 
     m.res_dsm_maximum = pyomo.Constraint(
-        m.tm, m.dsm_site_tuples, 
+        m.tm, m.dsm_site_tuples,
         rule=res_dsm_maximum_rule,
         doc='DSMup + DSMdo <= max(Cup,Cdo)')
 
     m.res_dsm_recovery = pyomo.Constraint(
-        m.tm, m.dsm_site_tuples, 
+        m.tm, m.dsm_site_tuples,
         rule=res_dsm_recovery_rule,
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
 
@@ -713,9 +713,9 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # upshifted demand and increased by the downshifted demand.
     if (sit, com) in m.dsm_site_tuples:
         power_surplus -= m.dsm_up[tm,sit,com]
-        power_surplus += sum(m.dsm_down[t,tm,sit,com] 
+        power_surplus += sum(m.dsm_down[t,tm,sit,com]
                              for t in dsm_time_tuples(
-                                 tm, m.timesteps[1:], 
+                                 tm, m.timesteps[1:],
                                  m.dsm['delay'].loc[sit,com]))
     return power_surplus == 0
 
@@ -723,14 +723,14 @@ def res_vertex_rule(m, tm, sit, com, com_type):
 # DSMup == DSMdo * efficiency factor n
 def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for tt in dsm_time_tuples(tm, 
+    for tt in dsm_time_tuples(tm,
                               m.timesteps[1:],
                               m.dsm['delay'].loc[sit,com]):
         dsm_down_sum += m.dsm_down[tm,tt,sit,com]
     return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
 
 
-# DSMup <= Cup (threshold capacity of DSMup)		
+# DSMup <= Cup (threshold capacity of DSMup)
 def res_dsm_upward_rule(m, tm, sit, com):
     return m.dsm_up[tm,sit,com] <= int(m.dsm.loc[sit,com]['cap-max-up'])
 
@@ -748,12 +748,12 @@ def res_dsm_maximum_rule(m, tm, sit, com):
     for t in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit,com]):
         dsm_down_sum += m.dsm_down[t,tm,sit,com]
 
-    max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'], 
+    max_dsm_limit = max(m.dsm.loc[sit,com]['cap-max-up'],
                           m.dsm.loc[sit,com]['cap-max-do'])
     return m.dsm_up[tm,sit,com] + dsm_down_sum <= max_dsm_limit
 
 
-# DSMup(t, t + recovery time R) <= Cup * delay time L  
+# DSMup(t, t + recovery time R) <= Cup * delay time L
 def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
     for t in range(tm, tm+m.dsm['recov'].loc[sit,com]):
@@ -911,24 +911,24 @@ def res_throughput_by_online_capacity_max_rule(m, tm, sit, pro):
     return (m.tau_pro[tm, sit, pro] <= m.cap_online[tm, sit, pro])
 
 def def_partial_process_input_rule(m, tm, sit, pro, coin):
-    R = m.r_in.loc[pro, coin] # input ratio at maximum operation point
+    R = m.r_in.loc[pro, coin]  # input ratio at maximum operation point
     r = m.r_in_min_fraction[pro, coin]  # input ratio at lowest operation point
     min_fraction = m.process.loc[sit, pro]['min-fraction']
-    
-    online_factor = min_fraction * (r - R) / (1 - min_fraction) 
+
+    online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor =  (R - min_fraction * r) / (1 - min_fraction)
-    
-    return (m.e_pro_in[tm, sit, pro, coin] == 
-            m.cap_online[tm, sit, pro] * online_factor + 
+
+    return (m.e_pro_in[tm, sit, pro, coin] ==
+            m.cap_online[tm, sit, pro] * online_factor +
             m.tau_pro[tm, sit, pro] * throughput_factor)
 
 def res_cap_online_by_cap_pro_rule(m, tm, sit, pro):
     return m.cap_online[tm, sit, pro] <= m.cap_pro[sit, pro]
-    
+
 def def_startup_capacity_rule(m, tm, sit, pro):
     return (m.startup_pro[tm, sit, pro] >= m.cap_online[tm, sit, pro] -
                                            m.cap_online[tm-1, sit, pro])
-                
+
 # lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
     return (m.process.loc[sit, pro]['cap-lo'],
@@ -1094,18 +1094,18 @@ def def_costs_rule(m, cost_type):
             sum(m.tau_pro[(tm,) + p] * m.dt *
                 m.process.loc[p]['var-cost'] *
                 m.weight
-                for tm in m.tm 
+                for tm in m.tm
                 for p in m.pro_tuples) + \
             sum(m.e_tra_in[(tm,) + t] * m.dt *
                 m.transmission.loc[t]['var-cost'] *
                 m.weight
-                for tm in m.tm 
+                for tm in m.tm
                 for t in m.tra_tuples) + \
             sum(m.e_sto_con[(tm,) + s] *
                 m.storage.loc[s]['var-cost-c'] * m.weight +
                 (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) * m.dt *
                 m.storage.loc[s]['var-cost-p'] * m.weight
-                for tm in m.tm 
+                for tm in m.tm
                 for s in m.sto_tuples)
 
     elif cost_type == 'Fuel':
@@ -1121,10 +1121,10 @@ def def_costs_rule(m, cost_type):
         com_prices = get_com_price(m, sell_tuples)
 
         return m.costs[cost_type] == -sum(
-            m.e_co_sell[(tm,) + c] * 
-            com_prices[c].loc[tm] * 
+            m.e_co_sell[(tm,) + c] *
+            com_prices[c].loc[tm] *
             m.weight * m.dt
-            for tm in m.tm 
+            for tm in m.tm
             for c in sell_tuples)
 
     elif cost_type == 'Purchase':
@@ -1132,26 +1132,26 @@ def def_costs_rule(m, cost_type):
         com_prices = get_com_price(m, buy_tuples)
 
         return m.costs[cost_type] == sum(
-            m.e_co_buy[(tm,) + c] * 
-            com_prices[c].loc[tm] * 
+            m.e_co_buy[(tm,) + c] *
+            com_prices[c].loc[tm] *
             m.weight * m.dt
-            for tm in m.tm 
+            for tm in m.tm
             for c in buy_tuples)
-            
+
     elif cost_type == 'Startup':
         return m.costs[cost_type] == sum(
-            m.startup_pro[(tm,) + p] * 
-            m.process.loc[p]['startup-cost'] * 
-            m.weight * m.dt 
-            for tm in m.tm 
+            m.startup_pro[(tm,) + p] *
+            m.process.loc[p]['startup-cost'] *
+            m.weight * m.dt
+            for tm in m.tm
             for p in m.pro_partial_tuples)
-        
+
     elif cost_type == 'Environmental':
         return m.costs[cost_type] == sum(
-            - commodity_balance(m, tm, sit, com) * 
-            m.weight * m.dt * 
+            - commodity_balance(m, tm, sit, com) *
+            m.weight * m.dt *
             m.commodity.loc[sit, com, com_type]['price']
-            for tm in m.tm 
+            for tm in m.tm
             for sit, com, com_type in m.com_tuples
             if com in m.com_env)
 
@@ -1195,7 +1195,7 @@ def res_global_co2_limit_rule(m):
     co2_output_sum = 0
     for tm in m.tm:
         for sit in m.sit:
-            # minus because negative commodity_balance represents creation of 
+            # minus because negative commodity_balance represents creation of
             # that commodity.
             co2_output_sum += (- commodity_balance(m, tm, sit, 'CO2') * m.dt)
 
@@ -1293,7 +1293,7 @@ def split_columns(columns, sep='.'):
         return columns
     column_tuples = [tuple(col.split('.')) for col in columns]
     return pd.MultiIndex.from_tuples(column_tuples)
-    
+
 def dsm_down_time_tuples(time, sit_com_tuple, m):
     """ Dictionary for the two time instances of DSM_down
 
@@ -1313,16 +1313,16 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
     ub = max(time)
     lb = min(time)
     time_list = []
-    
+
     for (site, commodity) in sit_com_tuple:
         for step1 in time:
-            for step2 in range(step1 - delay[site, commodity], 
+            for step2 in range(step1 - delay[site, commodity],
                                step1 + delay[site, commodity] + 1):
                 if lb <= step2 <= ub:
                     time_list.append((step1, step2, site, commodity))
-    
+
     return time_list
-    
+
 def dsm_time_tuples(timestep, time, delay):
     """ Tuples for the two time instances of DSM_down
 
@@ -1332,24 +1332,24 @@ def dsm_time_tuples(timestep, time, delay):
         delay: allowed dsm delay in particular site and commodity
 
     Returns:
-        A list of possible time tuples of a current time step in a specific 
+        A list of possible time tuples of a current time step in a specific
         site and commodity
     """
-        
+
     ub = max(time)
     lb = min(time)
-    
+
     time_list = list()
-    
+
     for step in range(timestep - delay, timestep + delay + 1):
         if step >= lb and step <= ub:
             time_list.append(step)
-    
+
     return time_list
-    
+
 
 def commodity_subset(com_tuples, type_name):
-    """ Unique list of commodity names for given type. 
+    """ Unique list of commodity names for given type.
 
     Args:
         com_tuples: a list of (site, commodity, commodity type) tuples
@@ -1388,7 +1388,7 @@ def get_com_price(instance, tuples):
             # a different commodity price for each hour
             # factor, to realize a different commodity price for each site
             factor = extract_number_str(instance.commodity.loc[c]['price'])
-            price = factor * instance.buy_sell_price.loc[(instance.tm,) + 
+            price = factor * instance.buy_sell_price.loc[(instance.tm,) +
                                                          (c[1],)]
             com_price[c] = pd.Series(price, index=com_price.index)
         else:
@@ -1400,8 +1400,8 @@ def get_com_price(instance, tuples):
 def extract_number_str(str_in):
     """ Extract first number from a given string and convert to a float number.
 
-    The function works with the following formats (,25), (.25), (2), (2,5), 
-    (2.5), (1,000.25), (1.000,25) and  doesn't with (1e3), (1.5-0.4j) and 
+    The function works with the following formats (,25), (.25), (2), (2,5),
+    (2.5), (1,000.25), (1.000,25) and  doesn't with (1e3), (1.5-0.4j) and
     negative numbers.
 
     Args:
@@ -1460,17 +1460,17 @@ def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
     pro_input_tuples = list(instance.pro_input_tuples.value)
     # search the output commodities for the "buy" process
     # buy_out = (site,output_commodity)
-    buy_out = set([(x[0],x[2]) 
-                   for x in pro_output_tuples 
+    buy_out = set([(x[0],x[2])
+                   for x in pro_output_tuples
                    if x[1] == pro_in])
     # search the sell process for the output_commodity from the buy process
-    sell_output_tuple = ([x 
-                          for x in pro_output_tuples 
+    sell_output_tuple = ([x
+                          for x in pro_output_tuples
                           if x[2] in instance.com_sell])
     for k in range(len(sell_output_tuple)):
         sell_pro = sell_output_tuple[k][1]
-        sell_in = set([(x[0],x[2]) 
-                       for x in pro_input_tuples 
+        sell_in = set([(x[0],x[2])
+                       for x in pro_input_tuples
                        if x[1] == sell_pro])
         # check: buy - commodity == commodity - sell; for a site
         if not(sell_in.isdisjoint(buy_out)):
@@ -1485,7 +1485,7 @@ def get_entity(instance, name):
         name: name of a Set, Param, Var, Constraint or Objective
 
     Returns:
-        a Pandas Series with domain as index and values (or 1's, for sets) of 
+        a Pandas Series with domain as index and values (or 1's, for sets) of
         entity name. For constraints, it retrieves the dual values
     """
 
@@ -1551,7 +1551,7 @@ def get_entity(instance, name):
         # name columns according to labels + entity name
         results.columns = labels + [name]
         results.set_index(labels, inplace=True)
-        
+
         # convert to Series
         results = results[name]
     else:
@@ -1651,14 +1651,14 @@ def list_entities(instance, entity_type):
 
 def _get_onset_names(entity):
     """ Return a list of domain set names for a given model entity
-    
+
     Args:
         entity: a member entity (i.e. a Set, Param, Var, Objective, Constraint)
                 of a Pyomo ConcreteModel object
-                
+
     Returns:
         list of domain set names for that entity
-        
+
     Example:
         >>> data = read_excel('mimo-example.xlsx')
         >>> model = create_model(data, range(1,25))
@@ -1676,10 +1676,10 @@ def _get_onset_names(entity):
                 domains = entity.domain.set_tuple
             else:
                 try:
-                    # if no domain attribute exists, some 
+                    # if no domain attribute exists, some
                     domains = entity.set_tuple
                 except AttributeError:
-                    # if that fails, too, a constructed (union, difference, 
+                    # if that fails, too, a constructed (union, difference,
                     # intersection, ...) set exists. In that case, the
                     # attribute _setA holds the domain for the base set
                     domains = entity._setA.domain.set_tuple
@@ -1812,7 +1812,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
     if dsmup.empty:
         # if no DSM happened, the demand is not modified (demanddelta == 0)
         demanddelta = pd.Series(0, index=timesteps)
-        
+
     else:
         # DSM happened (dsmup implies that dsmdo must be non-zero, too)
         # so the demand will be modified by the difference of DSM up and
@@ -1830,7 +1830,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
         demanddelta = dsmup - dsmdo
 
     shifted = demand + demanddelta
-    
+
     # give sensible names to the derived timeseries
     demanddelta.name = 'Delta of Demand to shifted Demand'
     shifted.name = 'Shifted Demand'
@@ -1866,7 +1866,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
         exported = (etra.xs(sit, level='sitin')['e_tra_in']
                         .unstack()
                         .fillna(0))
-        
+
     except (ValueError, KeyError):
         imported = pd.DataFrame(index=timesteps)
         exported = pd.DataFrame(index=timesteps)
@@ -1892,7 +1892,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
                               columns=derivative.columns)
     derivative = derivative.append(
         pd.DataFrame(np.zeros_like(derivative.tail(1)),
-                     index=derivative.index[-1:]+1, 
+                     index=derivative.index[-1:]+1,
                      columns=derivative.columns))
     # standardizing
     caps = get_entities(instance, ['cap_pro', 'cap_pro_new'])
@@ -1905,7 +1905,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
 
     # show demand as consumed
     consumed = consumed.join(shifted.rename('Demand'))
-    
+
     # show dsm timeseries as dsm
     dsm = pd.concat((demand.rename('Original Demand'), demanddelta), axis=1)
 
@@ -1943,7 +1943,7 @@ def report(instance, filename, commodities=None, sites=None):
         # collect timeseries data
         for co in commodities:
             for sit in sites:
-                (created, consumed, stored, imported, exported, derivative, 
+                (created, consumed, stored, imported, exported, derivative,
                  dsm) = get_timeseries(instance, co, sit)
 
                 overprod = pd.DataFrame(
@@ -1953,13 +1953,13 @@ def report(instance, filename, commodities=None, sites=None):
                     stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
-                    [created, 
-                     consumed, 
-                     stored, 
-                     imported, 
-                     exported, 
-                     overprod, 
-                     derivative, 
+                    [created,
+                     consumed,
+                     stored,
+                     imported,
+                     exported,
+                     overprod,
+                     derivative,
                      dsm],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
@@ -1983,7 +1983,7 @@ def report(instance, filename, commodities=None, sites=None):
             # concatenate Commodity sums
             energy = pd.concat(energies, axis=1).fillna(0)
             energy.to_excel(writer, 'Commodity sums')
-    
+
             # write timeseries to individual sheets
             for co in commodities:
                 for sit in sites:
@@ -2017,8 +2017,8 @@ def sort_plot_elements(elements):
                         index=elements.index[-1:]+1, columns=elements.columns)
     # calculate quotient
     quotient = pd.DataFrame(np.zeros_like(elements.tail(1)),
-                        index=elements.index[-1:]+1, columns=elements.columns)      
-                  
+                        index=elements.index[-1:]+1, columns=elements.columns)
+
     for col in std.columns:
         std[col] = np.std(elements[col])
         mean[col] = np.mean(elements[col])
@@ -2060,7 +2060,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         # default to all simulated timesteps
         timesteps = sorted(get_entity(prob, 'tm').index)
 
-    (created, consumed, stored, imported, exported, derivative, 
+    (created, consumed, stored, imported, exported, derivative,
      dsm) = get_timeseries(prob, com, sit, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)
@@ -2086,7 +2086,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     try:
         # detect whether DSM could be used in this plot
         # if so, show DSM subplot (even if deltademand == 0 for the whole time)
-        plot_dsm = prob.dsm.loc[(sit, com), 
+        plot_dsm = prob.dsm.loc[(sit, com),
                                 ['cap-max-do', 'cap-max-up']].sum() > 0
     except KeyError:
         plot_dsm = False
@@ -2115,23 +2115,23 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     all_axes.append(ax0)
 
     # PLOT CONSUMED
-    sp00 = ax0.stackplot(consumed.index, 
-                         -consumed.as_matrix().T, 
+    sp00 = ax0.stackplot(consumed.index,
+                         -consumed.as_matrix().T,
                          labels=tuple(consumed.columns),
                          linewidth=0.15)
-                
-    
+
+
     # color
     for k, commodity in enumerate(consumed.columns):
         commodity_color = to_color(commodity)
 
         sp00[k].set_facecolor(commodity_color)
         sp00[k].set_edgecolor((.5, .5, .5))
-    
+
     # PLOT CREATED
-    sp0 = ax0.stackplot(created.index, 
-                        created.as_matrix().T, 
-                        labels=tuple(created.columns), 
+    sp0 = ax0.stackplot(created.index,
+                        created.as_matrix().T,
+                        labels=tuple(created.columns),
                         linewidth=0.15)
 
     for k, commodity in enumerate(created.columns):
@@ -2144,7 +2144,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     # label
     ax0.set_title('Energy balance of {} in {}'.format(com, sit))
     ax0.set_ylabel('Power ({})'.format(power_unit))
-    
+
 
     # legend
     handles, labels = ax0.get_legend_handles_labels()
@@ -2166,8 +2166,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
             item_index = labels.index(item)
             handles.pop(item_index)
             labels.pop(item_index)
-    
-   
+
+
     lg = ax0.legend(handles=handles[::-1],
                     labels=labels[::-1],
                     frameon=False,
@@ -2175,12 +2175,12 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
                     bbox_to_anchor=(1, 1))
     plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
              linewidth=0.15)
-    plt.setp(ax0.get_xticklabels(), visible=False)    
-    
+    plt.setp(ax0.get_xticklabels(), visible=False)
+
     # PLOT DEMAND
     ax0.plot(original.index, original.values, linewidth=0.8,
              color=to_color('Original Demand'))
-             
+
     ax0.plot(demand.index, demand.values, linewidth=1.0,
              color=to_color('Demand'))
 
@@ -2206,9 +2206,9 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         # PLOT DEMAND SIDE MANAGEMENT
         ax2 = plt.subplot(gs[2], sharex=ax0)
         all_axes.append(ax2)
-        ax2.bar(deltademand.index, deltademand.values, 
+        ax2.bar(deltademand.index, deltademand.values,
                       color=to_color('Demand delta'), edgecolor='none')
-        
+
         # labels & y-limits
         ax2.set_xlabel('Time in year (h)')
         ax2.set_ylabel('Energy ({})'.format(energy_unit))
@@ -2238,7 +2238,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         ax.xaxis.set_ticks_position('none')
         ax.yaxis.set_ticks_position('none')
 
-        # group 1,000,000 with commas, but only if maximum or minimum are 
+        # group 1,000,000 with commas, but only if maximum or minimum are
         # sufficiently large. Otherwise, keep default tick labels
         ymin, ymax = ax.get_ylim()
         if ymin < -90 or ymax > 90:
@@ -2253,10 +2253,10 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     return fig
 
 
-def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}, 
+def result_figures(prob, figure_basename, plot_title_prefix=None, periods={},
                    **kwds):
     """Create plot for each site and demand commodity and save to files.
-    
+
     Args:
         prob: urbs model instance
         figure_basename: relative filename prefix that is shared
@@ -2268,7 +2268,7 @@ def result_figures(prob, figure_basename, plot_title_prefix=None, periods={},
     # default to all timesteps if no
     if not periods:
         periods = {'all': sorted(get_entity(prob, 'tm').index)}
-            
+
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in prob.demand.columns:
         for period, timesteps in periods.items():
@@ -2277,13 +2277,13 @@ def result_figures(prob, figure_basename, plot_title_prefix=None, periods={},
 
             # change the figure title
             ax0 = fig.get_axes()[0]
-            # if no custom title prefix is specified, use the figure 
+            # if no custom title prefix is specified, use the figure
             if not plot_title_prefix:
                 plot_title_prefix = os.path.basename(figure_basename)
             new_figure_title = ax0.get_title().replace(
                 'Energy balance of ', '{}: '.format(plot_title_prefix))
             ax0.set_title(new_figure_title)
-            
+
             # save plot to files
             for ext in ['png', 'pdf']:
                 fig_filename = '{}-{}-{}-{}.{}'.format(
@@ -2313,25 +2313,25 @@ def to_color(obj=None):
         # random deterministic color
         color = "#{:06x}".format(abs(hash(obj)))[:7]
     return color
-    
+
 
 def save(prob, filename):
     """Save urbs model instance to a gzip'ed pickle file.
-    
+
     Pickle is the standard Python way of serializing and de-serializing Python
-    objects. By using it, saving any object, in case of this function a 
-    Pyomo ConcreteModel, becomes a twoliner. 
+    objects. By using it, saving any object, in case of this function a
+    Pyomo ConcreteModel, becomes a twoliner.
     <https://docs.python.org/2/library/pickle.html>
     GZip is a standard Python compression library that is used to transparently
     compress the pickle file further.
     <https://docs.python.org/2/library/gzip.html>
     It is used over the possibly more compact bzip2 compression due to the
     lower runtime. Source: <http://stackoverflow.com/a/18475192/2375855>
-    
+
     Args:
         prob: a urbs model instance
         filename: pickle file to be written
-        
+
     Returns:
         Nothing
     """
@@ -2346,10 +2346,10 @@ def save(prob, filename):
 
 def load(filename):
     """Load a urbs model instance from a gzip'ed pickle file
-    
+
     Args:
         filename: pickle file
-    
+
     Returns:
         prob: the unpickled urbs model instance
     """

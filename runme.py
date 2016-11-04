@@ -40,7 +40,7 @@ def scenario_north_process_caps(data):
     pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
     pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
     return data
-    
+
 
 def scenario_no_dsm(data):
     # empty the DSM dataframe completely
@@ -74,7 +74,7 @@ def setup_solver(optim, logfile='solver.log'):
     if optim.name == 'gurobi':
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
-        optim.set_options("logfile={}".format(logfile)) 
+        optim.set_options("logfile={}".format(logfile))
         # optim.set_options("timelimit=7200")  # seconds
         # optim.set_options("mipgap=5e-4")  # default = 1e-4
     elif optim.name == 'glpk':
@@ -120,7 +120,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
 
     # copy input file to result directory
     shutil.copyfile(input_file, os.path.join(result_dir, input_file))
-	
+
 	# write report to spreadsheet
     urbs.report(
         prob,
@@ -128,7 +128,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
         prob.com_demand, prob.sit)
 
     urbs.result_figures(
-        prob, 
+        prob,
         os.path.join(result_dir, '{}'.format(sce)),
         plot_title_prefix=sce.replace('_', ' ').title(),
         periods=plot_periods)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     # simulation timesteps
     (offset, length) = (5000, 10*24)  # time step selection
     timesteps = range(offset, offset+length+1)
-    
+
     # plotting timesteps
     periods = {
         #'spr': range(1000, 1000+24*7),
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         'aut': range(5000, 5000+24*7),
         #'win': range(7000, 7000+24*7),
     }
-    
+
     # add or change plot colors
     my_colors = {
         'South': (230, 200, 200),
@@ -170,5 +170,5 @@ if __name__ == '__main__':
         scenario_all_together]
 
     for scenario in scenarios:
-        prob = run_scenario(input_file, timesteps, scenario, 
+        prob = run_scenario(input_file, timesteps, scenario,
                             result_dir, plot_periods=periods)

@@ -81,7 +81,7 @@ def read_excel(filename):
         demand = xls.parse('Demand').set_index(['t'])
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
-        dsm = xls.parse('DSM').set_index(['Site', 'Commodity']) #Demand Side Management
+        dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
         try:
             hacks = xls.parse('Hacks').set_index(['Name'])
         except XLRDError:
@@ -115,8 +115,7 @@ def read_excel(filename):
     if hacks is not None:
         data['hacks'] = hacks
 
-    # sort nested indexes to make direct assignments work, cf
-    # http://pandas.pydata.org/pandas-docs/stable/indexing.html#the-need-for-sortedness-with-multiindex
+    # sort nested indexes to make direct assignments work
     for key in data:
         if isinstance(data[key].index, pd.core.index.MultiIndex):
             data[key].sortlevel(inplace=True)
@@ -170,7 +169,8 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # only keep those entries whose values are
     # a) positive and 
     # b) numeric (implicitely, as NaN or NV compare false against 0) 
-    m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')['ratio-min']
+    m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')
+    m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
     m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
     
 	# Sets
@@ -249,7 +249,8 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.tra_tuples = pyomo.Set(
         within=m.sit*m.sit*m.tra*m.com,
         initialize=m.transmission.index,
-        doc='Combinations of possible transmission, e.g. (South,Mid,hvac,Elec)')
+        doc='Combinations of possible transmissions, e.g. '
+            '(South,Mid,hvac,Elec)')
     m.sto_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
         initialize=m.storage.index,
@@ -531,7 +532,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.res_sell_buy_symmetry = pyomo.Constraint(
         m.pro_input_tuples,
         rule=res_sell_buy_symmetry_rule,
-        doc='total power connection capacity must be symmetric in both directions')
+        doc='power connection capacity must be symmetric in both directions')
 
     m.res_throughput_by_online_capacity_min = pyomo.Constraint(
         m.tm, m.pro_partial_tuples,
@@ -544,8 +545,9 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.def_partial_process_input = pyomo.Constraint(
         m.tm, m.pro_partial_input_tuples,
         rule=def_partial_process_input_rule,
-        doc='e_pro_in = cap_online * min_fraction * (r - R) / (1 - min_fraction)'
-                        '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
+        doc='e_pro_in = '
+            ' cap_online * min_fraction * (r - R) / (1 - min_fraction)'
+            ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
     m.res_cap_online_by_cap_pro = pyomo.Constraint(
         m.tm, m.pro_partial_tuples,
         rule=res_cap_online_by_cap_pro_rule,
@@ -721,7 +723,9 @@ def res_vertex_rule(m, tm, sit, com, com_type):
 # DSMup == DSMdo * efficiency factor n
 def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
-    for tt in dsm_time_tuples(tm, m.timesteps[1:], m.dsm['delay'].loc[sit,com]):
+    for tt in dsm_time_tuples(tm, 
+                              m.timesteps[1:],
+                              m.dsm['delay'].loc[sit,com]):
         dsm_down_sum += m.dsm_down[tm,tt,sit,com]
     return dsm_down_sum == m.dsm_up[tm,sit,com] * m.dsm.loc[sit,com]['eff']
 
@@ -754,7 +758,8 @@ def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
     for t in range(tm, tm+m.dsm['recov'].loc[sit,com]):
         dsm_up_sum += m.dsm_up[t,sit,com]
-    return dsm_up_sum <= m.dsm.loc[sit,com]['cap-max-up'] * m.dsm['delay'].loc[sit,com]
+    return dsm_up_sum <= (m.dsm.loc[sit,com]['cap-max-up'] *
+                          m.dsm['delay'].loc[sit,com])
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -1383,7 +1388,8 @@ def get_com_price(instance, tuples):
             # a different commodity price for each hour
             # factor, to realize a different commodity price for each site
             factor = extract_number_str(instance.commodity.loc[c]['price'])
-            price = factor * instance.buy_sell_price.loc[(instance.tm,) + (c[1],)]
+            price = factor * instance.buy_sell_price.loc[(instance.tm,) + 
+                                                         (c[1],)]
             com_price[c] = pd.Series(price, index=com_price.index)
         else:
             # same commodity price for each hour
@@ -1394,8 +1400,9 @@ def get_com_price(instance, tuples):
 def extract_number_str(str_in):
     """ Extract first number from a given string and convert to a float number.
 
-    The function works with the following formats (,25), (.25), (2), (2,5), (2.5),
-    (1,000.25), (1.000,25) and  doesn't with (1e3), (1.5-0.4j) and negative numbers.
+    The function works with the following formats (,25), (.25), (2), (2,5), 
+    (2.5), (1,000.25), (1.000,25) and  doesn't with (1e3), (1.5-0.4j) and 
+    negative numbers.
 
     Args:
         str_in: a string ('1,20BUY')
@@ -1453,12 +1460,18 @@ def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
     pro_input_tuples = list(instance.pro_input_tuples.value)
     # search the output commodities for the "buy" process
     # buy_out = (site,output_commodity)
-    buy_out = set([(x[0],x[2]) for x in pro_output_tuples if x[1] == pro_in])
+    buy_out = set([(x[0],x[2]) 
+                   for x in pro_output_tuples 
+                   if x[1] == pro_in])
     # search the sell process for the output_commodity from the buy process
-    sell_output_tuple = ([x for x in pro_output_tuples if x[2] in instance.com_sell])
+    sell_output_tuple = ([x 
+                          for x in pro_output_tuples 
+                          if x[2] in instance.com_sell])
     for k in range(len(sell_output_tuple)):
         sell_pro = sell_output_tuple[k][1]
-        sell_in = set([(x[0],x[2]) for x in pro_input_tuples if x[1] == sell_pro])
+        sell_in = set([(x[0],x[2]) 
+                       for x in pro_input_tuples 
+                       if x[1] == sell_pro])
         # check: buy - commodity == commodity - sell; for a site
         if not(sell_in.isdisjoint(buy_out)):
             return sell_pro
@@ -1847,8 +1860,12 @@ def get_timeseries(instance, com, sit, timesteps=None):
         etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
         etra = etra.xs(com, level='com')
 
-        imported = etra.xs(sit, level='sitout')['e_tra_out'].unstack().fillna(0)
-        exported = etra.xs(sit, level='sitin')['e_tra_in'].unstack().fillna(0)
+        imported = (etra.xs(sit, level='sitout')['e_tra_out']
+                        .unstack()
+                        .fillna(0))
+        exported = (etra.xs(sit, level='sitin')['e_tra_in']
+                        .unstack()
+                        .fillna(0))
         
     except (ValueError, KeyError):
         imported = pd.DataFrame(index=timesteps)
@@ -1871,9 +1888,12 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # DERIVATIVE
     derivative = created.join(consumed)
     derivative = pd.DataFrame(np.diff(derivative.T).T,
-                    index=derivative.index[:-1], columns=derivative.columns)
-    derivative = derivative.append( pd.DataFrame(np.zeros_like(derivative.tail(1)),
-                    index=derivative.index[-1:]+1, columns=derivative.columns) )
+                              index=derivative.index[:-1],
+                              columns=derivative.columns)
+    derivative = derivative.append(
+        pd.DataFrame(np.zeros_like(derivative.tail(1)),
+                     index=derivative.index[-1:]+1, 
+                     columns=derivative.columns))
     # standardizing
     caps = get_entities(instance, ['cap_pro', 'cap_pro_new'])
     caps = caps.loc[:,'cap_pro_new']
@@ -1923,8 +1943,8 @@ def report(instance, filename, commodities=None, sites=None):
         # collect timeseries data
         for co in commodities:
             for sit in sites:
-                created, consumed, stored, imported, exported, derivative, dsm = get_timeseries(
-                    instance, co, sit)
+                (created, consumed, stored, imported, exported, derivative, 
+                 dsm) = get_timeseries(instance, co, sit)
 
                 overprod = pd.DataFrame(
                     columns=['Overproduction'],
@@ -1933,7 +1953,14 @@ def report(instance, filename, commodities=None, sites=None):
                     stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
-                    [created, consumed, stored, imported, exported, overprod, derivative, dsm],
+                    [created, 
+                     consumed, 
+                     stored, 
+                     imported, 
+                     exported, 
+                     overprod, 
+                     derivative, 
+                     dsm],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
                           'Export to', 'Balance', 'Derivative', 'DSM'])
@@ -2000,7 +2027,8 @@ def sort_plot_elements(elements):
     quotient = quotient.fillna(0)
     # sort created/consumed ascencing with quotient i.e. base load first
     elements = elements.append(quotient)
-    new_columns = elements.columns[elements.ix[elements.last_valid_index()].argsort()]
+    new_columns = elements.columns[elements.ix[elements.last_valid_index()]
+                                           .argsort()]
     elements_sorted = elements[new_columns][:-1]
 
     return elements_sorted
@@ -2020,7 +2048,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         timesteps: optional list of  timesteps to plot; default: prob.tm
         power_unit: optional string for unit; default: 'MW'
         energy_unit: optional string for storage plot; default: 'MWh'
-        figure_size: optional tuple of (width, height) in inch; default: (16,12)
+        figure_size: optional (width, height) tuple in inch; default: (16,12)
 
     Returns:
         fig: figure handle
@@ -2032,8 +2060,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         # default to all simulated timesteps
         timesteps = sorted(get_entity(prob, 'tm').index)
 
-    created, consumed, stored, imported, exported, derivative, dsm = get_timeseries(
-        prob, com, sit, timesteps)
+    (created, consumed, stored, imported, exported, derivative, 
+     dsm) = get_timeseries(prob, com, sit, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)
 
@@ -2087,7 +2115,9 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     all_axes.append(ax0)
 
     # PLOT CONSUMED
-    sp00 = ax0.stackplot(consumed.index, -consumed.as_matrix().T, labels = tuple(consumed.columns),
+    sp00 = ax0.stackplot(consumed.index, 
+                         -consumed.as_matrix().T, 
+                         labels=tuple(consumed.columns),
                          linewidth=0.15)
                 
     
@@ -2099,7 +2129,10 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         sp00[k].set_edgecolor((.5, .5, .5))
     
     # PLOT CREATED
-    sp0 = ax0.stackplot(created.index, created.as_matrix().T, labels = tuple(created.columns), linewidth=0.15)
+    sp0 = ax0.stackplot(created.index, 
+                        created.as_matrix().T, 
+                        labels=tuple(created.columns), 
+                        linewidth=0.15)
 
     for k, commodity in enumerate(created.columns):
         commodity_color = to_color(commodity)
@@ -2220,7 +2253,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     return fig
 
 
-def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}, **kwds):
+def result_figures(prob, figure_basename, plot_title_prefix=None, periods={}, 
+                   **kwds):
     """Create plot for each site and demand commodity and save to files.
     
     Args:

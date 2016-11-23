@@ -211,7 +211,7 @@ To research the influence of the start-up costs, a continouous start-up variable
     \chi_{pt} &\geq \omega_{pt} - \omega_{p(t-1)} \\
     \zeta_\text{var} & \mathrel{+}= \sum_{t\in T} \sum_{p\in P} k_{p}^\text{startup} \chi_{pt}
     
-Where the :math:`\omega_{pt}` is also a new introduced variable, represents the start-up capacity (or the idle consumption). With these two variables, the urbs can detect the energy consumption of a process at the starting point and put a start-up costs on it to obtain the variable costs.
+Where the :math:`\omega_{pt}` is also a new introduced variable, represents the start-up capacity (or the idle consumption). With these two variables, the urbs can detect the energy consumption of a process at the starting point and put a start-up costs on it to obtain the variable costs:
 
 
 .. math::

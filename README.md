@@ -12,7 +12,7 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
   * It finds the minimum cost energy system to satisfy given demand timeseries for possibly multiple commodities (e.g. electricity).
   * By default, operates on hourly-spaced timesteps (configurable).
   * Thanks to [Pandas](https://pandas.pydata.org), complex data analysis is easy.
-  * The model itself is quite small thanks to relying on the [Pyomo](http://www.pyomo.org/)
+  * The model itself is quite small thanks to relying on package [Pyomo](http://www.pyomo.org/).
   * The small codebase includes reporting and plotting functionality.
 
 ## Screenshots
@@ -100,9 +100,18 @@ and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-e
   
 ## Further reading
 
+  - If you do not know anything about the command line, read [Command Line Crash Course](https://learnpythonthehardway.org/book/appendixa.html). Python programs are scripts that are executed from the command line, similar to MATLAB scripts that are executed from the MATLAB command prompt.
+  - If you do not know Python, try one of the following ressources:
+    * The official [Python Tutorial](https://docs.python.org/3/tutorial/index.html) walks you through the language's basic features.
+    * [Learn Python the Hard Way](https://learnpythonthehardway.org/book/preface.html). It is meant for programming beginners.
   - The book [Python for Data Analysis](http://shop.oreilly.com/product/0636920023784.do) best summarises the capabilities of the packages installed here. It starts with IPython, then adds NumPy, slowly fades to pandas and then shows first basic, then advanced data conversion and analysis recipes. Visualisation with matplotlib is given its own chapter, both with and without pandas.
   - For a huge buffet of appetizers showing the capabilities of Python for scientific computing, I recommend browsing this [gallery of interesting IPython Notebooks](https://github.com/ipython/ipython/wiki/A-gallery-of-interesting-IPython-Notebooks).
   
+## Example uses
+
+  - Branch [1node](https://github.com/ojdo/urbs/tree/1node) in the forked repository [ojdo/urbs](https://github.com/ojdo/urbs) shows a small example of a real-world usage of the model. It includes a [`scenario_generator` function](https://github.com/ojdo/urbs/blob/dfa9cf0ad7b03289bf7c64d79ea93c7886a00a96/run1node.py#L10-L37) in its run script, which is useful for extensive parameter sweeps.
+  - Branch [haag15](https://github.com/ojdo/urbs/tree/haag15) in the forked repository [ojdo/urbs](https://github.com/ojdo/urbs) shows a larger example of a real-world use. Its input file contains a town divided into 12 regions, 12 process types, and 2 demand commodities (electricity and heat) . Patience and RAM (64 GB or more) is needed to run these scenarios with 8760 timesteps. The branch also contains three IPython notebooks that are used for result analysis and coupling to model [rivus](https://github.com/tum-ens/rivus).
+
 ## Copyright
 
 Copyright (C) 2014-2016  TUM ENS

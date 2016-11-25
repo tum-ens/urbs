@@ -1870,18 +1870,22 @@ def get_timeseries(instance, com, sit, timesteps=None):
         # DSM happened (dsmup implies that dsmdo must be non-zero, too)
         # so the demand will be modified by the difference of DSM up and
         # DSM down uses
-        dsmup = dsmup.xs(sit, level='sit')
-        dsmup = dsmup.xs(com, level='com')
+        #for sit in m.dsm_site_tuples:
+        try:
+            dsmup = dsmup.xs(sit, level='sit')
+            dsmup = dsmup.xs(com, level='com')
 
-        dsmdo = dsmdo.xs(sit, level='sit')
-        dsmdo = dsmdo.xs(com, level='com')
-        #  series by summing the first time step set
-        dsmdo = dsmdo.unstack().sum(axis=0)
-        dsmdo.index.names = ['t']
+            dsmdo = dsmdo.xs(sit, level='sit')
+            dsmdo = dsmdo.xs(com, level='com')
+            #  series by summing the first time step set
+            dsmdo = dsmdo.unstack().sum(axis=0)
+            dsmdo.index.names = ['t']
 
-        # derive secondary timeseries
-        demanddelta = dsmup - dsmdo
-
+            # derive secondary timeseries
+            demanddelta = dsmup - dsmdo
+        except KeyError:
+            demanddelta = pd.Series(0, index=timesteps)
+            
     shifted = demand + demanddelta
 
     # give sensible names to the derived timeseries
@@ -1893,17 +1897,21 @@ def get_timeseries(instance, com, sit, timesteps=None):
     # sit. Keep only entries with non-zero values and unstack process column.
     # Finally, slice to the desired timesteps.
     epro = get_entities(instance, ['e_pro_in', 'e_pro_out'])
-    epro = epro.xs(sit, level='sit').xs(com, level='com')
     try:
-        created = epro[epro['e_pro_out'] > 0]['e_pro_out'].unstack(level='pro')
-        created = created.loc[timesteps].fillna(0)
+        epro = epro.xs(sit, level='sit').xs(com, level='com')
+        try:
+            created = epro[epro['e_pro_out'] > 0]['e_pro_out'].unstack(level='pro')
+            created = created.loc[timesteps].fillna(0)
+        except KeyError:
+            created = pd.DataFrame(index=timesteps)
+
+        try:
+            consumed = epro[epro['e_pro_in'] > 0]['e_pro_in'].unstack(level='pro')
+            consumed = consumed.loc[timesteps].fillna(0)
+        except KeyError:
+            consumed = pd.DataFrame(index=timesteps)
     except KeyError:
         created = pd.DataFrame(index=timesteps)
-
-    try:
-        consumed = epro[epro['e_pro_in'] > 0]['e_pro_in'].unstack(level='pro')
-        consumed = consumed.loc[timesteps].fillna(0)
-    except KeyError:
         consumed = pd.DataFrame(index=timesteps)
 
     # TRANSMISSION

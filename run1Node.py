@@ -154,7 +154,7 @@ if __name__ == '__main__':
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
     # simulation timesteps
-    (offset, length) = (2000, 14*24)  # time step selection
+    (offset, length) = (2000, 3*24)  # time step selection
     timesteps = range(offset, offset+length+1)
 
     # plotting timesteps
@@ -176,9 +176,6 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_co2_limit,
-        scenario_co2_price_low,
-        scenario_co2_price_high,
         scenario_co2_price_veryhigh]
 
     for scenario in scenarios:

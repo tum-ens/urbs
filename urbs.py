@@ -976,9 +976,14 @@ def res_process_capacity_rule(m, sit, pro):
             
 # used roof area <= roof area
 def res_process_roof_area_rule(m, sit, pro):
-    return (0,
+    for p in m.pro_tuples:
+        try:
+            float(m.process.loc[p]['area-per-cap']) 
+            return (0,
             sum(m.cap_pro[p] * m.process.loc[p]['area-per-cap'] for p in m.pro_tuples),
             m.site.loc[sit]['area_roof'])
+        except ValueError:
+            return True
 
 # power connection capacity: Sell == Buy
 def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):

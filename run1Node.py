@@ -176,6 +176,9 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
+        scenario_co2_limit,
+        scenario_co2_price_low,
+        scenario_co2_price_high,
         scenario_co2_price_veryhigh]
 
     for scenario in scenarios:

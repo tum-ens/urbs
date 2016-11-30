@@ -1556,7 +1556,7 @@ def get_entity(instance, name):
         instance: a Pyomo ConcreteModel instance
         name: name of a Set, Param, Var, Constraint or Objective
 
-    Returns:
+    Returns
         a Pandas Series with domain as index and values (or 1's, for sets) of
         entity name. For constraints, it retrieves the dual values
     """

@@ -21,12 +21,17 @@ def scenario_base(data):
     # return data
 
 
-def scenario_co2_limit(data):
+def scenario_co2_limit_high(data):
    #change global CO2 limit
     hacks = data['hacks']
     hacks.loc['Global CO2 limit', 'Value'] = 30000
     return data
 
+def scenario_co2_limit_low(data):
+   #change global CO2 limit
+    hacks = data['hacks']
+    hacks.loc['Global CO2 limit', 'Value'] = 25000
+    return data
 
 def scenario_co2_price_low(data):
    #change CO2 price
@@ -139,7 +144,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, plot_periods={}):
     urbs.report(
         prob,
         os.path.join(result_dir, '{}.xlsx').format(sce),
-        prob.com_demand, prob.sit)
+        prob.com_demand | prob.com_env | prob.com_stock, ['Campus'])
 
     urbs.result_figures(
         prob,
@@ -154,7 +159,7 @@ if __name__ == '__main__':
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
     # simulation timesteps
-    (offset, length) = (2000, 3*24)  # time step selection
+    (offset, length) = (2000, 1*24)  # time step selection
     timesteps = range(offset, offset+length+1)
 
     # plotting timesteps
@@ -175,11 +180,7 @@ if __name__ == '__main__':
 
     # select scenarios to be run
     scenarios = [
-        scenario_base,
-        scenario_co2_limit,
-        scenario_co2_price_low,
-        scenario_co2_price_high,
-        scenario_co2_price_veryhigh]
+        scenario_co2_limit_high]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario,

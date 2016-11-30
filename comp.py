@@ -98,7 +98,7 @@ def compare_scenarios(result_files, output_filename):
     # drop redundant 'costs' column label
     # make index name nicer for plot
     # sort/transpose frame
-    # convert EUR/a to 1e9 EUR/a
+    # convert EUR/a to 1e6 EUR/a
     costs.columns = costs.columns.droplevel(1)
     costs.index.name = 'Cost type'
     costs = costs.sort_index().transpose()
@@ -115,6 +115,8 @@ def compare_scenarios(result_files, output_filename):
     esums = esums / 1e3
     
     # PLOT
+    
+    fig=
     
     fig = plt.figure(figsize=(20, 8))
     gs = gridspec.GridSpec(1, 2, width_ratios=[2, 3])

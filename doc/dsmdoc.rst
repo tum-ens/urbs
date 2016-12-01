@@ -1,11 +1,11 @@
-.. module:: urbs
+module:: urbs
 
 Demand Side Management Documentation
 **********************
 
 This documentation explains the Demand Side Management feature of urbs. 
 With it, one can model time variant Demand Side Management Up/Downshift 
-from energy exchanges.
+in a concrete energy MIMO system, for example, one smart city grid.
 
 
 
@@ -14,24 +14,23 @@ Introduction
 ============
 The DSM up/downshifts are closely related to commodities， 
 which are given by default in the urbs with their energy content (MWh). 
-0The size of the modelled market has to be considered small relative to 
+The size of the modelled market has to be considered small relative to 
 the surrounding market. To use this feature, the excel input file needs 
 an additional **Demand Side Management** sheet with the five parameters 
 containing the columns ``delay``, ``eff``, ``recov``, ``cap-max-do`` and 
 ``cap-max-up``, which are used in DSM constraints as technical parameters. 
 For a more detailed description of the implementation have a look at the 
-nMathematical Documentation. 
+Mathematical Documentation. 
 
 
 Exemplification
 ===============
 
 This section contains prototypical scenarios illustrating the system 
-behaviour with time variant DSM up/downshifts. Electricity can be moved 
-*locally* with transmission losses and *temporally* with storage losses.
+behaviour with time variant DSM up/downshifts. 
 In this part there is an island as an example named ``Greenland``, which 
-composed of three parts ``Mid``, ``North``, and ``South``. Between the 
-three parts most of the electricity from ``South`` has to be transported 
+composed of three sites ``Mid``, ``North``, and ``South``. Between the 
+three sites most of the electricity from ``South`` has to be transported 
 to supply ``Mid``. The electricity of ``North`` is relatively independent 
 of the other two parts.
 
@@ -62,7 +61,7 @@ All process, transmission and storage capacities are predetermined and
 constant.
 
 The following scenario illustrates the energy balance of the ``South`` of 
-``greenland``. It has a demand of 50-100 GW that is supplied by a 50000 MW 
+``greenland``. It has a demand of 50-100 GW that is supplied by a 50 GW 
 photovoltaics plant and a 50 GW wind plant. In addition a 50 GW transmission 
 cable exports electricity, which connects the ``Mid`` of island with the grid 
 of ``South``. Both capacities and prices are fix. Because of the meteorological 
@@ -76,7 +75,7 @@ year, which was also the beginning of the summer.
 
   
   Process,     eff, inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
- Photovoltaics,1.00,      0,      50000,           0,       0,          0 
+Photovoltaics, 1.00,      0,      50000,           0,       0,          0 
   Wind plant,  1.00,      0,     100000,           0,       0,          0
   Purchase,    1.00,      0,       1500,   **15/45/75**,    0,       15/45/75
   Feed-in,     1.00,      0,       1500,   **15/45/75**,    0,       15/45/75

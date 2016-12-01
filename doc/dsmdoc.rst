@@ -65,7 +65,7 @@ The following scenario illustrates the energy balance of the ``South`` of
 photovoltaics plant and a 50 GW wind plant. In addition a 50 GW transmission 
 cable exports electricity, which connects the ``Mid`` of island with the grid 
 of ``South``. Both capacities and prices are fix. Because of the meteorological 
-effects on Photovoltaics plants, the timesteps began at the 3000. hour of the 
+effects on Photovoltaics plants, the timesteps began at the 3000th hour of the 
 year, which was also the beginning of the summer.
 
 

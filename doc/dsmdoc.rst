@@ -137,8 +137,8 @@ more clearly to show how the DSM affects the electricity commodities .
 	
 
 	
-,Low Maximal Up/Downshift Capacity
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Low Maximal Up/Downshift Capacity
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 All process, transmission and storage capacities are predetermined and constant.
 
 For the second scenario, the ``North`` of greenland will replaced the ``South``.

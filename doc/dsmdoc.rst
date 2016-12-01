@@ -42,7 +42,7 @@ of the other two parts.
 When appears the electricity DSM downshifts in the process?
 
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
-the demand is greater than the total output capacity.
+ the demand is greater than the total output capacity.
 - it is *profitable* to constraint the whole system with DSM downshifts, if 
 the demand keeps on increasing till the peak value.
 
@@ -74,11 +74,11 @@ year, which was also the beginning of the summer.
     :stub-columns: 1
 
   
-  Process,     eff, inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
-Photovoltaics, 1.00,      0,      50000,           0,       0,          0 
-  Wind plant,  1.00,      0,     100000,           0,       0,          0
-  Purchase,    1.00,      0,       1500,   **15/45/75**,    0,       15/45/75
-  Feed-in,     1.00,      0,       1500,   **15/45/75**,    0,       15/45/75
+     Process,     eff,  inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
+ Photovoltaics, 1.00,      0,      50000,           0,        0,          0 
+   Wind plant,  1.00,      0,     100000,           0,        0,          0
+   Purchase,    1.00,      0,       1500,    **15/45/75**,    0,       15/45/75
+   Feed-in,     1.00,      0,       1500,    **15/45/75**,    0,       15/45/75
 	
 	
 .. csv-table::DSM in South

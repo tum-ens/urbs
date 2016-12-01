@@ -44,7 +44,7 @@ When appears the electricity DSM downshifts in the process?
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
 the demand is greater than the total output capacity.
 - it is *profitable* to constraint the whole system with DSM downshifts, if 
-the demand keeps on increasing till the peak value.
+ the demand keeps on increasing till the peak value.
 
 When appears the electricity DSM downshifts in the process?
 
@@ -85,8 +85,8 @@ year, which was also the beginning of the summer.
     :header-rows: 1
     :stub-columns: 1
 	
-	Site,   Commodity, delay,  eff,  recov, cap-max-do, cap-max-up
-	South,    Elec,     16,    0.90    1,     2000        2000
+	Site,   Commodity, delay,  eff,  recov,  cap-max-do, cap-max-up
+	South,    Elec,     16,    0.90     1,      2000        2000
 
 
 The modelled timesplan lasted 7 days with five parameters from DSM sheet in ``
@@ -163,8 +163,8 @@ provided by Purchase.
     :header-rows: 1
     :stub-columns: 1
 	
-	Site,   Commodity, delay,  eff,  recov, cap-max-do, cap-max-up
-	North,    Elec,      8,    1.00    1,      500         500
+	Site,   Commodity, delay,  eff,  recov,  cap-max-do, cap-max-up
+	North,    Elec,      8,    1.00    1,       500         500
 	
 	
 The modelled timesplan lasted also 7 days with five parameters from DSM sheet in 
@@ -223,8 +223,8 @@ had made a contribution to the whole electricity system of ``Mid``.
     :header-rows: 1
     :stub-columns: 1
 	
-	Site,   Commodity, delay,  eff,  recov, cap-max-do, cap-max-up
-	 Mid,     Elec,      0,    1.00    1,        0          0
+	Site,   Commodity, delay,  eff,  recov,  cap-max-do, cap-max-up
+	 Mid,     Elec,      0,    1.00    1,         0          0
 
 
 Because of the adequate power supply in ``Mid`` the parameters ``delay``, ``cap-max-do``

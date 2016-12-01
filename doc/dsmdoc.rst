@@ -42,7 +42,7 @@ of the other two parts.
 When appears the electricity DSM downshifts in the process?
 
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
- the demand is greater than the total output capacity.
+the demand is greater than the total output capacity.
 - it is *profitable* to constraint the whole system with DSM downshifts, if 
 the demand keeps on increasing till the peak value.
 
@@ -81,7 +81,7 @@ year, which was also the beginning of the summer.
    Feed-in,     1.00,      0,       1500,    **15/45/75**,    0,       15/45/75
 	
 	
-.. csv-table::DSM in South
+.. csv-table:: DSM in South
     :header-rows: 1
     :stub-columns: 1
 	
@@ -159,7 +159,7 @@ provided by Purchase.
     Feed-in,     1.00,   2500,      2500,    **15/45/75**,    0,       15/45/75
 	
 
-.. csv-table::DSM in North
+.. csv-table:: DSM in North
     :header-rows: 1
     :stub-columns: 1
 	
@@ -218,7 +218,8 @@ had made a contribution to the whole electricity system of ``Mid``.
  Biomass plant,  0.35,      0,      5000,          6,       1.40,        7.40
  	
 
-.. csv-table::DSM in Mid
+
+.. csv-table:: DSM in Mid
     :header-rows: 1
     :stub-columns: 1
 	

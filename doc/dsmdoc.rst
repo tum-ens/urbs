@@ -32,7 +32,7 @@ In this part there is an island as an example named ``Greenland``, which
 composed of three sites ``Mid``, ``North``, and ``South``. Between the 
 three sites most of the electricity from ``South`` has to be transported 
 to supply ``Mid``. The electricity of ``North`` is relatively independent 
-of the other two parts.
+of the other two sites.
 
 
 .. image:: greenland/greenland_introduction.PNG

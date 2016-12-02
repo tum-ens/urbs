@@ -41,9 +41,9 @@ of the other two sites.
 When appears the electricity DSM downshifts in the process?
 
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
-the demand is greater than the total output capacity.
+ the demand is greater than the total output capacity.
 - it is *profitable* to constraint the whole system with DSM downshifts, if 
-the demand keeps on increasing till the peak value.
+ the demand keeps on increasing till the peak value.
 
 When appears the electricity DSM upshifts in the process?
 

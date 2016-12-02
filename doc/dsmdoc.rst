@@ -129,7 +129,7 @@ more clearly to show how the DSM affects the electricity commodities .
 .. note::
 
     For trial e.g. of the result of higher Demand Side Management this
-    :download: `greenland south.xlsx <greenland/greenland south.xlsx>`
+    :download:`greenland south.xlsx <greenland/greenland south.xlsx>`
     is the input file used for this scenario
 
 

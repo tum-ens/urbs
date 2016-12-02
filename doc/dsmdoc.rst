@@ -106,7 +106,7 @@ photovoltaics plants generates electricity only in the daytime, that is why the
 parameter ``delay`` is set to 16 hours. It just coincides the time in one day, 
 that is covered by the sunshine. Before the second day the wind blows strongly 
 enough, so that the surplus of wind plant generated electricity is converted 
-into storage. From the 3rd day the wind wind production decreases, and the electricity of 
+into storage. From the 3rd day the wind production decreases, and the electricity of 
 storage has to be taken out to meet the demand. At the midnight of the 5th day 
 electricity capacity come to the lowest point of all, and the output and input 
 keep nearly in balance.  Not only the frequency of scenario_base ``up/downshifts``, 

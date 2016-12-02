@@ -5,7 +5,7 @@ Demand Side Management Documentation
 
 This documentation explains the Demand Side Management feature of urbs. 
 With it, one can model time variant Demand Side Management Up/Downshift 
-in a concrete energy MIMO system, for example, one smart city grid.
+in a concrete energy MIMO system, for example, smart grid of a city.
 
 
 

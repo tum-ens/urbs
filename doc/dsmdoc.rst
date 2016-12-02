@@ -95,7 +95,7 @@ was at a high level, because the supply was much less than the demand. So the
 DSM began with downshifts. But the situation will change into opposite direction 
 over time. After the supply exceeded, the demand the DSM upshifts appeared to 
 take place of downshifts. How much electricity can the photovoltaics plants and 
-wind plants generate all depending on the weather conditions. The wind plants 
+awind plants generate all depending on the weather conditions. The wind plants 
 worked the whole day 24 hours, as long as the wind blow strongly enough. But 
 photovoltaics plants generated electricity only in the daytime, that is why the
 parameter ``delay`` was set to 16 hours. It just coincided the time in one day, 
@@ -116,9 +116,9 @@ simulation than it without DSM.
 	
 
 	
-If do not change commodity stock prices, global CO2 limit and maximum installable 
-capacity in ``runme.py``, and just only consider the ``scenario_base``, it will be 
-more clearly to show how the DSM affects the electricity commodities .
+If commodity stock prices, global CO2 limit and maximum installable capacity in 
+``runme.py`` are not changed, and just only consider the ``scenario_base``, it 
+will be more clearly to show how the DSM affects the electricity commodities.
 
 
 .. image:: greenland/scenario_base-Elec-South-sum.png

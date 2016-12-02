@@ -44,6 +44,7 @@ When appears the electricity DSM downshifts in the process?
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
 the demand is greater than the total output capacity.
 
+
 - it is *profitable* to constraint the whole system with DSM downshifts, if 
 the commodity begin to show upward trend till the peak value.
 
@@ -65,7 +66,8 @@ All process, transmission and storage capacities are predetermined and
 constant.
 
 The following scenario illustrates the energy balance of the ``South`` of 
-``greenland``. It has a demand of 50-100 GW that is supplied by a 50 GW photovoltaics plant and a 50 GW wind plant. In addition a 50 GW transmission 
+``greenland``. It has a demand of 50-100 GW that is supplied by a 50 GW 
+photovoltaics plant and a 50 GW wind plant. In addition a 50 GW transmission 
 cable exports electricity, which connects the ``Mid`` of island with the grid 
 of ``South``. Both capacities and prices are fix. Because of the meteorological 
 effects on Photovoltaics plants, the timesteps began at the 3000th hour of the 
@@ -104,7 +106,7 @@ photovoltaics plants generates electricity only in the daytime, that is why the
 parameter ``delay`` is set to 16 hours. It just coincides the time in one day, 
 that is covered by the sunshine. Before the second day the wind blows strongly 
 enough, so that the surplus of wind plant generated electricity is converted 
-into storage. From the 3th day the wind becomes weakly, and the electricity of 
+into storage. From the 3rd day the wind wind production decreases, and the electricity of 
 storage has to be taken out to meet the demand. At the midnight of the 5th day 
 electricity capacity come to the lowest point of all, and the output and input 
 keep nearly in balance.  Not only the frequency of scenario_base ``up/downshifts``, 

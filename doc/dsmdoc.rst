@@ -1,3 +1,4 @@
+
 .. module:: urbs
 
 Demand Side Management Documentation
@@ -41,6 +42,7 @@ When appears the electricity DSM downshifts in the process?
 
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
 the demand is greater than the total output capacity.
+
 - it is *profitable* to constraint the whole system with DSM downshifts, if 
 the demand keeps on increasing till the peak value.
 

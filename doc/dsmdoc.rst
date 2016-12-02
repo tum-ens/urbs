@@ -116,8 +116,8 @@ simulation than it without DSM.
 	
 
 	
-If commodity stock prices, global CO2 limit and maximum installable capacity in 
-``runme.py`` are not changed, and just only consider the ``scenario_base``, it 
+If the **commodity stock prices**, **global CO2 limit** and **maximum installable capacity** 
+in ``runme.py`` are not changed, and just only consider the ``scenario_base``, it 
 will be more clearly to show how the DSM affects the electricity commodities.
 
 

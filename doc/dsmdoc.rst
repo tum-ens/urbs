@@ -21,7 +21,7 @@ containing the columns ``delay``, ``eff``, ``recov``, ``cap-max-do`` and
 ``cap-max-up``, which are used in DSM constraints as technical parameters. 
 For a more detailed description of the implementation have a look at the 
 Mathematical Documentation. 
-link:: http://urbs.readthedocs.io/en/latest/mathdoc/equ-commodity.html#demand-side-management-constraints
+http://urbs.readthedocs.io/en/latest/mathdoc/equ-commodity.html#demand-side-management-constraints
 
 Exemplification
 ===============

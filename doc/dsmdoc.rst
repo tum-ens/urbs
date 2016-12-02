@@ -19,8 +19,7 @@ the surrounding market. To use this feature, the excel input file needs
 an additional **Demand Side Management** sheet with the five parameters 
 containing the columns ``delay``, ``eff``, ``recov``, ``cap-max-do`` and 
 ``cap-max-up``, which are used in DSM constraints as technical parameters. 
-For a more detailed description of the implementation have a look at the 
-Mathematical Documentation. 
+For a more detailed description of the implementation have a look at the Mathematical Documentation. 
 
 
 Exemplification
@@ -42,11 +41,11 @@ of the other two sites.
 When appears the electricity DSM downshifts in the process?
 
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
- the demand is greater than the total output capacity.
+the demand is greater than the total output capacity.
 - it is *profitable* to constraint the whole system with DSM downshifts, if 
- the demand keeps on increasing till the peak value.
+the demand keeps on increasing till the peak value.
 
-When appears the electricity DSM downshifts in the process?
+When appears the electricity DSM upshifts in the process?
 
 - it is *possible* **and** *profitable* to constraint the whole system with 
 DSM upshifts, if the demand is lesser than the total output capacity **and** 

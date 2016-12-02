@@ -65,8 +65,7 @@ All process, transmission and storage capacities are predetermined and
 constant.
 
 The following scenario illustrates the energy balance of the ``South`` of 
-``greenland``. It has a demand of 50-100 GW that is supplied by a 50 GW 
-photovoltaics plant and a 50 GW wind plant. In addition a 50 GW transmission 
+``greenland``. It has a demand of 50-100 GW that is supplied by a 50 GW photovoltaics plant and a 50 GW wind plant. In addition a 50 GW transmission 
 cable exports electricity, which connects the ``Mid`` of island with the grid 
 of ``South``. Both capacities and prices are fix. Because of the meteorological 
 effects on Photovoltaics plants, the timesteps began at the 3000th hour of the 
@@ -93,24 +92,24 @@ year, which was also the beginning of the summer.
 	South,    Elec,     16,    0.90,      1,       2000,      2000
 
 
-The modelled timesplan lasted 7 days with five parameters from DSM sheet in ``
+The modelled timesplan lasts 7 days with five parameters from DSM sheet in ``
 greenland south.xlsx``. In the first ten hours of day 1 the electricity power
-was at a high level, because the supply was much less than the demand. So the 
-DSM began with downshifts. But the situation will change into opposite direction 
-over time. After the supply exceeded, the demand the DSM upshifts appeared to 
+is at a high level, because the supply is much less than the demand. So the 
+DSM begins with downshifts. But the situation will change into opposite direction 
+over time. After the supply exceeds, the demand the DSM upshifts appears to 
 take place of downshifts. How much electricity can the photovoltaics plants and 
 awind plants generate all depending on the weather conditions. The wind plants 
-worked the whole day 24 hours, as long as the wind blow strongly enough. But 
-photovoltaics plants generated electricity only in the daytime, that is why the
-parameter ``delay`` was set to 16 hours. It just coincided the time in one day, 
-that was covered by the sunshine. Before the second day the wind blew strongly 
-enough, so that the surplus of wind plant generated electricity was converted 
-into storage. From the 3. day the wind became weakly, and the electricity of 
-storage had to be taken out to meet the demand. At the midnight of the 5. day 
-electricity capacity came to the lowest point of all, and the output and input 
-kept nearly in balance.  Not only the frequency of scenario_base up/downshifts``, 
-but also the amount of times of``up/downshifts`` will decrease correspondingly. 
-There was relative more volatility of electricity capacity in the seven days 
+works the whole day 24 hours, as long as the wind blows strongly enough. But 
+photovoltaics plants generates electricity only in the daytime, that is why the
+parameter ``delay`` is set to 16 hours. It just coincides the time in one day, 
+that is covered by the sunshine. Before the second day the wind blows strongly 
+enough, so that the surplus of wind plant generated electricity is converted 
+into storage. From the 3th day the wind becomes weakly, and the electricity of 
+storage has to be taken out to meet the demand. At the midnight of the 5th day 
+electricity capacity come to the lowest point of all, and the output and input 
+keep nearly in balance.  Not only the frequency of scenario_base ``up/downshifts``, 
+but also the amount of times of ``up/downshifts`` will decrease correspondingly. 
+There is relative more volatility of electricity capacity in the seven days 
 simulation than it without DSM.
  
 

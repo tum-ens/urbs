@@ -229,10 +229,15 @@ has made a contribution to the whole electricity system of ``Mid``.
 	Site,   Commodity, delay,  eff,  recov,  cap-max-do, cap-max-up
 	 Mid,     Elec,      0,    1.00,    1,         0,          0
 
-
-Because of the adequate power supply in ``Mid`` the parameters ``delay``, ``cap-max-do``
-and ``cap-max-up`` are set to 0. It means that there is no more DSM in the electricity
-system of ``Mid`` to constraint the commodities.
+The ``Mid`` gets so adequate electricity import from the ``South``, that commodity of the 
+``Mid`` per unit time is far greater than maximal up/downshifts capacity. It is meaningless 
+for the setting of DSM faced with so enormous commodity, which is far 
+beyond the controllable range. Supposed that the ``Mid``is the city center, the 
+largest energy customer, not the energy producer, and then there is huge infrastructure 
+inside, such as public traffic, hospital, and communication system, which have to be supplied
+for 24 hours one day. That´s why the parameters ``delay``, ``cap-max-do``and ``cap-max-up`` 
+are set to 0. It means that there was no more DSM in the electricity system of ``Mid`` to 
+constraint the commodities. 
 
 
 .. image:: greenland/scenario_all_together-Elec-Mid-sum.png

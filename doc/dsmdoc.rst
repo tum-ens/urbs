@@ -232,7 +232,7 @@ has made a contribution to the whole electricity system of ``Mid``.
 The ``Mid`` gets so adequate electricity import from the ``South``, that commodity of the 
 ``Mid`` per unit time is far greater than maximal up/downshifts capacity. That means it 
 is meaningless for the setting of DSM faced with so enormous commodity, which is far 
-beyond the controllable range. Supposed that the ``Mid``is the city center, the 
+beyond the controllable range. Supposed that the ``Mid`` is the city center, the 
 largest energy customer, not the energy producer, and then there is huge infrastructure 
 inside, such as public traffic, hospital, and communication system, which have to be supplied
 for 24 hours one day. That´s why the parameters ``delay``, ``cap-max-do``and ``cap-max-up`` 

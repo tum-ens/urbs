@@ -67,6 +67,7 @@ def read_excel(filename):
         150000000
     """
     with pd.ExcelFile(filename) as xls:
+        site = xls.parse('Sites').set_index(['Name'])
         commodity = (
             xls.parse('Commodity').set_index(['Site', 'Commodity', 'Type']))
         process = xls.parse('Process').set_index(['Site', 'Process'])
@@ -104,6 +105,7 @@ def read_excel(filename):
         storage['depreciation'], storage['wacc'])
 
     data = {
+        'site': site,
         'commodity': commodity,
         'process': process,
         'process_commodity': process_commodity,
@@ -151,6 +153,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     #
     #     m.storage.loc[site, storage, commodity][attribute]
     #
+    m.site = data['site']
     m.commodity = data['commodity']
     m.process = data['process']
     m.process_commodity = data['process_commodity']
@@ -530,6 +533,12 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.pro_tuples,
         rule=res_process_capacity_rule,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
+    
+    m.res_roof_area = pyomo.Constraint(
+       m.pro_tuples,
+       rule=res_process_roof_area_rule,
+       doc='used roof area <= total roof area')
+        
     m.res_sell_buy_symmetry = pyomo.Constraint(
         m.pro_input_tuples,
         rule=res_sell_buy_symmetry_rule,
@@ -964,7 +973,17 @@ def res_process_capacity_rule(m, sit, pro):
     return (m.process.loc[sit, pro]['cap-lo'],
             m.cap_pro[sit, pro],
             m.process.loc[sit, pro]['cap-up'])
-
+            
+# used roof area <= roof area
+def res_process_roof_area_rule(m, sit, pro):
+    for p in m.pro_tuples:
+        try:
+            float(m.process.loc[p]['area-per-cap']) 
+            return (0,
+            sum(m.cap_pro[p] * m.process.loc[p]['area-per-cap'] for p in m.pro_tuples),
+            m.site.loc[sit]['area_roof'])
+        except ValueError:
+            return True
 
 # power connection capacity: Sell == Buy
 def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
@@ -1537,7 +1556,7 @@ def get_entity(instance, name):
         instance: a Pyomo ConcreteModel instance
         name: name of a Set, Param, Var, Constraint or Objective
 
-    Returns:
+    Returns
         a Pandas Series with domain as index and values (or 1's, for sets) of
         entity name. For constraints, it retrieves the dual values
     """

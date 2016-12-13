@@ -168,13 +168,13 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
-    
+
     # process areas
-    m.proc_area = m.process.xs('area-per-cap', axis=1)
-    m.sit_area = m.site.xs('area', axis=1)
+    m.proc_area = m.process['area-per-cap']
+    m.sit_area = m.site['area']
     m.proc_area = m.proc_area[m.proc_area >= 0]
     m.sit_area = m.sit_area[m.sit_area >= 0]
-    
+
     # input ratios for partial efficiencies
     # only keep those entries whose values are
     # a) positive and
@@ -256,7 +256,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.pro_tuples = pyomo.Set(
         within=m.sit*m.pro,
         initialize=m.process.index,
-        doc='Combinations of possible processes, e.g. (North,Coal plant)') 
+        doc='Combinations of possible processes, e.g. (North,Coal plant)')
     m.tra_tuples = pyomo.Set(
         within=m.sit*m.sit*m.tra*m.com,
         initialize=m.transmission.index,
@@ -279,13 +279,13 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                                             m)],
         doc='Combinations of possible dsm_down combinations, e.g. '
             '(5001,5003,Mid,Elec)')
-    
+
     # process tuples for area rule
     m.pro_area_tuples = pyomo.Set(
         within=m.sit*m.pro,
         initialize=m.proc_area.index,
         doc='Processes and Sites with area Restriction')
-    
+
     # process input/output
     m.pro_input_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
@@ -545,12 +545,12 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.pro_tuples,
         rule=res_process_capacity_rule,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
-    
+
     m.res_area = pyomo.Constraint(
        m.sit,
-       rule=res_process_area_rule,
+       rule=res_area_rule,
        doc='used process area <= total process area')
-        
+
     m.res_sell_buy_symmetry = pyomo.Constraint(
         m.pro_input_tuples,
         rule=res_sell_buy_symmetry_rule,
@@ -979,21 +979,25 @@ def def_startup_capacity_rule(m, tm, sit, pro):
             m.cap_online[tm, sit, pro] -
             m.cap_online[tm-1, sit, pro])
 
+
 # lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
     return (m.process.loc[sit, pro]['cap-lo'],
             m.cap_pro[sit, pro],
             m.process.loc[sit, pro]['cap-up'])
-            
+
+
 # used process area <= maximal process area
-def res_process_area_rule(m, sit):
-    sum_process_areas = sum(m.cap_pro[s, p] * m.process.loc[(str(s), str(p)), 'area-per-cap'] 
+def res_area_rule(m, sit):
+    if m.site.loc[sit]['area'] >= 0:
+        total_area = sum(m.cap_pro[s, p] * m.process.loc[(s, p), 'area-per-cap']
                             for (s, p) in m.pro_area_tuples
                             if s == sit)
-    if m.site.loc[sit]['area'] > 0:
-        return sum_process_areas <= m.site.loc[sit]['area']
+        return total_area <= m.site.loc[sit]['area']
     else:
+        # Skip constraint, if area is not numeric
         return pyomo.Constraint.Skip
+
 
 # power connection capacity: Sell == Buy
 def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
@@ -1899,7 +1903,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
         # DSM happened (dsmup implies that dsmdo must be non-zero, too)
         # so the demand will be modified by the difference of DSM up and
         # DSM down uses
-        #for sit in m.dsm_site_tuples:
+        # for sit in m.dsm_site_tuples:
         try:
             dsmup = dsmup.xs(sit, level='sit')
             dsmup = dsmup.xs(com, level='com')
@@ -1914,7 +1918,7 @@ def get_timeseries(instance, com, sit, timesteps=None):
             demanddelta = dsmup - dsmdo
         except KeyError:
             demanddelta = pd.Series(0, index=timesteps)
-            
+
     shifted = demand + demanddelta
 
     # give sensible names to the derived timeseries

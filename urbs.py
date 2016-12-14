@@ -96,14 +96,6 @@ def read_excel(filename):
     supim.columns = split_columns(supim.columns, '.')
     buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
 
-    # derive annuity factor from WACC and depreciation periods
-    process['annuity-factor'] = annuity_factor(
-        process['depreciation'], process['wacc'])
-    transmission['annuity-factor'] = annuity_factor(
-        transmission['depreciation'], transmission['wacc'])
-    storage['annuity-factor'] = annuity_factor(
-        storage['depreciation'], storage['wacc'])
-
     data = {
         'site': site,
         'commodity': commodity,
@@ -182,6 +174,17 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')
     m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
     m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
+
+    # derive annuity factor from WACC and depreciation duration
+    m.process['annuity-factor'] = annuity_factor(
+        m.process['depreciation'],
+        m.process['wacc'])
+    m.transmission['annuity-factor'] = annuity_factor(
+        m.transmission['depreciation'],
+        m.transmission['wacc'])
+    m.storage['annuity-factor'] = annuity_factor(
+        m.storage['depreciation'],
+        m.storage['wacc'])
 
     # Sets
     # ====

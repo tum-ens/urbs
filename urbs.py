@@ -2410,7 +2410,8 @@ def to_color(obj=None):
         color = tuple(rgb/255.0 for rgb in COLORS[obj])
     except KeyError:
         # random deterministic color
-        color = "#{:06x}".format(abs(hash(obj)))[:7]
+        import hashlib
+        color = hashlib.sha1(obj.encode()).hexdigest()[-6:]
     return color
 
 

@@ -2411,7 +2411,7 @@ def to_color(obj=None):
     except KeyError:
         # random deterministic color
         import hashlib
-        color = hashlib.sha1(obj.encode()).hexdigest()[-6:]
+        color = '#' + hashlib.sha1(obj.encode()).hexdigest()[-6:]
     return color
 
 

@@ -2221,7 +2221,7 @@ def plot(prob, com, sit, timesteps=None,
         # if so, show DSM subplot (even if delta == 0 for the whole time)
         plot_dsm = prob.dsm.loc[(sit, com),
                                 ['cap-max-do', 'cap-max-up']].sum().sum() > 0
-    except KeyError:
+    except (KeyError, TypeError):
         plot_dsm = False
 
     # remove all columns from created which are all-zeros in both created and

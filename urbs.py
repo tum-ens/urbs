@@ -32,9 +32,9 @@ COLORS = {
     'Slack powerplant': (163, 74, 130),
     'Wind park': (122, 179, 225),
     'Decoration': (128, 128, 128),  # plot labels
-    'Original Demand': (130, 130, 130),  # thick demand line
-    'Demand': (25, 25, 25),  # thick shifted demand line
-    'Demand delta': (130, 130, 130),  # dashed demand delta
+    'Unshifted': (130, 130, 130),  # unshifted demand line
+    'Shifted': (25, 25, 25),  # shifted demand line
+    'Delta': (130, 130, 130),  # demand delta
     'Grid': (128, 128, 128),  # background grid
     'Overproduction': (190, 0, 99),  # excess power
     'Storage': (60, 36, 154),  # storage area
@@ -1574,6 +1574,18 @@ def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
     return None
 
 
+def drop_all_zero_columns(df):
+    """ Drop columns from DataFrame if they contain only zeros.
+
+    Args:
+        df: a DataFrame
+
+    Returns:
+        the DataFrame without columns that only contain zeros
+    """
+    return df.loc[:, (df != 0).any(axis=0)]
+
+
 def get_entity(instance, name):
     """ Retrieve values (or duals) for an entity in a model instance.
 
@@ -1858,59 +1870,135 @@ def get_constants(instance):
     return costs, cpro, ctra, csto
 
 
-def get_timeseries(instance, com, sit, timesteps=None):
+def get_timeseries(instance, com, sites, timesteps=None):
     """Return DataFrames of all timeseries referring to given commodity
 
     Usage:
-        create, consume, store, imp, exp, der = get_timeseries(instance, co,
-                                                          sit, timesteps)
+        (created, consumed, stored, imported, exported,
+         dsm) = get_timeseries(instance, commodity, sites, timesteps)
 
     Args:
         instance: a urbs model instance
-        com: a commodity
-        sit: a site
-        timesteps: optional list of timesteps, defaults: all modelled timesteps
+        com: a commodity name
+        sites: a site name or list of site names
+        timesteps: optional list of timesteps, default: all modelled timesteps
 
     Returns:
-        a tuple of (created, consumed, storage, imported, exported, derivative,
-        dsm) with DataFrames timeseries. These are:
+        a tuple of (created, consumed, storage, imported, exported, dsm) with
+        DataFrames timeseries. These are:
 
         - created: timeseries of commodity creation, including stock source
         - consumed: timeseries of commodity consumption, including demand
         - storage: timeseries of commodity storage (level, stored, retrieved)
-        - imported: timeseries of commodity import (by site)
-        - exported: timeseries of commodity export (by site)
-        - derivative: normalized (by capacity) change of process throughput
-        - dsm: timeseries of demand-side management ()
+        - imported: timeseries of commodity import
+        - exported: timeseries of commodity export
+        - dsm: timeseries of demand-side management
     """
     if timesteps is None:
         # default to all simulated timesteps
         timesteps = sorted(get_entity(instance, 'tm').index)
+    else:
+        timesteps = sorted(timesteps)  # implicit: convert range to list
+
+    if isinstance(sites, str):
+        # wrap single site name into list
+        sites = [sites]
 
     # DEMAND
     # default to zeros if commodity has no demand, get timeseries
     try:
-        demand = instance.demand.loc[timesteps][sit, com]
+        # select relevant timesteps (=rows)
+        # select commodity (xs), then the sites from remaining simple columns
+        # and sum all together to form a Series
+        demand = (instance.demand.loc[timesteps]
+                                 .xs(com, axis=1, level=1)[sites]
+                                 .sum(axis=1))
     except KeyError:
         demand = pd.Series(0, index=timesteps)
     demand.name = 'Demand'
 
     # STOCK
-    eco = get_entity(instance, 'e_co_stock').unstack()['Stock']
-    eco = eco.xs(sit, level='sit').unstack().fillna(0)
+    eco = get_entity(instance, 'e_co_stock')
+    eco = eco.xs([com, 'Stock'], level=['com', 'com_type'])
     try:
-        stock = eco.loc[timesteps][com]
+        stock = eco.unstack()[sites].sum(axis=1)
     except KeyError:
         stock = pd.Series(0, index=timesteps)
     stock.name = 'Stock'
+
+    # PROCESS
+    created = get_entity(instance, 'e_pro_out')
+    created = created.xs(com, level='com').loc[timesteps]
+    try:
+        created = created.unstack(level='sit')[sites].sum(axis=1)
+        created = created.unstack(level='pro')
+        created = drop_all_zero_columns(created)
+    except KeyError:
+        created = pd.DataFrame(index=timesteps)
+
+    consumed = get_entity(instance, 'e_pro_in')
+    consumed = consumed.xs(com, level='com').loc[timesteps]
+    try:
+        consumed = consumed.unstack(level='sit')[sites].sum(axis=1)
+        consumed = consumed.unstack(level='pro')
+        consumed = drop_all_zero_columns(consumed)
+    except KeyError:
+        consumed = pd.DataFrame(index=timesteps)
+
+    # TRANSMISSION
+    other_sites = instance.site.index.difference(sites)
+
+    # if commodity is transportable
+    if com in set(instance.transmission.index.get_level_values('Commodity')):
+        imported = get_entity(instance, 'e_tra_out')
+        imported = imported.loc[timesteps].xs(com, level='com')
+        imported = imported.unstack(level='tra').sum(axis=1)
+        imported = imported.unstack(level='sit_')[sites].sum(axis=1)  # to...
+        imported = imported.unstack(level='sit')
+
+        internal_import = imported[sites].sum(axis=1)  # ... from sites
+        imported = imported[other_sites]  # ... from other_sites
+        imported = drop_all_zero_columns(imported)
+
+        exported = get_entity(instance, 'e_tra_in')
+        exported = exported.loc[timesteps].xs(com, level='com')
+        exported = exported.unstack(level='tra').sum(axis=1)
+        exported = exported.unstack(level='sit')[sites].sum(axis=1)  # from...
+        exported = exported.unstack(level='sit_')
+
+        internal_export = exported[sites].sum(axis=1)  # ... to sites (internal)
+        exported = exported[other_sites]  # ... to other_sites
+        exported = drop_all_zero_columns(exported)
+    else:
+        imported = pd.DataFrame(index=timesteps)
+        exported = pd.DataFrame(index=timesteps)
+        internal_export = pd.Series(0, index=timesteps)
+        internal_import = pd.Series(0, index=timesteps)
+
+    # to be discussed: increase demand by internal transmission losses
+    internal_transmission_losses = internal_export - internal_import
+    demand = demand + internal_transmission_losses
+
+    # STORAGE
+    # group storage energies by commodity
+    # select all entries with desired commodity co
+    stored = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
+    try:
+        stored = stored.loc[timesteps].xs(com, level='com')
+        stored = stored.groupby(level=['t', 'sit']).sum()
+        stored = stored.loc[(slice(None), sites), :].sum(level='t')
+        stored.columns = ['Level', 'Stored', 'Retrieved']
+    except (KeyError, ValueError):
+        stored = pd.DataFrame(0, index=timesteps,
+                              columns=['Level', 'Stored', 'Retrieved'])
 
     # DEMAND SIDE MANAGEMENT (load shifting)
     dsmup = get_entity(instance, 'dsm_up')
     dsmdo = get_entity(instance, 'dsm_down')
 
     if dsmup.empty:
-        # if no DSM happened, the demand is not modified (demanddelta == 0)
-        demanddelta = pd.Series(0, index=timesteps)
+        # if no DSM happened, the demand is not modified (delta = 0)
+        delta = pd.Series(0, index=timesteps)
 
     else:
         # DSM happened (dsmup implies that dsmdo must be non-zero, too)
@@ -1918,120 +2006,54 @@ def get_timeseries(instance, com, sit, timesteps=None):
         # DSM down uses
         # for sit in m.dsm_site_tuples:
         try:
-            dsmup = dsmup.xs(sit, level='sit')
+            # select commodity
             dsmup = dsmup.xs(com, level='com')
-
-            dsmdo = dsmdo.xs(sit, level='sit')
             dsmdo = dsmdo.xs(com, level='com')
-            #  series by summing the first time step set
+
+            # select sites
+            dsmup = dsmup.unstack()[sites].sum(axis=1)
+            dsmdo = dsmdo.unstack()[sites].sum(axis=1)
+
+            # convert dsmdo to Series by summing over the first time level
             dsmdo = dsmdo.unstack().sum(axis=0)
             dsmdo.index.names = ['t']
 
             # derive secondary timeseries
-            demanddelta = dsmup - dsmdo
+            delta = dsmup - dsmdo
         except KeyError:
-            demanddelta = pd.Series(0, index=timesteps)
+            delta = pd.Series(0, index=timesteps)
 
-    shifted = demand + demanddelta
+    shifted = demand + delta
 
-    # give sensible names to the derived timeseries
-    demanddelta.name = 'Delta of Demand to shifted Demand'
-    shifted.name = 'Shifted Demand'
+    shifted.name = 'Shifted'
+    demand.name = 'Unshifted'
+    delta.name = 'Delta'
 
-    # PROCESS
-    # select all entries of created and consumed desired commodity com and site
-    # sit. Keep only entries with non-zero values and unstack process column.
-    # Finally, slice to the desired timesteps.
-    epro = get_entities(instance, ['e_pro_in', 'e_pro_out'])
-    try:
-        epro = epro.xs(sit, level='sit').xs(com, level='com')
-        try:
-            created = epro[epro['e_pro_out'] > 0]['e_pro_out'].unstack(level='pro')
-            created = created.loc[timesteps].fillna(0)
-        except KeyError:
-            created = pd.DataFrame(index=timesteps)
+    dsm = pd.concat((shifted, demand, delta), axis=1)
 
-        try:
-            consumed = epro[epro['e_pro_in'] > 0]['e_pro_in'].unstack(level='pro')
-            consumed = consumed.loc[timesteps].fillna(0)
-        except KeyError:
-            consumed = pd.DataFrame(index=timesteps)
-    except KeyError:
-        created = pd.DataFrame(index=timesteps)
-        consumed = pd.DataFrame(index=timesteps)
+    # JOINS
+    created = created.join(stock)  # show stock as created
+    consumed = consumed.join(shifted.rename('Demand'))  # show shifted as demand
 
-    # TRANSMISSION
-    etra = get_entities(instance, ['e_tra_in', 'e_tra_out'])
-    try:
-        etra.index.names = ['tm', 'sitin', 'sitout', 'tra', 'com']
-        etra = etra.groupby(level=['tm', 'sitin', 'sitout', 'com']).sum()
-        etra = etra.xs(com, level='com')
-
-        imported = (etra.xs(sit, level='sitout')['e_tra_out']
-                        .unstack()
-                        .fillna(0))
-        exported = (etra.xs(sit, level='sitin')['e_tra_in']
-                        .unstack()
-                        .fillna(0))
-
-    except (ValueError, KeyError):
-        imported = pd.DataFrame(index=timesteps)
-        exported = pd.DataFrame(index=timesteps)
-
-    # STORAGE
-    # group storage energies by commodity
-    # select all entries with desired commodity co
-    esto = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
-    try:
-        esto = esto.groupby(level=['t', 'sit', 'com']).sum()
-        esto = esto.xs(sit, level='sit')
-        stored = esto.xs(com, level='com')
-        stored = stored.loc[timesteps]
-        stored.columns = ['Level', 'Stored', 'Retrieved']
-    except (KeyError, ValueError):
-        stored = pd.DataFrame(0, index=timesteps,
-                              columns=['Level', 'Stored', 'Retrieved'])
-
-    # DERIVATIVE
-    derivative = created.join(consumed)
-    derivative = pd.DataFrame(np.diff(derivative.T).T,
-                              index=derivative.index[:-1],
-                              columns=derivative.columns)
-    derivative = derivative.append(
-        pd.DataFrame(np.zeros_like(derivative.tail(1)),
-                     index=derivative.index[-1:]+1,
-                     columns=derivative.columns))
-    # standardizing
-    caps = get_entities(instance, ['cap_pro', 'cap_pro_new'])
-    caps = caps.loc[:, 'cap_pro_new']
-    for col in derivative.columns:
-        derivative[col] = derivative[col] / caps.loc[(sit, col)]
-
-    # show stock as created
-    created = created.join(stock)
-
-    # show demand as consumed
-    consumed = consumed.join(shifted.rename('Demand'))
-
-    # show dsm timeseries as dsm
-    dsm = pd.concat((demand.rename('Original Demand'), demanddelta), axis=1)
-
-    return created, consumed, stored, imported, exported, derivative, dsm
+    return created, consumed, stored, imported, exported, dsm
 
 
-def report(instance, filename, commodities=None, sites=None):
+def report(instance, filename, report_tuples=None):
     """Write result summary to a spreadsheet file
 
     Args:
         instance: a urbs model instance
         filename: Excel spreadsheet filename, will be overwritten if exists
-        commodities: optional list of commodities for which to write timeseries
-        sites: optional list of sites for which to write timeseries
+        report_tuples: (optional) list of (sit, com) tuples for which to
+                       create detailed timeseries sheets
 
     Returns:
         Nothing
     """
-    # get the data
+    # default to all demand (sit, com) tuples if none are specified
+    if report_tuples is None:
+        report_tuples = prob.demand.columns
+
     costs, cpro, ctra, csto = get_constants(instance)
 
     # create spreadsheet writer object
@@ -2048,42 +2070,33 @@ def report(instance, filename, commodities=None, sites=None):
         timeseries = {}
 
         # collect timeseries data
-        for co in commodities:
-            for sit in sites:
-                (created, consumed, stored, imported, exported, derivative,
-                 dsm) = get_timeseries(instance, co, sit)
+        for sit, com in report_tuples:
+            (created, consumed, stored, imported, exported,
+             dsm) = get_timeseries(instance, com, sit)
 
-                overprod = pd.DataFrame(
-                    columns=['Overproduction'],
-                    data=created.sum(axis=1) - consumed.sum(axis=1) +
-                    imported.sum(axis=1) - exported.sum(axis=1) +
-                    stored['Retrieved'] - stored['Stored'])
+            overprod = pd.DataFrame(
+                columns=['Overproduction'],
+                data=created.sum(axis=1) - consumed.sum(axis=1) +
+                imported.sum(axis=1) - exported.sum(axis=1) +
+                stored['Retrieved'] - stored['Stored'])
 
-                tableau = pd.concat(
-                    [created,
-                     consumed,
-                     stored,
-                     imported,
-                     exported,
-                     overprod,
-                     derivative,
-                     dsm],
-                    axis=1,
-                    keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'Derivative', 'DSM'])
-                timeseries[(co, sit)] = tableau.copy()
+            tableau = pd.concat(
+                [created, consumed, stored, imported, exported, overprod,
+                 dsm],
+                axis=1,
+                keys=['Created', 'Consumed', 'Storage', 'Import from',
+                      'Export to', 'Balance', 'DSM'])
+            timeseries[(sit, com)] = tableau.copy()
 
-                # timeseries sums
-                sums = pd.concat([created.sum(),
-                                  consumed.sum(),
-                                  stored.sum().drop('Level'),
-                                  imported.sum(),
-                                  exported.sum(),
-                                  overprod.sum(),
-                                  dsm.sum()], axis=0,
-                                 keys=['Created', 'Consumed', 'Storage',
-                                 'Import', 'Export', 'Balance', 'DSM'])
-                energies.append(sums.to_frame("{}.{}".format(co, sit)))
+            # timeseries sums
+            sums = pd.concat([created.sum(), consumed.sum(), 
+                              stored.sum().drop('Level'),
+                              imported.sum(), exported.sum(), overprod.sum(),
+                              dsm.sum()], 
+                             axis=0,
+                             keys=['Created', 'Consumed', 'Storage', 'Import', 
+                                   'Export', 'Balance', 'DSM'])
+            energies.append(sums.to_frame("{}.{}".format(sit, com)))
 
         # write timeseries data (if any)
         if timeseries:
@@ -2092,11 +2105,10 @@ def report(instance, filename, commodities=None, sites=None):
             energy.to_excel(writer, 'Commodity sums')
 
             # write timeseries to individual sheets
-            for co in commodities:
-                for sit in sites:
-                    # sheet names cannot be longer than 31 characters...
-                    sheet_name = "{}.{} timeseries".format(co, sit)[:31]
-                    timeseries[(co, sit)].to_excel(writer, sheet_name)
+            for sit, com in report_tuples:
+                # sheet names cannot be longer than 31 characters...
+                sheet_name = "{}.{} timeseries".format(sit, com)[:31]
+                timeseries[(sit, com)].to_excel(writer, sheet_name)
 
 
 def sort_plot_elements(elements):
@@ -2145,7 +2157,9 @@ def sort_plot_elements(elements):
     return elements_sorted
 
 
-def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
+def plot(prob, com, sit, timesteps=None,
+         power_name='Power', energy_name='Energy',
+         power_unit='MW', energy_unit='MWh', time_unit='h',
          figure_size=(16, 12)):
     """Plot a stacked timeseries of commodity balance and storage.
 
@@ -2157,8 +2171,12 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         com: commodity name to plot
         sit: site name to plot
         timesteps: optional list of  timesteps to plot; default: prob.tm
+
+        power_name: optional string for 'power' label; default: 'Power'
         power_unit: optional string for unit; default: 'MW'
+        energy_name: optional string for 'energy' label; default: 'Energy'
         energy_unit: optional string for storage plot; default: 'MWh'
+        time_unit: optional string for time unit label; default: 'h'
         figure_size: optional (width, height) tuple in inch; default: (16, 12)
 
     Returns:
@@ -2171,7 +2189,11 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         # default to all simulated timesteps
         timesteps = sorted(get_entity(prob, 'tm').index)
 
-    (created, consumed, stored, imported, exported, _,
+    if isinstance(sit, str):
+        # wrap single site in 1-element list for consistent behaviour
+        sit = [sit]
+
+    (created, consumed, stored, imported, exported, 
      dsm) = get_timeseries(prob, com, sit, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)
@@ -2192,13 +2214,13 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
 
     # move demand to its own plot
     demand = consumed.pop('Demand')
-    original = dsm.pop('Original Demand')
-    deltademand = dsm.pop('Delta of Demand to shifted Demand')
+    original = dsm.pop('Unshifted')
+    deltademand = dsm.pop('Delta')
     try:
         # detect whether DSM could be used in this plot
-        # if so, show DSM subplot (even if deltademand == 0 for the whole time)
+        # if so, show DSM subplot (even if delta == 0 for the whole time)
         plot_dsm = prob.dsm.loc[(sit, com),
-                                ['cap-max-do', 'cap-max-up']].sum() > 0
+                                ['cap-max-do', 'cap-max-up']].sum().sum() > 0
     except KeyError:
         plot_dsm = False
 
@@ -2251,8 +2273,8 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         sp0[k].set_edgecolor(to_color('Decoration'))
 
     # label
-    ax0.set_title('Energy balance of {} in {}'.format(com, sit))
-    ax0.set_ylabel('Power ({})'.format(power_unit))
+    ax0.set_title('Commodity balance of {} in {}'.format(com, ', '.join(sit)))
+    ax0.set_ylabel('{} ({})'.format(power_name, power_unit))
 
     # legend
     handles, labels = ax0.get_legend_handles_labels()
@@ -2286,10 +2308,10 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
 
     # PLOT DEMAND
     ax0.plot(original.index, original.values, linewidth=0.8,
-             color=to_color('Original Demand'))
+             color=to_color('Unshifted'))
 
     ax0.plot(demand.index, demand.values, linewidth=1.0,
-             color=to_color('Demand'))
+             color=to_color('Shifted'))
 
     # PLOT STORAGE
     ax1 = plt.subplot(gs[1], sharex=ax0)
@@ -2302,7 +2324,7 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     # color & labels
     sp1[0].set_facecolor(to_color('Storage'))
     sp1[0].set_edgecolor(to_color('Decoration'))
-    ax1.set_ylabel('Energy ({})'.format(energy_unit))
+    ax1.set_ylabel('{} ({})'.format(energy_name, energy_unit))
 
     try:
         ax1.set_ylim((0, 0.5 + csto.loc[sit, :, com]['C Total'].sum()))
@@ -2315,12 +2337,12 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
         all_axes.append(ax2)
         ax2.bar(deltademand.index,
                 deltademand.values,
-                color=to_color('Demand delta'),
+                color=to_color('Delta'),
                 edgecolor='none')
 
         # labels & y-limits
-        ax2.set_xlabel('Time in year (h)')
-        ax2.set_ylabel('Energy ({})'.format(energy_unit))
+        ax2.set_xlabel('Time in year ({})'.format(time_unit))
+        ax2.set_ylabel('{} ({})'.format(energy_name, energy_unit))
 
     # make xtick distance duration-dependent
     if len(timesteps) > 26*168:
@@ -2362,41 +2384,59 @@ def plot(prob, com, sit, timesteps=None, power_unit='MW', energy_unit='MWh',
     return fig
 
 
-def result_figures(prob, figure_basename, plot_title_prefix=None, periods={},
-                   **kwds):
-    """Create plot for each site and demand commodity and save to files.
+def result_figures(prob, figure_basename, plot_title_prefix=None,
+                   plot_tuples=None, periods=None, extensions=None, **kwds):
+    """Create plots for multiple periods and sites and save them to files.
 
     Args:
         prob: urbs model instance
         figure_basename: relative filename prefix that is shared
         plot_title_prefix: (optional) plot title identifier
+        plot_tuples: (optional) list of (sit, com) tuples to plot
+                     sit may be individual site names or lists of sites
+                     default: all demand (sit, com) tuples are plotted
         periods: (optional) dict of 'period name': timesteps_list items
-                 if omitted, one period 'all' with all timesteps is assumed
+                 default: one period 'all' with all timesteps is assumed
+        extensions: (optional) list of file extensions for plot images
+                    default: png, pdf 
         **kwds: (optional) keyword arguments are forwarded to urbs.plot()
     """
-    # default to all timesteps if no
-    if not periods:
+    # default to all demand (sit, com) tuples if none are specified
+    if plot_tuples is None:
+        plot_tuples = prob.demand.columns
+
+    # default to all timesteps if no periods are given
+    if periods is None:
         periods = {'all': sorted(get_entity(prob, 'tm').index)}
 
+    # default to PNG and PDF plots if no filetypes are specified
+    if extensions is None:
+        extensions = ['png', 'pdf']
+
     # create timeseries plot for each demand (site, commodity) timeseries
-    for sit, com in prob.demand.columns:
+    for sit, com in plot_tuples:
+        # wrap single site name in 1-element list for consistent behaviour
+        if isinstance(sit, str):
+            sit = [sit]
+
         for period, timesteps in periods.items():
             # do the plotting
             fig = plot(prob, com, sit, timesteps=timesteps, **kwds)
 
             # change the figure title
             ax0 = fig.get_axes()[0]
-            # if no custom title prefix is specified, use the figure
+            # if no custom title prefix is specified, use the figure basenmae
             if not plot_title_prefix:
                 plot_title_prefix = os.path.basename(figure_basename)
             new_figure_title = ax0.get_title().replace(
-                'Energy balance of ', '{}: '.format(plot_title_prefix))
+                'Commodity balance of ', '{}: '.format(plot_title_prefix))
             ax0.set_title(new_figure_title)
 
             # save plot to files
-            for ext in ['png', 'pdf']:
+            for ext in extensions:
                 fig_filename = '{}-{}-{}-{}.{}'.format(
-                                    figure_basename, com, sit, period, ext)
+                                    figure_basename, com, '-'.join(sit), period,
+                                    ext)
                 fig.savefig(fig_filename, bbox_inches='tight')
             plt.close(fig)
 

@@ -189,7 +189,7 @@ if __name__ == '__main__':
         scenario_north_process_caps,
         scenario_all_together]
 
-    for scenario in scenarios:
+    for scenario in scenarios[4:]:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,
                             plot_tuples=plot_tuples,
                             plot_periods=plot_periods,

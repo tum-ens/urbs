@@ -60,14 +60,12 @@ def compare_scenarios(result_files, output_filename):
                       .replace('.xlsx', '') # drop file extension
                       .replace('scenario ', '') # drop 'scenario ' prefix
                       for rf in result_files]
-    #scenario_names = [s[0:s.find('-')] for s in scenario_names] # drop everything after first '-'
-    
-    
+
     # find base scenario and put at first position
     try:
         base_scenario = scenario_names.index('base')
-        result_files.insert(0, result_files.pop(base_scenario))
-        scenario_names.insert(0, scenario_names.pop(base_scenario))
+        result_files.append(result_files.pop(base_scenario))
+        scenario_names.append(scenario_names.pop(base_scenario))
     except ValueError:
         pass # do nothing if no base scenario is found
     
@@ -85,7 +83,7 @@ def compare_scenarios(result_files, output_filename):
             esum.reset_index(inplace=True)
             esum.fillna(method='ffill', inplace=True)
             esum.set_index(['level_0', 'level_1'], inplace=True)
-    
+
             costs.append(cost)
             esums.append(esum)
     
@@ -103,6 +101,8 @@ def compare_scenarios(result_files, output_filename):
     costs.index.name = 'Cost type'
     costs = costs.sort_index().transpose()
     costs = costs / 1e9
+    spent = costs.loc[:, costs.sum() > 0]
+    earnt = costs.loc[:, costs.sum() < 0]
     
     # sum up created energy over all locations, but keeping scenarios (level=0)
     # make index name 'Commodity' nicer for plot
@@ -120,11 +120,18 @@ def compare_scenarios(result_files, output_filename):
     gs = gridspec.GridSpec(1, 2, width_ratios=[2, 3])
     
     ax0 = plt.subplot(gs[0])
-    bp0 = costs.plot(ax=ax0, kind='barh', stacked=True)
+    spent_colors = [urbs.to_color(ct) for ct in spent.columns]
+    bp0 = spent.plot(ax=ax0, kind='barh', stacked=True, color=spent_colors,
+                     linewidth=0)
+    if not earnt.empty:
+        earnt_colors =  [urbs.to_color(ct) for ct in earnt.columns]
+        bp0a = earnt.plot(ax=ax0, kind='barh', stacked=True, color=earnt_colors,
+                          linewidth=0)
     
     ax1 = plt.subplot(gs[1])
     esums_colors = [urbs.to_color(commodity) for commodity in esums.columns]
-    bp1 = esums.plot(ax=ax1, kind='barh', stacked=True, color=esums_colors)
+    bp1 = esums.plot(ax=ax1, kind='barh', stacked=True, color=esums_colors,
+                     linewidth=0)
     
     # remove scenario names from second plot
     ax1.set_yticklabels('')
@@ -151,9 +158,9 @@ def compare_scenarios(result_files, output_filename):
                        ncol=4,
                        bbox_to_anchor=(0.5, 1.11))
         plt.setp(lg.get_patches(), edgecolor=urbs.to_color('Decoration'),
-                 linewidth=0.15)
+                 linewidth=0)
     
-    ax0.set_xlabel('Total costs (1e9 EUR/a)')
+    ax0.set_xlabel('Total costs (billion EUR/a)')
     ax1.set_xlabel('Total energy produced (GWh)')
     
     for ext in ['png', 'pdf']:
@@ -179,4 +186,4 @@ if __name__ == '__main__':
         # specify comparison result filename 
         # and run the comparison function
         comp_filename = os.path.join(directory, 'comparison')
-        compare_scenarios(result_files, comp_filename)
+        compare_scenarios(list(reversed(result_files)), comp_filename)

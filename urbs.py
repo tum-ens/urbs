@@ -1940,7 +1940,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     created = get_entity(instance, 'e_pro_out')
     created = created.xs(com, level='com').loc[timesteps]
     try:
-        created = created.unstack(level='sit')[sites].sum(axis=1)
+        created = created.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         created = created.unstack(level='pro')
         created = drop_all_zero_columns(created)
     except KeyError:
@@ -1949,7 +1949,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     consumed = get_entity(instance, 'e_pro_in')
     consumed = consumed.xs(com, level='com').loc[timesteps]
     try:
-        consumed = consumed.unstack(level='sit')[sites].sum(axis=1)
+        consumed = consumed.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         consumed = consumed.unstack(level='pro')
         consumed = drop_all_zero_columns(consumed)
     except KeyError:
@@ -1963,7 +1963,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
         imported = get_entity(instance, 'e_tra_out')
         imported = imported.loc[timesteps].xs(com, level='com')
         imported = imported.unstack(level='tra').sum(axis=1)
-        imported = imported.unstack(level='sit_')[sites].sum(axis=1)  # to...
+        imported = imported.unstack(level='sit_')[sites].fillna(0).sum(axis=1)
         imported = imported.unstack(level='sit')
 
         internal_import = imported[sites].sum(axis=1)  # ... from sites
@@ -1973,7 +1973,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
         exported = get_entity(instance, 'e_tra_in')
         exported = exported.loc[timesteps].xs(com, level='com')
         exported = exported.unstack(level='tra').sum(axis=1)
-        exported = exported.unstack(level='sit')[sites].sum(axis=1)  # from...
+        exported = exported.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         exported = exported.unstack(level='sit_')
 
         internal_export = exported[sites].sum(axis=1)  # ... to sites (internal)
@@ -2330,6 +2330,9 @@ def plot(prob, com, sit, timesteps=None,
     if plot_dsm:
         # hide xtick labels only if DSM plot follows
         plt.setp(ax1.get_xticklabels(), visible=False)
+    else:
+        # else add label for time axis 
+        ax1.set_xlabel('Time in year ({})'.format(time_unit))
 
     # color & labels
     sp1[0].set_facecolor(to_color('Storage'))
@@ -2341,8 +2344,8 @@ def plot(prob, com, sit, timesteps=None,
     except KeyError:
         pass
 
+    # PLOT DEMAND SIDE MANAGEMENT
     if plot_dsm:
-        # PLOT DEMAND SIDE MANAGEMENT
         ax2 = plt.subplot(gs[2], sharex=ax0)
         all_axes.append(ax2)
         ax2.bar(deltademand.index,
@@ -2352,7 +2355,7 @@ def plot(prob, com, sit, timesteps=None,
 
         # labels & y-limits
         ax2.set_xlabel('Time in year ({})'.format(time_unit))
-        ax2.set_ylabel('{} ({})'.format(energy_name, energy_unit))
+        ax2.set_ylabel('{} ({})'.format(power_name, power_unit))
 
     # make xtick distance duration-dependent
     if len(timesteps) > 26*168:

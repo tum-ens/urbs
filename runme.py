@@ -120,7 +120,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 
@@ -137,9 +137,10 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     urbs.result_figures(
         prob,
         os.path.join(result_dir, '{}'.format(sce)),
-        plot_title_prefix=sce.replace('_', ' ').title(),
+        plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,
-        periods=plot_periods)
+        periods=plot_periods,
+        figure_size=(24, 9))
     return prob
 
 if __name__ == '__main__':
@@ -148,7 +149,7 @@ if __name__ == '__main__':
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
     # simulation timesteps
-    (offset, length) = (4999, 24 * 8)  # time step selection
+    (offset, length) = (0, 8760)  # time step selection
     timesteps = range(offset, offset+length+1)
 
     # plotting commodities/sites
@@ -165,10 +166,18 @@ if __name__ == '__main__':
 
     # plotting timesteps
     plot_periods = {
-        #'spr': range(1000, 1000 + 24 * 7),
-        #'sum': range(3000, 3000 + 24 * 7),
-        'aut': range(5000, 5000 + 24 * 7),
-        #'win': range(7000, 7000 + 24 * 7),
+        '01-jan': range(   1,  745),
+        '02-feb': range( 745, 1417),
+        '03-mar': range(1417, 2161),
+        '04-apr': range(2161, 2881),
+        '05-may': range(2881, 3625),
+        '06-jun': range(3625, 4345),
+        '07-jul': range(4345, 5089),
+        '08-aug': range(5089, 5833),
+        '09-sep': range(5833, 6553),
+        '10-oct': range(6553, 7297),
+        '11-nov': range(7297, 8017),
+        '12-dec': range(8017, 8761),
     }
 
     # add or change plot colors
@@ -189,7 +198,7 @@ if __name__ == '__main__':
         scenario_north_process_caps,
         scenario_all_together]
 
-    for scenario in scenarios[4:]:
+    for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,
                             plot_tuples=plot_tuples,
                             plot_periods=plot_periods,

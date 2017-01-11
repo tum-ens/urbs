@@ -50,6 +50,7 @@ model equations or extend the model yourself.
    api
    mathdoc
    buyselldoc
+   dsmdoc
 
 
 Features

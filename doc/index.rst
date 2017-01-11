@@ -69,7 +69,15 @@ Features
 Changes
 -------
 
-(Upcoming) Version 0.6
+(Upcoming) Version 0.7
+^^^^^^^^^^^^^^^^^^^^^^
+
+* Plot function (and ``get_timeseries``) now support grouping of multiple sites
+* Environmental commodity costs (e.g. emission taxes or other pollution externalities)
+* Bugfix: column *Overproduction* in report sheet did not respect DSM
+
+
+2016-08-18 Version 0.6
 ^^^^^^^^^^^^^^^^^^^^^^
 
 * :ref:`sec-dsm-constr` added

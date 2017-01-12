@@ -2561,9 +2561,7 @@ def save(prob, filename):
 
 
 class ResultContainer(object):
-    """ Result/input data container for reporting functions.
-    
-    """
+    """ Result/input data container for reporting functions. """
     def __init__(self, data, result):
         self._data = data
         self._result = result

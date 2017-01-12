@@ -13,6 +13,7 @@ commodities.
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import pyomo.core as pyomo
 from datetime import datetime
@@ -1609,7 +1610,7 @@ def get_entity(instance, name):
     """
     # magic: short-circuit if problem contains a result cache  
     if hasattr(instance, '_result') and name in instance._result:
-        return instance._result[name]
+        return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names
     entity = instance.__getattribute__(name)
@@ -1949,7 +1950,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     else:
         timesteps = sorted(timesteps)  # implicit: convert range to list
 
-    if isinstance(sites, str):
+    if is_string(sites):
         # wrap single site name into list
         sites = [sites]
 
@@ -2239,7 +2240,7 @@ def plot(prob, com, sit, timesteps=None,
         # default to all simulated timesteps
         timesteps = sorted(get_entity(prob, 'tm').index)
 
-    if isinstance(sit, str):
+    if is_string(sit):
         # wrap single site in 1-element list for consistent behaviour
         sit = [sit]
 
@@ -2470,7 +2471,7 @@ def result_figures(prob, figure_basename, plot_title_prefix=None,
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in plot_tuples:
         # wrap single site name in 1-element list for consistent behaviour
-        if isinstance(sit, str):
+        if is_string(sit):
             sit = [sit]
 
         for period, timesteps in periods.items():
@@ -2566,7 +2567,6 @@ class ResultContainer(object):
     def __init__(self, data, result):
         self._data = data
         self._result = result
-    pass
 
 
 def load(filename):
@@ -2588,6 +2588,15 @@ def load(filename):
             result_cache[group._v_name] = store[group._v_pathname]
 
     return ResultContainer(data_cache, result_cache)
+
+
+try:
+    isinstance("", basestring)
+    def is_string(s):
+        return isinstance(s, basestring)  # Python 3
+except NameError:
+    def is_string(s):
+        return isinstance(s, str)  # Python 2
 
 
 if __name__ == "__main__":

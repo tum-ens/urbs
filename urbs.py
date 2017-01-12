@@ -13,9 +13,9 @@ commodities.
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import pyomo.core as pyomo
-import warnings
 from datetime import datetime
 from operator import itemgetter
 from random import random
@@ -143,6 +143,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m = pyomo.ConcreteModel()
     m.name = 'URBS'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
+    m._data = data
 
     # Optional
     if not timesteps:
@@ -1607,6 +1608,9 @@ def get_entity(instance, name):
         a Pandas Series with domain as index and values (or 1's, for sets) of
         entity name. For constraints, it retrieves the dual values
     """
+    # magic: short-circuit if problem contains a result cache  
+    if hasattr(instance, '_result') and name in instance._result:
+        return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names
     entity = instance.__getattribute__(name)
@@ -1614,8 +1618,11 @@ def get_entity(instance, name):
 
     # extract values
     if isinstance(entity, pyomo.Set):
-        # Pyomo sets don't have values, only elements
-        results = pd.DataFrame([(v, 1) for v in entity.value])
+        if entity.dimen > 1:
+            results = pd.DataFrame([v + (1,) for v in entity.value])
+        else:
+            # Pyomo sets don't have values, only elements
+            results = pd.DataFrame([(v, 1) for v in entity.value])
 
         # for unconstrained sets, the column label is identical to their index
         # hence, make index equal to entity name and append underscore to name
@@ -1627,9 +1634,15 @@ def get_entity(instance, name):
 
     elif isinstance(entity, pyomo.Param):
         if entity.dim() > 1:
-            results = pd.DataFrame([v[0]+(v[1],) for v in entity.iteritems()])
+            results = pd.DataFrame(
+                [v[0]+(v[1],) for v in entity.iteritems()])
+        elif entity.dim() == 1:
+            results = pd.DataFrame(
+                [(v[0], v[1]) for v in entity.iteritems()])
         else:
-            results = pd.DataFrame(entity.iteritems())
+            results = pd.DataFrame(
+                [(v[0], v[1].value) for v in entity.iteritems()])
+            labels = ['None']
 
     elif isinstance(entity, pyomo.Constraint):
         if entity.dim() > 1:
@@ -1663,7 +1676,7 @@ def get_entity(instance, name):
     # check for duplicate onset names and append one to several "_" to make
     # them unique, e.g. ['sit', 'sit', 'com'] becomes ['sit', 'sit_', 'com']
     for k, label in enumerate(labels):
-        if label in labels[:k]:
+        if label in labels[:k] or label == name:
             labels[k] = labels[k] + "_"
 
     if not results.empty:
@@ -1831,6 +1844,33 @@ def _get_onset_names(entity):
     return labels
 
 
+def get_input(prob, name):
+    """Return input DataFrame of given name from urbs instance.
+    
+    These are identical to the key names returned by function `read_excel`.
+    That means they are lower-case names and use underscores for word
+    separation, e.g. 'process_commodity'.
+    
+    Args:
+        prob: a urbs model instance
+        name: an input DataFrame name ('commodity', 'process', ...)
+        
+    Returns:
+        the corresponding input DataFrame
+
+    """
+    if hasattr(prob, name):
+        # classic case: input data DataFrames are accessible via named
+        # attributes, e.g. `prob.process`.
+        return getattr(prob, name)
+    elif hasattr(prob, '_data') and name in prob._data:
+        # load case: input data is accessible via the input data cache dict
+        return prob._data[name]
+    else:
+        # unknown
+        raise ValueError("Unknown input DataFrame name!")
+
+
 def get_constants(instance):
     """Return summary DataFrames for important variables
 
@@ -1910,7 +1950,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     else:
         timesteps = sorted(timesteps)  # implicit: convert range to list
 
-    if isinstance(sites, str):
+    if is_string(sites):
         # wrap single site name into list
         sites = [sites]
 
@@ -1920,9 +1960,9 @@ def get_timeseries(instance, com, sites, timesteps=None):
         # select relevant timesteps (=rows)
         # select commodity (xs), then the sites from remaining simple columns
         # and sum all together to form a Series
-        demand = (instance.demand.loc[timesteps]
-                                 .xs(com, axis=1, level=1)[sites]
-                                 .sum(axis=1))
+        demand = (get_input(instance, 'demand').loc[timesteps]
+                                               .xs(com, axis=1, level=1)[sites]
+                                               .sum(axis=1))
     except KeyError:
         demand = pd.Series(0, index=timesteps)
     demand.name = 'Demand'
@@ -1956,10 +1996,11 @@ def get_timeseries(instance, com, sites, timesteps=None):
         consumed = pd.DataFrame(index=timesteps)
 
     # TRANSMISSION
-    other_sites = instance.site.index.difference(sites)
+    other_sites = get_input(instance, 'site').index.difference(sites)
 
     # if commodity is transportable
-    if com in set(instance.transmission.index.get_level_values('Commodity')):
+    df_transmission = get_input(instance, 'transmission')
+    if com in set(df_transmission.index.get_level_values('Commodity')):
         imported = get_entity(instance, 'e_tra_out')
         imported = imported.loc[timesteps].xs(com, level='com')
         imported = imported.unstack(level='tra').sum(axis=1)
@@ -2062,7 +2103,7 @@ def report(instance, filename, report_tuples=None):
     """
     # default to all demand (sit, com) tuples if none are specified
     if report_tuples is None:
-        report_tuples = prob.demand.columns
+        report_tuples = get_input(instance, 'demand').columns
 
     costs, cpro, ctra, csto = get_constants(instance)
 
@@ -2199,7 +2240,7 @@ def plot(prob, com, sit, timesteps=None,
         # default to all simulated timesteps
         timesteps = sorted(get_entity(prob, 'tm').index)
 
-    if isinstance(sit, str):
+    if is_string(sit):
         # wrap single site in 1-element list for consistent behaviour
         sit = [sit]
 
@@ -2229,8 +2270,9 @@ def plot(prob, com, sit, timesteps=None,
     try:
         # detect whether DSM could be used in this plot
         # if so, show DSM subplot (even if delta == 0 for the whole time)
-        plot_dsm = prob.dsm.loc[(sit, com),
-                                ['cap-max-do', 'cap-max-up']].sum().sum() > 0
+        df_dsm = get_input(prob, 'dsm')
+        plot_dsm = df_dsm.loc[(sit, com),
+                              ['cap-max-do', 'cap-max-up']].sum().sum() > 0
     except (KeyError, TypeError):
         plot_dsm = False
 
@@ -2416,7 +2458,7 @@ def result_figures(prob, figure_basename, plot_title_prefix=None,
     """
     # default to all demand (sit, com) tuples if none are specified
     if plot_tuples is None:
-        plot_tuples = prob.demand.columns
+        plot_tuples = get_input(prob, 'demand').columns
 
     # default to all timesteps if no periods are given
     if periods is None:
@@ -2429,7 +2471,7 @@ def result_figures(prob, figure_basename, plot_title_prefix=None,
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in plot_tuples:
         # wrap single site name in 1-element list for consistent behaviour
-        if isinstance(sit, str):
+        if is_string(sit):
             sit = [sit]
 
         for period, timesteps in periods.items():
@@ -2478,52 +2520,81 @@ def to_color(obj=None):
     return color
 
 
-def save(prob, filename):
-    """Save urbs model instance to a gzip'ed pickle file.
+def create_result_cache(prob):
+    entity_types = ['set', 'par', 'var']
+    if hasattr(prob, 'dual'):
+        entity_types.append('con')
 
-    Pickle is the standard Python way of serializing and de-serializing Python
-    objects. By using it, saving any object, in case of this function a
-    Pyomo ConcreteModel, becomes a twoliner.
-    <https://docs.python.org/2/library/pickle.html>
-    GZip is a standard Python compression library that is used to transparently
-    compress the pickle file further.
-    <https://docs.python.org/2/library/gzip.html>
-    It is used over the possibly more compact bzip2 compression due to the
-    lower runtime. Source: <http://stackoverflow.com/a/18475192/2375855>
+    entities = []
+    for entity_type in entity_types:
+        entities.extend(list_entities(prob, entity_type).index.tolist())
+
+    result_cache = {}
+    for entity in entities:
+        result_cache[entity] = get_entity(prob, entity)
+    return result_cache
+
+
+
+def save(prob, filename):
+    """Save urbs model input and result cache to a HDF5 store file.
 
     Args:
-        prob: a urbs model instance
-        filename: pickle file to be written
+        prob: a urbs model instance containing a solution
+        filename: HDF5 store file to be written
 
     Returns:
         Nothing
     """
-    import gzip
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import pickle
-    with gzip.GzipFile(filename, 'wb') as file_handle:
-        pickle.dump(prob, file_handle, pickle.HIGHEST_PROTOCOL)
+    import warnings
+    warnings.filterwarnings('ignore',
+                            category=pd.io.pytables.PerformanceWarning)
+
+    if not hasattr(prob, '_result'):
+        prob._result = create_result_cache(prob)
+
+    with pd.HDFStore(filename, mode='w') as store:
+        for name in prob._data.keys():
+            store['data/'+name] = prob._data[name]
+        for name in prob._result.keys():
+            store['result/'+name] = prob._result[name]
+
+
+class ResultContainer(object):
+    """ Result/input data container for reporting functions. """
+    def __init__(self, data, result):
+        self._data = data
+        self._result = result
 
 
 def load(filename):
-    """Load a urbs model instance from a gzip'ed pickle file
+    """Load a urbs model result container from a HDF5 store file.
 
     Args:
-        filename: pickle file
+        filename: an existing HDF5 store file
 
     Returns:
-        prob: the unpickled urbs model instance
+        prob: the modified instance containing the result cache
     """
-    import gzip
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import pickle
-    with gzip.GzipFile(filename, 'r') as file_handle:
-        prob = pickle.load(file_handle)
-    return prob
+    with pd.HDFStore(filename, mode='r') as store:        
+        data_cache = {}
+        for group in store.get_node('data'):
+            data_cache[group._v_name] = store[group._v_pathname]
+
+        result_cache = {}
+        for group in store.get_node('result'):
+            result_cache[group._v_name] = store[group._v_pathname]
+
+    return ResultContainer(data_cache, result_cache)
+
+
+try:
+    isinstance("", basestring)
+    def is_string(s):
+        return isinstance(s, basestring)  # Python 3
+except NameError:
+    def is_string(s):
+        return isinstance(s, str)  # Python 2
 
 
 if __name__ == "__main__":

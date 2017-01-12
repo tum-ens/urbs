@@ -169,13 +169,7 @@ if __name__ == '__main__':
 
     # plotting timesteps
     plot_periods = {
-        'day-01': range(3501, 3525),
-        'day-02': range(3525, 3549),
-        'day-03': range(3549, 3573),
-        'day-04': range(3573, 3597),
-        'day-05': range(3597, 3621),
-        'day-06': range(3621, 3645),
-        'day-07': range(3645, 3569),
+        'all': timesteps[1:]
     }
 
     # add or change plot colors

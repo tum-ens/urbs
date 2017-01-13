@@ -9,8 +9,8 @@ urbs: A linear optimisation model for distributed energy systems
 ================================================================
 
 :Maintainer: Johannes Dorfner, <johannes.dorfner@tum.de>
-:Organization: `Institute for Renewable and Sustainable Energy Systems`_,
-               Technische Universität München
+:Organization: `Chair of Renewable and Sustainable Energy Systems`_,
+               Technical University of Munich
 :Version: |version|
 :Date: |today|
 :Copyright:
@@ -69,11 +69,13 @@ Features
 Changes
 -------
 
-(Upcoming) Version 0.7
+2017-01-13 Version 0.7
 ^^^^^^^^^^^^^^^^^^^^^^
 
-* Plot function (and ``get_timeseries``) now support grouping of multiple sites
-* Environmental commodity costs (e.g. emission taxes or other pollution externalities)
+* Maintenance: Model file ``urbs.py`` split into subfiles in folder ``urbs``
+* Feature: Usable area in site implemented as possible constraint
+* Feature: Plot function (and ``get_timeseries``) now support grouping of multiple sites
+* Feature: Environmental commodity costs (e.g. emission taxes or other pollution externalities)
 * Bugfix: column *Overproduction* in report sheet did not respect DSM
 
 
@@ -159,7 +161,7 @@ Dependencies
 * Any solver supported by pyomo; suggestion: `GLPK`_
    
 .. _glpk: https://www.gnu.org/software/glpk/
-.. _Institute for Renewable and Sustainable Energy Systems: http://www.ens.ei.tum.de/
+.. _Chair of Renewable and Sustainable Energy Systems: http://www.ens.ei.tum.de/
 .. _matplotlib: http://matplotlib.org
 .. _pandas: http://pandas.pydata.org
 .. _pyomo: http://www.pyomo.org

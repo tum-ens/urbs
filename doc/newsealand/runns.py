@@ -16,7 +16,7 @@ def scenario_base(data):
 def scenario_co2_limit(data):
     # change global CO2 limit
     hacks = data['hacks']
-    hacks.loc['Global CO2 limit', 'Value'] = 50000
+    hacks.loc['Global CO2 limit', 'Value'] = 40000
     return data
 
 
@@ -83,7 +83,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 

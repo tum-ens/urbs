@@ -57,6 +57,17 @@ to version control::
     $ git add newsealand.xlsx
     $ git commit -m "added newsealand.xlsx"
 
+Site, DSM and Buy-Sell-price
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note at the outset, that you do not have to worry about the three mentioned 
+worksheets, since they are not used for this tutorial. You need to keep them, 
+however, and modify them in order to avoid problems. First, specify the four 
+desired Sites in **Site** and set all values to either ``NV()`` or ``inf``.
+In the sheet **DSM** enter the four islands of New Sealand as sites into the 
+corresponding fields and set all values in the columns *cap-max-do* and 
+*cap-max-up* to ``0``. You do not need to change anything in sheet 
+**Buy-Sell-Price**.  
+
 Commodity
 ^^^^^^^^^
 Remove the rows with unneeded commodities, here everything except **Gas**,
@@ -387,8 +398,8 @@ that you use :func:`plot`::
     >>> %matplotlib
     >>> fig = urbs.plot(prob, 'Elec', 'Vled Haven')
     
-.. image:: newsealand/newsealand-base-elec-vled-haven.png
-   :width: 95%
+.. image:: newsealand/newsealand_base-Elec-Vled-Haven.png
+   :width: 100%
    :align: center
     
 Depending on the plotting backend, you now either see a window with the plot
@@ -427,8 +438,10 @@ hard (annual) limit of 50 million tonnes of CO2 equivalent:
         hacks.loc['Global CO2 limit', 'Value'] = 50000
         return data
 
-Then, you want to show imported/exported electricity in the plots in custom
-colors. So you modify the ``my_colors`` :class:`dict` like this::
+Next, set adjust the plot_tuples and report_tuples by replacing ``North``, 
+``Mid`` and ``South`` by the four islands of Newsealand. 
+Furthermore, you want to show imported/exported electricity in the plots in 
+custom colors. So you modify the ``my_colors`` :class:`dict` like this::
     
     my_colors = {
         'Vled Haven': (230, 200, 200),

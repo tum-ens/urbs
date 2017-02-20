@@ -233,7 +233,8 @@ This set is defined as ``pro_tuples`` and given by the code fragment:
         doc='Combinations of possible processes, e.g. (North,Coal plant)')
 		
 
-A subset of these process tuples ``pro_partial_tuples`` :math:`P_v^\text{partial}` is formed in order to identify processes that have partial & startup properties. Programmatically, they are identified by those processes, which have the parameter ``ratio-min`` set for one of their input commodities in table *Process-Commodity*. The tuple set is defined as:
+A subset of these process tuples ``pro_partial_tuples`` :math:`P_v^\text{partial}` is formed in order to identify processes that have partial & startup properties. 
+Programmatically, they are identified by those processes, which have the parameter ``ratio-min`` set for one of their input commodities in table *Process-Commodity*. The tuple set is defined as:
         
 ::
 
@@ -245,8 +246,15 @@ A subset of these process tuples ``pro_partial_tuples`` :math:`P_v^\text{partial
                     if process == pro],
         doc='Processes with partial input')        
 
-Foo.
+A second subset is formed in order to caputure all processes that take up a certain area and are thus subject to the area constraint at the given site.
+These processes are identified by the parameter ``area-per-cap`` set in table *Process*, if at the same time a value for ``area`` is set in table *Site*. The tuple set is defined as:
+  
+::
 
+    m.pro_area_tuples = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=m.proc_area.index,
+        doc='Processes and Sites with area Restriction')
 
 
 Transmission Tuples

@@ -889,11 +889,11 @@ def res_process_capacity_rule(m, sit, pro):
 # used process area <= maximal process area
 def res_area_rule(m, sit):
     if m.site.loc[sit]['area'] >= 0:
-        tot_area = sum(m.cap_pro[s, p] * m.process.loc[(s, p), 'area-per-cap']
+        total_area = sum(m.cap_pro[s, p] * m.process.loc[(s, p), 'area-per-cap']
                        for (s, p) in m.pro_area_tuples
                        if s == sit)
-        if isinstance(tot_area, float):
-            return tot_area <= m.site.loc[sit]['area']
+        if isinstance(total_area, float):
+            return total_area <= m.site.loc[sit]['area']
         else:
             # Skip constraint, if sum of area-per-cap is not numeric at site
             return pyomo.Constraint.Skip

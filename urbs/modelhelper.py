@@ -120,6 +120,30 @@ def dsm_time_tuples(timestep, time, delay):
     return time_list
 
 
+def dsm_recovery(timestep, time, recov):
+    """ Time frame for the allowed time indices in case of recovery
+
+    Args:
+        timestep: current timestep
+        time: list with time indices
+        recov: allowed dsm recovery in particular site and commodity
+
+    Returns:
+        A list of possible time indices which are within the modelled time
+        area
+    """
+
+    ub = max(time)
+
+    time_list = list()
+
+    for step in range(timestep, timestep+recov):
+        if step <= ub:
+            time_list.append(step)
+
+    return time_list
+
+
 def commodity_subset(com_tuples, type_name):
     """ Unique list of commodity names for given type.
 

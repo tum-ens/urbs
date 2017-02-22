@@ -893,8 +893,8 @@ def res_area_rule(m, sit):
     if m.site.loc[sit]['area'] >= 0:
         total_area = sum(m.cap_pro[s, p] *
                          m.process.loc[(s, p), 'area-per-cap']
-                       for (s, p) in m.pro_area_tuples
-                       if s == sit)
+                         for (s, p) in m.pro_area_tuples
+                         if s == sit)
         if isinstance(total_area, float):
             return total_area <= m.site.loc[sit]['area']
         else:

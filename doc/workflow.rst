@@ -57,6 +57,17 @@ to version control::
     $ git add newsealand.xlsx
     $ git commit -m "added newsealand.xlsx"
 
+Site, DSM and Buy-Sell-price
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note at the outset, that you do not have to worry about the three mentioned 
+worksheets, since they are not used for this tutorial. You need to keep them, 
+however, and modify them in order to avoid problems. First, specify the four 
+desired Sites in **Site** and set all values to either ``NV()`` or ``inf``.
+In the sheet **DSM** enter the four islands of New Sealand as sites into the 
+corresponding fields and set all values in the columns *cap-max-do* and 
+*cap-max-up* to ``0``. You do not need to change anything in sheet 
+**Buy-Sell-Price**.  
+
 Commodity
 ^^^^^^^^^
 Remove the rows with unneeded commodities, here everything except **Gas**,
@@ -387,8 +398,8 @@ that you use :func:`plot`::
     >>> %matplotlib
     >>> fig = urbs.plot(prob, 'Elec', 'Vled Haven')
     
-.. image:: newsealand/newsealand-base-elec-vled-haven.png
-   :width: 95%
+.. image:: newsealand/newsealand_base-Elec-Vled-Haven.png
+   :width: 100%
    :align: center
     
 Depending on the plotting backend, you now either see a window with the plot
@@ -416,7 +427,7 @@ e.g. ``runns.py``.
 
 Modify the ``scenario_co2_limit`` function. As the base scenario now has no
 limit, reducing it by 95 % does not make it finite. Therefore you set a fixed
-hard (annual) limit of 50 million tonnes of CO2 equivalent:
+hard (annual) limit of 40 million tonnes of CO2 equivalent:
     
 .. code-block:: python
    :emphasize-lines: 4
@@ -424,11 +435,13 @@ hard (annual) limit of 50 million tonnes of CO2 equivalent:
     def scenario_co2_limit(data):
         # change global CO2 limit
         hacks = data['hacks']
-        hacks.loc['Global CO2 limit', 'Value'] = 50000
+        hacks.loc['Global CO2 limit', 'Value'] = 40000
         return data
 
-Then, you want to show imported/exported electricity in the plots in custom
-colors. So you modify the ``my_colors`` :class:`dict` like this::
+Next, set adjust the plot_tuples and report_tuples by replacing ``North``, 
+``Mid`` and ``South`` by the four islands of Newsealand. 
+Furthermore, you want to show imported/exported electricity in the plots in 
+custom colors. So you modify the ``my_colors`` :class:`dict` like this::
     
     my_colors = {
         'Vled Haven': (230, 200, 200),
@@ -450,7 +463,7 @@ so you exclude them from the ``scenarios`` :class:`list`:
         result_name = os.path.splitext(input_file)[0]  # cut away file extension
         result_dir = prepare_result_directory(result_name)  # name + time stamp
     
-        (offset, length) = (3700, 14*24)  # time step selection
+        (offset, length) = (3500, 14*24)  # time step selection
         timesteps = range(offset, offset+length+1)
         
         # select scenarios to be run

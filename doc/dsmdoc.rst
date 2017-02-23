@@ -31,7 +31,7 @@ three sites most of the electricity from ``South`` has to be transported
 to supply ``Mid``. The electricity of ``North`` is relatively independent 
 of the other two sites.
 
-When appears the electricity DSM downshifts in the process?
+When do the electricity DSM downshifts appear in the process?
 
 - it is *necessary* to constraint the whole system with DSM downshifts, if 
   the demand is greater than the total output capacity.

@@ -130,6 +130,13 @@ def plot(prob, com, sit, timesteps=None,
             if col not in consumed.columns or not consumed[col].any():
                 created.pop(col)
 
+    # remove all columns from consumed which are all-zeros in both created and
+    # consumed (except the last one, to prevent a completely empty frame)
+    for col in consumed.columns:
+        if not consumed[col].any() and len(consumed.columns) > 1:
+            if col not in created.columns or not created[col].any():
+                consumed.pop(col)
+
     # sorting plot elements
     created = sort_plot_elements(created)
     consumed = sort_plot_elements(consumed)

@@ -688,7 +688,9 @@ def res_dsm_maximum_rule(m, tm, sit, com):
 # DSMup(t, t + recovery time R) <= Cup * delay time L
 def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
-    for t in range(tm, tm+m.dsm['recov'].loc[sit, com]):
+    for t in dsm_recovery(tm,
+                          m.timesteps[1:],
+                          m.dsm['recov'].loc[sit, com]):
         dsm_up_sum += m.dsm_up[t, sit, com]
     return dsm_up_sum <= (m.dsm.loc[sit, com]['cap-max-up'] *
                           m.dsm['delay'].loc[sit, com])
@@ -889,10 +891,16 @@ def res_process_capacity_rule(m, sit, pro):
 # used process area <= maximal process area
 def res_area_rule(m, sit):
     if m.site.loc[sit]['area'] >= 0:
-        total_area = sum(m.cap_pro[s, p] * m.process.loc[(s, p), 'area-per-cap']
+        total_area = sum(m.cap_pro[s, p] *
+                         m.process.loc[(s, p), 'area-per-cap']
                          for (s, p) in m.pro_area_tuples
                          if s == sit)
-        return total_area <= m.site.loc[sit]['area']
+        if isinstance(total_area, float):
+            return total_area <= m.site.loc[sit]['area']
+        else:
+            # Skip constraint, if sum of area-per-cap is not numeric at site
+            return pyomo.Constraint.Skip
+
     else:
         # Skip constraint, if area is not numeric
         return pyomo.Constraint.Skip

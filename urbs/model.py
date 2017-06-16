@@ -5,7 +5,7 @@ from .modelhelper import *
 
 
 def create_model(data, timesteps=None, dt=1, dual=False):
-    """Create a pyomo ConcreteModel URBS object from given input data.
+    """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
@@ -18,7 +18,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         a pyomo ConcreteModel object
     """
     m = pyomo.ConcreteModel()
-    m.name = 'URBS'
+    m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
 

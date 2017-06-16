@@ -30,10 +30,11 @@ There are 2 ways to get all required packages under Windows. I recommend using t
 #### Anaconda (recommended)
 
   1. **[Anaconda (Python 3.5)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.  
-     During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
-  2. **Solver**: [GLPK](http://winglpk.sourceforge.net/).  (thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), only version 4.57 or older is supported at the moment [May 2016])
+     During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected! If only higher Python versions are available, you can switch to Python 3.5 by typing `conda install python=3.5`
+  2. **Solver**: [GLPK](http://winglpk.sourceforge.net/).
       1. Simply unzip the downloaded version to any folder, e.g. `C:\GLPK`. 
       2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `glpsol` command is available on the command prompt.
+      3. Alternative: Install it via conda by `conda install -c conda-forge glpk`. It will add it to the path variable, too.
   3. **Pyomo**
      1. Launch a new command prompt (Win+R, type "cmd", Enter)
      2. Type `conda install -c conda-forge pyomo`, hit Enter.

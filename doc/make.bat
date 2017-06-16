@@ -28,6 +28,7 @@ if "%1" == "help" (
 	echo.  devhelp    to make HTML files and a Devhelp project
 	echo.  epub       to make an epub
 	echo.  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter
+	echo.  livehtml   to run sphinx-autobuild to refresh html
 	echo.  text       to make text files
 	echo.  man        to make manual pages
 	echo.  texinfo    to make Texinfo files
@@ -47,7 +48,7 @@ if "%1" == "clean" (
 )
 
 
-%SPHINXBUILD% 2> nul
+%SPHINXBUILD% 1> nul 2> nul
 if errorlevel 9009 (
 	echo.
 	echo.The 'sphinx-build' command was not found. Make sure you have Sphinx
@@ -66,6 +67,10 @@ if "%1" == "html" (
 	echo.
 	echo.Build finished. The HTML pages are in %BUILDDIR%/html.
 	goto end
+)
+
+if "%1" == "livehtml" (
+    sphinx-autobuild -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 )
 
 if "%1" == "dirhtml" (

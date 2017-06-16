@@ -1,18 +1,18 @@
-# URBS
+# urbs
 
-URBS is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
+urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
 
-[![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](https://urbs.readthedocs.org/en/latest/)
-[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.46118.svg)](http://dx.doi.org/10.5281/zenodo.46118)
+[![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](http://urbs.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.242029.svg)](https://doi.org/10.5281/zenodo.242029)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/tum-ens/urbs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Features
 
-  * URBS is a linear programming model for multi-commodity energy systems with a focus on optimal storage sizing and use.
+  * urbs is a linear programming model for multi-commodity energy systems with a focus on optimal storage sizing and use.
   * It finds the minimum cost energy system to satisfy given demand timeseries for possibly multiple commodities (e.g. electricity).
   * By default, operates on hourly-spaced timesteps (configurable).
   * Thanks to [Pandas](https://pandas.pydata.org), complex data analysis is easy.
-  * The model itself is quite small thanks to relying on the [Pyomo](http://www.pyomo.org/)
+  * The model itself is quite small thanks to relying on package [Pyomo](http://www.pyomo.org/).
   * The small codebase includes reporting and plotting functionality.
 
 ## Screenshots
@@ -31,9 +31,12 @@ There are 2 ways to get all required packages under Windows. I recommend using t
 
   1. **[Anaconda (Python 3.5)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.  
      During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected!
-  2. **Pyomo** and **GLPK**
+  2. **Solver**: [GLPK](http://winglpk.sourceforge.net/).  (thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), only version 4.57 or older is supported at the moment [May 2016])
+      1. Simply unzip the downloaded version to any folder, e.g. `C:\GLPK`. 
+      2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `glpsol` command is available on the command prompt.
+  3. **Pyomo**
      1. Launch a new command prompt (Win+R, type "cmd", Enter)
-     2. Type `conda install -c conda-forge pyomo glpk`, hit Enter.
+     2. Type `conda install -c conda-forge pyomo`, hit Enter.
 
 Continue at [Get Started](#get-started).
 
@@ -89,7 +92,7 @@ and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-e
 
 ## Next steps
 
-  1. Head over to the tutorial at http://urbs.readthedocs.org, which goes through runme.py step by step. 
+  1. Head over to the tutorial at http://urbs.readthedocs.io, which goes through runme.py step by step. 
   2. Read the source code of `runme.py` and `comp.py`. 
   3. Quickly scan through `urbs.py`, read docstrings.
   4. Try adding/modifying scenarios in `runme.py` and see their effect on results.
@@ -97,9 +100,22 @@ and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-e
   
 ## Further reading
 
+  - If you do not know anything about the command line, read [Command Line Crash Course](https://learnpythonthehardway.org/book/appendixa.html). Python programs are scripts that are executed from the command line, similar to MATLAB scripts that are executed from the MATLAB command prompt.
+  - If you do not know Python, try one of the following ressources:
+    * The official [Python Tutorial](https://docs.python.org/3/tutorial/index.html) walks you through the language's basic features.
+    * [Learn Python the Hard Way](https://learnpythonthehardway.org/book/preface.html). It is meant for programming beginners.
   - The book [Python for Data Analysis](http://shop.oreilly.com/product/0636920023784.do) best summarises the capabilities of the packages installed here. It starts with IPython, then adds NumPy, slowly fades to pandas and then shows first basic, then advanced data conversion and analysis recipes. Visualisation with matplotlib is given its own chapter, both with and without pandas.
   - For a huge buffet of appetizers showing the capabilities of Python for scientific computing, I recommend browsing this [gallery of interesting IPython Notebooks](https://github.com/ipython/ipython/wiki/A-gallery-of-interesting-IPython-Notebooks).
   
+## Example uses
+
+  - Branch [1node](https://github.com/ojdo/urbs/tree/1node) in the forked repository [ojdo/urbs](https://github.com/ojdo/urbs) shows a small example of a real-world usage of the model. It includes a [`scenario_generator`](https://github.com/ojdo/urbs/blob/dfa9cf0ad7b03289bf7c64d79ea93c7886a00a96/run1node.py#L10-L37) function in its run script, which is useful for extensive parameter sweeps.
+  - Branch [1house](https://github.com/ojdo/urbs/tree/1house) in the forked repository [ojdo/urbs](https://github.com/ojdo/urbs) shows another (newer) example of a small-scale application of the model. It demonstrates the use for two demand commodities (electricity and heat) for a single consumer (a single site named 'house'). It also shows how to create a very customized comparison script:
+  
+<a href="https://raw.githubusercontent.com/ojdo/urbs/1house/img/comparison.png"><img src="https://raw.githubusercontent.com/ojdo/urbs/1house/img/comparison.png" alt="Comparison plot in example study 1house."></a>
+  
+  - Branch [haag15](https://github.com/ojdo/urbs/tree/haag15) in the forked repository [ojdo/urbs](https://github.com/ojdo/urbs) shows a larger example of a real-world use. Its input file contains a town divided into 12 regions, 12 process types, and 2 demand commodities (electricity and heat) . Patience and RAM (64 GB or more) is needed to run these scenarios with 8760 timesteps. The branch also contains three IPython notebooks that are used for result analysis and coupling to model [rivus](https://github.com/tum-ens/rivus).
+
 ## Copyright
 
 Copyright (C) 2014-2016  TUM ENS

@@ -14,9 +14,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 project = u'urbs'
-copyright = u'2014-2016, tum-ens'
-version = '0.5'
-release = '0.5'
+copyright = u'2014-2017, tum-ens'
+version = '0.7'
+release = '0.7'
 
 exclude_patterns = ['_build']
 #pygments_style = 'sphinx'
@@ -26,10 +26,14 @@ exclude_patterns = ['_build']
 htmlhelp_basename = 'urbsdoc'
 
 # LaTeX output
+LATEX_PREAMBLE = """
+\setcounter{tocdepth}{2}
+"""
 
 latex_elements = {
     'papersize': 'a4paper',
     'pointsize': '11pt',
+    'preamble': LATEX_PREAMBLE
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -68,7 +72,7 @@ texinfo_documents = [
 epub_title = u'urbs'
 epub_author = u'tum-ens'
 epub_publisher = u'tum-ens'
-epub_copyright = u'2014-2016, tum-ens'
+epub_copyright = u'2014-2017, tum-ens'
 
 epub_exclude_files = ['search.html']
 

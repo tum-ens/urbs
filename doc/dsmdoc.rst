@@ -1,231 +1,300 @@
 .. module:: urbs
 
+
 Demand Side Management Documentation
 ************************************
 
-This documentation explains the Demand Side Management feature of urbs. 
-With it, one can model time variant Demand Side Management Up/Downshift 
-in a concrete energy system, for example, smart grid of a city.
+Demand Side Management (DSM) is a plug-in feature to the energy model urbs. 
+DSM targets energy and enviromental efficiency through adapting demand and 
+controlled consumption. In this documentation the theory behind the DSM 
+formulation and the DSM feature of urbs are explained.
+
 
 Introduction
-============
-The DSM up/downshifts are closely related to commodities,
-which are given by default in the urbs with their energy content (MWh). 
-The size of the modelled market has to be considered small relative to 
-the surrounding market. To use this feature, the excel input file needs 
-an additional **Demand Side Management** sheet with the five parameters 
-containing the columns ``delay``, ``eff``, ``recov``, ``cap-max-do`` and 
-``cap-max-up``, which are used in DSM constraints as technical parameters. 
-For a more detailed description of the implementation have a look at the 
-mathematical definitions in the Mathematical Documentation, section 
-:ref:`sec-dsm-constr`.
+------------
 
-Exemplification
-===============
-
-This section contains prototypical scenarios illustrating the system 
-behaviour with time variant DSM up/downshifts. 
-In this part there is an island as an example named ``Greenland``, which 
-composed of three sites ``Mid``, ``North``, and ``South``. Between the 
-three sites most of the electricity from ``South`` has to be transported 
-to supply ``Mid``. The electricity of ``North`` is relatively independent 
-of the other two sites.
-
-When do the electricity DSM downshifts appear in the process?
-
-- it is *necessary* to constraint the whole system with DSM downshifts, if 
-  the demand is greater than the total output capacity.
-
-- it is *profitable* to constraint the whole system with DSM downshifts, if 
-  the commodity begin to show upward trend till the peak value.
-
-When appears the electricity DSM upshifts in the process?
-
-- it is *possible* **and** *profitable* to constraint the whole system with DSM
-  upshifts, if the demand is lesser than the total output capacity **and** 
-  the commodity begin to show downward trend till the valley value.
+The DSM feature of urbs has 2 variables **DSM upshift** and **DSM downshift**. 
+An upshift/downshift in time step :math:`t` means increased/decreased demand for that 
+time step. The DSM feature has 5 technical parameters **delay** (:math:`y_{vc}`), **eff** (:math:`e_{vc}`), 
+**recov** (:math:`o_{vc}`), **cap-max-do** (:math:`\overline{K}_{vc}^\text{down}`) and **cap-max-up** (:math:`\overline{K}_{vc}^\text{up}`). 
+For detailed information, see :ref:`Demand Side Management Technical Parameters`.
+The input excel file of urbs requires an extra DSM sheet, with columns named 
+these parameters. This sheet allows DSM to be incorporated in urbs. The DSM feature 
+also has to stay within some limitations, which are determined by its formulation. 
+For detailed information see :ref:`Demand Side Management Constraints`.
 
 
-High Maximal Up/Downshift Capacity 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Mathematical Description
+------------------------
 
-All process, transmission and storage capacities are predetermined and 
-constant.
+Before getting started with examples, the :ref:`DSM Variables Rule` should be 
+clarified, as it is vital in understanding the workflow of DSM. This rule 
+is about the relation between upshifts and their corresponding downshifts. An upshift (multiplied 
+with efficiency) must be compensated with multiple downshifts during a certain
+time intervall. The lower and upper bounds of this time intervall are :math:`t - y_{vc}` 
+and :math:`t + y_{vc}`. While defining this time interval, another 
+time index :math:`tt` is required. Main idea behind this representation is to map every downshift 
+to an upshift. With :math:`tt` being included, our downshift process 
+can be seen as a matrix with rows/columns corresponding to :math:`t`/:math:`tt` values. 
+Mathematically expressed, for every :math:`t`, this rule iterates through 
+the defined time interval of DSM downshift process horizontally (:math:`t` is constant, :math:`tt` varies between :math:`t - y_{vc}` and :math:`t + y_{vc}`) 
+and sums every component of matrix. Finally the sum must be equal to the upshift 
+made in that time step :math:`t`.
+   
+Another constraint of DSM is the **DSM downward rule** and also helpful realizing the 
+matrix representation of time indexes. This rule limits the maximum downshift 
+capacity in time step :math:`tt` during a certain time intervall. The lower and upper bounds 
+of this time intervall are :math:`tt - y_{vc}` and :math:`tt + y_{vc}`. For every :math:`tt`, 
+the **DSM downward rule** iterates through this time intervall vertically (:math:`tt` is constant, 
+:math:`t` varies between :math:`tt - y_{vc}` and :math:`tt + y_{vc}`) and sums every component of matrix. The sum may not 
+exceed a pre-defined value of maximum downshift capacity.
 
-The following scenario illustrates the energy balance of the ``South`` of 
-``greenland``. It has a demand of 50-100 GW that is supplied by a 50 GW 
-photovoltaics plant and a 50 GW wind plant. In addition a 50 GW transmission 
-cable exports electricity, which connects the ``Mid`` of island with the grid 
-of ``South``. Both capacities and prices are fix. Because of the meteorological 
-effects on Photovoltaics plants, the timesteps began at the 3000th hour of the 
-year, which was also the beginning of the summer.
 
+Example Scenario
+^^^^^^^^^^^^^^^^
 
-.. csv-table:: Scenario All Together: Elec in South
+An example scenario, which lasts 6 days with parameters below clarifies the mathematical 
+description above. DSM variables are extracted and their specific values can be seen
+in the tables below. In light of mathematical description, tables representing DSM upshift and downshift processes 
+can be analysed.
+
+.. csv-table::
    :header-rows: 1
    :stub-columns: 1
-   
-   Process,        eff, inst-cap, inst-cap-out,  fuel-cost, var-cost, total-var-cost
-   Photovoltaics, 1.00,        0,      50000,            0,        0,              0 
-   Wind plant,    1.00,        0,     100000,            0,        0,              0
-   Purchase,      1.00,        0,       1500, **15/45/75**,        0,       15/45/75
-   Feed-in,       1.00,        0,       1500, **15/45/75**,        0,       15/45/75
 
-.. csv-table:: DSM in South
+   Site,   Commodity, delay,  eff, recov, cap-max-do, cap-max-up
+   South,  Elec,         3,     1,     1,       2000,       2000
+
+   
+.. csv-table:: **DSM upshift process**
+   :header-rows: 1                                                           
+   :stub-columns: 1
+
+   :math:`t`,   
+   1, 0
+   2, 0
+   3, 1445
+   4, 1580
+   5, 2000
+   6, 0
+
+   
+   
+
+.. csv-table:: **DSM downshift process**
+   :header-rows: 1                                                           
+   :stub-columns: 1
+   
+   :math:`t` \\ :math:`tt`,   1,    2,    3,    4,    5,    6
+   1,                         0,    0,    0,    0,     ,        
+   2,                         0,    0,    0,    0,    0,        
+   3,                      1445,    0,    0,    0,    0,    0   
+   4,                       555,    0,  555,    0,    0,  470   
+   5,                          , 2000,    0,    0,    0,    0
+   6,                          ,     ,    0,    0,    0,    0
+   
+   
+   
+DSM upshift process is easy to understand, for every time step :math:`t` one upshift 
+is made and it can not exceed 2000. The table for DSM downshift process shows, the sum
+of horizontally positioned terms for every :math:`t`, is equal to the upshift made at
+that time step :math:`t`. The blank spaces in the table are because of delay time 
+restriction. For instance, an upshift in :math:`t = 1` may not be compensated with a 
+downshift in :math:`tt = 5`, as delay time is equal to 3 in our example. The DSM downward
+rule can be noticed in the sum of vertically positioned terms for every :math:`tt`. 
+This sum may not exceed 2000 as well, due to given parameters. 
+   
+   
+   
+Exemplification
+---------------
+
+After the mathematical description of the DSM feature in urbs, running some example 
+scenarios will be helpful for visualization of the feature in the output plots. 
+The purpose of this exemplification is to display effects of DSM parameter changes 
+to the demand curve. Therefore, the input file without any changes is used as the 
+original one and every other result is compared with this one for better understanding.
+
+For the exemplification phase, the excel input file :download:`mimo-example.xlsx <mimo-example.xlsx>` is used and 
+the output plot scenario_base-Elec-South-all is regarded.
+
+
+.. csv-table:: **DSM original**
    :header-rows: 1
    :stub-columns: 1
 
    Site,   Commodity, delay,  eff, recov, cap-max-do, cap-max-up
    South,  Elec,         16, 0.90,     1,       2000,       2000
-
-
-The modelled timesplan lasts 7 days with five parameters from DSM sheet in 
-``greenland-south.xlsx``. In the first ten hours of day 1 the electricity power
-is at a high level, because the supply is much less than the demand. So the 
-DSM begins with downshifts. But the situation will change into opposite direction 
-over time. After the supply exceeds, the demand the DSM upshifts appears to 
-take place of downshifts. How much electricity can the photovoltaics plants and 
-awind plants generate all depending on the weather conditions. The wind plants 
-works the whole day 24 hours, as long as the wind blows strongly enough. But 
-photovoltaics plants generates electricity only in the daytime, that is why the
-parameter ``delay`` is set to 16 hours. It just coincides the time in one day, 
-that is covered by the sunshine. Before the second day the wind blows strongly 
-enough, so that the surplus of wind plant generated electricity is converted 
-into storage. From the 3rd day the wind production decreases, and the electricity of 
-storage has to be taken out to meet the demand. At the midnight of the 5th day 
-electricity capacity come to the lowest point of all, and the output and input 
-keep nearly in balance.  Not only the frequency of scenario_base up/downshifts, 
-but also the amount of times of up/downshifts will decrease correspondingly. 
-There is relative more volatility of electricity capacity in the seven days 
-simulation than it without DSM.
-
-.. image:: greenland/scenario_all_together-Elec-South-sum.png
-    :width: 90%
-    :align: center
-	
-
-If the **commodity stock prices**, **global CO2 limit** and **maximum installable capacity** 
-in ``runme.py`` are not changed, and just only consider the ``scenario_base``, it 
-will be more clearly to show how the DSM affects the electricity commodities.
-
-.. image:: greenland/scenario_base-Elec-South-sum.png
-    :width: 90%
-    :align: center
-
-
-.. note::
-
-    For trial e.g. of the result of higher Demand Side Management this
-    :download:`greenland-south.xlsx <greenland/greenland-south.xlsx>`
-    is the input file used for this scenario.
-
-	
-Low Maximal Up/Downshift Capacity
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-All process, transmission and storage capacities are predetermined and constant.
-
-For the second scenario, the ``North`` of greenland will replaced the ``South``.
-Compared to the ``South``, the electricity supply of ``North`` is relatively 
-simple and independent. It has a demand of 10000-15000 MW, and the supply is 
-dominated by wind plants. Additionally there is about 2500 MW needed to be 
-provided by Purchase.
-
-.. csv-table:: Scenario All Together: Elec in North
-   :header-rows: 1
-   :stub-columns: 1
    
-    Process,        eff, inst-cap, inst-cap-out,    fuel-cost, var-cost, total-var-cost
-    Photovoltaics, 1.00,        0,         3000,            0,        0,              0 
-    Wind plant,	   1.00,        0,        15000,            0,        0,              0
-    Gas plant,     0.60,        0,            0,           27,     1.60,          28.60
-    Purchase,      1.00,     1500,         1500, **15/45/75**,        0,       15/45/75
-    Feed-in,       1.00,     2500,         2500, **15/45/75**,        0,       15/45/75
-	
-
-.. csv-table:: DSM in North
-    :header-rows: 1
-    :stub-columns: 1
-	
-	Site,   Commodity, delay,  eff,   recov,  cap-max-do, cap-max-up
-	North,  Elec,          8, 1.00,       1,         500,        500
-	
-	
-The modelled timesplan lasts also 7 days with five parameters from DSM sheet in 
-``greenland-north.xlsx``.  The electricity supply of ``North`` is dominated by 
-wind plants. The wind plants works for 24 hours in one whole day, and the wind 
-power strong or weak has nothing to do with the change of time. So the parameter 
-``delay`` is set to 8 hours. Because the peak value of the output of ``North`` 
-is just close to 15 GW, the ``cap-max-do`` and ``cap-max-up`` are set to 500 MW, 
-which is a quarter of South's. The electricity in the first four days, which is 
-generated by wind plants, keeps at a higher level. That is why the up/downshifts 
-appear frequently, regularly, and alternately during this time. But in the last 
-three days the wind power gets lower, and the electricity of storage has to be taken 
-out to meet the demand. Then during the three days downshifts dominate in most 
-case. With DSM up/downshifts intelligent allocation of electricity resources is 
-required to avoid the shortage of electricity supply during peak hours and the 
-overcapacity in the usual time. 
-
-
-.. image:: greenland/scenario_all_together-Elec-North-sum.png
+   
+.. image:: dsmdoc/scenario_base-Elec-South-all.png
     :width: 90%
     :align: center
 
-.. note::
 
-    For trial e.g. of the result of lower Demand Side Management this
-    :download:`greenland-north.xlsx <greenland/greenland-north.xlsx>`
-    is the input file used for this scenario.
+The above scenario is the unchanged, original one and illustrates the energy balance 
+of site South for a time period of 7 days. Gray curve in the output plot represents 
+the original demand curve and black curve the shifted demand curve. The difference 
+between these curves can be explained with the impact of the DSM feature. Even though 
+output plots do not give certain information about DSM variables directly, they 
+can be informative at some points. For instance, if the gap between black and gray curve, 
+in one time step, is equal to cap-max-up, than it is certain that at that time step 
+a maximal upshift and no downshifts are made. In every other situation, demand curves 
+do not correspond to DSM variables directly. The reason behind is, as expressed 
+in mathematical description above, that in one time step tt there can be multiple 
+downshifts and an upshift. Therefore, the difference between the demand curves
+is equal to difference between upshift and downshifts in that time step and do not 
+correspond to a specific upshift or downshift.
 
 
-
-No Maximal Up/Downshift Capacity 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-All process, transmission and storage capacities are predetermined and constant.
-
-The last scenario illustrates the energy balance of the ``Mid`` of ``greenland``. 
-It has a demand of 50-70 GW that is mostly supplied by a 50 GW transmission, which 
-come from ``South``. In addition, a 13 GW wind plant and 16 GW Photovoltaics plant 
-has made a contribution to the whole electricity system of ``Mid``.
- 
-
-.. csv-table:: Scenario All Together: Elec in Mid
+.. csv-table:: **DSM with delay=1**
    :header-rows: 1
    :stub-columns: 1
 
-   Process,         eff, inst-cap, inst-cap-out, fuel-cost, var-cost, total-var-cost
-   Photovoltaics,  1.00,    15000,        16000,         0,        0,           0.00
-   Wind plant,     1.00,        0,        13000,         0,        0,           0.00
-   Gas plant,      0.60,        0,         8000,        27,     1.60,          28.60
-   Hydro plant,    1.00,        0,         1400,         6,     1.40,           7.40
-   Lignite plant,  0.40,        0,        60000,         0,     0.60,           0.60
-   Biomass plant,  0.35,        0,         5000,         6,     1.40,           7.40
-
-
-.. csv-table:: DSM in Mid
-   :header-rows: 1
-   :stub-columns: 1
+   Site,   Commodity, delay,  eff, recov, cap-max-do, cap-max-up
+   South,  Elec,         1, 0.90,     1,       2000,       2000
    
-   Site,   Commodity, delay,  eff,  recov,  cap-max-do, cap-max-up
-   Mid,     Elec,      0,    1.00,    1,         0,          0
+   
+.. image:: dsmdoc/scenario_base-Elec-South-all_delay1.png
+    :width: 90%
+    :align: center
+   
+   
 
-The ``Mid`` gets so adequate electricity import from the ``South``, that
-commodity of the ``Mid`` per unit time is far greater than maximal up/downshifts
-capacity. That means it is meaningless for the setting of DSM faced with so
-enormous commodity, which is far beyond the controllable range. Supposed that
-the ``Mid`` is the city center, the largest energy customer, not the energy
-producer, and then there is huge infrastructure inside, such as public traffic,
-hospital, and communication system, which have to be supplied for 24 hours one
-day. That's why the parameters ``delay``, ``cap-max-do`` and ``cap-max-up`` are
-set to 0. It means that there was no more DSM in the electricity system of
-``Mid`` to constraint the commodities.
+The scenario above illustrates the same site South for the same time period of 
+7 days, with just a change of delay time of 1. Delay time is a vital constraint 
+of the DSM feature and many real-world DSM applications work with short delay times. 
+As seen in the plot above, delay time of 1 hour, directly restricts the DSM 
+effectiveness in our example. With reduced demand time, the interval lessens, so demand adaptation 
+is impeded. Every upshift in time step :math:`t` is compensated in maximal range of 2 hours ([:math:`t-1`, :math:`t+1`]).
+Therefore, usually in critical times just as when photovoltaics start to generate 
+electricity, downshifts and upshifts step in. It is the most proper time for the system to
+make profit with using the DSM feature, with a delay time of 1.
 
 
-.. image:: greenland/scenario_all_together-Elec-Mid-sum.png
-   :width: 90%
-   :align: center
+.. csv-table:: **DSM with delay=24**
+   :header-rows: 1
+   :stub-columns: 1
 
-.. note::
+   Site,   Commodity, delay,  eff, recov, cap-max-do, cap-max-up
+   South,  Elec,         24, 0.90,     1,       2000,       2000
+   
+.. image:: dsmdoc/scenario_base-Elec-South-all_delay24.png
+    :width: 90%
+    :align: center   
 
-    For trial e.g. of the result of no Demand Side Management this
-    :download:`greenland-mid.xlsx <greenland/greenland-mid.xlsx>`
-    is the input file used for this scenario.
+
+	
+	
+In this example above, delay time is equal to 24. It means DSM cycle has more time 
+to compensate an upshift with downshifts. It has an effect of longer periods of 
+consecutive upshifts, because of less-tight time restriction. However, very long 
+delay times may not be appropriate for real-world DSM applications. For meaningful 
+conclusions in many real-world applications delay time :math:`y_{vc}` should be assigned to 
+reasonable numbers.
+
+
+.. csv-table:: **DSM with cap-max-do=1000**
+   :header-rows: 1
+   :stub-columns: 1
+
+   Site,   Commodity, delay,  eff, recov, cap-max-do, cap-max-up
+   South,  Elec,         16, 0.90,     1,       1000,       2000
+   
+.. image:: dsmdoc/scenario_base-Elec-South-all_capmaxdo1000.png
+    :width: 90%
+    :align: center   
+
+	
+
+The scenario above illustrates the same site South for the same time period of 
+7 days, with just a change of cap-max-do of 1000. Time steps, where upshifts 
+and downshifts are made, do not vary considerably. However, as the new maximal 
+downshift capacity is equal to half of before, the system needs more time to 
+compensate an upshift. Effective usage of the DSM feature is through indirect time 
+restriction blocked.
+
+
+.. csv-table:: **DSM with eff=0.10**
+   :header-rows: 1
+   :stub-columns: 1
+
+   Site,   Commodity, delay,  eff, recov, cap-max-do, cap-max-up
+   South,  Elec,         16, 0.10,     1,       2000,       2000
+   
+.. image:: dsmdoc/scenario_base-Elec-South-all_eff0,1.png
+    :width: 90%
+    :align: center 
+
+
+Adding the efficiency factor to formula means taking possible losses due to real 
+world conditions into consideration. In the example above, the changed parameter 
+is efficiency and it is equal to 0.1, which makes the upshift 10 percent efficient. 
+That is why less downshifts have to be made in order the compensate upshifts. The
+time steps where upshifts are made, are chosen the most profitable ones. This example
+with efficiency of 0.1, which is very low, can be interpreted as an application with
+technical incoherencies.
+
+
+
+.. csv-table:: **DSM with recov=72**
+   :header-rows: 1
+   :stub-columns: 1
+
+   Site,   Commodity, delay,  eff, recov, cap-max-do, cap-max-up
+   South,  Elec,         16, 0.90,    72,       2000,       2000
+   
+.. image:: dsmdoc/scenario_base-Elec-South-all_recov72.png
+    :width: 90%
+    :align: center 
+	
+
+	
+Recovery time is another extension to model, which prevents DSM process to cycle 
+continiously, so that the DSM feature orientates to real-world DSM processes. The 
+example scenario above has a recovery time of 72 hours (3 days). Recovery
+time limitates the cumulative upshifts for a defined time, which is 72 hours
+in this example. As illustrated in the graph, this restricton prevents system
+to make upshifts during some time periods and the process becomes non-continious. 
+Recovery time is in relation with delay time and have to be chosen reasonably 
+regarding to its formula. It is a substantive extension to the model, as many 
+real-world DSM processes are not permitted to cycle constantly.
+
+
+.. csv-table:: **DSM upshift process with recov=72**
+   :header-rows: 1                                                           
+   :stub-columns: 1
+
+   :math:`t`,   
+   3501, 0
+   ..., 0
+   3513, 0
+   3514, 1375
+   3515, 0
+   3516, 1282
+   3517, 2000
+   ..., 2000
+   3528, 2000
+   3529, 0
+   ..., 0
+   3540, 0
+   3541, 1343
+   3542, 0
+   3543, 2000
+   3544, 2000
+   3545, 0
+   ..., 0
+   3572, 0
+
+
+
+The DSM upshift process table above, which is for this scenario, expresses the 
+restriction of the upshifts explicitly. After time step 3537 the system should
+normally start with upshifts and continue until time step 3550 as seen in our original scenario. 
+But in this scenario during this time interval just 3 upshifts are made and until time step 3572
+no upshifts are on the cards. It is because the maximal limit of :math:`\overline{K}_{vc}^\text{up}y_{vc}`
+is reached and no upshifts are allowed for a certain time. 
+
+
+
+

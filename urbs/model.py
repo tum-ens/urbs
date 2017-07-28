@@ -954,7 +954,7 @@ def res_transmission_symmetry_rule(m, sin, sout, tra, com):
 
 # storage
 
-# storage content in timestep [t] == storage content[t-1] * Discharge
+# storage content in timestep [t] == storage content[t-1] * (1-Discharge)
 # + newly stored energy * input efficiency
 # - retrieved energy / output efficiency
 def def_storage_state_rule(m, t, sit, sto, com):

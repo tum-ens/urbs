@@ -28,9 +28,9 @@ and subtracts for the same given commodity :math:`c`, site :math:`v` and timeste
 
 The value of the function :math:`\mathrm{CB}` being greater than zero :math:`\mathrm{CB} > 0` means that the presence of the commodity :math:`c` in the site :math:`v` at the timestep :math:`t` is getting less than before by the technologies given above. Correspondingly, the value of the function being less than zero means that the presence of the commodity in the site at the timestep is getting more than before by the technologies given above.
 
-In script ``urbs.py`` the value of the commodity balance function :math:`\mathrm{CB}(v,c,t)` is calculated by the following code fragment: 
+In script ``model.py`` the value of the commodity balance function :math:`\mathrm{CB}(v,c,t)` is calculated by the following code fragment: 
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/modelhelper.py
    :pyobject: commodity_balance
 
 
@@ -65,7 +65,7 @@ In script ``urbs.py`` the value of the commodity balance function :math:`\mathrm
 .. math::
 	\forall (v,c) in D_{vc}, t\in T_m\colon\ - \mathrm{CB}(v,c,t) - \delta_{vct}^\text{up}` + \sum_{tt \in D_{vct,tt}^\text{down}} \delta_{vct,tt}^\text{down}` \geq 0
 
-In script ``urbs.py`` the constraint vertex rule is defined and calculated by the following code fragments:
+In script ``model.py`` the constraint vertex rule is defined and calculated by the following code fragments:
 
 ::
 
@@ -75,7 +75,7 @@ In script ``urbs.py`` the constraint vertex rule is defined and calculated by th
 			doc='storage + transmission + process + source + buy - sell == demand')
 		
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_vertex_rule
 
 **Stock Per Step Rule**: The constraint stock per step rule applies only for commodities of type "Stock" ( :math:`c \in C_\text{st}`). This constraint limits the amount of stock commodity :math:`c \in C_\text{st}`, that can be used by the energy system in the site :math:`v` at the timestep :math:`t`. The limited amount is defined by the parameter maximum stock supply limit per time step :math:`\overline{l}_{vc}`. To satisfy this constraint, the value of the variable stock commodity source term :math:`\rho_{vct}` must be less than or equal to the value of the parameter maximum stock supply limit per time step :math:`\overline{l}_{vc}`. In mathematical notation this is expressed as:
@@ -84,7 +84,7 @@ In script ``urbs.py`` the constraint vertex rule is defined and calculated by th
 
 	\forall v\in V, c\in C_\text{st}, t\in T_m\colon\ \rho_{vct} \leq \overline{l}_{vc}
 
-In script ``urbs.py`` the constraint stock per step rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint stock per step rule is defined and calculated by the following code fragment:
 
 ::
 
@@ -94,7 +94,7 @@ In script ``urbs.py`` the constraint stock per step rule is defined and calculat
         doc='stock commodity input per step <= commodity.maxperstep')
 
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_stock_step_rule
 
 
@@ -104,7 +104,7 @@ In script ``urbs.py`` the constraint stock per step rule is defined and calculat
 
 	\forall v\in V, c\in C_\text{st}\colon\ w \sum_{t\in T_m} \Delta t\, \rho_{vct} \leq \overline{L}_{vc}
 
-In script ``urbs.py`` the constraint total stock rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint total stock rule is defined and calculated by the following code fragment:
 
 ::
 
@@ -113,7 +113,7 @@ In script ``urbs.py`` the constraint total stock rule is defined and calculated 
         rule=res_stock_total_rule,
         doc='total stock commodity input <= commodity.max')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_stock_total_rule
 
 
@@ -123,7 +123,7 @@ In script ``urbs.py`` the constraint total stock rule is defined and calculated 
 
 	\forall v\in V, c\in C_\text{sell}, t\in T_m\colon\  \varrho_{vct} \leq \overline{g}_{vc}
 
-In script ``urbs.py`` the constraint sell per step rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint sell per step rule is defined and calculated by the following code fragment:
 ::
 
     m.res_sell_step = pyomo.Constraint(
@@ -131,7 +131,7 @@ In script ``urbs.py`` the constraint sell per step rule is defined and calculate
        rule=res_sell_step_rule,
        doc='sell commodity output per step <= commodity.maxperstep')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_sell_step_rule
 
 **Total Sell Rule**: The constraint total sell rule applies only for commodities of type "Sell" ( :math:`c \in C_\text{sell}`). This constraint limits the amount of sell commodity :math:`c \in C_\text{sell}`, that can be sold annually by the energy system in the site :math:`v`. The limited amount is defined by the parameter maximum annual sell supply limit per vertex :math:`\overline{G}_{vc}`. To satisfy this constraint, the annual usage of sell commodity must be less than or equal to the value of the parameter sell supply limit per vertex :math:`\overline{G}_{vc}`. The annual usage of sell commodity is calculated by the sum of the products of the parameter weight :math:`w`, the parameter timestep duration :math:`\Delta t` and the parameter sell commodity source term :math:`\varrho_{vct}` for every timestep :math:`t \in T_m`. In mathematical notation this is expressed as:
@@ -140,7 +140,7 @@ In script ``urbs.py`` the constraint sell per step rule is defined and calculate
 
 	\forall v\in V, c\in C_\text{sell}\colon\ w \sum_{t\in T_m} \Delta t\, \varrho_{vct} \leq \overline{G}_{vc}
 
-In script ``urbs.py`` the constraint total sell rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint total sell rule is defined and calculated by the following code fragment:
 ::
 
     m.res_sell_total = pyomo.Constraint(
@@ -148,7 +148,7 @@ In script ``urbs.py`` the constraint total sell rule is defined and calculated b
         rule=res_sell_total_rule,
         doc='total sell commodity output <= commodity.max')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_sell_total_rule
 
 **Buy Per Step Rule**: The constraint buy per step rule applies only for commodities of type "Buy" ( :math:`c \in C_\text{buy}`). This constraint limits the amount of buy commodity :math:`c \in C_\text{buy}`, that can be bought by the energy system in the site :math:`v` at the timestep :math:`t`. The limited amount is defined by the parameter maximum buy supply limit per time step :math:`\overline{b}_{vc}`. To satisfy this constraint, the value of the variable buy commodity source term :math:`\psi_{vct}` must be less than or equal to the value of the parameter maximum buy supply limit per time step :math:`\overline{b}_{vc}`. In mathematical notation this is expressed as:
@@ -157,7 +157,7 @@ In script ``urbs.py`` the constraint total sell rule is defined and calculated b
 
 	\forall v\in V, c\in C_\text{buy}, t\in T_m\colon\  \psi_{vct} \leq \overline{b}_{vc}
 
-In script ``urbs.py`` the constraint buy per step rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint buy per step rule is defined and calculated by the following code fragment:
 ::
 
     m.res_buy_step = pyomo.Constraint(
@@ -165,7 +165,7 @@ In script ``urbs.py`` the constraint buy per step rule is defined and calculated
         rule=res_buy_step_rule,
         doc='buy commodity output per step <= commodity.maxperstep')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_buy_step_rule
 
 **Total Buy Rule**: The constraint total buy rule applies only for commodities of type "Buy" ( :math:`c \in C_\text{buy}`). This constraint limits the amount of buy commodity :math:`c \in C_\text{buy}`, that can be bought annually by the energy system in the site :math:`v`. The limited amount is defined by the parameter maximum annual buy supply limit per vertex :math:`\overline{B}_{vc}`. To satisfy this constraint, the annual usage of buy commodity must be less than or equal to the value of the parameter buy supply limit per vertex :math:`\overline{B}_{vc}`. The annual usage of buy commodity is calculated by the sum of the products of the parameter weight :math:`w`, the parameter timestep duration :math:`\Delta t` and the parameter buy commodity source term :math:`\psi_{vct}` for every timestep :math:`t \in T_m`. In mathematical notation this is expressed as:
@@ -174,7 +174,7 @@ In script ``urbs.py`` the constraint buy per step rule is defined and calculated
 
 	\forall v\in V, c\in C_\text{buy}\colon\ w \sum_{t\in T_m} \Delta t\, \psi_{vct} \leq \overline{B}_{vc}
 
-In script ``urbs.py`` the constraint total buy rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint total buy rule is defined and calculated by the following code fragment:
 ::
 
     m.res_buy_total = pyomo.Constraint(
@@ -182,7 +182,7 @@ In script ``urbs.py`` the constraint total buy rule is defined and calculated by
        rule=res_buy_total_rule,
        doc='total buy commodity output <= commodity.max')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_buy_total_rule
 
 
@@ -192,7 +192,7 @@ In script ``urbs.py`` the constraint total buy rule is defined and calculated by
 
 	\forall v\in V, c\in C_\text{env}, t\in T_m\colon\  -\mathrm{CB}(v,c,t) \leq \overline{m}_{vc}
 
-In script ``urbs.py`` the constraint environmental output per step rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint environmental output per step rule is defined and calculated by the following code fragment:
 ::
 
     m.res_env_step = pyomo.Constraint(
@@ -200,7 +200,7 @@ In script ``urbs.py`` the constraint environmental output per step rule is defin
         rule=res_env_step_rule,
         doc='environmental output per step <= commodity.maxperstep')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_env_step_rule
 
 
@@ -210,7 +210,7 @@ In script ``urbs.py`` the constraint environmental output per step rule is defin
 
 	\forall v\in V, c\in C_\text{env}\colon\ - w \sum_{t\in T_m} \Delta t\, \mathrm{CB}(v,c,t) \leq \overline{M}_{vc}
 
-In script ``urbs.py`` the constraint total environmental output rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint total environmental output rule is defined and calculated by the following code fragment:
 ::
 
     m.res_env_total = pyomo.Constraint(
@@ -218,9 +218,9 @@ In script ``urbs.py`` the constraint total environmental output rule is defined 
         rule=res_env_total_rule,
         doc='total environmental commodity output <= commodity.max')
 
-In script ``urbs.py`` the constraint total environmental output rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint total environmental output rule is defined and calculated by the following code fragment:
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_env_total_rule
 
 
@@ -246,7 +246,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=def_dsm_variables_rule,
         doc='DSMup == DSMdo * efficiency factor n')	
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: def_dsm_variables_rule
         
         
@@ -264,7 +264,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_upward_rule,
         doc='DSMup <= Cup (threshold capacity of DSMup)')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_dsm_upward_rule
         
 **DSM Downward Rule**: The DSM downshift :math:`\delta_{vct}^\text{up}` in site :math:`v` of commodity :math:`c` in time step :math:`t` is limited by the maximal upshift capacity :math:`\overline{K}_{vc}^\text{up}`. In mathematical terms, this is written as:
@@ -281,7 +281,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_downward_rule,
         doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_dsm_downward_rule
         
 
@@ -299,7 +299,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_maximum_rule,
         doc='DSMup + DSMdo <= max(Cup,Cdo)')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_dsm_maximum_rule
 
 **DSM Recovery Rule**: The DSM recovery rule limits the upshift in site :math:`v` of commodity :math:`c` during a set recovery period :math:`o_{vc}`. In mathematical terms, this is written as:
@@ -316,7 +316,7 @@ The definition of the constraint and its corresponding rule is defined by the fo
         rule=res_dsm_recovery_rule,
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_dsm_recovery_rule     
   
         
@@ -330,10 +330,10 @@ Global Environmental Constraint
 
 	w \sum_{t\in T_\text{m}} \sum_{v \in V} \mathrm{-CB}(v,CO_{2},t) \leq \overline{L}_{CO_{2}}
 
-In script ``urbs.py`` the constraint global CO2 limit rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint global CO2 limit rule is defined and calculated by the following code fragment:
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: add_hacks
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_global_co2_limit_rule

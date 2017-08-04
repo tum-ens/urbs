@@ -11,9 +11,9 @@ The variable total system cost :math:`\zeta` is calculated by the cost function.
 .. math::
     \zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} + \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur} + \zeta_\text{startup}
 
-The calculation of the variable total system cost is given in ``urbs.py`` by the following code fragment.  
+The calculation of the variable total system cost is given in ``model.py`` by the following code fragment.  
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: obj_rule
 
 The variable total system cost :math:`\zeta` is basically calculated by the summation of every type of total costs. As previously mentioned in section :ref:`sec-cost-types`, these cost types are : ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``. The calculation of each single cost types are listed below.
@@ -61,7 +61,7 @@ Total annual investment cost is calculated by the sum of three main summands, th
 
 As mentioned above the variable investment costs :math:`\zeta_\text{inv}` is calculated by the sum of these 3 summands.
 
-In script ``urbs.py`` the value of the total investment cost is calculated by the following code fragment:
+In script ``model.py`` the value of the total investment cost is calculated by the following code fragment:
 
 ::
 
@@ -120,7 +120,7 @@ Total annual fix cost :math:`\zeta_\text{fix}` is calculated by the sum of three
 
 As mentioned above, the fix costs :math:`\zeta_\text{fix}` are calculated by the sum of these 3 summands.
 
-In script ``urbs.py`` the value of the total fix cost is calculated by the following code fragment:
+In script ``model.py`` the value of the total fix cost is calculated by the following code fragment:
 
 ::
 
@@ -189,7 +189,7 @@ The variable :math:`\zeta_\text{fuel}` is calculated by the sum of all possible 
 	* The variable timestep duration.( :math:`\Delta t`, ``dt``)
 	* The variable weight.( :math:`w`, ``weight``)
 
-In script ``urbs.py`` the value of the total fuel cost is calculated by the following code fragment:
+In script ``model.py`` the value of the total fuel cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Fuel':
@@ -220,7 +220,7 @@ The variable :math:`\zeta_\text{rev}` is calculated by the sum of all possible a
 	* Coefficient [-1].
 
 Since this variable is an income for the energy system, it is multiplied by the value -1 to be able to express it in the cost function as a summand.
-In script ``urbs.py`` the value of the total revenue cost is calculated by the following code fragment:
+In script ``model.py`` the value of the total revenue cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Revenue':
@@ -252,7 +252,7 @@ The variable :math:`\zeta_\text{pur}` is calculated by the sum of all possible a
 	* The variable timestep duration.( :math:`\Delta t`, ``dt``)
 	* The variable weight.( :math:`w`, ``weight``)
 
-In script ``urbs.py`` the value of the total purchase cost is calculated by the following code fragment:
+In script ``model.py`` the value of the total purchase cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Purchase':
@@ -278,7 +278,7 @@ The variable startup costs :math:`\zeta_\text{startup}` represents the total ann
 	w \sum_{t\in T_\text{m}} \sum_{v \in V} \sum_{p \in P} \phi_{vpt} k_{vp}^\text{st} \Delta t
 
 
-In script ``urbs.py`` the value of the total startup cost is calculated by the following code fragment:
+In script ``model.py`` the value of the total startup cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Startup':
@@ -301,7 +301,7 @@ Environmental costs :math:`\zeta_\text{env}` represent the total annual taxes fo
     w \sum_{t\in T_\text{m}} \sum_{v\in V} \sum_{c \in C_\text{env}}
     \textrm{CB}(v,c,t) \Delta t
     
-In script ``urbs.py`` the value of the total environmental cost is calculated by the following code fragment:
+In script ``model.py`` the value of the total environmental cost is calculated by the following code fragment:
 ::
 
     elif cost_type == 'Environmental':

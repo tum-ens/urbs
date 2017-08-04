@@ -13,8 +13,8 @@ capacity installed :math:`K_{vp}` and the variable new process capacity
 
 	\forall v\in V, p\in P\colon\ \kappa_{vp} = K_{vp} + \hat{\kappa}_{vp}
 
-In script ``urbs.py`` the constraint process capacity rule is defined and
-calculated by the following code fragment:
+In script ``model.py`` the constraint process capacity rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_process_capacity = pyomo.Constraint(
@@ -36,8 +36,9 @@ ratio :math:`r_{pc}^\text{in}`. In mathematical notation this is expressed as:
 	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{in}_{vcpt} =
     \tau_{vpt} r^\text{in}_{pc}
 
-In script ``urbs.py`` the constraint process input rule is defined and
-calculated by the following code fragment:
+
+In script ``model.py`` the constraint process input rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_process_input = pyomo.Constraint(
@@ -59,8 +60,8 @@ ratio :math:`r_{pc}^\text{out}`. In mathematical notation this is expressed as:
 	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{out}_{vpct} =
     \tau_{vpt} r^\text{out}_{pc}
 
-In script ``urbs.py`` the constraint process output rule is defined and
-calculated by the following code fragment:
+In script ``model.py`` the constraint process output rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_process_output = pyomo.Constraint(
@@ -86,8 +87,9 @@ notation this is expressed as:
 	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon\
     \epsilon^\text{in}_{vpct} = \kappa_{vp} s_{vct}
 
-In script ``urbs.py`` the constraint intermittent supply rule is defined and
-calculated by the following code fragment:
+
+In script ``model.py`` the constraint intermittent supply rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_intermittent_supply = pyomo.Constraint(
@@ -109,8 +111,8 @@ this is expressed as:
 
     \forall v\in V, p\in P, t\in T_m\colon\ \tau_{vpt} \leq \kappa_{vp}
 
-In script ``urbs.py`` the constraint process throughput by capacity rule is
-defined and calculated by the following code fragment:
+In script ``model.py`` the constraint process throughput by capacity rule is defined and calculated by the following code fragment:
+
 ::
 
     m.res_process_throughput_by_capacity = pyomo.Constraint(
@@ -135,7 +137,7 @@ notation this is expressed as:
     \forall v\in V, p\in P, t\in T_m\colon\ \left| \tau_{vpt} - \tau_{vp(t-1)}
     \right| \leq  \kappa_{vp} \overline{PG}_{vp} \Delta t
 
-In script ``urbs.py`` the constraint process throughput gradient rule is split
+In script ``model.py`` the constraint process throughput gradient rule is split
 into 2 parts and defined and calculated by the following code fragment:
 ::
 
@@ -163,13 +165,14 @@ greater than or equal to the parameter process capacity lower bound
 capacity upper bound :math:`\overline{K}_{vp}`. In mathematical notation this
 is expressed as:
 
+
 .. math::
 
     \forall v\in V, p\in P\colon\  \underline{K}_{vp} \leq \kappa_{vp} \leq
     \overline{K}_{vp}
 
-In script ``urbs.py`` the constraint process capacity limit rule is defined and
-calculated by the following code fragment:
+In script ``model.py`` the constraint process capacity limit rule is defined and calculated by the following code fragment:
+
 ::
 
     m.res_process_capacity = pyomo.Constraint(
@@ -179,6 +182,7 @@ calculated by the following code fragment:
 
 .. literalinclude:: /../urbs/model.py
    :pyobject: res_process_capacity_rule
+
 
 **Sell Buy Symmetry Rule**: The constraint sell buy symmetry rule defines the
 total process capacity :math:`\kappa_{vp}` of a process :math:`p` in a site
@@ -191,8 +195,9 @@ commodity :math:`c` is an output of a process where the buy commodity is an
 input, and at the same time the commodity :math:`c` is an input commodity of a
 process where the sell commodity is an output.
 
-In script ``urbs.py`` the constraint sell buy symmetry rule is defined and
+In script ``model.py`` the constraint sell buy symmetry rule is defined and
 calculated by the following code fragment:
+
 ::
 
     m.res_sell_buy_symmetry = pyomo.Constraint(

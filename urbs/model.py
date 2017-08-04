@@ -511,7 +511,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
-        doc='storage[t] = storage[t-1] + input - output')
+        doc='storage[t] = storage[t-1] * (1 - discharge) + input - output')
     m.def_storage_power = pyomo.Constraint(
         m.sto_tuples,
         rule=def_storage_power_rule,
@@ -956,12 +956,13 @@ def res_transmission_symmetry_rule(m, sin, sout, tra, com):
 
 # storage
 
-# storage content in timestep [t] == storage content[t-1]
+# storage content in timestep [t] == storage content[t-1] * (1-discharge)
 # + newly stored energy * input efficiency
 # - retrieved energy / output efficiency
 def def_storage_state_rule(m, t, sit, sto, com):
     return (m.e_sto_con[t, sit, sto, com] ==
-            m.e_sto_con[t-1, sit, sto, com] +
+            m.e_sto_con[t-1, sit, sto, com] *
+            (1 - m.storage.loc[sit, sto, com]['discharge']) +
             m.e_sto_in[t, sit, sto, com] *
             m.storage.loc[sit, sto, com]['eff-in'] * m.dt -
             m.e_sto_out[t, sit, sto, com] /

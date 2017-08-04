@@ -58,17 +58,19 @@ Technical Parameters
     +-------------------------------------+----+--------------------------------------------+
     |**Storage Technical Parameters**                                                       |
     +-------------------------------------+----+--------------------------------------------+
-    |:math:`I_{vs}`                       | 1  |Initial and Final State of Charge           |
+    |:math:`I_{vs}`                       | _  |Initial and Final State of Charge           |
     +-------------------------------------+----+--------------------------------------------+
     |:math:`e_{vs}^\text{in}`             | _  |Storage Efficiency During Charge            |
     +-------------------------------------+----+--------------------------------------------+
     |:math:`e_{vs}^\text{out}`            | _  |Storage Efficiency During Discharge         |
     +-------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{K}_{vs}^\text{c}`  |MWh |Storage Content Lower Bound                 |
+    |:math:`d_{vs}`                       | _  |Hourly amount of self-discharge             |
     +-------------------------------------+----+--------------------------------------------+
-    |:math:`K_{vs}^\text{c}`              |MWh |Storage Content Installed                   |
+    |:math:`\underline{K}_{vs}^\text{c}`  |MWh |Storage Capacity Lower Bound                |
     +-------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{vs}^\text{c}`   |MWh |Storage Content Upper Bound                 |
+    |:math:`K_{vs}^\text{c}`              |MWh |Storage Capacity Installed                  |
+    +-------------------------------------+----+--------------------------------------------+
+    |:math:`\overline{K}_{vs}^\text{c}`   |MWh |Storage Capacity Upper Bound                |
     +-------------------------------------+----+--------------------------------------------+
     |:math:`\underline{K}_{vs}^\text{p}`  |MW  |Storage Power Lower Bound                   |
     +-------------------------------------+----+--------------------------------------------+
@@ -101,7 +103,7 @@ Technical Parameters
 
 General Technical Parameters
 ----------------------------
-**Weight**, :math:`w`, ``weight``: The variable :math:`w` helps to scale variable costs and emissions from the length of simulation, that the energy system model is being observed, to an annual result. This variable represents the rate of a year (8760 hours) to the observed time span. The observed time span is calculated by the product of number of time steps of the set :math:`T` and the time step duration. In script ``urbs.py`` this variable is defined by the model variable ``weight`` and initialized by the following code fragment:
+**Weight**, :math:`w`, ``weight``: The parameter :math:`w` helps to scale variable costs and emissions from the length of simulation, that the energy system model is being observed, to an annual result. This parameter represents the rate of a year (8760 hours) to the observed time span. The observed time span is calculated by the product of number of time steps of the set :math:`T` and the time step duration. In script ``model.py`` this parameter is defined by the model parameter ``weight`` and initialized by the following code fragment:
 ::
 
     m.weight = pyomo.Param(
@@ -109,7 +111,7 @@ General Technical Parameters
         doc='Pre-factor for variable costs and emissions for an annual result')
 		
 
-**Timestep Duration**, :math:`\Delta t`, ``dt``: The variable :math:`\Delta t` represents the duration between two sequential timesteps :math:`t_x` and :math:`t_{x+1}`. This is calculated by the subtraction of smaller one from the bigger of the two sequential timesteps :math:`\Delta t = t_{x+1} - t_x`. This variable is the unit of time for the optimization model This variable is expressed in the unit h and by default the value is set to ``1``. In script ``urbs.py`` this variable is defined by the model variable ``dt`` and initialized by the following code fragment:
+**Timestep Duration**, :math:`\Delta t`, ``dt``: The variable :math:`\Delta t` represents the duration between two sequential timesteps :math:`t_x` and :math:`t_{x+1}`. This is calculated by the subtraction of smaller one from the bigger of the two sequential timesteps :math:`\Delta t = t_{x+1} - t_x`. This variable is the unit of time for the optimization model This variable is expressed in the unit h and by default the value is set to ``1``. In script ``model.py`` this variable is defined by the model variable ``dt`` and initialized by the following code fragment:
 ::
 
     m.dt = pyomo.Param(
@@ -173,6 +175,8 @@ Storage Technical Parameters
 **Storage Efficiency During Charge**, :math:`e_{vs}^\text{in}`, ``m.storage.loc[sit, sto, com]['eff-in']``: The parameter :math:`e_{vs}^\text{in}` represents the charge efficiency of a storage :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The charge efficiency shows, how much of a desired energy and accordingly power can be succesfully stored into a storage. The value of this parameter is expressed as a normalized percentage, where "1" represents a charge with no power or energy loss and "0" represents that storage technology consumes whole enery during charge. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The tenth column with the header label "eff-in" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
 **Storage Efficiency During Discharge**, :math:`e_{vs}^\text{out}`, ``m.storage.loc[sit, sto, com]['eff-out']``:  The parameter :math:`e_{vs}^\text{out}` represents the discharge efficiency of a storage :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The discharge efficiency shows, how much of a desired energy and accordingly power can be succesfully retrieved out of a storage.  The value of this parameter is expressed as a normalized efipercentage, where "1" represents a discharge with no power or energy loss and "0" represents that storage technology consumes whole enery during discharge. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The eleventh column with the header label "eff-out" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
+
+**Hourly Storage self-discharge**, :math:`d_{vs}`, ``m.storage.loc[sit, sto, com]['Discharge']``: The parameter :math:`d_{vs}` represents the hourly fraction of energy lost due to self-discharge. It introduces an exponential decay of a given storage state if no charging/discharging takes place. The value of this parameter is unitless.
 
 **Storage Content Lower Bound**, :math:`\underline{K}_{vs}^\text{c}`, ``m.storage.loc[sit, sto, com]['cap-lo-c']``: The parameter :math:`\underline{K}_{vs}^\text{c}` represents the minimum amount of energy content capacity allowed of a storage :math:`s` storing a commodity :math:`c` in a site :math:`v`, that the energy system model is allowed to have. The unit of this parameter is MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The fifth column with the header label "cap-lo-c" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.  If there is no desired minimum limit for the storage energy content capacities, this parameter can be simply set to "0", to ignore this parameter. 
 

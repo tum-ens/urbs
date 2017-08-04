@@ -48,6 +48,8 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
+    m.r_in_dict = m.r_in.to_dict()
+    m.r_out_dict = m.r_out.to_dict()
 
     # process areas
     m.proc_area = m.process['area-per-cap']

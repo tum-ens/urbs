@@ -2,10 +2,11 @@ import math
 import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
+import pdb
 
 
 def create_model(data, timesteps=None, dt=1, dual=False):
-    """Create a pyomo ConcreteModel urbs object from given input data.
+    """Create a pyomo ConcreteModel URBS object from given input data.
 
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
@@ -18,7 +19,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         a pyomo ConcreteModel object
     """
     m = pyomo.ConcreteModel()
-    m.name = 'urbs'
+    m.name = 'URBS'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
 
@@ -48,8 +49,6 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
-    m.r_in_dict = m.r_in.to_dict()
-    m.r_out_dict = m.r_out.to_dict()
 
     # process areas
     m.proc_area = m.process['area-per-cap']
@@ -451,10 +450,10 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         rule=res_process_capacity_rule,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
 
-    m.res_area = pyomo.Constraint(
-        m.sit,
-        rule=res_area_rule,
-        doc='used process area <= total process area')
+    # m.res_area = pyomo.Constraint(
+        # m.sit,
+        # rule=res_area_rule,
+        # doc='used process area <= total process area')
 
     m.res_sell_buy_symmetry = pyomo.Constraint(
         m.pro_input_tuples,
@@ -511,7 +510,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
-        doc='storage[t] = storage[t-1] * (1 - discharge) + input - output')
+        doc='storage[t] = storage[t-1] + input - output')
     m.def_storage_power = pyomo.Constraint(
         m.sto_tuples,
         rule=def_storage_power_rule,
@@ -690,9 +689,7 @@ def res_dsm_maximum_rule(m, tm, sit, com):
 # DSMup(t, t + recovery time R) <= Cup * delay time L
 def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
-    for t in dsm_recovery(tm,
-                          m.timesteps[1:],
-                          m.dsm['recov'].loc[sit, com]):
+    for t in range(tm, tm+m.dsm['recov'].loc[sit, com]):
         dsm_up_sum += m.dsm_up[t, sit, com]
     return dsm_up_sum <= (m.dsm.loc[sit, com]['cap-max-up'] *
                           m.dsm['delay'].loc[sit, com])
@@ -724,7 +721,8 @@ def res_stock_total_rule(m, sit, com, com_type):
         return (total_consumption <=
                 m.commodity.loc[sit, com, com_type]['max'])
 
-
+				
+				
 # limit sell commodity use per time step
 def res_sell_step_rule(m, tm, sit, com, com_type):
     if com not in m.com_sell:
@@ -801,9 +799,11 @@ def res_env_total_rule(m, sit, com, com_type):
         env_output_sum *= m.weight
         return (env_output_sum <=
                 m.commodity.loc[sit, com, com_type]['max'])
-
+	
+				
+				
+				
 # process
-
 
 # process capacity == new capacity + existing capacity
 def def_process_capacity_rule(m, sit, pro):
@@ -827,7 +827,7 @@ def def_process_output_rule(m, tm, sit, pro, co):
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, sit, pro, coin):
     if coin in m.com_supim:
-        return (m.e_pro_in[tm, sit, pro, coin] ==
+        return (m.e_pro_in[tm, sit, pro, coin] <=
                 m.cap_pro[sit, pro] * m.supim.loc[tm][sit, coin])
     else:
         return pyomo.Constraint.Skip
@@ -892,12 +892,8 @@ def res_process_capacity_rule(m, sit, pro):
 
 # used process area <= maximal process area
 def res_area_rule(m, sit):
-    if m.site.loc[sit]['area'] >= 0 and sum(
-                         m.process.loc[(s, p), 'area-per-cap']
-                         for (s, p) in m.pro_area_tuples
-                         if s == sit) > 0:
-        total_area = sum(m.cap_pro[s, p] *
-                         m.process.loc[(s, p), 'area-per-cap']
+    if m.site.loc[sit]['area'] >= 0:
+        total_area = sum(m.cap_pro[s, p] * m.process.loc[(s, p), 'area-per-cap']
                          for (s, p) in m.pro_area_tuples
                          if s == sit)
         return total_area <= m.site.loc[sit]['area']
@@ -956,13 +952,12 @@ def res_transmission_symmetry_rule(m, sin, sout, tra, com):
 
 # storage
 
-# storage content in timestep [t] == storage content[t-1] * (1-discharge)
+# storage content in timestep [t] == storage content[t-1]
 # + newly stored energy * input efficiency
 # - retrieved energy / output efficiency
 def def_storage_state_rule(m, t, sit, sto, com):
     return (m.e_sto_con[t, sit, sto, com] ==
-            m.e_sto_con[t-1, sit, sto, com] *
-            (1 - m.storage.loc[sit, sto, com]['discharge']) +
+            m.e_sto_con[t-1, sit, sto, com] +
             m.e_sto_in[t, sit, sto, com] *
             m.storage.loc[sit, sto, com]['eff-in'] * m.dt -
             m.e_sto_out[t, sit, sto, com] /
@@ -1095,12 +1090,12 @@ def def_costs_rule(m, cost_type):
                 for s in m.sto_tuples)
 
     elif cost_type == 'Fuel':
-        return m.costs[cost_type] == sum(
-            m.e_co_stock[(tm,) + c] * m.dt *
-            m.commodity.loc[c]['price'] *
-            m.weight
-            for tm in m.tm for c in m.com_tuples
-            if c[1] in m.com_stock)
+        return m.costs[cost_type] == \
+            sum(m.e_co_stock[(tm,) + c] * m.dt *
+                m.commodity.loc[c]['price'] *
+                m.weight
+                for tm in m.tm for c in m.com_tuples
+                if c[1] in m.com_stock)
 
     elif cost_type == 'Revenue':
         sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
@@ -1175,6 +1170,18 @@ def add_hacks(model, hacks):
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= hacks.Glocal CO2 limit')
 
+			
+	# Renewable Portfolio
+    try:
+        rps=hacks.loc['RPS', 'Value']
+    except KeyError:
+        rps = 0
+	
+	# only add constraint if limit is larger 0
+    if rps > 0:
+        model.rps_requirements_rule=pyomo.Constraint(
+            rule=res_rps_rule,
+            doc='total generation from eligible renewables >= hacks.RPS * overall demand')
     return model
 
 
@@ -1190,3 +1197,15 @@ def res_global_co2_limit_rule(m):
     # scaling to annual output (cf. definition of m.weight)
     co2_output_sum *= m.weight
     return (co2_output_sum <= m.hacks.loc['Global CO2 limit', 'Value'])
+
+	
+# define a minimum share of renewable generation rps (renewable portfolio standard)
+def res_rps_rule(m):
+    ren_output_sum = 0
+    demand_sum = 0
+    for tm in m.tm:
+        for sit in m.sit:
+            demand_sum += (m.demand.loc[tm][sit, 'Elec'])
+            for pro in ['Photovoltaic Plant','Onshore Wind Plant','Small Hydro Plant','Geothermal Plant','Biomass Plant']:
+                ren_output_sum += (m.e_pro_out[tm, sit, pro, 'Elec'])
+    return (ren_output_sum >= m.hacks.loc['RPS','Value'] * demand_sum)

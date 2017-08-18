@@ -216,7 +216,7 @@ In script ``urbs.py`` this variable is defined by the model variable ``e_pro_out
         within=pyomo.NonNegativeReals,
         doc='Online capacity (MW) of process per timestep')     
 
-**Process Startup Capacity**, :math:`\phi'_{vpt}`, ``startup_pro``: This variable indicates every rise in the *process online capacity*. This indicator is then used to determine startup costs for all partial process tuples. The variable is defined by the following code fragment: ::
+**Process Startup Capacity**, :math:`\phi_{vpt}`, ``startup_pro``: This variable indicates every rise in the *process online capacity*. This indicator is then used to determine startup costs for all partial process tuples. The variable is defined by the following code fragment: ::
 
     m.startup_pro = pyomo.Var(
         m.tm, m.pro_partial_tuples,

@@ -23,7 +23,7 @@ def read_excel(filename):
 
     Example:
         >>> data = read_excel('mimo-example.xlsx')
-        >>> data['global'].loc['Global CO2 limit', 'Value']
+        >>> data['global'].loc['CO2 limit', 'value']
         150000000
     """
     with pd.ExcelFile(filename) as xls:

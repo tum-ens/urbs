@@ -9,9 +9,8 @@ def read_excel(filename):
     mimo-example.xlsx. Two preprocessing steps happen here:
     1. Column titles in 'Demand' and 'SupIm' are split, so that
     'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
-    2. The attribute 'annuity-factor' is derived here from the global
-    property 'wacc' and 'depreciation' for 'Process', 'Transmission' and
-    'Storage'.
+    2. The attribute 'annuity-factor' is derived here from the columns 'wacc'
+    and 'depreciation' for 'Process', 'Transmission' and 'Storage'.
 
     Args:
         filename: filename to an Excel spreadsheet with the required sheets

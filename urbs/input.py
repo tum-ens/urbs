@@ -9,8 +9,9 @@ def read_excel(filename):
     mimo-example.xlsx. Two preprocessing steps happen here:
     1. Column titles in 'Demand' and 'SupIm' are split, so that
     'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
-    2. The attribute 'annuity-factor' is derived here from the columns 'wacc'
-    and 'depreciation' for 'Process', 'Transmission' and 'Storage'.
+    2. The attribute 'annuity-factor' is derived here from the global
+    property 'wacc' and 'depreciation' for 'Process', 'Transmission' and
+    'Storage'.
 
     Args:
         filename: filename to an Excel spreadsheet with the required sheets
@@ -22,7 +23,7 @@ def read_excel(filename):
 
     Example:
         >>> data = read_excel('mimo-example.xlsx')
-        >>> data['hacks'].loc['Global CO2 limit', 'Value']
+        >>> data['global'].loc['Global CO2 limit', 'Value']
         150000000
     """
     with pd.ExcelFile(filename) as xls:
@@ -43,10 +44,7 @@ def read_excel(filename):
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        try:
-            hacks = xls.parse('Hacks').set_index(['Name'])
-        except XLRDError:
-            hacks = None
+        glob = xls.parse('Global').set_index(['Property'])
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -56,6 +54,7 @@ def read_excel(filename):
     buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
 
     data = {
+        'global': glob,
         'site': site,
         'commodity': commodity,
         'process': process,
@@ -65,9 +64,8 @@ def read_excel(filename):
         'demand': demand,
         'supim': supim,
         'buy_sell_price': buy_sell_price,
-        'dsm': dsm}
-    if hacks is not None:
-        data['hacks'] = hacks
+        'dsm': dsm
+        }
 
     # sort nested indexes to make direct assignments work
     for key in data:

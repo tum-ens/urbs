@@ -120,7 +120,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 
@@ -128,7 +128,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     shutil.copyfile(input_file, os.path.join(result_dir, input_file))
     
     # save problem solution (and input data) to HDF5 file
-    # urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # write report to spreadsheet
     urbs.report(
@@ -183,7 +183,12 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_co2_limit]
+        scenario_stock_prices,
+        scenario_co2_limit,
+        scenario_co2_tax_mid,
+        scenario_no_dsm,
+        scenario_north_process_caps,
+        scenario_all_together]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,

@@ -69,7 +69,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # derive annuity factor from WACC and depreciation duration
     m.process['annuity-factor'] = annuity_factor(
         m.process['depreciation'],
-        m.proces['wacc'])
+        m.process['wacc'])
     m.transmission['annuity-factor'] = annuity_factor(
         m.transmission['depreciation'],
         m.transmission['wacc'])

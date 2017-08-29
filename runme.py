@@ -5,7 +5,7 @@ import shutil
 import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
-
+import winsound
 
 # SCENARIOS
 def scenario_base(data):
@@ -120,7 +120,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 
@@ -195,3 +195,6 @@ if __name__ == '__main__':
                             plot_tuples=plot_tuples,
                             plot_periods=plot_periods,
                             report_tuples=report_tuples)
+    # play sound when finished
+    winsound.MessageBeep(type=winsound.MB_ICONEXCLAMATION)
+    

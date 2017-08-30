@@ -129,7 +129,6 @@ def get_timeseries(instance, com, sites, timesteps=None):
         consumed = pd.DataFrame(index=timesteps)
 
     # TRANSMISSION
-    other_sites = get_input(instance, 'site').index.difference(sites)
 
     # if commodity is transportable
     df_transmission = get_input(instance, 'transmission')
@@ -141,7 +140,6 @@ def get_timeseries(instance, com, sites, timesteps=None):
         imported = imported.unstack(level='sit')
 
         internal_import = imported[sites].sum(axis=1)  # ...from sites
-        imported = imported[other_sites]  # ...from other_sites
         imported = drop_all_zero_columns(imported)
 
         exported = get_entity(instance, 'e_tra_in')
@@ -151,7 +149,6 @@ def get_timeseries(instance, com, sites, timesteps=None):
         exported = exported.unstack(level='sit_')
 
         internal_export = exported[sites].sum(axis=1)  # ...to sites (internal)
-        exported = exported[other_sites]  # ...to other_sites
         exported = drop_all_zero_columns(exported)
     else:
         imported = pd.DataFrame(index=timesteps)

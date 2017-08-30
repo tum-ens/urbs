@@ -3,6 +3,7 @@ from .input import get_input
 from .pyomoio import get_entity, get_entities
 from .util import is_string
 
+
 def get_constants(instance):
     """Return summary DataFrames for important variables
 

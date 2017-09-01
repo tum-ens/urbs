@@ -23,8 +23,8 @@ def scenario_stock_prices(data):
 
 def scenario_co2_limit(data):
     # change global CO2 limit
-    hacks = data['hacks']
-    hacks.loc['Global CO2 limit', 'Value'] *= 0.05
+    glob = data['global']
+    glob.loc['CO2 limit', 'value'] *= 0.05
     return data
 
 

@@ -22,7 +22,7 @@ def read_excel(filename):
 
     Example:
         >>> data = read_excel('mimo-example.xlsx')
-        >>> data['hacks'].loc['Global CO2 limit', 'Value']
+        >>> data['global'].loc['CO2 limit', 'value']
         150000000
     """
     with pd.ExcelFile(filename) as xls:
@@ -43,10 +43,7 @@ def read_excel(filename):
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        try:
-            hacks = xls.parse('Hacks').set_index(['Name'])
-        except XLRDError:
-            hacks = None
+        glob = xls.parse('Global').set_index(['Property'])
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -56,6 +53,7 @@ def read_excel(filename):
     buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
 
     data = {
+        'global': glob,
         'site': site,
         'commodity': commodity,
         'process': process,
@@ -65,9 +63,8 @@ def read_excel(filename):
         'demand': demand,
         'supim': supim,
         'buy_sell_price': buy_sell_price,
-        'dsm': dsm}
-    if hacks is not None:
-        data['hacks'] = hacks
+        'dsm': dsm
+        }
 
     # sort nested indexes to make direct assignments work
     for key in data:

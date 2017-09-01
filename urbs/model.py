@@ -33,6 +33,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     #
     #     m.storage.loc[site, storage, commodity][attribute]
     #
+    m.glob = data['global'].drop('description', axis=1)
     m.site = data['site']
     m.commodity = data['commodity']
     m.process = data['process']
@@ -581,9 +582,9 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         rule=res_dsm_recovery_rule,
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
 
-    # possibly: add hack features
-    if 'hacks' in data:
-        m = add_hacks(m, data['hacks'])
+    m.res_global_co2_limit = pyomo.Constraint(
+            rule=res_global_co2_limit_rule,
+            doc='total co2 commodity output <= global.Glocal CO2 limit')
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
@@ -1028,6 +1029,26 @@ def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
         return pyomo.Constraint.Skip
 
 
+# total CO2 output <= Global CO2 limit
+def res_global_co2_limit_rule(m):
+    if math.isinf(m.glob.loc['CO2 limit', 'value']):
+        return pyomo.Constraint.Skip
+    elif m.glob.loc['CO2 limit', 'value'] > 0:
+        co2_output_sum = 0
+        for tm in m.tm:
+            for sit in m.sit:
+                # minus because negative commodity_balance represents creation
+                # of that commodity.
+                co2_output_sum += (- commodity_balance(m, tm, sit, 'CO2') *
+                                   m.dt)
+
+        # scaling to annual output (cf. definition of m.weight)
+        co2_output_sum *= m.weight
+        return (co2_output_sum <= m.glob.loc['CO2 limit', 'value'])
+    else:
+        return pyomo.Constraint.Skip
+
+
 # Objective
 def def_costs_rule(m, cost_type):
     """Calculate total costs by cost type.
@@ -1147,46 +1168,3 @@ def def_costs_rule(m, cost_type):
 
 def obj_rule(m):
     return pyomo.summation(m.costs)
-
-
-def add_hacks(model, hacks):
-    """ add hackish features to model object
-
-    This function is reserved for corner cases/features that still lack a
-    satisfyingly general solution that could become part of create_model.
-    Use hack features sparingly and think about how to incorporate into main
-    model function before adding here. Otherwise, these features might become
-    a maintenance burden.
-
-    """
-
-    # Store hack data
-    model.hacks = hacks
-
-    # Global CO2 limit
-    try:
-        global_co2_limit = hacks.loc['Global CO2 limit', 'Value']
-    except KeyError:
-        global_co2_limit = float('inf')
-
-    # only add constraint if limit is finite
-    if not math.isinf(global_co2_limit):
-        model.res_global_co2_limit = pyomo.Constraint(
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= hacks.Glocal CO2 limit')
-
-    return model
-
-
-# total CO2 output <= Global CO2 limit
-def res_global_co2_limit_rule(m):
-    co2_output_sum = 0
-    for tm in m.tm:
-        for sit in m.sit:
-            # minus because negative commodity_balance represents creation of
-            # that commodity.
-            co2_output_sum += (- commodity_balance(m, tm, sit, 'CO2') * m.dt)
-
-    # scaling to annual output (cf. definition of m.weight)
-    co2_output_sum *= m.weight
-    return (co2_output_sum <= m.hacks.loc['Global CO2 limit', 'Value'])

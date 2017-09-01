@@ -5,7 +5,7 @@ from .modelhelper import *
 
 
 def create_model(data, timesteps=None, dt=1, dual=False):
-    """Create a pyomo ConcreteModel URBS object from given input data.
+    """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
@@ -18,7 +18,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         a pyomo ConcreteModel object
     """
     m = pyomo.ConcreteModel()
-    m.name = 'URBS'
+    m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
 
@@ -48,6 +48,8 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
+    m.r_in_dict = m.r_in.to_dict()
+    m.r_out_dict = m.r_out.to_dict()
 
     # process areas
     m.proc_area = m.process['area-per-cap']
@@ -509,7 +511,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
-        doc='storage[t] = storage[t-1] + input - output')
+        doc='storage[t] = storage[t-1] * (1 - discharge) + input - output')
     m.def_storage_power = pyomo.Constraint(
         m.sto_tuples,
         rule=def_storage_power_rule,
@@ -825,7 +827,7 @@ def def_process_output_rule(m, tm, sit, pro, co):
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, sit, pro, coin):
     if coin in m.com_supim:
-        return (m.e_pro_in[tm, sit, pro, coin] <=
+        return (m.e_pro_in[tm, sit, pro, coin] ==
                 m.cap_pro[sit, pro] * m.supim.loc[tm][sit, coin])
     else:
         return pyomo.Constraint.Skip
@@ -954,12 +956,13 @@ def res_transmission_symmetry_rule(m, sin, sout, tra, com):
 
 # storage
 
-# storage content in timestep [t] == storage content[t-1]
+# storage content in timestep [t] == storage content[t-1] * (1-discharge)
 # + newly stored energy * input efficiency
 # - retrieved energy / output efficiency
 def def_storage_state_rule(m, t, sit, sto, com):
     return (m.e_sto_con[t, sit, sto, com] ==
-            m.e_sto_con[t-1, sit, sto, com] +
+            m.e_sto_con[t-1, sit, sto, com] *
+            (1 - m.storage.loc[sit, sto, com]['discharge']) +
             m.e_sto_in[t, sit, sto, com] *
             m.storage.loc[sit, sto, com]['eff-in'] * m.dt -
             m.e_sto_out[t, sit, sto, com] /

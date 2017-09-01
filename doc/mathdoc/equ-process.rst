@@ -3,13 +3,18 @@
 Process Constraints
 ^^^^^^^^^^^^^^^^^^^
 
-**Process Capacity Rule**: The constraint process capacity rule defines the variable total process capacity :math:`\kappa_{vp}`. The variable total process capacity is defined by the constraint as the sum of the parameter process capacity installed :math:`K_{vp}` and the variable new process capacity :math:`\hat{\kappa}_{vp}`. In mathematical notation this is expressed as:
+**Process Capacity Rule**: The constraint process capacity rule defines the 
+variable total process capacity :math:`\kappa_{vp}`. The variable total process 
+capacity is defined by the constraint as the sum of the parameter process 
+capacity installed :math:`K_{vp}` and the variable new process capacity 
+:math:`\hat{\kappa}_{vp}`. In mathematical notation this is expressed as: 
 
 .. math::
 
 	\forall v\in V, p\in P\colon\ \kappa_{vp} = K_{vp} + \hat{\kappa}_{vp}
 
-In script ``urbs.py`` the constraint process capacity rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint process capacity rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_process_capacity = pyomo.Constraint(
@@ -17,16 +22,23 @@ In script ``urbs.py`` the constraint process capacity rule is defined and calcul
         rule=def_process_capacity_rule,
         doc='total process capacity = inst-cap + new capacity')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: def_process_capacity_rule
 
-**Process Input Rule**: The constraint process input rule defines the variable process input commodity flow :math:`\epsilon_{vcpt}^\text{in}`. The variable process input commodity flow is defined by the constraint as the product of the variable process throughput :math:`\tau_{vpt}` and the parameter process input ratio :math:`r_{pc}^\text{in}`. In mathematical notation this is expressed as:
+**Process Input Rule**: The constraint process input rule defines the variable
+process input commodity flow :math:`\epsilon_{vcpt}^\text{in}`. The variable
+process input commodity flow is defined by the constraint as the product of the
+variable process throughput :math:`\tau_{vpt}` and the parameter process input
+ratio :math:`r_{pc}^\text{in}`. In mathematical notation this is expressed as:
 
 .. math::
 
-	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{in}_{vcpt} = \tau_{vpt} r^\text{in}_{pc}
+	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{in}_{vcpt} =
+    \tau_{vpt} r^\text{in}_{pc}
 
-In script ``urbs.py`` the constraint process input rule is defined and calculated by the following code fragment:
+
+In script ``model.py`` the constraint process input rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_process_input = pyomo.Constraint(
@@ -34,16 +46,22 @@ In script ``urbs.py`` the constraint process input rule is defined and calculate
         rule=def_process_input_rule,
         doc='process input = process throughput * input ratio')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: def_process_input_rule
 
-**Process Output Rule**: The constraint process output rule defines the variable process output commodity flow :math:`\epsilon_{vcpt}^\text{out}`. The variable process output commodity flow is defined by the constraint as the product of the variable process throughput :math:`\tau_{vpt}` and the parameter process output ratio :math:`r_{pc}^\text{out}`. In mathematical notation this is expressed as:
+**Process Output Rule**: The constraint process output rule defines the variable
+process output commodity flow :math:`\epsilon_{vcpt}^\text{out}`. The variable
+process output commodity flow is defined by the constraint as the product of the
+variable process throughput :math:`\tau_{vpt}` and the parameter process output
+ratio :math:`r_{pc}^\text{out}`. In mathematical notation this is expressed as:
 
 .. math::
 
-	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{out}_{vpct} = \tau_{vpt} r^\text{out}_{pc}
+	\forall v\in V, p\in P, t\in T_m\colon\ \epsilon^\text{out}_{vpct} =
+    \tau_{vpt} r^\text{out}_{pc}
 
-In script ``urbs.py`` the constraint process output rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint process output rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_process_output = pyomo.Constraint(
@@ -51,16 +69,27 @@ In script ``urbs.py`` the constraint process output rule is defined and calculat
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: def_process_output_rule
 
-**Intermittent Supply Rule**: The constraint intermittent supply rule defines the variable process input commodity flow :math:`\epsilon_{vcpt}^\text{in}` for processes :math:`p` that use a supply intermittent commodity :math:`c \in C_\text{sup}` as input. Therefore this constraint only applies if a commodity is an intermittent supply commodity :math:`c \in C_\text{sup}`. The variable process input commodity flow is defined by the constraint as the product of the variable total process capacity :math:`\kappa_{vp}` and the parameter intermittent supply capacity factor :math:`s_{vct}`. In mathematical notation this is expressed as:
+**Intermittent Supply Rule**: The constraint intermittent supply rule defines
+the variable process input commodity flow :math:`\epsilon_{vcpt}^\text{in}` for
+processes :math:`p` that use a supply intermittent commodity
+:math:`c \in C_\text{sup}` as input. Therefore this constraint only applies if a
+commodity is an intermittent supply commodity :math:`c \in C_\text{sup}`. The
+variable process input commodity flow is defined by the constraint as the
+product of the variable total process capacity :math:`\kappa_{vp}` and the
+parameter intermittent supply capacity factor :math:`s_{vct}`. In mathematical
+notation this is expressed as:
 
 .. math::
 
-	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon\ \epsilon^\text{in}_{vpct} = \kappa_{vp} s_{vct}
+	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon\
+    \epsilon^\text{in}_{vpct} = \kappa_{vp} s_{vct}
 
-In script ``urbs.py`` the constraint intermittent supply rule is defined and calculated by the following code fragment:
+
+In script ``model.py`` the constraint intermittent supply rule is defined and calculated by the following code fragment:
+
 ::
 
     m.def_intermittent_supply = pyomo.Constraint(
@@ -68,16 +97,22 @@ In script ``urbs.py`` the constraint intermittent supply rule is defined and cal
         rule=def_intermittent_supply_rule,
         doc='process output = process capacity * supim timeseries')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: def_intermittent_supply_rule
 
-**Process Throughput By Capacity Rule**: The constraint process throughput by capacity rule limits the variable process throughput :math:`\tau_{vpt}`. This constraint prevents processes from exceeding their capacity. The constraint states that the variable process throughput must be less than or equal to the variable total process capacity :math:`\kappa_{vp}`. In mathematical notation this is expressed as:
+**Process Throughput By Capacity Rule**: The constraint process throughput by
+capacity rule limits the variable process throughput :math:`\tau_{vpt}`. This
+constraint prevents processes from exceeding their capacity. The constraint
+states that the variable process throughput must be less than or equal to the
+variable total process capacity :math:`\kappa_{vp}`. In mathematical notation
+this is expressed as:
 
 .. math::
 
     \forall v\in V, p\in P, t\in T_m\colon\ \tau_{vpt} \leq \kappa_{vp}
 
-In script ``urbs.py`` the constraint process throughput by capacity rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint process throughput by capacity rule is defined and calculated by the following code fragment:
+
 ::
 
     m.res_process_throughput_by_capacity = pyomo.Constraint(
@@ -85,33 +120,59 @@ In script ``urbs.py`` the constraint process throughput by capacity rule is defi
         rule=res_process_throughput_by_capacity_rule,
         doc='process throughput <= total process capacity')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_process_throughput_by_capacity_rule
 
-**Process Throughput Gradient Rule**: The constraint process throughput gradient rule limits the process power gradient :math:`\left| \tau_{vpt} - \tau_{vp(t-1)} \right|`. This constraint prevents processes from exceeding their maximal possible change in activity from one time step to the next. The constraint states that absolute power gradient must be less than or equal to the maximal power gradient :math:`\overline{PG}_{vp}` parameter (scaled to capacity and by time step duration). In mathematical notation this is expressed as:
+**Process Throughput Gradient Rule**: The constraint process throughput gradient
+rule limits the process power gradient
+:math:`\left| \tau_{vpt} - \tau_{vp(t-1)} \right|`. This constraint prevents
+processes from exceeding their maximal possible change in activity from one time
+step to the next. The constraint states that absolute power gradient must be
+less than or equal to the maximal power gradient :math:`\overline{PG}_{vp}`
+parameter (scaled to capacity and by time step duration). In mathematical
+notation this is expressed as:
 
 .. math::
 
-    \forall v\in V, p\in P, t\in T_m\colon\ \left| \tau_{vpt} - \tau_{vp(t-1)} \right| \leq  \kappa_{vp} \overline{PG}_{vp} \Delta t
+    \forall v\in V, p\in P, t\in T_m\colon\ \left| \tau_{vpt} - \tau_{vp(t-1)}
+    \right| \leq  \kappa_{vp} \overline{PG}_{vp} \Delta t
 
-In script ``urbs.py`` the constraint process throughput gradient rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint process throughput gradient rule is split
+into 2 parts and defined and calculated by the following code fragment:
 ::
 
-    m.res_process_throughput_gradient = pyomo.Constraint(
-        m.tm, m.pro_tuples,
-        rule=res_process_throughput_gradient_rule,
-        doc='process throughput gradient <= maximal gradient')
+    m.res_process_maxgrad_lower = pyomo.Constraint(
+        m.tm, m.pro_maxgrad_tuples,
+        rule=res_process_maxgrad_lower_rule,
+        doc='throughput may not decrease faster than maximal gradient')
+    m.res_process_maxgrad_upper = pyomo.Constraint(
+        m.tm, m.pro_maxgrad_tuples,
+        rule=res_process_maxgrad_upper_rule,
+        doc='throughput may not increase faster than maximal gradient')
 
-.. literalinclude:: /../urbs.py
-   :pyobject: res_process_throughput_gradient_rule
+.. literalinclude:: /../urbs/model.py
+   :pyobject: res_process_maxgrad_lower_rule
+.. literalinclude:: /../urbs/model.py
+   :pyobject: res_process_maxgrad_upper_rule
 
-**Process Capacity Limit Rule**: The constraint process capacity limit rule limits the variable total process capacity :math:`\kappa_{vp}`. This constraint restricts a process :math:`p` in a site :math:`v` from having more total capacity than an upper bound and having less than a lower bound. The constraint states that the variable total process capacity :math:`\kappa_{vp}` must be greater than or equal to the parameter process capacity lower bound :math:`\underline{K}_{vp}` and less than or equal to the parameter process capacity upper bound :math:`\overline{K}_{vp}`. In mathematical notation this is expressed as:
+**Process Capacity Limit Rule**: The constraint process capacity limit rule
+limits the variable total process capacity :math:`\kappa_{vp}`. This constraint
+restricts a process :math:`p` in a site :math:`v` from having more total
+capacity than an upper bound and having less than a lower bound. The constraint
+states that the variable total process capacity :math:`\kappa_{vp}` must be
+greater than or equal to the parameter process capacity lower bound
+:math:`\underline{K}_{vp}` and less than or equal to the parameter process
+capacity upper bound :math:`\overline{K}_{vp}`. In mathematical notation this
+is expressed as:
+
 
 .. math::
 
-    \forall v\in V, p\in P\colon\  \underline{K}_{vp} \leq \kappa_{vp} \leq \overline{K}_{vp}
+    \forall v\in V, p\in P\colon\  \underline{K}_{vp} \leq \kappa_{vp} \leq
+    \overline{K}_{vp}
 
-In script ``urbs.py`` the constraint process capacity limit rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint process capacity limit rule is defined and calculated by the following code fragment:
+
 ::
 
     m.res_process_capacity = pyomo.Constraint(
@@ -119,12 +180,24 @@ In script ``urbs.py`` the constraint process capacity limit rule is defined and 
         rule=res_process_capacity_rule,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_process_capacity_rule
 
-**Sell Buy Symmetry Rule**: The constraint sell buy symmetry rule defines the total process capacity :math:`\kappa_{vp}` of a process :math:`p` in a site :math:`v` that uses either sell or buy commodities ( :math:`c \in C_\text{sell} \vee C_\text{buy}`), therefore this constraint only applies to processes that use sell or buy commodities. The constraint states that the total process capacities :math:`\kappa_{vp}` of processes that use complementary buy and sell commodities must be equal. Buy and sell commodities are complementary, when a commodity :math:`c` is an output of a process where the buy commodity is an input, and at the same time the commodity :math:`c` is an input commodity of a process where the sell commodity is an output.
 
-In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calculated by the following code fragment:
+**Sell Buy Symmetry Rule**: The constraint sell buy symmetry rule defines the
+total process capacity :math:`\kappa_{vp}` of a process :math:`p` in a site
+:math:`v` that uses either sell or buy commodities ( :math:`c \in C_\text{sell}
+\vee C_\text{buy}`), therefore this constraint only applies to processes that
+use sell or buy commodities. The constraint states that the total process
+capacities :math:`\kappa_{vp}` of processes that use complementary buy and sell
+commodities must be equal. Buy and sell commodities are complementary, when a
+commodity :math:`c` is an output of a process where the buy commodity is an
+input, and at the same time the commodity :math:`c` is an input commodity of a
+process where the sell commodity is an output.
+
+In script ``model.py`` the constraint sell buy symmetry rule is defined and
+calculated by the following code fragment:
+
 ::
 
     m.res_sell_buy_symmetry = pyomo.Constraint(
@@ -132,7 +205,7 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
         rule=res_sell_buy_symmetry_rule,
         doc='total power connection capacity must be symmetric in both directions')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_sell_buy_symmetry_rule
 
 
@@ -140,12 +213,24 @@ In script ``urbs.py`` the constraint sell buy symmetry rule is defined and calcu
 
 Partial & Startup Process Constraints
 -------------------------------------
+The partial & startup process constraint described in the following are only
+acitivated if in the input file there is a value set in the column **ratio-min**
+for an **input commodity** in the **process-commodity** sheet for the process
+in question. Values for the **output commodities** do not have any effect.
 
-It is important to understand that this partial load formulation can only work if its accompanied by a sensible value for both the minimum partial load fraction :math:`\underline{P}_{vp}` and the startup cost :math:`k_{vp}^\text{startup}`. Otherwise, the optimal solution yields identical operation and performance like a regular, fully proportional process with constant/flat input ratios. 
+It is important to understand that this partial load formulation can only work
+if its accompanied by a sensible value for both the minimum partial load
+fraction :math:`\underline{P}_{vp}` and the startup cost
+:math:`k_{vp}^\text{startup}`. Otherwise, the optimal solution yields identical
+operation and performance like a regular, fully proportional process with
+constant/flat input ratios. 
 
-**Throughput by Online Capacity Min Rule**
-
-The new variable *online capacity* forces the process throughput to always stay above its value times the minium partial load fraction. But note that there is **no** constraint that stops :math:`\omega_{vpt}` from assuming arbitrarily small values. This is only softly prohibited by the startup cost term, which acts as kind of a soft friction term that punishes too dynamic of an operation strategy.
+**Throughput by Online Capacity Min Rule**: The new variable *online capacity*
+forces the process throughput to always stay above its value times the minium 
+partial load fraction. But note that there is **no** constraint that stops
+:math:`\omega_{vpt}` from assuming arbitrarily small values. This is only softly
+prohibited by the startup cost term, which acts as kind of a soft friction term
+that punishes too dynamic of an operation strategy.
 
 .. math::
     \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
@@ -160,12 +245,11 @@ And here as code:
         rule=res_throughput_by_online_capacity_min_rule,
         doc='cap_online * min-fraction <= tau_pro')
         
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_throughput_by_online_capacity_min_rule
 
-**Throughput by Online Capacity Max Rule**
-   
-On the other side, the *online capacity* is an upper cap on the process throughput.
+**Throughput by Online Capacity Max Rule**: On the other side, the
+*online capacity* is an upper cap on the process throughput.
 
 .. math::
     \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
@@ -179,40 +263,69 @@ And the code:
         rule=res_throughput_by_online_capacity_max_rule,
         doc='tau_pro <= cap_online')
         
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_throughput_by_online_capacity_max_rule
 
    
 
-**Partial Process Input Rule**: In energy system modelling, the simplest way to represent an energy conversion process is to assume a linear input-output relationship with a flat efficiency parameter :math:`\eta`:
+**Partial Process Input Rule**: In energy system modelling, the simplest way to
+represent an energy conversion process is to assume a linear input-output
+relationship with a flat efficiency parameter :math:`\eta`:
 
 .. math::
        \epsilon_{out} = \epsilon_{in} \cdot \eta
 
 
-Which means there is only one efficiency :math:`\eta` during the whole process, i.e. it remains constant during the electricity production. But in fact, most of the powerplants do not operate at a certain efficiency and the operation load varies along time. Therefore the regular single efficiency :math:`\eta` will be replaced by a set of input ratios (:math:`r^\text{in}`) and output ratios (:math:`r^\text{out}`) in urbs. And both ratios relate to the process activity :math:`\tau`:
+Which means there is only one efficiency :math:`\eta` during the whole process,
+i.e. it remains constant during the electricity production. But in fact, most of
+the powerplants do not operate at a certain efficiency and the operation load
+varies along time. Therefore the regular single efficiency :math:`\eta` will be
+replaced by a set of input ratios (:math:`r^\text{in}`) and output ratios
+(:math:`r^\text{out}`) in urbs. And both ratios relate to the process throughput
+:math:`\tau`:
 
 .. math::
-       \epsilon_{pct}^\text{in} &= \tau_{pt} r_{pc}^\text{in}
+       \epsilon_{vpct}^\text{in} &= \tau_{vpt} r_{pc}^\text{in}
        
-       \epsilon_{pct}^\text{out} &= \tau_{pt} r_{pc}^\text{out}
+       \epsilon_{vpct}^\text{out} &= \tau_{vpt} r_{pc}^\text{out}
        
-In order to simplify the mathematical calculation, the output ratios are set to 1 so that the process output (:math:`\epsilon_{pct}^\text{out}`) is equal to the process throughput (:math:`\tau`). Then, the process efficiency :math:`\eta` can be represented as follows:
+In order to simplify the mathematical calculation, the output ratios are set to
+1 so that the process output (:math:`\epsilon_{vpct}^\text{out}`) is equal to the
+process throughput (:math:`\tau_{vpt}`). Then, the process efficiency
+:math:`\eta` can be represented as follows:
 
 .. math::
-    \eta = \frac{\epsilon_{pct}^\text{out}}{\epsilon_{pct}^\text{in}} = \frac{\tau}{\epsilon_{pct}^\text{in}}
+    \eta = \frac{\epsilon_{vpct}^\text{out}}{\epsilon_{vpct}^\text{in}} =
+    \frac{\tau_{vpt}}{\epsilon_{vpct}^\text{in}}
     
-Assume now a process, it has a lower input ratio :math:`\underline{r}_{pc}^\text{in}`, a upper input ratio :math:`r_{pc}^\text{in}`, the process minimum part load fraction :math:`\underline{P}_{vp}` and the corresponding start-up costs. The :math:`\tau` will be bounded by :math:`\underline{P}_{vp}` and the online capacity :math:`\omega_{vpt}`, which means the throughput can only vary between :math:`\underline{P}_{vp} \cdot \omega_{vpt}` and :math:`\omega_{vpt}`. When all the start-up costs are equal to zero, the relation between the process input and the process throughout is nothing else but a straight line across the original point, which exists almost only theoretically. Practically, every powerplant has a start-up cost, which has a big influence on the effeiciency of the process. 
+Assume now a process, it has a lower input ratio
+:math:`\underline{r}_{pc}^\text{in}`, a upper input ratio
+:math:`r_{pc}^\text{in}`, the process minimum part load fraction
+:math:`\underline{P}_{vp}` and the corresponding start-up costs. The
+:math:`\tau_{vpt}` will be bounded by :math:`\underline{P}_{vp}` and the online
+capacity :math:`\omega_{vpt}`, which means the throughput can only vary between
+:math:`\underline{P}_{vp} \cdot \omega_{vpt}` and :math:`\omega_{vpt}`. When all
+the start-up costs are equal to zero, the relation between the process input and
+the process throughout is nothing else but a straight line across the original
+point, which exists almost only theoretically. Practically, every powerplant has
+a start-up cost, which has a big influence on the effeiciency of the process. 
 
-To research the influence of the start-up costs, a continouous start-up variable :math:`\chi_{pt} \in [0, \kappa_p]` is introduced and defines as follows:
+To research the influence of the start-up costs, a continouous start-up variable
+:math:`\phi_{vpt} \in [0, \kappa_p]` is introduced and defined as follows:
 
 .. math::
-    \tau_{pt} &\leq \omega_{pt} \\
-    \chi_{pt} &\geq \omega_{pt} - \omega_{p(t-1)} \\
-    \zeta_\text{var} & \mathrel{+}= \sum_{t\in T} \sum_{p\in P} k_{p}^\text{startup} \chi_{pt}
+    \tau_{vpt} &\leq \omega_{vpt} \\
+    \phi_{vpt} &\geq \omega_{vpt} - \omega_{vp(t-1)} \\
+    \zeta_\text{startup} & \mathrel{+}=
+    \sum_{t\in T_{m}} \sum_{p\in P} k_{p}^\text{st} \phi_{pt}
     
-Where the :math:`\omega_{pt}` is also a new introduced variable, represents the start-up capacity (or the idle consumption). With these two variables, the urbs can detect the energy consumption of a process at the starting point and put a start-up costs on it to obtain the variable costs.
+With this new variable, urbs can detect the energy consumption of a process at
+the starting point and put start-up costs on it. Like the variable costs these
+start-up costs are per unit of energy.
 
+For a part load case the input ratio of the process is a function of both
+:math:`\omega_{vpt}` and :math:`\tau_{vpt}`:. Here we still assume that the
+output ratio is set to 1.
 
 .. math::
     \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  
@@ -226,28 +339,45 @@ Where the :math:`\omega_{pt}` is also a new introduced variable, represents the 
           \underline{r}_{pc}^\text{in}}{
         1 - \underline{P}_{vp}}
 
-As it is not immediately clear what this expression accomplishes, here is visual example. It plots the value off the expression :math:`\tau_{vpt}/\epsilon_{vpct}^\text{in}` for a process with :math:`\underline{P}_{vp} = 0.35`, :math:`\underline{r}_{pc}^\text{in} = 3.33` and :math:`r_{pc}^\text{in} = 2.5` and a hypothetical capacity of :math:`1 MW`. When operating at its maximum, it yields an input efficiecny of :math:`40 \%`, whereas in partial load this drops to :math:`30 \%`.
-
-
-.. image:: ../img/partial-eff.*
-   :width: 95%
-   :align: center
-
-More discussion and a visualisation of the reverse case (partial load more efficient than full load operation) is shown in a `dedicated IPython notebook <http://nbviewer.jupyter.org/gist/ojdo/a8d26dc6abc9d22faf77d7cd2623dddc/startup-partial-ratios.ipynb>`_.
-   
+In the program code this expression is written in the following way:
 ::
 
     m.def_partial_process_input = pyomo.Constraint(
         m.tm, m.pro_partial_input_tuples,
         rule=def_partial_process_input_rule,
         doc='e_pro_in = cap_online * min_fraction * (r - R) / (1 - min_fraction)'
-                        '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
+                     '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: def_partial_process_input_rule
 
+As it is not immediately clear what this expression accomplishes, here is visual
+example. It plots the value off the expression
+:math:`\tau_{vpt}/\epsilon_{vpct}^\text{in}` for a process with
+:math:`\underline{P}_{vp} = 0.35`, :math:`\underline{r}_{pc}^\text{in} = 3.33`
+and :math:`r_{pc}^\text{in} = 2.5` and a hypothetical capacity of :math:`1 MW`.
+When operating at its maximum, it yields an input efficiecny of :math:`40 \%`,
+whereas in partial load this drops to :math:`30 \%`.
 
-**Online Capacity By Process Capacity Rule** limits the value of the online capacity :math:`\omega_{vpt}` by the total installed process capacity :math:`\kappa_{vp}`:
+
+.. image:: ../img/partial-eff.*
+   :width: 95%
+   :align: center
+
+For very high startup costs the system will typically follow the line
+:math:`\omega_{vpt}=1 MW` since all changes in :math:`\omega_{vpt}` are very
+expensive in that case. This means then also that the process is rather strongly
+forced to not run below the minimum capacity :\underline{P}_{vp}:. In this case
+the input ratio :math:`\epsilon^\text{in}_{vcpt}` is a linear function with an
+offset and the efficiency consequently shows a nonlinear behavior typical for
+real machines. More discussion and a visualisation of the reverse case (partial
+load more efficient than full load operation) is shown in a `dedicated IPython
+notebook
+<http://nbviewer.jupyter.org/gist/ojdo/a8d26dc6abc9d22faf77d7cd2623dddc/startup-partial-ratios.ipynb>`_.
+
+**Online Capacity By Process Capacity Rule** limits the value of the online
+capacity :math:`\omega_{vpt}` by the total installed process capacity
+:math:`\kappa_{vp}`:
 
 
 .. math::
@@ -262,10 +392,14 @@ More discussion and a visualisation of the reverse case (partial load more effic
         rule=res_cap_online_by_cap_pro_rule,
         doc='online capacity <= process capacity')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: res_cap_online_by_cap_pro_rule 
 
-**Startup Capacity Rule** determines the value of the startup capacity indicator variable :math:`\phi_{vpt}`, by limiting its value to at least the positive difference of subsequent online capacity states :math:`\omega_{vpt}` and :math:`\omega_{vp(t-1)}`. In other words: whenever the onlince capacity increases, startup capacity :math:`\phi_{vpt}` assumes a non-zero value.
+**Startup Capacity Rule** determines the value of the startup capacity indicator
+variable :math:`\phi_{vpt}`, by limiting its value to at least the positive
+difference of subsequent online capacity states :math:`\omega_{vpt}` and
+:math:`\omega_{vp(t-1)}`. In other words: whenever the onlince capacity
+increases, startup capacity :math:`\phi_{vpt}` assumes a non-zero value.
 
 .. math::
 
@@ -281,6 +415,6 @@ Code declaration and definition:
         rule=def_startup_capacity_rule,
         doc='startup_capacity[t] >= cap_online[t] - cap_online[t-1]')
 
-.. literalinclude:: /../urbs.py
+.. literalinclude:: /../urbs/model.py
    :pyobject: def_startup_capacity_rule
         

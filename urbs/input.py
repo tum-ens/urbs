@@ -22,7 +22,7 @@ def read_excel(filename):
 
     Example:
         >>> data = read_excel('mimo-example.xlsx')
-        >>> data['global'].loc['CO2 limit', 'value']
+        >>> data['global_prop'].loc['CO2 limit', 'value']
         150000000
     """
     with pd.ExcelFile(filename) as xls:
@@ -43,7 +43,7 @@ def read_excel(filename):
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        glob_prop = xls.parse('Global').set_index(['Property'])
+        global_prop = xls.parse('Global').set_index(['Property'])
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -53,7 +53,7 @@ def read_excel(filename):
     buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
 
     data = {
-        'glob_prop': glob_prop,
+        'global_prop': global_prop,
         'site': site,
         'commodity': commodity,
         'process': process,

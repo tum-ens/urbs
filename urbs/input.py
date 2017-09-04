@@ -43,7 +43,7 @@ def read_excel(filename):
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        glob = xls.parse('Global').set_index(['Property'])
+        glob_prop = xls.parse('Global').set_index(['Property'])
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -53,7 +53,7 @@ def read_excel(filename):
     buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
 
     data = {
-        'global': glob,
+        'glob_prop': glob_prop,
         'site': site,
         'commodity': commodity,
         'process': process,

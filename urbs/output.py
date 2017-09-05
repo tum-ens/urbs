@@ -141,7 +141,8 @@ def get_timeseries(instance, com, sites, timesteps=None):
         imported = imported.unstack(level='sit')
 
         internal_import = imported[sites].sum(axis=1)  # ...from sites
-        imported = imported[other_sites]  # ...from other_sites
+        other_sites_im = list(other_sites & imported.columns)
+        imported = imported[other_sites_im]  # ...from other_sites
         imported = drop_all_zero_columns(imported)
 
         exported = get_entity(instance, 'e_tra_in')
@@ -151,7 +152,8 @@ def get_timeseries(instance, com, sites, timesteps=None):
         exported = exported.unstack(level='sit_')
 
         internal_export = exported[sites].sum(axis=1)  # ...to sites (internal)
-        exported = exported[other_sites]  # ...to other_sites
+        other_sites_ex = list(other_sites & exported.columns)
+        exported = exported[other_sites_ex]  # ...to other_sites
         exported = drop_all_zero_columns(exported)
     else:
         imported = pd.DataFrame(index=timesteps)

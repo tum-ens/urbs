@@ -19,7 +19,7 @@ columns specifying your buy- and sellable commodities, e.g.,
 resolved buy and sell prices by default in € per MWh. In the **Commodity** sheet
 the new tradable commodities have to be set as type ``Buy`` or ``Sell``. The
 price column in the **Commodity** sheet is then reinterpreted as a factor
-multiplied to the given price timeseries. For an actaul use of the tradeable
+multiplied to the given price timeseries. For an actual use of the tradeable
 commodities they have to be converted into demand commodities in a separate
 process.
 For a more detailed description of the implementation have a look at the

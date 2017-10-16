@@ -133,7 +133,8 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     # write report to spreadsheet
     urbs.report(
         prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
+        os.path.join(result_dir, '{}_{}.xlsx').format(sce, result_dir[-13:]), # mod by Vicky
+#        os.path.join(result_dir, '{}.xlsx').format(sce), # mod by Vicky
         report_tuples=report_tuples)
 
     # result plots
@@ -147,25 +148,67 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     return prob
 
 if __name__ == '__main__':
-    input_file = 'mimo-example.xlsx'
+#    input_file = 'mimo-example.xlsx'
+    input_file = 'InputFile_VictHe_ElecShunt.xlsx'
+  #  input_file = '1Node(all).xlsx'
+
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
     # simulation timesteps
-    (offset, length) = (3500, 168) # time step selection
+    (offset, length) = (0, 8760) # time step selection: 
+        #Start (d.h. ab 3224h im Jahr) und Anzahl Jahresstunden (d.h. 24h lang), die berechnet werden soll
     timesteps = range(offset, offset+length+1)
-
+    
     # plotting commodities/sites
     plot_tuples = [
-        ('North', 'Elec'),
-        ('Mid', 'Elec'),
-        ('South', 'Elec'),
-        (['North', 'Mid', 'South'], 'Elec')]
+            ('DE', 'Elec'),
+            ('DE', 'Heat'),
+            ('DE SolD', 'Elec'),
+            ('DE SolD', 'Heat'),
+            ('DE WindOn', 'Elec'),
+            ('DE WindOff', 'Elec'),         
+            ('DE SolF&Bio', 'Elec'),
+            ('DE SolF&Bio', 'Heat'),
+            ('DE', 'CO2'),
+            ('DE SolF&Bio', 'CO2'),
+#            ('DE', 'Elec Sell'),
+            (['DE', 'DE SolD', 'DE WindOn', 'DE WindOff', 'DE SolF&Bio'], 'Elec'),
+            (['DE', 'DE SolD', 'DE WindOn', 'DE WindOff', 'DE SolF&Bio'], 'Heat'),
+               ]       
+            
+#          ('Campus', 'Elec'),
+#          ('Campus', 'Heat'),
+#          ('Campus','CO2')
+    
+#        ('North', 'Elec'),
+#        ('Mid', 'Elec'),
+#        ('South', 'Elec'),
+#        (['North', 'Mid', 'South'], 'Elec')]
 
     # detailed reporting commodity/sites
     report_tuples = [
-        ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
-        ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
+            ('DE', 'Elec'),
+            ('DE', 'Heat'),
+            ('DE SolD', 'Elec'),
+            ('DE SolD', 'Heat'), 
+            ('DE WindOn', 'Elec'), 
+            ('DE WindOff', 'Elec'),
+            ('DE SolF&Bio', 'Elec'),
+            ('DE SolF&Bio','Heat'), 
+            ('DE', 'CO2'),
+            ('DE SolF&Bio', 'CO2'),
+#            ('DE', 'Elec Sell'),
+            ]
+            
+          
+#        ('Campus', 'Elec'),('Grid', 'Elec'),
+#        ('Campus', 'Heat'),('Grid', 'Heat'),
+#        ('Campus', 'Cold'),('Grid', 'Cold'),
+#        ('Campus', 'CO2'),('Grid', 'CO2')
+            
+#        ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
+#        ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
 
     # plotting timesteps
     plot_periods = {
@@ -174,21 +217,28 @@ if __name__ == '__main__':
 
     # add or change plot colors
     my_colors = {
-        'South': (230, 200, 200),
-        'Mid': (200, 230, 200),
-        'North': (200, 200, 230)}
+        'DE': (230, 200, 200),
+        'DE SolD': (200, 230, 200),
+        'DE WindOn': (200, 200, 230),
+        'DE WindOff': (100, 200, 200),
+        'DE SolF&Bio': (100, 200, 100)
+            }     
+    
+#        'South': (230, 200, 200),
+#        'Mid': (200, 230, 200),
+#        'North': (200, 200, 230)}
     for country, color in my_colors.items():
         urbs.COLORS[country] = color
 
     # select scenarios to be run
     scenarios = [
-        scenario_base,
-        scenario_stock_prices,
-        scenario_co2_limit,
-        scenario_co2_tax_mid,
-        scenario_no_dsm,
-        scenario_north_process_caps,
-        scenario_all_together]
+        scenario_base,]
+#        scenario_stock_prices,
+#        scenario_co2_limit,
+#        scenario_co2_tax_mid,
+#        scenario_no_dsm,
+#        scenario_north_process_caps,
+#        scenario_all_together]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,

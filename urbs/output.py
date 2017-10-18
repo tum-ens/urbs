@@ -38,6 +38,10 @@ def get_constants(instance):
                                    'cap_sto_p', 'cap_sto_p_new'])
 
     # better labels and index names and return sorted
+    if not costs.empty:
+        costs.index.names = ['cost_type']
+		costs.columns = ['costs']
+		costs.sort_index(inplace=True)
     if not cpro.empty:
         cpro.index.names = ['Site', 'Process']
         cpro.columns = ['Total', 'New']

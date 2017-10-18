@@ -125,7 +125,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     result = optim.solve(prob, tee=True)
 
     # save problem solution (and input data) to HDF5 file
-    # urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # write report to spreadsheet
     urbs.report(
@@ -144,14 +144,14 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     return prob
 
 if __name__ == '__main__':
-    input_file = 'flexi-example.xlsx'
+    input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
     # copy input file to result directory
     shutil.copyfile(input_file, os.path.join(result_dir, input_file))
     # copy runme.py to result directory
-    # shutil.copyfile(__file__, os.path.join(result_dir, __file__))
+    shutil.copyfile(__file__, os.path.join(result_dir, __file__))
 
     # simulation timesteps
     (offset, length) = (3500, 168)  # time step selection
@@ -167,8 +167,7 @@ if __name__ == '__main__':
     # detailed reporting commodity/sites
     report_tuples = [
         ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
-        ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2'),
-        ('North', 'Gas'), ('Mid', 'Gas'), ('South', 'Gas')]
+        ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
 
     # plotting timesteps
     plot_periods = {
@@ -185,7 +184,13 @@ if __name__ == '__main__':
 
     # select scenarios to be run
     scenarios = [
-        scenario_base]
+        scenario_base,
+        scenario_stock_prices,
+        scenario_co2_limit,
+        scenario_co2_tax_mid,
+        scenario_no_dsm,
+        scenario_north_process_caps,
+        scenario_all_together]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,

@@ -65,7 +65,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')
     m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
     m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
-    
+
     # output ratios for partial efficiencies
     # only keep those entries whose values are
     # a) positive and
@@ -228,7 +228,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                     for (pro, commodity) in m.r_in_min_fraction.index
                     if process == pro],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,Coal)')
-    
+
     m.pro_partial_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)

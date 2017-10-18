@@ -120,7 +120,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 
@@ -190,7 +190,8 @@ if __name__ == '__main__':
         scenario_co2_tax_mid,
         scenario_no_dsm,
         scenario_north_process_caps,
-        scenario_all_together]
+        scenario_all_together
+		]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,

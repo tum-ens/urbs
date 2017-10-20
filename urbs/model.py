@@ -66,6 +66,14 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
     m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
 
+    # output ratios for partial efficiencies
+    # only keep those entries whose values are
+    # a) positive and
+    # b) numeric (implicitely, as NaN or NV compare false against 0)
+    m.r_out_min_fraction = m.process_commodity.xs('Out', level='Direction')
+    m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
+    m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
+
     # derive annuity factor from WACC and depreciation duration
     m.process['annuity-factor'] = annuity_factor(
         m.process['depreciation'],
@@ -220,6 +228,14 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                     for (pro, commodity) in m.r_in_min_fraction.index
                     if process == pro],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,Coal)')
+
+    m.pro_partial_output_tuples = pyomo.Set(
+        within=m.sit*m.pro*m.com,
+        initialize=[(site, process, commodity)
+                    for (site, process) in m.pro_partial_tuples
+                    for (pro, commodity) in m.r_out_min_fraction.index
+                    if process == pro],
+        doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
 
     # commodity type subsets
     m.com_supim = pyomo.Set(
@@ -428,7 +444,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         rule=def_process_input_rule,
         doc='process input = process throughput * input ratio')
     m.def_process_output = pyomo.Constraint(
-        m.tm, m.pro_output_tuples,
+        m.tm, m.pro_output_tuples - m.pro_partial_output_tuples,
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
     m.def_intermittent_supply = pyomo.Constraint(
@@ -474,6 +490,12 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.tm, m.pro_partial_input_tuples,
         rule=def_partial_process_input_rule,
         doc='e_pro_in = '
+            ' cap_online * min_fraction * (r - R) / (1 - min_fraction)'
+            ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
+    m.def_partial_process_output = pyomo.Constraint(
+        m.tm, m.pro_partial_output_tuples,
+        rule=def_partial_process_output_rule,
+        doc='e_pro_out = '
             ' cap_online * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
     m.res_cap_online_by_cap_pro = pyomo.Constraint(
@@ -874,6 +896,19 @@ def def_partial_process_input_rule(m, tm, sit, pro, coin):
             m.tau_pro[tm, sit, pro] * throughput_factor)
 
 
+def def_partial_process_output_rule(m, tm, sit, pro, coo):
+    R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
+    r = m.r_out_min_fraction[pro, coo]  # input ratio at lowest operation point
+    min_fraction = m.process.loc[sit, pro]['min-fraction']
+
+    online_factor = min_fraction * (r - R) / (1 - min_fraction)
+    throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
+
+    return (m.e_pro_out[tm, sit, pro, coo] ==
+            m.cap_online[tm, sit, pro] * online_factor +
+            m.tau_pro[tm, sit, pro] * throughput_factor)
+
+
 def res_cap_online_by_cap_pro_rule(m, tm, sit, pro):
     return m.cap_online[tm, sit, pro] <= m.cap_pro[sit, pro]
 
@@ -1125,22 +1160,22 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Revenue':
         sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
-        com_prices = get_com_price(m, sell_tuples)
 
         return m.costs[cost_type] == -sum(
             m.e_co_sell[(tm,) + c] *
-            com_prices[c].loc[tm] *
+            m.buy_sell_price.loc[tm][c[1]] *
+            m.commodity.loc[c]['price'] *
             m.weight * m.dt
             for tm in m.tm
             for c in sell_tuples)
 
     elif cost_type == 'Purchase':
         buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
-        com_prices = get_com_price(m, buy_tuples)
 
         return m.costs[cost_type] == sum(
             m.e_co_buy[(tm,) + c] *
-            com_prices[c].loc[tm] *
+            m.buy_sell_price.loc[tm][c[1]] *
+            m.commodity.loc[c]['price'] *
             m.weight * m.dt
             for tm in m.tm
             for c in buy_tuples)

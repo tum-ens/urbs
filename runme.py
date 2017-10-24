@@ -151,7 +151,7 @@ if __name__ == '__main__':
     # copy input file to result directory
     shutil.copyfile(input_file, os.path.join(result_dir, input_file))
     # copy runme.py to result directory
-    shutil.copyfile(__file__, os.path.join(os.path.dirname(__file__),result_dir,os.path.basename(__file__)))
+    shutil.copyfile(__file__, os.path.join(os.path.dirname(__file__), result_dir, os.path.basename(__file__)))
 
     # simulation timesteps
     (offset, length) = (3500, 168)  # time step selection

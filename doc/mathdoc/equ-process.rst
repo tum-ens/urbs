@@ -323,14 +323,13 @@ With this new variable, urbs can detect the energy consumption of a process at
 the starting point and put start-up costs on it. Like the variable costs these
 start-up costs are per unit of energy.
 
-For a part load case the input ratio of the process is a function of both
-:math:`\omega_{vpt}` and :math:`\tau_{vpt}`:. Here we still assume that the
-output ratio is set to 1.
+For a part load case the input ratio and, if specified, the output ratio of the
+process is a function of :math:`\tau_{vpt}`:
 
 .. math::
     \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  
     \epsilon_{vpct}^\text{in} = 
-      \omega_{vpt} \cdot \frac{
+      \kappa_{vp} \cdot \frac{
           \underline{r}_{pc}^\text{in} - r_{pc}^\text{in}}{
           1 - \underline{P}_{vp}} \cdot \underline{P}_{vp} 
     + \tau_{vpt} \cdot \frac{
@@ -339,41 +338,32 @@ output ratio is set to 1.
           \underline{r}_{pc}^\text{in}}{
         1 - \underline{P}_{vp}}
 
-In the program code this expression is written in the following way:
+In the program code this expression is written in the following way for the
+input ratio:
 ::
 
     m.def_partial_process_input = pyomo.Constraint(
         m.tm, m.pro_partial_input_tuples,
         rule=def_partial_process_input_rule,
-        doc='e_pro_in = cap_online * min_fraction * (r - R) / (1 - min_fraction)'
+        doc='e_pro_in = cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
                      '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
 .. literalinclude:: /../urbs/model.py
    :pyobject: def_partial_process_input_rule
 
-As it is not immediately clear what this expression accomplishes, here is visual
-example. It plots the value off the expression
-:math:`\tau_{vpt}/\epsilon_{vpct}^\text{in}` for a process with
-:math:`\underline{P}_{vp} = 0.35`, :math:`\underline{r}_{pc}^\text{in} = 3.33`
-and :math:`r_{pc}^\text{in} = 2.5` and a hypothetical capacity of :math:`1 MW`.
-When operating at its maximum, it yields an input efficiecny of :math:`40 \%`,
-whereas in partial load this drops to :math:`30 \%`.
+For a given process capacity :math:`\kappa_{vp}` the efficiency of the process
+is then only dependent on the process throughput :math:`\tau_{vpt}`. The
+input (or output) ratio varies then linearly between :math:`r^{in}_{pc}` and
+:math:`r^{in}_{pc}` for throughputs in the desired operational region, i.e.,
+between full load :math:`\kappa_{vp}` and the minimal part load state
+:math:`\kappa_{vp}\underline P_{vp}`. The efficiency is then of the form:
 
+.. math::
+    \eta = \frac{\epsilon_{vpct}^\text{out}}{\epsilon_{vpct}^\text{in}} =
+    \frac{a + b \tau_{vpt}}{c + d \tau_{vpt}}
 
-.. image:: ../img/partial-eff.*
-   :width: 95%
-   :align: center
-
-For very high startup costs the system will typically follow the line
-:math:`\omega_{vpt}=1 MW` since all changes in :math:`\omega_{vpt}` are very
-expensive in that case. This means then also that the process is rather strongly
-forced to not run below the minimum capacity :\underline{P}_{vp}:. In this case
-the input ratio :math:`\epsilon^\text{in}_{vcpt}` is a linear function with an
-offset and the efficiency consequently shows a nonlinear behavior typical for
-real machines. More discussion and a visualisation of the reverse case (partial
-load more efficient than full load operation) is shown in a `dedicated IPython
-notebook
-<http://nbviewer.jupyter.org/gist/ojdo/a8d26dc6abc9d22faf77d7cd2623dddc/startup-partial-ratios.ipynb>`_.
+Note that :math:`\underline{r}>r` has to be valid for all in- and output ratios
+since otherwise negative energy in-/outputs and thus wrong results would occur.  
 
 **Online Capacity By Process Capacity Rule** limits the value of the online
 capacity :math:`\omega_{vpt}` by the total installed process capacity

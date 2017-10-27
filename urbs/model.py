@@ -1133,28 +1133,26 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Variable':
         return m.costs[cost_type] == \
-            sum(m.tau_pro[(tm,) + p] * m.dt *
-                m.process.loc[p]['var-cost'] *
-                m.weight
+            sum(m.tau_pro[(tm,) + p] * m.dt * m.weight *
+                m.process.loc[p]['var-cost']
                 for tm in m.tm
                 for p in m.pro_tuples) + \
-            sum(m.e_tra_in[(tm,) + t] * m.dt *
-                m.transmission.loc[t]['var-cost'] *
-                m.weight
+            sum(m.e_tra_in[(tm,) + t] * m.dt * m.weight *
+                m.transmission.loc[t]['var-cost']
                 for tm in m.tm
                 for t in m.tra_tuples) + \
-            sum(m.e_sto_con[(tm,) + s] *
-                m.storage.loc[s]['var-cost-c'] * m.weight +
-                (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) * m.dt *
-                m.storage.loc[s]['var-cost-p'] * m.weight
+            sum(m.e_sto_con[(tm,) + s] * m.weight *
+                m.storage.loc[s]['var-cost-c'] +
+                m.dt * m.weight *
+                (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
+                m.storage.loc[s]['var-cost-p']
                 for tm in m.tm
                 for s in m.sto_tuples)
 
     elif cost_type == 'Fuel':
         return m.costs[cost_type] == sum(
-            m.e_co_stock[(tm,) + c] * m.dt *
-            m.commodity.loc[c]['price'] *
-            m.weight
+            m.e_co_stock[(tm,) + c] * m.dt * m.weight *
+            m.commodity.loc[c]['price']
             for tm in m.tm for c in m.com_tuples
             if c[1] in m.com_stock)
 
@@ -1162,10 +1160,9 @@ def def_costs_rule(m, cost_type):
         sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
 
         return m.costs[cost_type] == -sum(
-            m.e_co_sell[(tm,) + c] *
+            m.e_co_sell[(tm,) + c] * m.weight * m.dt *
             m.buy_sell_price.loc[tm][c[1]] *
-            m.commodity.loc[c]['price'] *
-            m.weight * m.dt
+            m.commodity.loc[c]['price']
             for tm in m.tm
             for c in sell_tuples)
 
@@ -1173,18 +1170,16 @@ def def_costs_rule(m, cost_type):
         buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
 
         return m.costs[cost_type] == sum(
-            m.e_co_buy[(tm,) + c] *
+            m.e_co_buy[(tm,) + c] * m.weight * m.dt *
             m.buy_sell_price.loc[tm][c[1]] *
-            m.commodity.loc[c]['price'] *
-            m.weight * m.dt
+            m.commodity.loc[c]['price']
             for tm in m.tm
             for c in buy_tuples)
 
     elif cost_type == 'Startup':
         return m.costs[cost_type] == sum(
-            m.startup_pro[(tm,) + p] *
-            m.process.loc[p]['startup-cost'] *
-            m.weight * m.dt
+            m.startup_pro[(tm,) + p] * m.weight * m.dt *
+            m.process.loc[p]['startup-cost']
             for tm in m.tm
             for p in m.pro_partial_tuples)
 

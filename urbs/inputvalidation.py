@@ -15,13 +15,14 @@ def validate_input(data):
     # Ensure correct formation of vertex rule
     for (sit, pro) in data['process'].index:
         for com in data['commodity'].index.get_level_values('Commodity'):
-            simplified_pro_com_index = (
-            [(p, c) for p, c, d in data['process_commodity'].index.tolist()])
-            simplified_com_index = (
-            [(s, c) for s, c, t in data['commodity'].index.tolist()])
+            simplified_pro_com_index = ([(p, c) for p, c, d in
+                                        data['process_commodity'].index
+                                        .tolist()])
+            simplified_com_index = ([(s, c) for s, c, t in data['commodity']
+                                    .index.tolist()])
             if ((pro, com) in simplified_pro_com_index and
                 (sit, com) not in simplified_com_index):
                 raise ValueError('Commodities used in a process at a site must'
-                                 ' be specified in the commodity input sheet!'
-                                 + ' the pair (' + sit + ',' + com + ')'
+                                 ' be specified in the commodity input sheet'
+                                 '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')

@@ -2,8 +2,18 @@ import pandas as pd
 
 
 def validate_input(data):
-    """ This function raises errors if inconsistent or illogical inputs are
-    made, that might lead to erreneous results."""
+    """ Input validation function
+
+    This function raises errors if inconsistent or illogical inputs are
+    made, that might lead to erreneous results.
+
+    Args:
+        data: Input data frames as read in by input.read_excel
+
+    Returns:
+        Customized error messages.
+
+    """
 
     # Avoid negative part-load efficiencies
     for index in data['process_commodity']['ratio'].index:

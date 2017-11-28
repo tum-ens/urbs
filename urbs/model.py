@@ -1068,7 +1068,7 @@ def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
 def res_global_co2_limit_rule(m):
     if math.isinf(m.global_prop.loc['CO2 limit', 'value']):
         return pyomo.Constraint.Skip
-    elif m.global_prop.loc['CO2 limit', 'value'] > 0:
+    elif m.global_prop.loc['CO2 limit', 'value'] >= 0:
         co2_output_sum = 0
         for tm in m.tm:
             for sit in m.sit:

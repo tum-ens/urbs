@@ -506,6 +506,10 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.tm, m.pro_partial_tuples,
         rule=def_startup_capacity_rule,
         doc='startup_capacity[t] >= cap_online[t] - cap_online[t-1]')
+    m.res_cap_online_init_final = pyomo.Constraint(
+        m.t, m.pro_partial_tuples,
+        rule=res_init_final_cap_online_rule,
+        doc='online capacity = process capacity in first and last step')
 
     # transmission
     m.def_transmission_capacity = pyomo.Constraint(
@@ -924,6 +928,16 @@ def res_process_capacity_rule(m, sit, pro):
     return (m.process.loc[sit, pro]['cap-lo'],
             m.cap_pro[sit, pro],
             m.process.loc[sit, pro]['cap-up'])
+
+
+# Online capacity identical in beginning and end
+def res_init_final_cap_online_rule(m, t, sit, pro):
+    if t == m.t[1]:  # first timestep (Pyomo uses 1-based indexing)
+        return (m.cap_online[t, sit, pro] == m.cap_pro[sit, pro])
+    elif t == m.t[len(m.t)]:  # last timestep
+        return (m.cap_online[t, sit, pro] == m.cap_pro[sit, pro])
+    else:
+        return pyomo.Constraint.Skip
 
 
 # used process area <= maximal process area

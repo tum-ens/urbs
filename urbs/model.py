@@ -147,7 +147,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     # cost_type
     m.cost_type = pyomo.Set(
         initialize=['Invest', 'Fixed', 'Variable', 'Fuel', 'Revenue',
-                    'Purchase', 'Startup', 'Environmental'],
+                    'Purchase', 'Partial_violation', 'Environmental'],
         doc='Set of cost types (hard-coded)')
 
     # tuple sets
@@ -329,7 +329,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.t, m.pro_partial_tuples,
         within=pyomo.NonNegativeReals,
         doc='Online capacity (MW) of process per timestep')
-    m.startup_pro = pyomo.Var(
+    m.part_viol_pro = pyomo.Var(
         m.tm, m.pro_partial_tuples,
         within=pyomo.NonNegativeReals,
         doc='Started capacity (MW) of process per timestep')
@@ -502,10 +502,14 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         m.tm, m.pro_partial_tuples,
         rule=res_cap_online_by_cap_pro_rule,
         doc='online capacity <= process capacity')
-    m.def_startup_capacity = pyomo.Constraint(
+    m.def_partial_violation_up = pyomo.Constraint(
         m.tm, m.pro_partial_tuples,
-        rule=def_startup_capacity_rule,
-        doc='startup_capacity[t] >= cap_online[t] - cap_online[t-1]')
+        rule=def_partial_violation_up_rule,
+        doc='partial_violation[t] >= cap_online[t] - cap_online[t-1]')
+    m.def_partial_violation_down = pyomo.Constraint(
+        m.tm, m.pro_partial_tuples,
+        rule=def_partial_violation_down_rule,
+        doc='partial_violation[t] >= cap_online[t-1] - cap_online[t]')
     m.res_cap_online_init_final = pyomo.Constraint(
         m.t, m.pro_partial_tuples,
         rule=res_init_final_cap_online_rule,
@@ -917,10 +921,16 @@ def res_cap_online_by_cap_pro_rule(m, tm, sit, pro):
     return m.cap_online[tm, sit, pro] <= m.cap_pro[sit, pro]
 
 
-def def_startup_capacity_rule(m, tm, sit, pro):
-    return (m.startup_pro[tm, sit, pro] >=
+def def_partial_violation_down_rule(m, tm, sit, pro):
+    return (m.part_viol_pro[tm, sit, pro] >=
             m.cap_online[tm, sit, pro] -
             m.cap_online[tm-1, sit, pro])
+
+
+def def_partial_violation_up_rule(m, tm, sit, pro):
+    return (m.part_viol_pro[tm, sit, pro] >=
+            m.cap_online[tm-1, sit, pro] -
+            m.cap_online[tm, sit, pro])
 
 
 # lower bound <= process capacity <= upper bound
@@ -1190,12 +1200,19 @@ def def_costs_rule(m, cost_type):
             for tm in m.tm
             for c in buy_tuples)
 
-    elif cost_type == 'Startup':
-        return m.costs[cost_type] == sum(
-            m.startup_pro[(tm,) + p] * m.weight * m.dt *
-            m.process.loc[p]['startup-cost']
-            for tm in m.tm
-            for p in m.pro_partial_tuples)
+    elif cost_type == 'Partial_violation':
+        try:
+            return m.costs[cost_type] == sum(
+                m.part_viol_pro[(tm,) + p] * m.weight * m.dt *
+                m.process.loc[p]['partial-violation-cost']
+                for tm in m.tm
+                for p in m.pro_partial_tuples)
+        except KeyError:
+            return m.costs[cost_type] == sum(
+                m.part_viol_pro[(tm,) + p] * m.weight * m.dt *
+                m.process.loc[p]['startup-cost']
+                for tm in m.tm
+                for p in m.pro_partial_tuples)
 
     elif cost_type == 'Environmental':
         return m.costs[cost_type] == sum(

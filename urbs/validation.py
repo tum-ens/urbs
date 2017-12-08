@@ -15,13 +15,6 @@ def validate_input(data):
 
     """
 
-    # Avoid negative part-load efficiencies
-    for index in data['process_commodity']['ratio'].index:
-        if (data['process_commodity'].loc[index]['ratio'] >
-            data['process_commodity'].loc[index]['ratio-min']):
-            raise ValueError('ratio-min must be larger than ratio for each'
-                             ' line in process-commodity input sheet!')
-
     # Ensure correct formation of vertex rule
     for (sit, pro) in data['process'].index:
         for com in data['commodity'].index.get_level_values('Commodity'):

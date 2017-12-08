@@ -31,8 +31,6 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
     +------------------------------------+------+----------------------------------+
     | :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                   |
     +------------------------------------+------+----------------------------------+
-    | :math:`\zeta_\text{startup}`       | €/a  | Startup Costs                    |
-    +------------------------------------+------+----------------------------------+
     | **Commodity Variables**                                                      |
     +------------------------------------+------+----------------------------------+
     | :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
@@ -52,10 +50,6 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
     | :math:`\epsilon_{vcpt}^\text{in}`  | MW   | Process Input Commodity Flow     |
     +------------------------------------+------+----------------------------------+
     | :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\omega_{vpt}`               | MW   | Process Online Capacity          |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\phi_{vpt}`                 | MW   | Process Startup Capacity         |
     +------------------------------------+------+----------------------------------+
     | **Transmission Variables**                                                   |
     +------------------------------------+------+----------------------------------+
@@ -130,9 +124,6 @@ Since this variable is an income for the system, it is either zero or has a nega
 
 **Purchase Costs** :math:`\zeta_\text{pur}`: The variable :math:`\zeta_\text{pur}` represents the annualised total purchase costs.
 Purchase costs is defined for the costs that occures by buying the buy commodities ( :math:`\forall c \in C_\text{buy}` ).
-
-**Startup Costs** :math:`\zeta_\text{startup}`: The variable :math:`\zeta_\text{startup}` represents the annualised total startup costs.
-Startup costs are reliant on the yearly startup occurences of the processes.
     
 For more information on calculation of these variables see section :ref:`eq-cost-func`.
 
@@ -208,20 +199,6 @@ In script ``urbs.py`` this variable is defined by the model variable ``e_pro_out
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Flow of commodity out of process per timestep')
-
-**Process Online Capacity**, :math:`\omega_{vpt}`, ``cap_online``: This variable is the time-dependent version of the usual process capacity :math:`\kappa_{vp}`. It is defined for partial process tuples, i.e. those processes that have the parameter input ratio ``ratio-min`` set. of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T`). In script ``urbs.py`` this variable is defined by the model variable ``onlinestatus`` and initialized by the following code fragment: ::
-
-    m.cap_online = pyomo.Var(
-        m.t, m.pro_partial_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='Online capacity (MW) of process per timestep')     
-
-**Process Startup Capacity**, :math:`\phi_{vpt}`, ``startup_pro``: This variable indicates every rise in the *process online capacity*. This indicator is then used to determine startup costs for all partial process tuples. The variable is defined by the following code fragment: ::
-
-    m.startup_pro = pyomo.Var(
-        m.tm, m.pro_partial_tuples,
-        within=pyomo.NonNegativeReals,
-        doc='Started capacity (MW) of process per timestep') 
 
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^

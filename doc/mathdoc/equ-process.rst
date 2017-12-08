@@ -211,62 +211,39 @@ calculated by the following code fragment:
 
 .. _sec-partial-startup-constr:
 
-Partial & Startup Process Constraints
+Process Constraints for partial operation
 -------------------------------------
-The partial & startup process constraint described in the following are only
-acitivated if in the input file there is a value set in the column **ratio-min**
-for an **input commodity** in the **process-commodity** sheet for the process
-in question. Values for the **output commodities** do not have any effect.
+The process constraints for partial operation described in the following are
+only acitivated if in the input file there is a value set in the column
+**ratio-min** for an **input commodity** in the **process-commodity** sheet for
+the process in question. Values for the **output commodities** do not have any
+effect.
 
-It is important to understand that this partial load formulation can only work
-if its accompanied by a sensible value for both the minimum partial load
-fraction :math:`\underline{P}_{vp}` and the startup cost
-:math:`k_{vp}^\text{startup}`. Otherwise, the optimal solution yields identical
-operation and performance like a regular, fully proportional process with
-constant/flat input ratios. 
+The partial load feature can only be used for processes that are never meant
+to be shut down and are always operating only between a given part load state
+and full load. It is important to understand that this partial load formulation
+can only work if its accompanied by a sensible value for both the minimum
+partial load fraction :math:`\underline{P}_{vp}`.
 
-**Throughput by Online Capacity Min Rule**: The new variable *online capacity*
-forces the process throughput to always stay above its value times the minium 
-partial load fraction. But note that there is **no** constraint that stops
-:math:`\omega_{vpt}` from assuming arbitrarily small values. This is only softly
-prohibited by the startup cost term, which acts as kind of a soft friction term
-that punishes too dynamic of an operation strategy.
+**Throughput by Min fraction Rule**: This constraint limits the minimal
+operational state of a process downward, making sure that the minimal part load
+fraction is honored.
 
 .. math::
     \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
-    \tau_{vpt} \geq \omega_{vpt} \underline{P}_{vp}
+    \tau_{vpt} \geq \kappa_{vp} \underline{P}_{vp}
 
     
 And here as code:
 ::
 
-    m.res_throughput_by_online_capacity_min = pyomo.Constraint(
+    m.res_throughput_by_capacity_min = pyomo.Constraint(
         m.tm, m.pro_partial_tuples,
-        rule=res_throughput_by_online_capacity_min_rule,
-        doc='cap_online * min-fraction <= tau_pro')
+        rule=res_throughput_by_capacity_min_rule,
+        doc='cap_pro * min-fraction <= tau_pro')
         
 .. literalinclude:: /../urbs/model.py
-   :pyobject: res_throughput_by_online_capacity_min_rule
-
-**Throughput by Online Capacity Max Rule**: On the other side, the
-*online capacity* is an upper cap on the process throughput.
-
-.. math::
-    \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
-    \tau_{vpt} \leq \omega_{vpt}
-
-And the code:
-::    
-    
-    m.res_throughput_by_online_capacity_max = pyomo.Constraint(
-        m.tm, m.pro_partial_tuples,
-        rule=res_throughput_by_online_capacity_max_rule,
-        doc='tau_pro <= cap_online')
-        
-.. literalinclude:: /../urbs/model.py
-   :pyobject: res_throughput_by_online_capacity_max_rule
-
-   
+   :pyobject: res_throughput_by_capacity_min_rule
 
 **Partial Process Input Rule**: In energy system modelling, the simplest way to
 represent an energy conversion process is to assume a linear input-output
@@ -277,51 +254,26 @@ relationship with a flat efficiency parameter :math:`\eta`:
 
 
 Which means there is only one efficiency :math:`\eta` during the whole process,
-i.e. it remains constant during the electricity production. But in fact, most of
-the powerplants do not operate at a certain efficiency and the operation load
-varies along time. Therefore the regular single efficiency :math:`\eta` will be
-replaced by a set of input ratios (:math:`r^\text{in}`) and output ratios
-(:math:`r^\text{out}`) in urbs. And both ratios relate to the process throughput
-:math:`\tau`:
+i.e. it remains constant during the electricity production. But in fact, most
+of the powerplants do not operate at a certain efficiency and the operation
+load varies along time. Therefore the regular single efficiency :math:`\eta`
+is replaced by a set of input ratios (:math:`r^\text{in}`) and output
+ratios (:math:`r^\text{out}`) in urbs. And both ratios relate to the process
+throughput :math:`\tau`:
 
 .. math::
        \epsilon_{vpct}^\text{in} &= \tau_{vpt} r_{pc}^\text{in}
        
        \epsilon_{vpct}^\text{out} &= \tau_{vpt} r_{pc}^\text{out}
        
-In order to simplify the mathematical calculation, the output ratios are set to
-1 so that the process output (:math:`\epsilon_{vpct}^\text{out}`) is equal to the
-process throughput (:math:`\tau_{vpt}`). Then, the process efficiency
-:math:`\eta` can be represented as follows:
+If input or output ratios are set to 1 the process input or output
+(:math:`\epsilon_{vpct}^\text{in, out}`) is equal to the process throughput
+(:math:`\tau_{vpt}`). The process efficiency :math:`\eta` can be represented as
+follows:
 
 .. math::
     \eta = \frac{\epsilon_{vpct}^\text{out}}{\epsilon_{vpct}^\text{in}} =
     \frac{\tau_{vpt}}{\epsilon_{vpct}^\text{in}}
-    
-Assume now a process, it has a lower input ratio
-:math:`\underline{r}_{pc}^\text{in}`, a upper input ratio
-:math:`r_{pc}^\text{in}`, the process minimum part load fraction
-:math:`\underline{P}_{vp}` and the corresponding start-up costs. The
-:math:`\tau_{vpt}` will be bounded by :math:`\underline{P}_{vp}` and the online
-capacity :math:`\omega_{vpt}`, which means the throughput can only vary between
-:math:`\underline{P}_{vp} \cdot \omega_{vpt}` and :math:`\omega_{vpt}`. When all
-the start-up costs are equal to zero, the relation between the process input and
-the process throughout is nothing else but a straight line across the original
-point, which exists almost only theoretically. Practically, every powerplant has
-a start-up cost, which has a big influence on the effeiciency of the process. 
-
-To research the influence of the start-up costs, a continouous start-up variable
-:math:`\phi_{vpt} \in [0, \kappa_p]` is introduced and defined as follows:
-
-.. math::
-    \tau_{vpt} &\leq \omega_{vpt} \\
-    \phi_{vpt} &\geq \omega_{vpt} - \omega_{vp(t-1)} \\
-    \zeta_\text{startup} & \mathrel{+}=
-    \sum_{t\in T_{m}} \sum_{p\in P} k_{p}^\text{st} \phi_{pt}
-    
-With this new variable, urbs can detect the energy consumption of a process at
-the starting point and put start-up costs on it. Like the variable costs these
-start-up costs are per unit of energy.
 
 For a part load case the input ratio and, if specified, the output ratio of the
 process is a function of :math:`\tau_{vpt}`:
@@ -361,50 +313,3 @@ between full load :math:`\kappa_{vp}` and the minimal part load state
 .. math::
     \eta = \frac{\epsilon_{vpct}^\text{out}}{\epsilon_{vpct}^\text{in}} =
     \frac{a + b \tau_{vpt}}{c + d \tau_{vpt}}
-
-Note that :math:`\underline{r}>r` has to be valid for all in- and output ratios
-since otherwise negative energy in-/outputs and thus wrong results would occur.  
-
-**Online Capacity By Process Capacity Rule** limits the value of the online
-capacity :math:`\omega_{vpt}` by the total installed process capacity
-:math:`\kappa_{vp}`:
-
-
-.. math::
-
-	\forall (v, p)\in P_v^\text{partial},t\in T_\text{m}\colon\  
-	\omega_{vpt} \leq \kappa_{vp}
-   
-::
-
-    m.res_cap_online_by_cap_pro = pyomo.Constraint(
-        m.tm, m.pro_partial_tuples,
-        rule=res_cap_online_by_cap_pro_rule,
-        doc='online capacity <= process capacity')
-
-.. literalinclude:: /../urbs/model.py
-   :pyobject: res_cap_online_by_cap_pro_rule 
-
-**Startup Capacity Rule** determines the value of the startup capacity indicator
-variable :math:`\phi_{vpt}`, by limiting its value to at least the positive
-difference of subsequent online capacity states :math:`\omega_{vpt}` and
-:math:`\omega_{vp(t-1)}`. In other words: whenever the onlince capacity
-increases, startup capacity :math:`\phi_{vpt}` assumes a non-zero value.
-
-.. math::
-
-	\forall (v, p)\in P_v^\text{partial},t\in T_\text{m}\colon\  
-	\phi_{vpt} \geq \omega_{vpt} - \omega_{vp(t-1)}
-
-Code declaration and definition:
-   
-::
-
-    m.def_startup_capacity = pyomo.Constraint(
-        m.tm, m.pro_partial_tuples,
-        rule=def_startup_capacity_rule,
-        doc='startup_capacity[t] >= cap_online[t] - cap_online[t-1]')
-
-.. literalinclude:: /../urbs/model.py
-   :pyobject: def_startup_capacity_rule
-        

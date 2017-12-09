@@ -3,6 +3,7 @@ from xlrd import XLRDError
 import pyomo.core as pyomo
 from .modelhelper import *
 
+
 def read_excel(filename):
     """Read Excel input file and prepare URBS input dict.
 
@@ -73,7 +74,9 @@ def read_excel(filename):
             data[key].sort_index(inplace=True)
     return data
 
-def pyomo_model_prep(data, timesteps):  #preparing the pyomo model
+
+# preparing the pyomo model
+def pyomo_model_prep(data, timesteps):
     m = pyomo.ConcreteModel()
 
     # Preparations
@@ -96,12 +99,11 @@ def pyomo_model_prep(data, timesteps):  #preparing the pyomo model
     m.timesteps = timesteps
     m.dsm = data['dsm']
 
-    #Converting Data frames to dict
-    #
-    m.commodity_dict = m.commodity.to_dict()  #Changed
-    m.demand_dict = m.demand.to_dict()  #Changed
-    m.supim_dict = m.supim.to_dict()  #Changed
-    m.dsm_dict = m.dsm.to_dict()  #Changed
+    # Converting Data frames to dict
+    m.commodity_dict = m.commodity.to_dict()  # Changed
+    m.demand_dict = m.demand.to_dict()  # Changed
+    m.supim_dict = m.supim.to_dict()  # Changed
+    m.dsm_dict = m.dsm.to_dict()  # Changed
     m.buy_sell_price_dict = m.buy_sell_price.to_dict()
 
     # process input/output ratios
@@ -143,12 +145,13 @@ def pyomo_model_prep(data, timesteps):  #preparing the pyomo model
         m.storage['depreciation'],
         m.storage['wacc'])
 
-    #Converting Data frames to dictionaries
+    # Converting Data frames to dictionaries
     #
-    m.process_dict = m.process.to_dict()  #Changed
-    m.transmission_dict = m.transmission.to_dict()  #Changed
-    m.storage_dict = m.storage.to_dict()  #Changed
+    m.process_dict = m.process.to_dict()  # Changed
+    m.transmission_dict = m.transmission.to_dict()  # Changed
+    m.storage_dict = m.storage.to_dict()  # Changed
     return m
+
 
 def split_columns(columns, sep='.'):
     """Split columns by separator into MultiIndex.

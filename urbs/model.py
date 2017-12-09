@@ -979,25 +979,25 @@ def res_transmission_symmetry_rule(m, sin, sout, tra, com):
 def def_storage_state_rule(m, t, sit, sto, com):
     return (m.e_sto_con[t, sit, sto, com] ==
             m.e_sto_con[t-1, sit, sto, com] *
-            (1 - m.storage.loc[sit, sto, com]['discharge']) +
+            (1 - m.storage_dict['discharge'][(sit, sto, com)]) +  #Changed
             m.e_sto_in[t, sit, sto, com] *
-            m.storage.loc[sit, sto, com]['eff-in'] * m.dt -
+            m.storage_dict['eff-in'][(sit, sto, com)] * m.dt -  #Changed
             m.e_sto_out[t, sit, sto, com] /
-            m.storage.loc[sit, sto, com]['eff-out'] * m.dt)
+            m.storage_dict['eff-out'][(sit, sto, com)] * m.dt)  #Changed
 
 
 # storage power == new storage power + existing storage power
 def def_storage_power_rule(m, sit, sto, com):
     return (m.cap_sto_p[sit, sto, com] ==
             m.cap_sto_p_new[sit, sto, com] +
-            m.storage.loc[sit, sto, com]['inst-cap-p'])
+            m.storage_dict['inst-cap-p'][(sit, sto, com)])  #Changed
 
 
 # storage capacity == new storage capacity + existing storage capacity
 def def_storage_capacity_rule(m, sit, sto, com):
     return (m.cap_sto_c[sit, sto, com] ==
             m.cap_sto_c_new[sit, sto, com] +
-            m.storage.loc[sit, sto, com]['inst-cap-c'])
+            m.storage_dict['inst-cap-c'][(sit, sto, com)])  #Changed
 
 
 # storage input <= storage power
@@ -1017,16 +1017,16 @@ def res_storage_state_by_capacity_rule(m, t, sit, sto, com):
 
 # lower bound <= storage power <= upper bound
 def res_storage_power_rule(m, sit, sto, com):
-    return (m.storage.loc[sit, sto, com]['cap-lo-p'],
+    return (m.storage_dict['cap-lo-p'][(sit, sto, com)],  #Changed
             m.cap_sto_p[sit, sto, com],
-            m.storage.loc[sit, sto, com]['cap-up-p'])
+            m.storage_dict['cap-up-p'][(sit, sto, com)])  #Changed
 
 
 # lower bound <= storage capacity <= upper bound
 def res_storage_capacity_rule(m, sit, sto, com):
-    return (m.storage.loc[sit, sto, com]['cap-lo-c'],
+    return (m.storage_dict['cap-lo-c'][(sit, sto, com)],  #Changed
             m.cap_sto_c[sit, sto, com],
-            m.storage.loc[sit, sto, com]['cap-up-c'])
+            m.storage_dict['cap-up-c'][(sit, sto, com)])  #Changed
 
 
 # initialization of storage content in first timestep t[1]
@@ -1036,11 +1036,11 @@ def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
     if t == m.t[1]:  # first timestep (Pyomo uses 1-based indexing)
         return (m.e_sto_con[t, sit, sto, com] ==
                 m.cap_sto_c[sit, sto, com] *
-                m.storage.loc[sit, sto, com]['init'])
+                m.storage_dict['init'][(sit, sto, com)])  #Changed
     elif t == m.t[len(m.t)]:  # last timestep
         return (m.e_sto_con[t, sit, sto, com] >=
                 m.cap_sto_c[sit, sto, com] *
-                m.storage.loc[sit, sto, com]['init'])
+                m.storage_dict['init'][(sit, sto, com)])  #Changed
     else:
         return pyomo.Constraint.Skip
 

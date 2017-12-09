@@ -46,6 +46,13 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.timesteps = timesteps
     m.dsm = data['dsm']
 
+    #Converting Data frames to dict
+    #
+    m.commodity_dict = m.commodity.to_dict()  #Changed
+    m.demand_dict = m.demand.to_dict()  #Changed
+    m.supim_dict = m.supim.to_dict()  #Changed
+    m.dsm_dict = m.dsm.to_dict()  #Changed
+
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
@@ -84,6 +91,12 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.storage['annuity-factor'] = annuity_factor(
         m.storage['depreciation'],
         m.storage['wacc'])
+
+    #Converting Data frames to dictionaries
+    #
+    m.process_dict = m.process.to_dict()  #Changed
+    m.transmission_dict = m.transmission.to_dict()  #Changed
+    m.storage_dict = m.storage.to_dict()  #Changed
 
     # Sets
     # ====
@@ -635,7 +648,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     # constraint is about power (MW), not energy (MWh)
     if com in m.com_demand:
         try:
-            power_surplus -= m.demand.loc[tm][sit, com]
+            power_surplus -= m.demand_dict[(sit, com)][tm]  #Changed
         except KeyError:
             pass
     # if sit com is a dsm tuple, the power surplus is decreased by the
@@ -645,7 +658,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
         power_surplus += sum(m.dsm_down[t, tm, sit, com]
                              for t in dsm_time_tuples(
                                  tm, m.timesteps[1:],
-                                 m.dsm['delay'].loc[sit, com]))
+                                 m.dsm_dict['delay'][(sit, com)]))  #Changed
     return power_surplus == 0
 
 # demand side management (DSM) constraints
@@ -656,14 +669,15 @@ def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for tt in dsm_time_tuples(tm,
                               m.timesteps[1:],
-                              m.dsm['delay'].loc[sit, com]):
+                              m.dsm_dict['delay'][(sit, com)]):  #Changed
         dsm_down_sum += m.dsm_down[tm, tt, sit, com]
-    return dsm_down_sum == m.dsm_up[tm, sit, com] * m.dsm.loc[sit, com]['eff']
-
+    return dsm_down_sum == m.dsm_up[tm, sit, com] * \
+    m.dsm_dict['eff'][(sit, com)]  #Changed
 
 # DSMup <= Cup (threshold capacity of DSMup)
 def res_dsm_upward_rule(m, tm, sit, com):
-    return m.dsm_up[tm, sit, com] <= int(m.dsm.loc[sit, com]['cap-max-up'])
+    return m.dsm_up[tm, sit, com] <= int(m.dsm_dict['cap-max-up'][(sit, com)])
+#Changed
 
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
@@ -671,9 +685,9 @@ def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             m.dsm['delay'].loc[sit, com]):
+                             m.dsm_dict['delay'][(sit, com)]):  #Changed
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
-    return dsm_down_sum <= m.dsm.loc[sit, com]['cap-max-do']
+    return dsm_down_sum <= m.dsm_dict['cap-max-do'][(sit, com)]  #Changed
 
 
 # DSMup + DSMdo <= max(Cup,Cdo)
@@ -681,11 +695,11 @@ def res_dsm_maximum_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             m.dsm['delay'].loc[sit, com]):
+                             m.dsm_dict['delay'][(sit, com)]):  #Changed
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
 
-    max_dsm_limit = max(m.dsm.loc[sit, com]['cap-max-up'],
-                        m.dsm.loc[sit, com]['cap-max-do'])
+    max_dsm_limit = max(m.dsm_dict['cap-max-up'][(sit, com)],  #Changed
+                        m.dsm_dict['cap-max-do'][(sit, com)])  #Changed
     return m.dsm_up[tm, sit, com] + dsm_down_sum <= max_dsm_limit
 
 
@@ -694,10 +708,10 @@ def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
     for t in dsm_recovery(tm,
                           m.timesteps[1:],
-                          m.dsm['recov'].loc[sit, com]):
+                          m.dsm_dict['recov'][(sit, com)]):  #Changed
         dsm_up_sum += m.dsm_up[t, sit, com]
-    return dsm_up_sum <= (m.dsm.loc[sit, com]['cap-max-up'] *
-                          m.dsm['delay'].loc[sit, com])
+    return dsm_up_sum <= (m.dsm_dict['cap-max-up'][(sit, com)] *
+                          m.dsm_dict['delay'][(sit, com)])  #Changed
 
 
 # stock commodity purchase == commodity consumption, according to
@@ -708,7 +722,7 @@ def res_stock_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_stock[tm, sit, com, com_type] <=
-                m.commodity.loc[sit, com, com_type]['maxperstep'])
+                m.commodity_dict['maxperstep'][(sit, com, com_type)])  #Changed
 
 
 # limit stock commodity use in total (scaled to annual consumption, thanks
@@ -724,7 +738,7 @@ def res_stock_total_rule(m, sit, com, com_type):
                 m.e_co_stock[tm, sit, com, com_type] * m.dt)
         total_consumption *= m.weight
         return (total_consumption <=
-                m.commodity.loc[sit, com, com_type]['max'])
+                m.commodity_dict['max'][(sit, com, com_type)])  #Changed
 
 
 # limit sell commodity use per time step
@@ -733,7 +747,7 @@ def res_sell_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_sell[tm, sit, com, com_type] <=
-                m.commodity.loc[sit, com, com_type]['maxperstep'])
+                m.commodity_dict['maxperstep'][(sit, com, com_type)])  #Changed
 
 
 # limit sell commodity use in total (scaled to annual consumption, thanks
@@ -749,7 +763,7 @@ def res_sell_total_rule(m, sit, com, com_type):
                 m.e_co_sell[tm, sit, com, com_type] * m.dt)
         total_consumption *= m.weight
         return (total_consumption <=
-                m.commodity.loc[sit, com, com_type]['max'])
+                m.commodity_dict['max'][(sit, com, com_type)])  #Changed
 
 
 # limit buy commodity use per time step
@@ -758,7 +772,7 @@ def res_buy_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_buy[tm, sit, com, com_type] <=
-                m.commodity.loc[sit, com, com_type]['maxperstep'])
+                m.commodity_dict['maxperstep'][(sit, com, com_type)])  #Changed
 
 
 # limit buy commodity use in total (scaled to annual consumption, thanks
@@ -774,7 +788,7 @@ def res_buy_total_rule(m, sit, com, com_type):
                 m.e_co_buy[tm, sit, com, com_type] * m.dt)
         total_consumption *= m.weight
         return (total_consumption <=
-                m.commodity.loc[sit, com, com_type]['max'])
+                m.commodity_dict['max'][(sit, com, com_type)])  #Changed
 
 
 # environmental commodity creation == - commodity_balance of that commodity
@@ -787,7 +801,7 @@ def res_env_step_rule(m, tm, sit, com, com_type):
     else:
         environmental_output = - commodity_balance(m, tm, sit, com)
         return (environmental_output <=
-                m.commodity.loc[sit, com, com_type]['maxperstep'])
+                m.commodity_dict['maxperstep'][(sit, com, com_type)]) #Changed
 
 
 # limit environmental commodity output in total (scaled to annual
@@ -802,7 +816,7 @@ def res_env_total_rule(m, sit, com, com_type):
             env_output_sum += (- commodity_balance(m, tm, sit, com) * m.dt)
         env_output_sum *= m.weight
         return (env_output_sum <=
-                m.commodity.loc[sit, com, com_type]['max'])
+                m.commodity_dict['max'][(sit, com, com_type)])  #Changed
 
 # process
 

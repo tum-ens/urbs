@@ -41,14 +41,14 @@ def get_constants(instance):
     if not cpro.empty:
         cpro.index.names = ['Site', 'Process']
         cpro.columns = ['Total', 'New']
-        cpro.sortlevel(inplace=True)
+        cpro.sort_index(inplace=True)
     if not ctra.empty:
         ctra.index.names = ['Site In', 'Site Out', 'Transmission', 'Commodity']
         ctra.columns = ['Total', 'New']
-        ctra.sortlevel(inplace=True)
+        ctra.sort_index(inplace=True)
     if not csto.empty:
         csto.columns = ['C Total', 'C New', 'P Total', 'P New']
-        csto.sortlevel(inplace=True)
+        csto.sort_index(inplace=True)
 
     return costs, cpro, ctra, csto
 

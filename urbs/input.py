@@ -70,7 +70,7 @@ def read_excel(filename):
     # sort nested indexes to make direct assignments work
     for key in data:
         if isinstance(data[key].index, pd.core.index.MultiIndex):
-            data[key].sortlevel(inplace=True)
+            data[key].sort_index(inplace=True)
     return data
 
 def pyomo_model_prep(data, timesteps):  #preparing the pyomo model

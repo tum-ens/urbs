@@ -943,14 +943,14 @@ def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
 def def_transmission_capacity_rule(m, sin, sout, tra, com):
     return (m.cap_tra[sin, sout, tra, com] ==
             m.cap_tra_new[sin, sout, tra, com] +
-            m.transmission.loc[sin, sout, tra, com]['inst-cap'])
+            m.transmission_dict['inst-cap'][(sin, sout, tra, com)])  #Changed
 
 
 # transmission output == transmission input * efficiency
 def def_transmission_output_rule(m, tm, sin, sout, tra, com):
     return (m.e_tra_out[tm, sin, sout, tra, com] ==
             m.e_tra_in[tm, sin, sout, tra, com] *
-            m.transmission.loc[sin, sout, tra, com]['eff'])
+            m.transmission_dict['eff'][(sin, sout, tra, com)])  #Changed
 
 
 # transmission input <= transmission capacity
@@ -961,9 +961,9 @@ def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
 
 # lower bound <= transmission capacity <= upper bound
 def res_transmission_capacity_rule(m, sin, sout, tra, com):
-    return (m.transmission.loc[sin, sout, tra, com]['cap-lo'],
+    return (m.transmission_dict['cap-lo'][(sin, sout, tra, com)],  #Changed
             m.cap_tra[sin, sout, tra, com],
-            m.transmission.loc[sin, sout, tra, com]['cap-up'])
+            m.transmission_dict['cap-up'][(sin, sout, tra, com)])  #Changed
 
 
 # transmission capacity from A to B == transmission capacity from B to A

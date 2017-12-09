@@ -1,6 +1,7 @@
 import pandas as pd
 from xlrd import XLRDError
-
+import pyomo.core as pyomo
+from .modelhelper import *
 
 def read_excel(filename):
     """Read Excel input file and prepare URBS input dict.
@@ -72,6 +73,82 @@ def read_excel(filename):
             data[key].sortlevel(inplace=True)
     return data
 
+def pyomo_model_prep(data, timesteps):  #preparing the pyomo model
+    m = pyomo.ConcreteModel()
+
+    # Preparations
+    # ============
+    # Data import. Syntax to access a value within equation definitions looks
+    # like this:
+    #
+    #     m.storage.loc[site, storage, commodity][attribute]
+    #
+    m.global_prop = data['global_prop'].drop('description', axis=1)
+    m.site = data['site']
+    m.commodity = data['commodity']
+    m.process = data['process']
+    m.process_commodity = data['process_commodity']
+    m.transmission = data['transmission']
+    m.storage = data['storage']
+    m.demand = data['demand']
+    m.supim = data['supim']
+    m.buy_sell_price = data['buy_sell_price']
+    m.timesteps = timesteps
+    m.dsm = data['dsm']
+
+    #Converting Data frames to dict
+    #
+    m.commodity_dict = m.commodity.to_dict()  #Changed
+    m.demand_dict = m.demand.to_dict()  #Changed
+    m.supim_dict = m.supim.to_dict()  #Changed
+    m.dsm_dict = m.dsm.to_dict()  #Changed
+    m.buy_sell_price_dict = m.buy_sell_price.to_dict()
+
+    # process input/output ratios
+    m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
+    m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
+    m.r_in_dict = m.r_in.to_dict()
+    m.r_out_dict = m.r_out.to_dict()
+
+    # process areas
+    m.proc_area = m.process['area-per-cap']
+    m.sit_area = m.site['area']
+    m.proc_area = m.proc_area[m.proc_area >= 0]
+    m.sit_area = m.sit_area[m.sit_area >= 0]
+
+    # input ratios for partial efficiencies
+    # only keep those entries whose values are
+    # a) positive and
+    # b) numeric (implicitely, as NaN or NV compare false against 0)
+    m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')
+    m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
+    m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
+
+    # output ratios for partial efficiencies
+    # only keep those entries whose values are
+    # a) positive and
+    # b) numeric (implicitely, as NaN or NV compare false against 0)
+    m.r_out_min_fraction = m.process_commodity.xs('Out', level='Direction')
+    m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
+    m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
+
+    # derive annuity factor from WACC and depreciation duration
+    m.process['annuity-factor'] = annuity_factor(
+        m.process['depreciation'],
+        m.process['wacc'])
+    m.transmission['annuity-factor'] = annuity_factor(
+        m.transmission['depreciation'],
+        m.transmission['wacc'])
+    m.storage['annuity-factor'] = annuity_factor(
+        m.storage['depreciation'],
+        m.storage['wacc'])
+
+    #Converting Data frames to dictionaries
+    #
+    m.process_dict = m.process.to_dict()  #Changed
+    m.transmission_dict = m.transmission.to_dict()  #Changed
+    m.storage_dict = m.storage.to_dict()  #Changed
+    return m
 
 def split_columns(columns, sep='.'):
     """Split columns by separator into MultiIndex.

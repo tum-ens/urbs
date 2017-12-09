@@ -52,6 +52,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.demand_dict = m.demand.to_dict()  #Changed
     m.supim_dict = m.supim.to_dict()  #Changed
     m.dsm_dict = m.dsm.to_dict()  #Changed
+    m.buy_sell_price_dict = m.buy_sell_price.to_dict()
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
@@ -1087,53 +1088,53 @@ def def_costs_rule(m, cost_type):
     if cost_type == 'Invest':
         return m.costs[cost_type] == \
             sum(m.cap_pro_new[p] *
-                m.process.loc[p]['inv-cost'] *
-                m.process.loc[p]['annuity-factor']
+                m.process_dict['inv-cost'][p] *  #Changed
+                m.process_dict['annuity-factor'][p]  #Changed
                 for p in m.pro_tuples) + \
             sum(m.cap_tra_new[t] *
-                m.transmission.loc[t]['inv-cost'] *
-                m.transmission.loc[t]['annuity-factor']
+                m.transmission_dict['inv-cost'][t] *  #Changed
+                m.transmission_dict['annuity-factor'][t]  #Changed
                 for t in m.tra_tuples) + \
             sum(m.cap_sto_p_new[s] *
-                m.storage.loc[s]['inv-cost-p'] *
-                m.storage.loc[s]['annuity-factor'] +
+                m.storage_dict['inv-cost-p'][s] *  #Changed
+                m.storage_dict['annuity-factor'][s] +  #Changed
                 m.cap_sto_c_new[s] *
-                m.storage.loc[s]['inv-cost-c'] *
-                m.storage.loc[s]['annuity-factor']
+                m.storage_dict['inv-cost-c'][s] *  #Changed
+                m.storage_dict['annuity-factor'][s]  #Changed
                 for s in m.sto_tuples)
 
     elif cost_type == 'Fixed':
         return m.costs[cost_type] == \
-            sum(m.cap_pro[p] * m.process.loc[p]['fix-cost']
+            sum(m.cap_pro[p] * m.process_dict['fix-cost'][p]  #Changed
                 for p in m.pro_tuples) + \
-            sum(m.cap_tra[t] * m.transmission.loc[t]['fix-cost']
+            sum(m.cap_tra[t] * m.transmission_dict['fix-cost'][t]  #Changed
                 for t in m.tra_tuples) + \
-            sum(m.cap_sto_p[s] * m.storage.loc[s]['fix-cost-p'] +
-                m.cap_sto_c[s] * m.storage.loc[s]['fix-cost-c']
+            sum(m.cap_sto_p[s] * m.storage_dict['fix-cost-p'][s] +  #Changed
+                m.cap_sto_c[s] * m.storage_dict['fix-cost-c'][s]  #Changed
                 for s in m.sto_tuples)
 
     elif cost_type == 'Variable':
         return m.costs[cost_type] == \
             sum(m.tau_pro[(tm,) + p] * m.dt * m.weight *
-                m.process.loc[p]['var-cost']
+                m.process_dict['var-cost'][p]  #Changed
                 for tm in m.tm
                 for p in m.pro_tuples) + \
             sum(m.e_tra_in[(tm,) + t] * m.dt * m.weight *
-                m.transmission.loc[t]['var-cost']
+                m.transmission_dict['var-cost'][t]  #Changed
                 for tm in m.tm
                 for t in m.tra_tuples) + \
             sum(m.e_sto_con[(tm,) + s] * m.weight *
-                m.storage.loc[s]['var-cost-c'] +
+                m.storage_dict['var-cost-c'][s] +  #Changed
                 m.dt * m.weight *
                 (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
-                m.storage.loc[s]['var-cost-p']
+                m.storage_dict['var-cost-p'][s]  #Changed
                 for tm in m.tm
                 for s in m.sto_tuples)
 
     elif cost_type == 'Fuel':
         return m.costs[cost_type] == sum(
             m.e_co_stock[(tm,) + c] * m.dt * m.weight *
-            m.commodity.loc[c]['price']
+            m.commodity_dict['price'][c]  #Changed
             for tm in m.tm for c in m.com_tuples
             if c[1] in m.com_stock)
 
@@ -1142,8 +1143,8 @@ def def_costs_rule(m, cost_type):
 
         return m.costs[cost_type] == -sum(
             m.e_co_sell[(tm,) + c] * m.weight * m.dt *
-            m.buy_sell_price.loc[tm][c[1]] *
-            m.commodity.loc[c]['price']
+            m.buy_sell_price_dict[c[1]][tm] *  #Changed
+            m.commodity_dict['price'][c]  #Changed
             for tm in m.tm
             for c in sell_tuples)
 
@@ -1152,8 +1153,8 @@ def def_costs_rule(m, cost_type):
 
         return m.costs[cost_type] == sum(
             m.e_co_buy[(tm,) + c] * m.weight * m.dt *
-            m.buy_sell_price.loc[tm][c[1]] *
-            m.commodity.loc[c]['price']
+            m.buy_sell_price_dict[c[1]][tm] *  #Changed
+            m.commodity_dict['price'][c]  #Changed
             for tm in m.tm
             for c in buy_tuples)
 
@@ -1161,7 +1162,7 @@ def def_costs_rule(m, cost_type):
         return m.costs[cost_type] == sum(
             - commodity_balance(m, tm, sit, com) *
             m.weight * m.dt *
-            m.commodity.loc[sit, com, com_type]['price']
+            m.commodity_dict['price'][(sit, com, com_type)]  #Changed
             for tm in m.tm
             for sit, com, com_type in m.com_tuples
             if com in m.com_env)

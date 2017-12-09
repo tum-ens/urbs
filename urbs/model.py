@@ -825,26 +825,26 @@ def res_env_total_rule(m, sit, com, com_type):
 def def_process_capacity_rule(m, sit, pro):
     return (m.cap_pro[sit, pro] ==
             m.cap_pro_new[sit, pro] +
-            m.process.loc[sit, pro]['inst-cap'])
+            m.process_dict['inst-cap'][(sit, pro)])  #Changed
 
 
 # process input power == process throughput * input ratio
 def def_process_input_rule(m, tm, sit, pro, co):
     return (m.e_pro_in[tm, sit, pro, co] ==
-            m.tau_pro[tm, sit, pro] * m.r_in.loc[pro, co])
+            m.tau_pro[tm, sit, pro] * m.r_in_dict[(pro, co)]) #Changed
 
 
 # process output power = process throughput * output ratio
 def def_process_output_rule(m, tm, sit, pro, co):
     return (m.e_pro_out[tm, sit, pro, co] ==
-            m.tau_pro[tm, sit, pro] * m.r_out.loc[pro, co])
+            m.tau_pro[tm, sit, pro] * m.r_out_dict[(pro, co)])  #Changed
 
 
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, sit, pro, coin):
     if coin in m.com_supim:
         return (m.e_pro_in[tm, sit, pro, coin] ==
-                m.cap_pro[sit, pro] * m.supim.loc[tm][sit, coin])
+                m.cap_pro[sit, pro] * m.supim_dict[(sit, coin)][tm])  #Changed
     else:
         return pyomo.Constraint.Skip
 
@@ -856,26 +856,28 @@ def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
 
 def res_process_maxgrad_lower_rule(m, t, sit, pro):
     return (m.tau_pro[t-1, sit, pro] -
-            m.cap_pro[sit, pro] * m.process.loc[sit, pro]['max-grad'] * m.dt <=
-            m.tau_pro[t, sit, pro])
+            m.cap_pro[sit, pro] * m.process_dict['max-grad'][(sit, pro)] * m.dt <=
+            m.tau_pro[t, sit, pro])  #Changed
 
 
 def res_process_maxgrad_upper_rule(m, t, sit, pro):
     return (m.tau_pro[t-1, sit, pro] +
-            m.cap_pro[sit, pro] * m.process.loc[sit, pro]['max-grad'] * m.dt >=
-            m.tau_pro[t, sit, pro])
+            m.cap_pro[sit, pro] * m.process_dict['max-grad'][(sit, pro)] * m.dt >=
+            m.tau_pro[t, sit, pro])  #Changed
 
 
 def res_throughput_by_capacity_min_rule(m, tm, sit, pro):
     return (m.tau_pro[tm, sit, pro] >=
             m.cap_pro[sit, pro] *
-            m.process.loc[sit, pro]['min-fraction'])
+            m.process_dict['min-fraction'][(sit, pro)])  #Changed
 
 
 def def_partial_process_input_rule(m, tm, sit, pro, coin):
-    R = m.r_in.loc[pro, coin]  # input ratio at maximum operation point
-    r = m.r_in_min_fraction[pro, coin]  # input ratio at lowest operation point
-    min_fraction = m.process.loc[sit, pro]['min-fraction']
+    R = m.r_in_dict[(pro, coin)]  # input ratio at maximum operation point
+    #Changed
+    r = m.r_in_min_fraction[pro, coin]  # input ratio at lowest
+    # operation point
+    min_fraction = m.process_dict['min-fraction'][(sit, pro)]  #Changed
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
@@ -888,7 +890,7 @@ def def_partial_process_input_rule(m, tm, sit, pro, coin):
 def def_partial_process_output_rule(m, tm, sit, pro, coo):
     R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
     r = m.r_out_min_fraction[pro, coo]  # input ratio at lowest operation point
-    min_fraction = m.process.loc[sit, pro]['min-fraction']
+    min_fraction = m.process_dict['min-fraction'][(sit, pro)]  #Changed
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
@@ -900,9 +902,9 @@ def def_partial_process_output_rule(m, tm, sit, pro, coo):
 
 # lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
-    return (m.process.loc[sit, pro]['cap-lo'],
+    return (m.process_dict['cap-lo'][sit, pro],  #Changed
             m.cap_pro[sit, pro],
-            m.process.loc[sit, pro]['cap-up'])
+            m.process_dict['cap-up'][sit, pro])  #Changed
 
 
 # used process area <= maximal process area

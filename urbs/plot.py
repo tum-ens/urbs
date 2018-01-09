@@ -6,6 +6,7 @@ from random import random
 from .data import COLORS
 from .input import get_input
 from .output import get_constants, get_timeseries
+from .pyomoio import get_entity
 from .util import is_string
 
 

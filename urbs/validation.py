@@ -63,3 +63,7 @@ def validate_input(data):
                 data['storage'].loc[index]['cap-up-c']):
             raise ValueError('Ensure cap_lo <= cap_up and inst_cap <= cap_up'
                              ' for all storage capacities.')
+
+    # Identify SupIm values larger than 1, which lead to an infeasible model
+    if (data['supim'] > 1).sum().sum() >= 0:
+        raise ValueError('All values in Sheet SupIm must be <= 1.')

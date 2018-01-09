@@ -110,8 +110,8 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = urbs.read_excel(input_file)
-    urbs.validate_input(data)
     data = scenario(data)
+    urbs.validate_input(data)
 
     # create model
     prob = urbs.create_model(data, timesteps)

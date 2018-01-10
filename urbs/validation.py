@@ -56,11 +56,10 @@ def validate_input(data):
             raise ValueError('Ensure cap_lo <= cap_up and inst_cap <= cap_up'
                              ' for all storage powers.')
 
-    for index in data['storage'].index:
-        if not (data['storage'].loc[index]['cap-lo-c'] <=
-                data['storage'].loc[index]['cap-up-c'] and
-                data['storage'].loc[index]['inst-cap-c'] <=
-                data['storage'].loc[index]['cap-up-c']):
+        elif not (data['storage'].loc[index]['cap-lo-c'] <=
+                  data['storage'].loc[index]['cap-up-c'] and
+                  data['storage'].loc[index]['inst-cap-c'] <=
+                  data['storage'].loc[index]['cap-up-c']):
             raise ValueError('Ensure cap_lo <= cap_up and inst_cap <= cap_up'
                              ' for all storage capacities.')
 

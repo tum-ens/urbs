@@ -64,5 +64,5 @@ def validate_input(data):
                              ' for all storage capacities.')
 
     # Identify SupIm values larger than 1, which lead to an infeasible model
-    if (data['supim'] > 1).sum().sum() >= 0:
+    if (data['supim'] > 1).sum().sum() > 0:
         raise ValueError('All values in Sheet SupIm must be <= 1.')

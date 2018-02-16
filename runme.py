@@ -100,6 +100,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
+        plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
         plot_tuples_names: (optional) dict of names for plot_tuples
         plot_periods: (optional) dict of plot periods(c.f. urbs.result_figures)
         report_tuples: (optional) list of (sit, com) tuples (c.f. urbs.report)

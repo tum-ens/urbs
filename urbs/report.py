@@ -81,13 +81,13 @@ def report(instance, filename, report_tuples=None, report_tuples_names=None):
                                             'Import', 'Export', 'Balance',
                                             'DSM'])
                 try:
-                    timeseries[(report_tuples_names[sit], com)] =
-                    timeseries[(report_tuples_names[sit], com)].add(
+                    timeseries[(report_tuples_names[sit], com)] = timeseries[
+                        (report_tuples_names[sit], com)].add(
                             help_ts[(lv, com)], axis=1, fill_value=0)
                     sums = sums.add(help_sums, fill_value=0)
                 except:
-                    timeseries[(report_tuples_names[sit], com)] =
-                    help_ts[(lv, com)]
+                    timeseries[(report_tuples_names[sit], com)] = help_ts[
+                        (lv, com)]
                     sums = help_sums
 
             energies.append(sums.to_frame("{}.{}".format(

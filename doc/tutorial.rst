@@ -284,13 +284,14 @@ sums") and as individual timeseries (in sheet "... timeseries").
         ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
         ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
         
-    # optional: define names for report_tuples
-    report_tuples_names = {
-        ('North', 'Elec') : 'Elec North'}
+    # optional: define names for sites in report_tuples
+    report_sites_name = {
+        ('North') : 'Greenland',
+        ('North', 'South') : 'Not Mid'}
 
 Optional it is possible to define ``report_tuples`` to control what shell be reported. And
-with ``report_tuples_names`` you can define, how they should be named. If they are empty, the
-default value will be taken.
+with ``report_sites_name`` you can define, if the sites inside the report tuples should
+be named differently. If they are empty, the default value will be taken.
 See also :ref:`report-function` for a detailed explanation of this function's implementation.
    
 Plotting
@@ -331,11 +332,12 @@ shorter plotting period could be defined and given as an optional argument to
         (['North', 'Mid', 'South'], 'Elec')]
 
     # optional: define names for plot_tuples
-    plot_tuples_names = {
-        ('North', 'Elec') : 'Elec North plot'}
+    plot_sites_name = {
+        ('North', 'Mid', 'South') : 'NMS plot'}
     
-As in the reporting section mentioned, also for plotting the output of plots can optionally changed
-with ``plot_tuples``. The title and name of each plot can be adapted with ``plot_tuples_names``.
+As in the reporting section mentioned, also for plotting the output of plots 
+can optionally changed with ``plot_tuples``. The sites in title and name of 
+each plot can be adapted with ``plot_sites_name``.
 ::
 
     # change the figure title
@@ -344,14 +346,14 @@ with ``plot_tuples``. The title and name of each plot can be adapted with ``plot
     if not plot_title_prefix:
         plot_title_prefix = os.path.basename(figure_basename)
     new_figure_title = '{}: {} in {}'.format(
-        plot_title_prefix, com, plot_tuples_names[sit])
+        plot_title_prefix, com, plot_sites_name[sit])
     ax0.set_title(new_figure_title)
 
     # save plot to files
     for ext in extensions:
         fig_filename = '{}-{}-{}-{}.{}'.format(
             figure_basename, com, ''.join(
-                plot_tuples_names[sit]), period, ext)
+                plot_sites_name[sit]), period, ext)
         fig.savefig(fig_filename, bbox_inches='tight')
     plt.close(fig)
 

@@ -4,7 +4,7 @@ from .output import get_constants, get_timeseries
 from .util import is_string
 
 
-def report(instance, filename, report_tuples=None, report_tuples_names=None):
+def report(instance, filename, report_tuples=None, report_sites_name=None):
     """Write result summary to a spreadsheet file
 
     Args:
@@ -12,7 +12,7 @@ def report(instance, filename, report_tuples=None, report_tuples_names=None):
         filename: Excel spreadsheet filename, will be overwritten if exists
         report_tuples: (optional) list of (sit, com) tuples for which to
                        create detailed timeseries sheets
-        report_tuples_names: (optional) dict of names for created timeseries
+        report_sites_name: (optional) dict of names for created timeseries
                        sheets
     Returns:
         Nothing
@@ -40,7 +40,7 @@ def report(instance, filename, report_tuples=None, report_tuples_names=None):
         # collect timeseries data
         for sit, com in report_tuples:
 
-            # wrap single site name in 1-element list for consistent behaviour
+            # wrap single site name in 1-element list for consistent behavior
             if is_string(sit):
                 help_sit = [sit]
             else:
@@ -49,9 +49,9 @@ def report(instance, filename, report_tuples=None, report_tuples_names=None):
 
             # check existence of predefined names, else define them
             try:
-                report_tuples_names[sit]
+                report_sites_name[sit]
             except:
-                report_tuples_names[sit] = str(sit)
+                report_sites_name[sit] = str(sit)
 
             for lv in help_sit:
                 (created, consumed, stored, imported, exported,
@@ -81,17 +81,17 @@ def report(instance, filename, report_tuples=None, report_tuples_names=None):
                                             'Import', 'Export', 'Balance',
                                             'DSM'])
                 try:
-                    timeseries[(report_tuples_names[sit], com)] = timeseries[
-                        (report_tuples_names[sit], com)].add(
+                    timeseries[(report_sites_name[sit], com)] = timeseries[
+                        (report_sites_name[sit], com)].add(
                             help_ts[(lv, com)], axis=1, fill_value=0)
                     sums = sums.add(help_sums, fill_value=0)
                 except:
-                    timeseries[(report_tuples_names[sit], com)] = help_ts[
+                    timeseries[(report_sites_name[sit], com)] = help_ts[
                         (lv, com)]
                     sums = help_sums
 
             energies.append(sums.to_frame("{}.{}".format(
-                report_tuples_names[sit], com)))
+                report_sites_name[sit], com)))
 
         # write timeseries data (if any)
         if timeseries:
@@ -105,6 +105,6 @@ def report(instance, filename, report_tuples=None, report_tuples_names=None):
                     sit = tuple(sit)
                 # sheet names cannot be longer than 31 characters...
                 sheet_name = "{}.{} timeseries".format(
-                    report_tuples_names[sit], com)[:31]
-                timeseries[(report_tuples_names[sit], com)].to_excel(
+                    report_sites_name[sit], com)[:31]
+                timeseries[(report_sites_name[sit], com)].to_excel(
                     writer, sheet_name)

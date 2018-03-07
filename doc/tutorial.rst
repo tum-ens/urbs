@@ -276,8 +276,23 @@ The :func:`urbs.report` function creates a spreadsheet from the main results.
 Summaries of costs, emissions, capacities (process, transmissions, storage) are
 saved to one sheet each. For timeseries, each combination of the given
 ``sites`` and ``commodities`` are summarised both in sum (in sheet "Energy
-sums") and as individual timeseries (in sheet "... timeseries"). See also
-:ref:`report-function` for a detailed explanation of this function's implementation.
+sums") and as individual timeseries (in sheet "... timeseries").
+::
+    
+    # detailed reporting commodity/sites
+    report_tuples = [
+        ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
+        ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
+        
+    # optional: define names for sites in report_tuples
+    report_sites_name = {
+        ('North') : 'Greenland',
+        ('North', 'South') : 'Not Mid'}
+
+Optional it is possible to define ``report_tuples`` to control what shell be reported. And
+with ``report_sites_name`` you can define, if the sites inside the report tuples should
+be named differently. If they are empty, the default value will be taken.
+See also :ref:`report-function` for a detailed explanation of this function's implementation.
    
 Plotting
 ^^^^^^^^
@@ -297,30 +312,50 @@ colors is demonstrated. All plot colors are user-defineable by adding color
 :func:`tuple` ``(r, g, b)`` or modifying existing tuples for commodities and 
 plot decoration elements. Here, new colors for displaying import/export are
 added. Without these, pseudo-random colors are generated in 
-:func:`to_color`.::
+:func:`to_color`.
+::
 
     # create timeseries plot for each demand (site, commodity) timeseries
     for sit, com in prob.demand.columns:
-        # create figure
-        fig = urbs.plot(prob, com, sit)
-        
-        # change the figure title
-        ax0 = fig.get_axes()[0]
-        nice_sce_name = sce.replace('_', ' ').title()
-        new_figure_title = ax0.get_title().replace(
-            'Energy balance of ', '{}: '.format(nice_sce_name))
-        ax0.set_title(new_figure_title)
-        
-        # save plot to files 
-        for ext in ['png', 'pdf']:
-            fig_filename = os.path.join(
-                result_dir, '{}-{}-{}-{}.{}').format(sce, com, sit, now, ext)
-            fig.savefig(fig_filename, bbox_inches='tight')
-   
+
 Finally, for each demand commodity (only ``Elec`` in this case), a plot over
 the whole optimisation period is created. If ``timesteps`` were longer, a
 shorter plotting period could be defined and given as an optional argument to
 :func:`plot`.
+::
+
+    # plotting commodities/sites
+    plot_tuples = [
+        ('North', 'Elec'),
+        ('Mid', 'Elec'),
+        ('South', 'Elec'),
+        (['North', 'Mid', 'South'], 'Elec')]
+
+    # optional: define names for plot_tuples
+    plot_sites_name = {
+        ('North', 'Mid', 'South') : 'NMS plot'}
+    
+As in the reporting section mentioned, also for plotting the output of plots 
+can optionally changed with ``plot_tuples``. The sites in title and name of 
+each plot can be adapted with ``plot_sites_name``.
+::
+
+    # change the figure title
+    # if no custom title prefix is specified, use the figure_basename
+    ax0 = fig.get_axes()[0]
+    if not plot_title_prefix:
+        plot_title_prefix = os.path.basename(figure_basename)
+    new_figure_title = '{}: {} in {}'.format(
+        plot_title_prefix, com, plot_sites_name[sit])
+    ax0.set_title(new_figure_title)
+
+    # save plot to files
+    for ext in extensions:
+        fig_filename = '{}-{}-{}-{}.{}'.format(
+            figure_basename, com, ''.join(
+                plot_sites_name[sit]), period, ext)
+        fig.savefig(fig_filename, bbox_inches='tight')
+    plt.close(fig)
 
 The paragraph "change figure title" shows exemplarily how to use matplotlib
 manually to modify some aspects of a plot without having to recreate the

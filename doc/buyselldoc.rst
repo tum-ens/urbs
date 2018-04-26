@@ -14,10 +14,14 @@ there is no feedback. The size of the modelled market has to be considered
 small relative to the surrounding market.
 To use this feature your excel input file needs an additional
 **Buy-Sell-Price** sheet with the columns ``t`` containing the timesteps and
-the columns ``Elec buy`` and ``Elec sell`` containing the buy and sell prices
-by default in hourly € per MWh. In the **Commodity** sheet the price for
-``Elec`` at a ``Site`` has to be changed from a number to a string ``Buy`` or
-``Sell`` or a multiple of it for example ``1,25xBuy``.
+columns specifying your buy- and sellable commodities, e.g.,
+``Elec buy`` and ``Elec sell`` in the mimo-example. The entries then set time
+resolved buy and sell prices by default in € per MWh. In the **Commodity** sheet
+the new tradable commodities have to be set as type ``Buy`` or ``Sell``. The
+price column in the **Commodity** sheet is then reinterpreted as a factor
+multiplied to the given price timeseries. For an actual use of the tradeable
+commodities they have to be converted into demand commodities in a separate
+process.
 For a more detailed description of the implementation have a look at the
 Mathematical Documentation. 
 

@@ -13,6 +13,7 @@ commodities.
 from .data import COLORS
 from .model import create_model
 from .input import read_excel, get_input
+from .validation import validate_input
 from .output import get_constants, get_timeseries
 from .plot import plot, result_figures, to_color
 from .pyomoio import get_entity, get_entities, list_entities

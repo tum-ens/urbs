@@ -23,8 +23,8 @@ def scenario_stock_prices(data):
 
 def scenario_co2_limit(data):
     # change global CO2 limit
-    hacks = data['hacks']
-    hacks.loc['Global CO2 limit', 'Value'] *= 0.05
+    global_prop = data['global_prop']
+    global_prop.loc['CO2 limit', 'value'] *= 0.05
     return data
 
 
@@ -91,7 +91,8 @@ def setup_solver(optim, logfile='solver.log'):
 
 
 def run_scenario(input_file, timesteps, scenario, result_dir,
-                 plot_tuples=None, plot_periods=None, report_tuples=None):
+                 plot_tuples=None,  plot_sites_name=None, plot_periods=None,
+                 report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
@@ -100,8 +101,10 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
         plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
-        plot_periods: (optional) dict of plot periods (c.f. urbs.result_figures)
+        plot_sites_name: (optional) dict of names for sites in plot_tuples
+        plot_periods: (optional) dict of plot periods(c.f. urbs.result_figures)
         report_tuples: (optional) list of (sit, com) tuples (c.f. urbs.report)
+        report_sites_name: (optional) dict of names for sites in report_tuples
 
     Returns:
         the urbs model instance
@@ -111,6 +114,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     sce = scenario.__name__
     data = urbs.read_excel(input_file)
     data = scenario(data)
+    urbs.validate_input(data)
 
     # create model
     prob = urbs.create_model(data, timesteps)
@@ -124,9 +128,6 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 
-    # copy input file to result directory
-    shutil.copyfile(input_file, os.path.join(result_dir, input_file))
-    
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
@@ -134,7 +135,8 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     urbs.report(
         prob,
         os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples)
+        report_tuples=report_tuples,
+        report_sites_name=report_sites_name)
 
     # result plots
     urbs.result_figures(
@@ -142,6 +144,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
         os.path.join(result_dir, '{}'.format(sce)),
         plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,
+        plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
     return prob
@@ -151,8 +154,13 @@ if __name__ == '__main__':
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 
+    # copy input file to result directory
+    shutil.copyfile(input_file, os.path.join(result_dir, input_file))
+    # copy runme.py to result directory
+    shutil.copy(__file__, result_dir)
+
     # simulation timesteps
-    (offset, length) = (3500, 168) # time step selection
+    (offset, length) = (3500, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
 
     # plotting commodities/sites
@@ -162,10 +170,16 @@ if __name__ == '__main__':
         ('South', 'Elec'),
         (['North', 'Mid', 'South'], 'Elec')]
 
+    # optional: define names for sites in plot_tuples
+    plot_sites_name = {('North', 'Mid', 'South'):'All'}
+
     # detailed reporting commodity/sites
     report_tuples = [
         ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
         ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
+
+    # optional: define names for sites in report_tuples
+    report_sites_name = {'North': 'Greenland'}
 
     # plotting timesteps
     plot_periods = {
@@ -193,5 +207,7 @@ if __name__ == '__main__':
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir,
                             plot_tuples=plot_tuples,
+                            plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
-                            report_tuples=report_tuples)
+                            report_tuples=report_tuples,
+                            report_sites_name=report_sites_name)

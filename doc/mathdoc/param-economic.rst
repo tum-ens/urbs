@@ -30,8 +30,6 @@ Economical Parameters
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`k_{vp}^\text{var}`  |€/MWh    |Process Variable Costs                           |
 	+---------------------------+---------+-------------------------------------------------+
-	|:math:`k_{vp}^\text{st}`   |€        |Process Startup Costs                            |
-	+---------------------------+---------+-------------------------------------------------+
 	|**Storage Economical Parameters**                                                      |
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`i_{vs}`             | _       |Weighted Average Cost of Capital for Storage     |
@@ -126,9 +124,7 @@ Process Economical Parameters
 
 **Process Capacity Fixed Costs**, :math:`k_{vp}^\text{fix}`, ``m.process.loc[p]['fix-cost']``: The parameter :math:`k_{vp}^\text{fix}` represents the fix cost per one unit capacity :math:`\kappa_{vp}` of a process technology :math:`p` in a site :math:`v`, that is charged annually. The unit of this parameter is €/(MW a). The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the eighth column with the header label "fix-cost" represents the parameters :math:`k_{vp}^\text{fix}` of the corresponding process :math:`p` and site :math:`v` combinations. 
 
-**Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``: The parameter :math:`k_{vp}^\text{var}` represents the variable cost per one unit energy throughput :math:`\tau_{vpt}` through a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "var-cost" represents the parameters :math:`k_{vp}^\text{var}` of the corresponding process :math:`p` and site :math:`v` combinations. 
-
-**Process Startup Costs**, :math:`k_{vp}^\text{st}`, ``m.process.loc[p]['startup']``: The parameter :math:`k_{vp}^\text{st}` represents the startup cost per "startup occurence" of a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the thirteenth column with the header label "startup" represents the parameters :math:`k_{vp}^\text{st}` of the corresponding process :math:`p` and site :math:`v` combinations. 
+**Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``: The parameter :math:`k_{vp}^\text{var}` represents the variable cost per one unit energy throughput :math:`\tau_{vpt}` through a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "var-cost" represents the parameters :math:`k_{vp}^\text{var}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
 Storage Economical Parameters
 -----------------------------

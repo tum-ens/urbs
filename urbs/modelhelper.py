@@ -90,9 +90,9 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
 
     for (site, commodity) in sit_com_tuple:
         for step1 in time:
-            for step2 in range(step1 
+            for step2 in range(step1
                                - int(delay[site, commodity] / m.dt.value),
-                               step1 
+                               step1
                                + int(delay[site, commodity] / m.dt.value) + 1):
                 if lb <= step2 <= ub:
                     time_list.append((step1, step2, site, commodity))

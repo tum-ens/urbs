@@ -5,14 +5,14 @@ from .modelhelper import *
 from .input import *
 
 
-def create_model(data, timesteps=None, dt=1, dual=False):
+def create_model(data, dt, timesteps=None, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
             'transmission', 'storage', 'demand' and 'supim'.
-        timesteps: optional list of timesteps, default: demand timeseries
         dt: timestep duration in hours (default: 1)
+        timesteps: optional list of timesteps, default: demand timeseries
         dual: set True to add dual variables to model (slower); default: False
 
     Returns:
@@ -26,7 +26,6 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
-
 
     # Sets
     # ====
@@ -75,7 +74,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         doc='Time step duration (in hours), default: 1')
 
     # Sets (cont.)
-    
+
     # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Site').unique(),
@@ -609,8 +608,8 @@ def def_dsm_variables_rule(m, tm, sit, com):
 
 # DSMup <= Cup (threshold capacity of DSMup)
 def res_dsm_upward_rule(m, tm, sit, com):
-    return m.dsm_up[tm, sit, com] <= int(m.dsm_dict['cap-max-up'][(sit, com)]
-                   * m.dt)
+    return m.dsm_up[tm, sit, com] <= (m.dsm_dict['cap-max-up'][(sit, com)]
+                                      * m.dt)
 
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
@@ -939,7 +938,7 @@ def res_storage_input_by_power_rule(m, t, sit, sto, com):
 
 # storage output <= storage power
 def res_storage_output_by_power_rule(m, t, sit, sto, co):
-    return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co]  * m.dt
+    return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co] * m.dt
 
 
 # storage content <= storage capacity
@@ -1073,14 +1072,14 @@ def def_costs_rule(m, cost_type):
 
         try:
             return m.costs[cost_type] == -sum(
-                m.e_co_sell[(tm,) + c] * m.weight * 
+                m.e_co_sell[(tm,) + c] * m.weight *
                 m.buy_sell_price_dict[c[1], ][tm] *
                 m.commodity_dict['price'][c]
                 for tm in m.tm
                 for c in sell_tuples)
         except KeyError:
             return m.costs[cost_type] == -sum(
-                m.e_co_sell[(tm,) + c] * m.weight * 
+                m.e_co_sell[(tm,) + c] * m.weight *
                 m.buy_sell_price_dict[c[1]][tm] *
                 m.commodity_dict['price'][c]
                 for tm in m.tm
@@ -1091,14 +1090,14 @@ def def_costs_rule(m, cost_type):
 
         try:
             return m.costs[cost_type] == sum(
-                m.e_co_buy[(tm,) + c] * m.weight * 
+                m.e_co_buy[(tm,) + c] * m.weight *
                 m.buy_sell_price_dict[c[1], ][tm] *
                 m.commodity_dict['price'][c]
                 for tm in m.tm
                 for c in buy_tuples)
         except KeyError:
             return m.costs[cost_type] == sum(
-                m.e_co_buy[(tm,) + c] * m.weight * 
+                m.e_co_buy[(tm,) + c] * m.weight *
                 m.buy_sell_price_dict[c[1]][tm] *
                 m.commodity_dict['price'][c]
                 for tm in m.tm

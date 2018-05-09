@@ -74,18 +74,20 @@ From here on, the script is best read from the back.::
         result_name = os.path.splitext(input_file)[0]  # cut away file extension
         result_dir = prepare_result_directory(result_name)  # name + time stamp
     
-        (offset, length) = (4000, 5*24)  # time step selection
+        (offset, length) = (3500, 168)  # time step selection
         timesteps = range(offset, offset+length+1)
+		dt = 1
 
 Variable ``input_file`` defines the input spreadsheet, from which the
 optimization problem will draw all its set/parameter data.
    
 Variable ``timesteps`` is the list of timesteps to be simulated. Its members
 must be a subset of the labels used in ``input_file``'s sheets "Demand" and
-"SupIm". It is one of the two function arguments to :func:`create_model` and
-accessible directly, because one can quickly reduce the problem size by
+"SupIm". It is one of the function arguments to :func:`create_model` and
+accessible directly, so that one can quickly reduce the problem size by
 reducing the simulation ``length``, i.e. the number of timesteps to be
-optimised. 
+optimised. Variable ``dt`` is the duration of each timestep in the list
+(hours, minutes, days...). 
 
 :func:`range` is used to create a list of consecutive integers. The argument
 ``+1`` is needed, because ``range(a,b)`` only includes integers from ``a`` to
@@ -192,7 +194,7 @@ Run scenarios
 ::
 
     for scenario in scenarios:
-        prob = run_scenario(input_file, timesteps, scenario, result_dir)
+        prob = run_scenario(input_file, timesteps, scenario, result_dir, dt)
 
 Having prepared settings, input data and scenarios, the actual computations
 happen in the function :func:`run_scenario` of the script. It is executed 
@@ -232,7 +234,7 @@ Solving
 ::
 
     # create model
-    prob = urbs.create_model(data, timesteps)
+    prob = urbs.create_model(data, dt, timesteps)
     if PYOMO3:
         prob = prob.create()
 

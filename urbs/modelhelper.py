@@ -28,7 +28,7 @@ def commodity_balance(m, tm, sit, com):
 
     For a given commodity co and timestep tm, calculate the balance of
     consumed (to process/storage/transmission, counts positive) and provided
-    (from process/storage/transmission, counts negative) power. Used as helper
+    (from process/storage/transmission, counts negative) commodity flow. Used as helper
     function in create_model for constraints on demand and stock commodities.
 
     Args:

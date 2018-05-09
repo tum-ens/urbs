@@ -5,7 +5,7 @@ from .modelhelper import *
 from .input import *
 
 
-def create_model(data, dt, timesteps=None, dual=False):
+def create_model(data, dt=1, timesteps=None, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -457,7 +457,7 @@ def create_model(data, dt, timesteps=None, dual=False):
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
-        doc='storage[t] = storage[t-1] * (1 - discharge) + input - output')
+        doc='storage[t] = (1 - selfdischarge) * storage[t-1] + input * eff_in - output / eff_out')
     m.def_storage_power = pyomo.Constraint(
         m.sto_tuples,
         rule=def_storage_power_rule,
@@ -505,8 +505,8 @@ def create_model(data, dt, timesteps=None, dual=False):
     m.def_dsm_variables = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
         rule=def_dsm_variables_rule,
-        doc='DSMup * efficiency factor n == DSMdo')
-
+        doc='DSMup * efficiency factor n == DSMdo (summed)')	
+		
     m.res_dsm_upward = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
         rule=res_dsm_upward_rule,
@@ -515,12 +515,12 @@ def create_model(data, dt, timesteps=None, dual=False):
     m.res_dsm_downward = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
         rule=res_dsm_downward_rule,
-        doc='DSMdo <= Cdo (threshold capacity of DSMdo)')
+        doc='DSMdo (summed) <= Cdo (threshold capacity of DSMdo)')
 
     m.res_dsm_maximum = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
         rule=res_dsm_maximum_rule,
-        doc='DSMup + DSMdo <= max(Cup,Cdo)')
+        doc='DSMup + DSMdo (summed) <= max(Cup,Cdo)')
 
     m.res_dsm_recovery = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
@@ -654,7 +654,7 @@ def res_stock_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_stock[tm, sit, com, com_type] <=
-                m.commodity_dict['maxperstep'][(sit, com, com_type)] * m.dt)
+                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
 
 
 # limit stock commodity use in total (scaled to annual consumption, thanks
@@ -679,7 +679,7 @@ def res_sell_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_sell[tm, sit, com, com_type] <=
-                m.commodity_dict['maxperstep'][(sit, com, com_type)] * m.dt)
+                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
 
 
 # limit sell commodity use in total (scaled to annual consumption, thanks
@@ -704,7 +704,7 @@ def res_buy_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_buy[tm, sit, com, com_type] <=
-                m.commodity_dict['maxperstep'][(sit, com, com_type)] * m.dt)
+                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
 
 
 # limit buy commodity use in total (scaled to annual consumption, thanks
@@ -733,7 +733,7 @@ def res_env_step_rule(m, tm, sit, com, com_type):
     else:
         environmental_output = - commodity_balance(m, tm, sit, com)
         return (environmental_output <=
-                m.commodity_dict['maxperstep'][(sit, com, com_type)] * m.dt)
+                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
 
 
 # limit environmental commodity output in total (scaled to annual

@@ -15,7 +15,7 @@ Report
 
 So let's start by first printing the function as a whole:
 
-.. literalinclude:: ../urbs.py
+.. literalinclude:: ../urbs/report.py
    :pyobject: report
    
 After the function header and the docstring briefly explaining its use, another
@@ -26,7 +26,7 @@ is presented.
 Get constants
 -------------
 
-.. literalinclude:: ../urbs.py
+.. literalinclude:: ../urbs/output.py
    :pyobject: get_constants
 
 Taking only one argument, this function retrieves all time-independent
@@ -45,9 +45,9 @@ the tuple *(site, process, input commodity, output commodity)* and the
 summed emissions as value.
 
 Get timeseries
--------------
+--------------
 
-.. literalinclude:: ../urbs.py
+.. literalinclude:: ../urbs/output.py
    :pyobject: get_timeseries
 
 With the arguments ``instance``, ``com`` and ``sit`` the function :func:
@@ -59,7 +59,7 @@ calculated and standardized by the power capacity at the end of the function.
 Write to Excel
 --------------
 
-.. literalinclude:: ../urbs.py
+.. literalinclude:: ../urbs/report.py
    :start-after:     # create spreadsheet writer object 
    :end-before:        # write constants to spreadsheet
 
@@ -75,7 +75,7 @@ aggregate all outputs into a single spreadsheet.
 Constants
 ^^^^^^^^^
 
-.. literalinclude:: ../urbs.py
+.. literalinclude:: ../urbs/report.py
    :start-after:        # write constants to spreadsheet
    :end-before:        # initialize timeseries tableaus
 
@@ -88,7 +88,7 @@ writer object as a target. ``co2`` is an exception, as it starts as a
 
 Timeseries
 ^^^^^^^^^^
-.. literalinclude:: ../urbs.py
+.. literalinclude:: ../urbs/report.py
    :start-after:        # initialize timeseries tableaus
    :end-before:        # collect timeseries data
 
@@ -98,9 +98,9 @@ will become a list of :class:`~pandas.DataFrame` objects before getting
 stitched together, while ``timeseries`` becomes a dictionary of
 :class:`~pandas.DataFrame` objects, with a tuple ``(commodity, site)`` as key.
    
-.. literalinclude:: ../urbs.py
+.. literalinclude:: ../urbs/report.py
    :start-after:        # collect timeseries data
-   :end-before:        # concatenate energy sums
+   :end-before:         # write timeseries data (if any)
    
 Module function :func:`get_timeseries` is similar to :func:`get_constants`,
 just for time-dependent quantities. For a given commodity and site, this
@@ -124,9 +124,8 @@ with custom labels (``keys=...``) for each series type. Finally the Series is
 converted back to a DataFrame, using ``Commodity.Site`` as the column title
 template.
 
-.. literalinclude:: ../urbs.py
-   :start-after:        # concatenate energy sums
-   :end-before: def plot(prob, com, sit, timesteps=None):
+.. literalinclude:: ../urbs/report.py
+   :start-after:        # write timeseries data (if any)
 
 Finally, the *Energy sums* table is assembled by stitching together the
 individual energy sums per commodity and site and filling missing values with

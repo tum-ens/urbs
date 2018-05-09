@@ -87,8 +87,8 @@ Timeseries
 
 Demand
 """"""
-Each combination ``(site, demand commidty)`` may have one timeseries,
-describing the (average) power demand (MWh/h) per timestep. They are a crucial
+Each combination ``(site, demand commodity)`` may have one timeseries,
+describing the aggregate demand (typically MWh) for a commodity within a given timestep. They are a crucial
 input parameter, as the whole optimisation aims to satisfy these demands with
 minimal costs by the given technologies (process, storage, transmission).
 

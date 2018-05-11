@@ -10,26 +10,27 @@ The following is a minimum "hello world" script that shows the life cycle of
 the optimization object `prob`, and how the various :mod:`urbs` module 
 functions create it, modify it and process it.::
 
-    import pandas as pd
+	import os
+	import pandas as pd
 	import pyomo.environ
 	import shutil
 	import urbs
 	from pyomo.opt.base import SolverFactory
-    
-    # read input, create optimisation problem
-    data = urbs.read_excel('mimo-example.xlsx')
-    prob = urbs.create_model(data)
-
-    # solve problem, read results
-    optim = SolverFactory('glpk')
-    result = optim.solve(prob, tee=True)
    
-    # save problem instance (incl. input and result) for later analyses
-    urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+	# read input, create optimisation problem
+	data = urbs.read_excel('mimo-example.xlsx')
+	prob = urbs.create_model(data)
 
-    # write report and plot timeseries
-    urbs.report(prob, 'report.xlsx')
-    urbs.result_figures(prob, 'plot', plot_title_prefix=sce.replace('_', ' '), plot_tuples=[('Mid', 'Elec')])
+	# solve problem, read results
+	optim = SolverFactory('glpk')
+	result = optim.solve(prob, tee=True)
+
+	# save problem instance (incl. input and result) for later analyses
+	urbs.save(prob, 'model.h5')
+
+	# write report and plot timeseries
+	urbs.report(prob, 'report.xlsx')
+	urbs.result_figures(prob, 'plot', 'scenario_base')
 
 The following lists and describes the use of all module-level functions. They
 are roughly ordered from high-level to low-level access, followed by helper 

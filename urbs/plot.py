@@ -312,7 +312,7 @@ def plot(prob, com, sit, dt, timesteps=None,
 
 
 def result_figures(prob, figure_basename, plot_title_prefix=None,
-                   plot_tuples=None, plot_sites_name=None,
+                   plot_tuples=None, plot_sites_name={},
                    periods=None, extensions=None, **kwds):
     """Create plots for multiple periods and sites and save them to files.
 

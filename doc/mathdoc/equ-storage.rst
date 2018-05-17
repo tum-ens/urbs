@@ -2,11 +2,11 @@
 Storage Constraints
 ^^^^^^^^^^^^^^^^^^^
 
-**Storage State Rule**: The constraint storage state rule is the main storage constraint and it defines the storage energy content of a storage :math:`s` in a site :math:`v` at a timestep :math:`t`. This constraint calculates the storage energy content at a timestep :math:`t` by adding or subtracting differences, such as ingoing and outgoing energy, to/from a storage energy content at a previous timestep :math:`t-1` multiplied by 1 minus the self-discharge rate :math:`d_{vs}`. Here ingoing energy is given by the product of the variable storage input commodity flow :math:`\epsilon_{vst}^\text{in}` and the parameter storage efficiency during charge :math:`e_{vs}^\text{in}`. Outgoing energy is given by the variable storage output commodity flow :math:`\epsilon_{vst}^\text{out}` divided by the parameter storage efficiency during discharge :math:`e_{vs}^\text{out}`. In mathematical notation this is expressed as:
+**Storage State Rule**: The constraint storage state rule is the main storage constraint and it defines the storage energy content of a storage :math:`s` in a site :math:`v` at a timestep :math:`t`. This constraint calculates the storage energy content at a timestep :math:`t` by adding or subtracting differences, such as ingoing and outgoing energy, to/from a storage energy content at a previous timestep :math:`t-1` multiplied by 1 minus the self-discharge rate :math:`d_{vs}` (which is scaled exponentially with the timestep size :math:`\delta t`). Here ingoing energy is given by the product of the variable storage input commodity flow :math:`\epsilon_{vst}^\text{in}` and the parameter storage efficiency during charge :math:`e_{vs}^\text{in}`. Outgoing energy is given by the variable storage output commodity flow :math:`\epsilon_{vst}^\text{out}` divided by the parameter storage efficiency during discharge :math:`e_{vs}^\text{out}`. In mathematical notation this is expressed as:
 
 .. math::
 
-	\forall v\in V, \forall s\in S, t\in T_\text{m}\colon\ \epsilon_{vst}^\text{con} = \epsilon_{vs(t-1)}^\text{con} \cdot (1-d_{vs}) + \epsilon_{vst}^\text{in} \cdot e_{vs}^\text{in} - \epsilon_{vst}^\text{out} / e_{vs}^\text{out}
+	\forall v\in V, \forall s\in S, t\in T_\text{m}\colon\ \epsilon_{vst}^\text{con} = \epsilon_{vs(t-1)}^\text{con} \cdot (1-d_{vs})^{\delta t} + \epsilon_{vst}^\text{in} \cdot e_{vs}^\text{in} - \epsilon_{vst}^\text{out} / e_{vs}^\text{out}
 
 In script ``model.py`` the constraint storage state rule is defined and calculated by the following code fragment:
 

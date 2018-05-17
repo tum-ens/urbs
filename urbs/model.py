@@ -908,7 +908,7 @@ def res_transmission_symmetry_rule(m, sin, sout, tra, com):
 def def_storage_state_rule(m, t, sit, sto, com):
     return (m.e_sto_con[t, sit, sto, com] ==
             m.e_sto_con[t-1, sit, sto, com] *
-            (1 - m.storage_dict['discharge'][(sit, sto, com)]) +
+            (1 - m.storage_dict['discharge'][(sit, sto, com)])**m.dt +
             m.e_sto_in[t, sit, sto, com] *
             m.storage_dict['eff-in'][(sit, sto, com)] -
             m.e_sto_out[t, sit, sto, com] /

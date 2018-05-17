@@ -27,6 +27,24 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
 
+    # Parameters
+
+    # weight = length of year (hours) / length of simulation (hours)
+    # weight scales costs and emissions from length of simulation to a full
+    # year, making comparisons among cost types (invest is annualized, fixed
+    # costs are annual by default, variable costs are scaled by weight) and
+    # among different simulation durations meaningful.
+    m.weight = pyomo.Param(
+        initialize=float(8760) / (len(m.timesteps) * dt),
+        doc='Pre-factor for variable costs and emissions for an annual result')
+
+    # dt = spacing between timesteps. Required for storage equation that
+    # converts between energy (storage content, e_sto_con) and power (all other
+    # quantities that start with "e_")
+    m.dt = pyomo.Param(
+        initialize=dt,
+        doc='Time step duration (in hours), default: 1')
+	
     # Sets
     # ====
     # Syntax: m.{name} = Set({domain}, initialize={values})
@@ -54,26 +72,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of additional DSM time steps')
-
-    # Parameters
-
-    # weight = length of year (hours) / length of simulation (hours)
-    # weight scales costs and emissions from length of simulation to a full
-    # year, making comparisons among cost types (invest is annualized, fixed
-    # costs are annual by default, variable costs are scaled by weight) and
-    # among different simulation durations meaningful.
-    m.weight = pyomo.Param(
-        initialize=float(8760) / (len(m.tm) * dt),
-        doc='Pre-factor for variable costs and emissions for an annual result')
-
-    # dt = spacing between timesteps. Required for storage equation that
-    # converts between energy (storage content, e_sto_con) and power (all other
-    # quantities that start with "e_")
-    m.dt = pyomo.Param(
-        initialize=dt,
-        doc='Time step duration (in hours), default: 1')
-
-    # Sets (cont.)
 
     # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
@@ -589,7 +587,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
         power_surplus += sum(m.dsm_down[t, tm, sit, com]
                              for t in dsm_time_tuples(
                                  tm, m.timesteps[1:],
-                                 int(m.dsm_dict['delay'][(sit, com)] / m.dt)))
+                                 max(int(m.dsm_dict['delay'][(sit, com)] / m.dt), 1)))
     return power_surplus == 0
 
 # demand side management (DSM) constraints
@@ -600,7 +598,7 @@ def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for tt in dsm_time_tuples(tm,
                               m.timesteps[1:],
-                              int(m.dsm_dict['delay'][(sit, com)] / m.dt)):
+                              max(int(m.dsm_dict['delay'][(sit, com)] / m.dt),1)):
         dsm_down_sum += m.dsm_down[tm, tt, sit, com]
     return dsm_down_sum == (m.dsm_up[tm, sit, com] *
                             m.dsm_dict['eff'][(sit, com)])
@@ -617,7 +615,7 @@ def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             int(m.dsm_dict['delay'][(sit, com)] / m.dt)):
+                             max(int(m.dsm_dict['delay'][(sit, com)] / m.dt), 1)):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
     return dsm_down_sum <= (m.dsm_dict['cap-max-do'][(sit, com)] * m.dt)
 
@@ -627,7 +625,7 @@ def res_dsm_maximum_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             int(m.dsm_dict['delay'][(sit, com)] / m.dt)):
+                             max(int(m.dsm_dict['delay'][(sit, com)] / m.dt), 1)):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
 
     max_dsm_limit = max(m.dsm_dict['cap-max-up'][(sit, com)],
@@ -640,7 +638,7 @@ def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
     for t in dsm_recovery(tm,
                           m.timesteps[1:],
-                          int(m.dsm_dict['recov'][(sit, com)] / m.dt)):
+                          max(int(m.dsm_dict['recov'][(sit, com)] / m.dt), 1)):
         dsm_up_sum += m.dsm_up[t, sit, com]
     return dsm_up_sum <= (m.dsm_dict['cap-max-up'][(sit, com)] *
                           m.dsm_dict['delay'][(sit, com)])

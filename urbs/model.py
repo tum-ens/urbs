@@ -44,7 +44,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.dt = pyomo.Param(
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
-	
+
     # Sets
     # ====
     # Syntax: m.{name} = Set({domain}, initialize={values})
@@ -455,7 +455,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
-        doc='storage[t] = (1 - selfdischarge) * storage[t-1] + input * eff_in - output / eff_out')
+        doc='storage[t] = (1 - sd) * storage[t-1] + in * eff_i - out / eff_o')
     m.def_storage_power = pyomo.Constraint(
         m.sto_tuples,
         rule=def_storage_power_rule,
@@ -503,8 +503,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.def_dsm_variables = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
         rule=def_dsm_variables_rule,
-        doc='DSMup * efficiency factor n == DSMdo (summed)')	
-		
+        doc='DSMup * efficiency factor n == DSMdo (summed)')
+
     m.res_dsm_upward = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
         rule=res_dsm_upward_rule,
@@ -587,7 +587,8 @@ def res_vertex_rule(m, tm, sit, com, com_type):
         power_surplus += sum(m.dsm_down[t, tm, sit, com]
                              for t in dsm_time_tuples(
                                  tm, m.timesteps[1:],
-                                 max(int(m.dsm_dict['delay'][(sit, com)] / m.dt), 1)))
+                                 max(int(m.dsm_dict['delay'][(sit, com)]
+                                     / m.dt), 1)))
     return power_surplus == 0
 
 # demand side management (DSM) constraints
@@ -598,7 +599,8 @@ def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for tt in dsm_time_tuples(tm,
                               m.timesteps[1:],
-                              max(int(m.dsm_dict['delay'][(sit, com)] / m.dt),1)):
+                              max(int(m.dsm_dict['delay'][(sit, com)]
+                                  / m.dt), 1)):
         dsm_down_sum += m.dsm_down[tm, tt, sit, com]
     return dsm_down_sum == (m.dsm_up[tm, sit, com] *
                             m.dsm_dict['eff'][(sit, com)])
@@ -615,7 +617,8 @@ def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             max(int(m.dsm_dict['delay'][(sit, com)] / m.dt), 1)):
+                             max(int(m.dsm_dict['delay'][(sit, com)]
+                                 / m.dt), 1)):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
     return dsm_down_sum <= (m.dsm_dict['cap-max-do'][(sit, com)] * m.dt)
 
@@ -625,7 +628,8 @@ def res_dsm_maximum_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             max(int(m.dsm_dict['delay'][(sit, com)] / m.dt), 1)):
+                             max(int(m.dsm_dict['delay'][(sit, com)]
+                                 / m.dt), 1)):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
 
     max_dsm_limit = max(m.dsm_dict['cap-max-up'][(sit, com)],

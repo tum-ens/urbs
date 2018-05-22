@@ -90,8 +90,7 @@ def plot(prob, com, sit, dt, timesteps=None,
         timesteps = sorted(get_entity(prob, 'tm').index)
 
     # convert timesteps to hour series for the plots
-    hoursteps = [timesteps[0] - 1 + dt[0] * i
-                 for i in range(1, len(timesteps) + 1)]
+    hoursteps = timesteps * dt[0]
 
     if is_string(sit):
         # wrap single site in 1-element list for consistent behaviour
@@ -271,18 +270,20 @@ def plot(prob, com, sit, dt, timesteps=None,
         ax2.set_ylabel('{} ({})'.format(power_name, power_unit))
 
     # make xtick distance duration-dependent
-    if len(timesteps) > 26 * 168 / dt[0]:   # time horizon > half a year
-        steps_between_ticks = 168 * 4       # tick every four weeks
-    elif len(timesteps) > 3 * 168 / dt[0]:  # time horizon > three weeks
-        steps_between_ticks = 168           # tick every week
-    elif len(timesteps) > 2 * 24 / dt[0]:   # time horizon > two days
-        steps_between_ticks = 24            # tick every day
-    elif len(timesteps) > 24 / dt[0]:       # time horizon > a day
-        steps_between_ticks = 6             # tick every six hours
-    else:                                   # time horizon <= a day
-        steps_between_ticks = 3             # tick every three hours
+    if len(timesteps) > 26 * 168 / dt[0]:          # time horizon > half a year
+        steps_between_ticks = int(168 * 4 / dt[0])  # tick every four weeks
+    elif len(timesteps) > 3 * 168 / dt[0]:         # time horizon > three weeks
+        steps_between_ticks = int(168 / dt[0])     # tick every week
+    elif len(timesteps) > 2 * 24 / dt[0]:          # time horizon > two days
+        steps_between_ticks = int(24 / dt[0])      # tick every day
+    elif len(timesteps) > 24 / dt[0]:              # time horizon > a day
+        steps_between_ticks = int(6 / dt[0])       # tick every six hours
+    else:                                          # time horizon <= a day
+        steps_between_ticks = int(3 / dt[0])       # tick every three hours
 
-    xticks = hoursteps[::int(steps_between_ticks / dt[0])]
+    hoursteps_ = hoursteps[(steps_between_ticks-1):]
+    hoursteps_ = hoursteps_[::steps_between_ticks]   # create hour timeseries
+    xticks = np.insert(hoursteps_, 0, hoursteps[0])  # add first timestep
 
     # set limits and ticks for all axes
     for ax in all_axes:

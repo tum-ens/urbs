@@ -2,11 +2,11 @@
 Storage Constraints
 ^^^^^^^^^^^^^^^^^^^
 
-**Storage State Rule**: The constraint storage state rule is the main storage constraint and it defines the storage energy content of a storage :math:`s` in a site :math:`v` at a timestep :math:`t`. This constraint calculates the storage energy content at a timestep :math:`t` by adding or subtracting differences, such as ingoing and outgoing energy, to/from a storage energy content at a previous timestep :math:`t-1` multiplied by 1 minus the self-discharge rate :math:`d_{vs}`. Here ingoing energy is given by the product of the variable input storage power flow :math:`\epsilon_{vst}^\text{in}`, the parameter timestep duration :math:`\Delta t` and the parameter storage efficiency during charge :math:`e_{vs}^\text{in}`. Outgoing energy is given by the product of the variable output storage power flow :math:`\epsilon_{vst}^\text{out}` and the parameter timestep duration :math:`\Delta t` divided by the parameter storage efficiency during discharge :math:`e_{vs}^\text{out}`. In mathematical notation this is expressed as:
+**Storage State Rule**: The constraint storage state rule is the main storage constraint and it defines the storage energy content of a storage :math:`s` in a site :math:`v` at a timestep :math:`t`. This constraint calculates the storage energy content at a timestep :math:`t` by adding or subtracting differences, such as ingoing and outgoing energy, to/from a storage energy content at a previous timestep :math:`t-1` multiplied by 1 minus the self-discharge rate :math:`d_{vs}` (which is scaled exponentially with the timestep size :math:`\delta t`). Here ingoing energy is given by the product of the variable storage input commodity flow :math:`\epsilon_{vst}^\text{in}` and the parameter storage efficiency during charge :math:`e_{vs}^\text{in}`. Outgoing energy is given by the variable storage output commodity flow :math:`\epsilon_{vst}^\text{out}` divided by the parameter storage efficiency during discharge :math:`e_{vs}^\text{out}`. In mathematical notation this is expressed as:
 
 .. math::
 
-	\forall v\in V, \forall s\in S, t\in T_\text{m}\colon\ \epsilon_{vst}^\text{con} = \epsilon_{vs(t-1)}^\text{con} \cdot (1-d_{vs}) + \epsilon_{vst}^\text{in} \cdot e_{vs}^\text{in} - \epsilon_{vst}^\text{out} / e_{vs}^\text{out}
+	\forall v\in V, \forall s\in S, t\in T_\text{m}\colon\ \epsilon_{vst}^\text{con} = \epsilon_{vs(t-1)}^\text{con} \cdot (1-d_{vs})^{\delta t} + \epsilon_{vst}^\text{in} \cdot e_{vs}^\text{in} - \epsilon_{vst}^\text{out} / e_{vs}^\text{out}
 
 In script ``model.py`` the constraint storage state rule is defined and calculated by the following code fragment:
 
@@ -15,7 +15,7 @@ In script ``model.py`` the constraint storage state rule is defined and calculat
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
-        doc='storage[t] = storage[t-1] + input - output')
+        doc='storage[t] = (1 - selfdischarge) * storage[t-1] + input * eff_in - output / eff_out')
 
 .. literalinclude:: /../urbs/model.py
    :pyobject: def_storage_state_rule
@@ -54,11 +54,11 @@ In script ``model.py`` the constraint storage capacity rule is defined and calcu
 .. literalinclude:: /../urbs/model.py
    :pyobject: def_storage_capacity_rule
 
-**Storage Input By Power Rule**: The constraint storage input by power rule limits the variable storage input power flow :math:`\epsilon_{vst}^\text{in}`. This constraint restricts a storage :math:`s` in a site :math:`v` at a timestep :math:`t` from having more input power than the storage power capacity. The constraint states that the variable :math:`\epsilon_{vst}^\text{in}` must be less than or equal to the variable total storage power :math:`\kappa_{vs}^\text{p}`. In mathematical notation this is expressed as:
+**Storage Input By Power Rule**: The constraint storage input by power rule limits the variable storage input commodity flow :math:`\epsilon_{vst}^\text{in}`. This constraint restricts a storage :math:`s` in a site :math:`v` at a timestep :math:`t` from having more input power than the storage power capacity. The constraint states that the variable :math:`\epsilon_{vst}^\text{in}` must be less than or equal to the variable total storage power :math:`\kappa_{vs}^\text{p}`, scaled by the size of the time steps :math: `\Delta t`. In mathematical notation this is expressed as:
 
 .. math::
 
-	\forall v\in V, s\in S, t\in T_m\colon\ \epsilon_{vst}^\text{in} \leq \kappa_{vs}^\text{p}
+	\forall v\in V, s\in S, t\in T_m\colon\ \epsilon_{vst}^\text{in} \leq \kappa_{vs}^\text{p} \Delta t
 
 In script ``model.py`` the constraint storage input by power rule is defined and calculated by the following code fragment:
 ::
@@ -71,11 +71,11 @@ In script ``model.py`` the constraint storage input by power rule is defined and
 .. literalinclude:: /../urbs/model.py
    :pyobject: res_storage_input_by_power_rule
 
-**Storage Output By Power Rule**: The constraint storage output by power rule limits the variable storage output power flow :math:`\epsilon_{vst}^\text{out}`. This constraint restricts a storage :math:`s` in a site :math:`v` at a timestep :math:`t` from having more output power than the storage power capacity. The constraint states that the variable :math:`\epsilon_{vst}^\text{out}` must be less than or equal to the variable total storage power :math:`\kappa_{vs}^\text{p}`. In mathematical notation this is expressed as:
+**Storage Output By Power Rule**: The constraint storage output by power rule limits the variable storage output commodity flow :math:`\epsilon_{vst}^\text{out}`. This constraint restricts a storage :math:`s` in a site :math:`v` at a timestep :math:`t` from having more output power than the storage power capacity. The constraint states that the variable :math:`\epsilon_{vst}^\text{out}` must be less than or equal to the variable total storage power :math:`\kappa_{vs}^\text{p}`, scaled by the size of the time steps :math: `\Delta t`. In mathematical notation this is expressed as:
 
 .. math::
 
-	 \forall v\in V, s\in S, t\in T\colon\ \epsilon_{vst}^\text{out} \leq \kappa_{vs}^\text{p}
+	 \forall v\in V, s\in S, t\in T\colon\ \epsilon_{vst}^\text{out} \leq \kappa_{vs}^\text{p} \Delta t
 
 In script ``model.py`` the constraint storage output by power rule is defined and calculated by the following code fragment:
 ::

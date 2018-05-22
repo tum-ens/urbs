@@ -12,77 +12,77 @@ These Sections are Cost, Commodity, Process, Transmission and Storage.
 
 .. table:: *Table: Model Variables*
     
-    +------------------------------------+------+----------------------------------+
-    | Variable                           | Unit | Description                      |
-    +====================================+======+==================================+
-    | **Cost  Variables**                                                          |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\zeta`                      | €/a  | Total System Cost                |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\zeta_\text{inv}`           | €/a  | Investment Costs                 |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\zeta_\text{fix}`           | €/a  | Fix Costs                        |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\zeta_\text{var}`           | €/a  | Variable Costs                   |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\zeta_\text{fuel}`          | €/a  | Fuel Costs                       |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\zeta_\text{rev}`           | €/a  | Revenue Costs                    |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                   |
-    +------------------------------------+------+----------------------------------+
-    | **Commodity Variables**                                                      |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\rho_{vct}`                 | MW   | Stock Commodity Source Term      |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\varrho_{vct}`              | MW   | Sell Commodity Source Term       |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\psi_{vct}`                 | MW   | Buy Commodity Source Term        |
-    +------------------------------------+------+----------------------------------+
-    | **Process Variables**                                                        |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\kappa_{vp}`                | MW   | Total Process Capacity           |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\hat{\kappa}_{vp}`          | MW   | New Process Capacity             |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\tau_{vpt}`                 | MW   | Process Throughput               |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\epsilon_{vcpt}^\text{in}`  | MW   | Process Input Commodity Flow     |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\epsilon_{vcpt}^\text{out}` | MW   | Process Output Commodity Flow    |
-    +------------------------------------+------+----------------------------------+
-    | **Transmission Variables**                                                   |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\kappa_{af}`                | MW   | Total transmission Capacity      |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\hat{\kappa}_{af}`          | MW   | New Transmission Capacity        |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\pi_{aft}^\text{in}`        | MW   | Transmission Power Flow (Input)  |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\pi_{aft}^\text{out}`       | MW   | Transmission Power Flow (Output) |
-    +------------------------------------+------+----------------------------------+
-    | **Storage Variables**                                                        |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\kappa_{vs}^\text{c}`       | MWh  | Total Storage Size               |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\hat{\kappa}_{vs}^\text{c}` | MWh  | New Storage Size                 |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\kappa_{vs}^\text{p}`       | MW   | Total Storage Power              |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\hat{\kappa}_{vs}^\text{p}` | MW   | New Storage Power                |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\epsilon_{vst}^\text{in}`   | MW   | Storage Power Flow (Input)       |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\epsilon_{vst}^\text{out}`  | MW   | Storage Power Flow (Output)      |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content           |
-    +------------------------------------+------+----------------------------------+
-    | **Demand Side Management Variables**                                         |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\delta_{vct}^\text{up}`     | MW   | DSM Upshift                      |
-    +------------------------------------+------+----------------------------------+
-    | :math:`\delta_{vct,tt}^\text{down}`| MW   | DSM Downshift                    |
-    +------------------------------------+------+----------------------------------+
+    +------------------------------------+------+------------------------------------+
+    | Variable                           | Unit | Description                        |
+    +====================================+======+====================================+
+    | **Cost  Variables**                                                            |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\zeta`                      | €/a  | Total System Cost                  |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\zeta_\text{inv}`           | €/a  | Investment Costs                   |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\zeta_\text{fix}`           | €/a  | Fix Costs                          |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\zeta_\text{var}`           | €/a  | Variable Costs                     |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\zeta_\text{fuel}`          | €/a  | Fuel Costs                         |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\zeta_\text{rev}`           | €/a  | Revenue Costs                      |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\zeta_\text{pur}`           | €/a  | Purchase Costs                     |
+    +------------------------------------+------+------------------------------------+
+    | **Commodity Variables**                                                        |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\rho_{vct}`                 | MWh  | Stock Commodity Source Term        |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\varrho_{vct}`              | MWh  | Sell Commodity Source Term         |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\psi_{vct}`                 | MWh  | Buy Commodity Source Term          |
+    +------------------------------------+------+------------------------------------+
+    | **Process Variables**                                                          |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\kappa_{vp}`                | MW   | Total Process Capacity             |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\hat{\kappa}_{vp}`          | MW   | New Process Capacity               |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\tau_{vpt}`                 | MWh  | Process Throughput                 |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\epsilon_{vcpt}^\text{in}`  | MWh  | Process Input Commodity Flow       |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\epsilon_{vcpt}^\text{out}` | MWh  | Process Output Commodity Flow      |
+    +------------------------------------+------+------------------------------------+
+    | **Transmission Variables**                                                     |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\kappa_{af}`                | MW   | Total transmission Capacity        |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\hat{\kappa}_{af}`          | MW   | New Transmission Capacity          |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\pi_{aft}^\text{in}`        | MWh  | Transmission Input Commodity Flow  | 
+    +------------------------------------+------+------------------------------------+
+    | :math:`\pi_{aft}^\text{out}`       | MWh  | Transmission Output Commodity Flow |
+    +------------------------------------+------+------------------------------------+
+    | **Storage Variables**                                                          |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\kappa_{vs}^\text{c}`       | MWh  | Total Storage Size                 |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\hat{\kappa}_{vs}^\text{c}` | MWh  | New Storage Size                   |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\kappa_{vs}^\text{p}`       | MW   | Total Storage Power                |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\hat{\kappa}_{vs}^\text{p}` | MW   | New Storage Power                  |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\epsilon_{vst}^\text{in}`   | MWh  | Storage Input Commodity Flow       |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\epsilon_{vst}^\text{out}`  | MWh  | Storage Output Commodity Flow      |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\epsilon_{vst}^\text{con}`  | MWh  | Storage Energy Content             |
+    +------------------------------------+------+------------------------------------+
+    | **Demand Side Management Variables**                                           |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\delta_{vct}^\text{up}`     | MWh   | DSM Upshift                       |
+    +------------------------------------+------+------------------------------------+
+    | :math:`\delta_{vct,tt}^\text{down}`| MWh   | DSM Downshift                     |
+    +------------------------------------+------+------------------------------------+
     
 
 	
@@ -130,29 +130,29 @@ For more information on calculation of these variables see section :ref:`eq-cost
 Commodity Variables
 ^^^^^^^^^^^^^^^^^^^
 
-**Stock Commodity Source Term**, :math:`\rho_{vct}`, ``e_co_stock``, MW : The variable :math:`\rho_{vct}` represents the energy amount in [MW] that is being used by the system of commodity :math:`c` from type stock (:math:`\forall c \in C_\text{stock}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+**Stock Commodity Source Term**, :math:`\rho_{vct}`, ``e_co_stock``, MWh : The variable :math:`\rho_{vct}` represents the energy amount in [MWh] that is being used by the system of commodity :math:`c` from type stock (:math:`\forall c \in C_\text{stock}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
 In script ``urbs.py`` this variable is defined by the variable ``e_co_stock`` and initialized by the following code fragment: ::
 
     m.e_co_stock = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Use of stock commodity source (MW) per timestep')
+        doc='Use of stock commodity source (MWh) at a given timestep')
 
-**Sell Commodity Source Term**, :math:`\varrho_{vct}`, ``e_co_sell``, MW : The variable :math:`\varrho_{vct}` represents the energy amount in [MW] that is being used by the system of commodity :math:`c` from type sell (:math:`\forall c \in C_\text{sell}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+**Sell Commodity Source Term**, :math:`\varrho_{vct}`, ``e_co_sell``, MWh : The variable :math:`\varrho_{vct}` represents the energy amount in [MWh] that is being used by the system of commodity :math:`c` from type sell (:math:`\forall c \in C_\text{sell}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
 In script ``urbs.py`` this variable is defined by the variable ``e_co_sell`` and initialized by the following code fragment: ::
 
     m.e_co_sell = pyomo.Var(
         m.tm, m.com_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Use of sell commodity source (MW) per timestep')
+        doc='Use of sell commodity source (MWh) at a given timestep')
 
-**Buy Commodity Source Term**, :math:`\psi_{vct}`, ``e_co_buy``, MW : The variable :math:`\psi_{vct}` represents the energy amount in [MW] that is being used by the system of commodity :math:`c` from type buy (:math:`\forall c \in C_\text{buy}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
+**Buy Commodity Source Term**, :math:`\psi_{vct}`, ``e_co_buy``, MWh : The variable :math:`\psi_{vct}` represents the energy amount in [MWh] that is being used by the system of commodity :math:`c` from type buy (:math:`\forall c \in C_\text{buy}`)  in a site :math:`v` (:math:`\forall v \in V`) at timestep :math:`t` (:math:`\forall t \in T_\text{m}`).
 In script ``urbs.py`` this variable is defined by the variable ``e_co_buy`` and initialized by the following code fragment: ::
 
     m.e_co_buy = pyomo.Var(
        m.tm, m.com_tuples,
        within=pyomo.NonNegativeReals,
-       doc='Use of buy commodity source (MW) per timestep')
+       doc='Use of buy commodity source (MWh) at a given timestep')
 
 Process Variables
 ^^^^^^^^^^^^^^^^^
@@ -175,30 +175,30 @@ In script ``urbs.py`` this variable is defined by the model variable ``cap_pro_n
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
 
-**Process Throughput**, :math:`\tau_{vpt}`, ``tau_pro`` : The variable :math:`\tau_{vpt}` represents the measure of (energetic) activity of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). By default, process throughput is represented by the major input commodity flow of the process (e.g. 'Gas' for 'Gas plant', 'Wind' for 'Wind park'). Based on the process throughput amount in a given timestep of a process, flow amounts of the process' input and output commodities at that timestep can be calculated by scaling the process throughput with corresponding process input and output ratios. For further information see **Process Input Ratio** and **Process Output Ratio**. This variable is expressed in the unit MW. 
+**Process Throughput**, :math:`\tau_{vpt}`, ``tau_pro`` : The variable :math:`\tau_{vpt}` represents the measure of (energetic) activity of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). By default, process throughput is represented by the major input commodity flow of the process (e.g. 'Gas' for 'Gas plant', 'Wind' for 'Wind park'). Based on the process throughput amount in a given timestep of a process, flow amounts of the process' input and output commodities at that timestep can be calculated by scaling the process throughput with corresponding process input and output ratios. For further information see **Process Input Ratio** and **Process Output Ratio**. This variable is expressed in the unit MWh. 
 In script ``urbs.py`` this variable is defined by the model variable ``tau_pro`` and initialized by the following code fragment: ::
 
     m.tau_pro = pyomo.Var(
         m.tm, m.pro_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Activity (MW) through process')
+        doc='Activity (MWh) through process')
 
-**Process Input Commodity Flow**, :math:`\epsilon_{vcpt}^\text{in}`, ``e_pro_in``: The variable :math:`\epsilon_{vcpt}^\text{in}` represents the flow input into a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) caused by an input commodity :math:`c` (:math:`\forall c \in C`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). This variable is generally expressed in the unit MW.
+**Process Input Commodity Flow**, :math:`\epsilon_{vcpt}^\text{in}`, ``e_pro_in``: The variable :math:`\epsilon_{vcpt}^\text{in}` represents the commodity flow input into a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) caused by an input commodity :math:`c` (:math:`\forall c \in C`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). This variable is generally expressed in the unit MWh.
 In script ``urbs.py`` this variable is defined by the model variable ``e_pro_in`` and initialized by the following code fragment: ::
 
     m.e_pro_in = pyomo.Var(
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
-        doc='Flow of commodity into process per timestep')
+        doc='Flow of commodity into process at a given timestep')
 
 
-**Process Output Commodity Flow**, :math:`\epsilon_{vcpt}^\text{out}`, ``e_pro_out``: The variable :math:`\epsilon_{vcpt}^\text{out}` represents the flow output out of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) caused by an output commodity :math:`c` (:math:`\forall c \in C`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). This variable is generally expressed in the unit MW (or tonnes e.g. for the environmental commodity 'CO2').
+**Process Output Commodity Flow**, :math:`\epsilon_{vcpt}^\text{out}`, ``e_pro_out``: The variable :math:`\epsilon_{vcpt}^\text{out}` represents the commodity flow output out of a process tuple :math:`p_v` (:math:`\forall p \in P, \forall v \in V`) caused by an output commodity :math:`c` (:math:`\forall c \in C`) at a timestep :math:`t` (:math:`\forall t \in T_{m}`). This variable is generally expressed in the unit MWh (or tonnes e.g. for the environmental commodity 'CO2').
 In script ``urbs.py`` this variable is defined by the model variable ``e_pro_out`` and initialized by the following code fragment: ::
 
     m.e_pro_out = pyomo.Var(
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
-        doc='Flow of commodity out of process per timestep')
+        doc='Flow of commodity out of process at a given timestep')
 
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -219,19 +219,19 @@ In script ``urbs.py`` this variable is defined by the model variable ``cap_tra_n
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
 
-**Transmission Power Flow (Input)**, :math:`\pi_{aft}^\text{in}`, ``e_tra_in``: The variable :math:`\pi_{aft}^\text{in}` represents the power flow input into a transmission tuple :math:`f_{ca}` at a timestep :math:`t`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_tra_in`` and initialized by the following code fragment: ::
+**Transmission Input Commodity Flow**, :math:`\pi_{aft}^\text{in}`, ``e_tra_in``: The variable :math:`\pi_{aft}^\text{in}` represents the commodity flow input into a transmission tuple :math:`f_{ca}` at a timestep :math:`t`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by the model variable ``e_tra_in`` and initialized by the following code fragment: ::
 
     m.e_tra_in = pyomo.Var(
         m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Power flow into transmission line (MW) per timestep')
+        doc='Commodity flow into transmission line (MWh) at a given timestep')
 
-**Transmission Power Flow (Output)**, :math:`\pi_{aft}^\text{out}`, ``e_tra_out``: The variable :math:`\pi_{aft}^\text{out}` represents the power flow output out of a transmission tuple :math:`f_{ca}` at a timestep :math:`t`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_tra_out`` and initialized by the following code fragment: ::
+**Transmission Output Commodity Flow**, :math:`\pi_{aft}^\text{out}`, ``e_tra_out``: The variable :math:`\pi_{aft}^\text{out}` represents the commodity flow output out of a transmission tuple :math:`f_{ca}` at a timestep :math:`t`, where :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by the model variable ``e_tra_out`` and initialized by the following code fragment: ::
 
     m.e_tra_out = pyomo.Var(
         m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Power flow out of transmission line (MW) per timestep')
+        doc='Power flow out of transmission line (MWh) at a given timestep')
 
 Storage Variables
 ^^^^^^^^^^^^^^^^^
@@ -270,21 +270,21 @@ In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_p
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
 
-**Storage Power Flow (Input)**, :math:`\epsilon_{vst}^\text{in}`, ``e_sto_in``: The variable :math:`\epsilon_{vst}^\text{in}` represents the input power flow into a storage tuple :math:`s_{vc}` at a timestep :math:`t`. Input power flow into a storage tuple can also be defined as the charge of a storage tuple. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_in`` and initialized by the following code fragment:
+**Storage Input Commodity Flow**, :math:`\epsilon_{vst}^\text{in}`, ``e_sto_in``: The variable :math:`\epsilon_{vst}^\text{in}` represents the input commodity flow into a storage tuple :math:`s_{vc}` at a timestep :math:`t`. Input commodity flow into a storage tuple can also be defined as the charge of a storage tuple. This variable is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_in`` and initialized by the following code fragment:
 ::
 
     m.e_sto_in = pyomo.Var(
         m.tm, m.sto_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Power flow into storage (MW) per timestep')
+        doc='Commodity flow into storage (MWh) at a given timestep')
 
-**Storage Power Flow (Output)**, :math:`\epsilon_{vst}^\text{out}`, ``e_sto_out``:  The variable :math:`\epsilon_{vst}^\text{out}` represents the output power flow out of a storage tuple :math:`s_{vc}` at a timestep :math:`t`. Output power flow out of a storage tuple can also be defined as the discharge of a storage tuple. This variable is expressed in the unit MW. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_out`` and initialized by the following code fragment:
+**Storage Output Commodity Flow**, :math:`\epsilon_{vst}^\text{out}`, ``e_sto_out``:  The variable :math:`\epsilon_{vst}^\text{out}` represents the output commodity flow out of a storage tuple :math:`s_{vc}` at a timestep :math:`t`. Output commodity flow out of a storage tuple can also be defined as the discharge of a storage tuple. This variable is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_out`` and initialized by the following code fragment:
 ::
 
     m.e_sto_out = pyomo.Var(
         m.tm, m.sto_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Power flow out of storage (MW) per timestep')
+        doc='Commodity flow out of storage (MWh) at a given timestep')
 
 **Storage Energy Content**, :math:`\epsilon_{vst}^\text{con}`, ``e_sto_con``: The variable :math:`\epsilon_{vst}^\text{con}` represents the energy amount that is loaded in a storage tuple :math:`s_{vc}` at a timestep :math:`t`. This variable is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by the model variable ``e_sto_out`` and initialized by the following code fragment:
 ::
@@ -292,21 +292,22 @@ In script ``urbs.py`` this variable is defined by the model variable ``cap_sto_p
     m.e_sto_con = pyomo.Var(
         m.t, m.sto_tuples,
         within=pyomo.NonNegativeReals,
-        doc='Energy content of storage (MWh) in timestep')
+        doc='Energy content of storage (MWh) at a given timestep')
         
 Demand Side Management Variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**DSM Upshift**, :math:`\delta_{vct}^\text{up}`, ``dsm_up``, MW: The variable :math:`\delta_{vct}^\text{up}` represents the DSM upshift in time step :math:`t` in site :math:`v` for commodity :math:`c`. It is only defined for all ``dsm_site_tuples``. The following code fragment shows the definition of the variable:
+**DSM Upshift**, :math:`\delta_{vct}^\text{up}`, ``dsm_up``, MWh: The variable :math:`\delta_{vct}^\text{up}` represents the DSM upshift in time step :math:`t` in site :math:`v` for commodity :math:`c`. It is only defined for all ``dsm_site_tuples``. The following code fragment shows the definition of the variable:
 ::
 
     m.dsm_up = pyomo.Var(
         m.tm, m.dsm_site_tuples,
         within=pyomo.NonNegativeReals,
-        doc='DSM upshift')
+        doc='DSM upshift (MWh) of a demand commodity at a given timestap')
         
-**DSM Downshift**, :math:`\delta_{vct,tt}^\text{down}`, ``dsm_down``, MW: The variable :math:`\delta_{vct,tt}^\text{down}` represents the DSM downshift in timestepp :math:`tt` caused by the upshift in time :math:`t` in site :math:`v` for commodity :math:`c`. The special combinations of timesteps :math:`t` and :math:`tt` for each site and commodity combination is created by the ``dsm_down_tuples``. The definition of the variable is shown in the code fragment:
+**DSM Downshift**, :math:`\delta_{vct,tt}^\text{down}`, ``dsm_down``, MWh: The variable :math:`\delta_{vct,tt}^\text{down}` represents the DSM downshift in timestepp :math:`tt` caused by the upshift in time :math:`t` in site :math:`v` for commodity :math:`c`. The special combinations of timesteps :math:`t` and :math:`tt` for each site and commodity combination is created by the ``dsm_down_tuples``. The definition of the variable is shown in the code fragment:
 ::
-    m.dsm_down = pyomo.Var(
+    
+	m.dsm_down = pyomo.Var(
         m.dsm_down_tuples,
         within=pyomo.NonNegativeReals,
-        doc='DSM downshift')
+        doc='DSM downshift (MWh) of a demand commodity at a given timestep')

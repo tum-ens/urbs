@@ -10,24 +10,27 @@ The following is a minimum "hello world" script that shows the life cycle of
 the optimization object `prob`, and how the various :mod:`urbs` module 
 functions create it, modify it and process it.::
 
-    import urbs
-    from pyomo.opt.base import SolverFactory
-    
-    # read input, create optimisation problem
-    data = urbs.read_excel('mimo-example.xlsx')
-    prob = urbs.create_model(data)
+	import os
+	import pandas as pd
+	import pyomo.environ
+	import shutil
+	import urbs
+	from pyomo.opt.base import SolverFactory
+   
+	# read input, create optimisation problem
+	data = urbs.read_excel('mimo-example.xlsx')
+	prob = urbs.create_model(data)
 
-    # solve problem, read results
-    optim = SolverFactory('glpk')
-    result = optim.solve(prob)
-    prob.solutions.load_from(result)
-    
-    # save problem instance (incl. input and result) for later analyses
-    urbs.save(prob, 'mimo-example.pgz')
+	# solve problem, read results
+	optim = SolverFactory('glpk')
+	result = optim.solve(prob, tee=True)
 
-    # write report and plot timeseries
-    urbs.report(prob, 'report.xlsx')
-    urbs.plot(prob, 'Elec', 'Mid')
+	# save problem instance (incl. input and result) for later analyses
+	urbs.save(prob, 'model.h5')
+
+	# write report and plot timeseries
+	urbs.report(prob, 'report.xlsx')
+	urbs.result_figures(prob, 'plot', 'scenario_base')
 
 The following lists and describes the use of all module-level functions. They
 are roughly ordered from high-level to low-level access, followed by helper 
@@ -43,22 +46,22 @@ Create model
   
   The spreadsheet must contain 7 sheets labelled 'Commodity', 'Process',
   'Process-Commodity', 'Transmission', 'Storage', 'Demand' and 'SupIm'.
-  It can contain 2 additional sheets called 'Buy-Sell-Price' and 'Hacks'.
-  If present, function :func:`add_hacks` is called by :func:`create_model`
-  upon model creation.
+  It can contain three additional sheets called 'Buy-Sell-Price', 'DSM' and 'Global'.
   
   Refer to the `mimo-example.xlsx` file for exemplary documentation of the 
   table contents and definitions of all attributes by selecting the column
   titles. 
   
   
-.. function:: create_model(data, timesteps)
+.. function:: create_model(data, [dt=1], [timesteps=None], [dual=False])
 
   Returns a Pyomo `ConcreteModel` object.
   
   :param dict data: input like created by :func:`read_excel`
+  :param float dt: length of each modelled timestep (unit: hours)
   :param list timesteps: consecutive list of modelled timesteps
-  
+  :param boolean dual: boolean parameter to enable dual variables in the model
+ 
   :return: urbs model object
   
   Timestep numbers must match those of the demand and supim timeseries.
@@ -67,57 +70,40 @@ Create model
   called with ``data['hacks']`` as the second argument.  
 
   
-.. function:: add_hacks(model, hacks)
-
-    Is called by :func:`create_model` to add special elements, e.g.
-    constraints, to the model. Each hack, if present, can trigger the creation
-    of additional sets, parameters, variables or constraints. Refer to the 
-    `code`__ of this function to see which hacks exists and what they do.
-    
-.. __: https://github.com/tum-ens/urbs/blob/master/urbs.py#L798-L824
-    
-    As of v0.3, only one hack exists: if a line "Global CO2 limit" exists in
-    the hacks DataFrame, its value is used as a global upper limit for a
-    constraint that limits the annual creation of the commodity "CO2".
-    
-    :param model: urbs model object (not instance!)
-    :param hacks: a DataFrame of hacks  
-    
-    :return model: the modified urbs model object
-
-  
 Report & plotting
 ^^^^^^^^^^^^^^^^^
 
 These two **high-level** functions cover the envisioned use of the unmodified
 urbs model and should cover most use cases.
 
-.. function:: plot(prob, com, sit, [timesteps=None])
-
-    :param prob: urbs model instance
-    :param str com: commodity name to plot
-    :param str sit: site name to plot
-    :param list timesteps: timesteps to plot, default: all
-    
-    :return fig: matplotlib figure handle 
-
-  
-.. function:: report(prob, filename, commodities, sites)
+.. function:: report(prob, filename, [report_tuples=None], [report_sites_name=None])
 
     Write optimisation result summary to spreadsheet.
     
     :param prob: urbs model instance
     :param str filename: spreadsheet filename, will be overwritten if exists
-    :param list commodities: list of commodities for which to output timeseries
-    :param list sites: list sites for which to output timeseries
+    :param list report_tuples: list of (site, commodity) tuples for which to output timeseries, default: all
+    :param list report_sites_name: dict of names for created timeseries, default: same with tuples' names
 
+
+.. function:: result_figures(prob, figure_basename, [plot_title_prefix=None], [plot_tuples=None], [plot_sites_name=None], [periods=None], [extensions=None], [**kwds])
+
+
+    :param prob: urbs model instance
+    :param str figure_basename: relative filename prefix that is shared
+    :param str plot_title_prefix: plot title identifier, default: same with figure_basename
+    :param list plot_tuples: list of (site, commodity) tuples for which to plot (site may be individual site names or lists of sites), default: all demand (sit, com) tuples are plotted
+	:param dict plot_sites_name: dict of names for created plots, default: same with tuples' names
+	:param dict periods: dict of {'period name': timesteps_list} items, default: one period 'all' with all timesteps is assumed
+	:param list extensions: list of file extensions for plot images, default: [png, pdf]
+	:param ``*kwds:`` keyword arguments are forwarded to urbs.plot()
 
 .. _medium-level-functions:
   
 Retrieve results
 ^^^^^^^^^^^^^^^^
 
-While :func:`report` and :func:`plot` are quite flexible, custom
+While :func:`report` and :func:`result_figures` are quite flexible, custom
 result analysis scripts might be needed. These can be built on top of the
 following two **medium-level** functions. They retrieve all time-dependent and
 -independent quantities and return them as ready-to-use DataFrames.
@@ -148,6 +134,7 @@ following two **medium-level** functions. They retrieve all time-dependent and
         * storage: timeseries of commodity storage (level, stored, retrieved)
         * imported: timeseries of commodity import (by site)
         * exported: timeseries of commodity export (by site)
+        * dsm: timeseries of DSM up-/downshifts (by site and commodity)
 
         
 Persistence
@@ -161,7 +148,7 @@ using :func:`save`:
 
 .. function:: save(prob, filename)
 
-    Save rivus model instance to a gzip'ed pickle file
+    Save urbs model instance to a gzip'ed pickle file
     
     `Pickle <https://docs.python.org/2/library/pickle.html>`_ is the standard
     Python way of serializing and de-serializing Python objects. By using it,
@@ -175,18 +162,18 @@ using :func:`save`:
     It is used over the possibly more compact bzip2 compression due to the
     lower runtime. Source: <http://stackoverflow.com/a/18475192/2375855>
     
-    :param prob: a rivus model instance
+    :param prob: an urbs model instance
     :param str filename: pickle file to be written
         
     :return: nothing
         
 .. function:: load(filename)
 
-    Load a rivus model instance from a gzip'ed pickle file
+    Load an urbs model instance from a gzip'ed pickle file
     
     :param str filename: pickle file
     
-    :return prob: the unpickled rivus model instance
+    :return prob: the unpickled urbs model instance
 
 Low-level access
 ^^^^^^^^^^^^^^^^
@@ -293,3 +280,43 @@ Helper functions
           'North': (200, 200, 230)}
       for country, color in my_colors.items():
           urbs.COLORS[country] = color
+
+		  
+Helper functions for DSM
+^^^^^^^^^^^^^^^^^^^^^^^^		  
+		  
+.. function:: dsm_down_time_tuples(time, sit_com_tuple, m):
+   
+   Function to generate dictionaries for DSM timestep pairs (t_upshift, t_downshift)
+   of a commodity in a given site.
+
+    :param list time: list with timestep indices, at which the DSM upshift may occur
+    :param lost sit_com_tuple: a list of (site, commodity) tuples
+    :param m: model instance
+
+    :return: A list of possible timestep pairs (t_upshift, t_downshift) 
+	depending on site and commodity
+
+.. function:: dsm_time_tuples(timestep, time, delay):
+    
+	Function to generate the timesteps, in which DSM downshift has to occur in return of
+	a DSM upshift occuring in a given timestep
+
+    :param int timestep: timestep of DSM upshift
+    :param list time: list with all modelled timesteps
+    :param int delay: allowed DSM delay (in hours) in a particular site and commodity
+
+    :return: A list of possible downshift timesteps in return of a given upshift time step,
+	in a particular site and commotidy, subject to a certain allowable delay duration
+
+.. function:: dsm_recovery(timestep, time, recov):
+
+    Function to generate the time frame, at which the limitation of recovery for DSM upshift
+	takes place
+	
+    :param int timestep: timestep of DSM upshift
+    :param list time: list with all modelled timesteps
+    :param int recov: recovery duration (in hours) required for a DSM upshift in a particular 
+	site and commodity
+
+    :return: A list of timesteps which are within the recovery frame of a DSM upshift

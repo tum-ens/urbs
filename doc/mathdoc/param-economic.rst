@@ -1,16 +1,16 @@
 .. module:: urbs
 
-Economical Parameters
-^^^^^^^^^^^^^^^^^^^^^
+Economic Parameters
+^^^^^^^^^^^^^^^^^^^
 
-.. table:: *Table: Economical Model Parameters*
+.. table:: *Table: Economic Model Parameters*
 
 	+---------------------------+---------+-------------------------------------------------+
 	|Parameter                  |Unit     |Description                                      |
 	+===========================+=========+=================================================+
 	|:math:`AF`                 | _       |Annuity factor                                   |
 	+---------------------------+---------+-------------------------------------------------+
-	|**Commodity Economical Parameters**                                                    |
+	|**Commodity Economic Parameters**                                                      |
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`k_{vc}^\text{fuel}` |€/MWh    |Stock Commodity Fuel Costs                       |
 	+---------------------------+---------+-------------------------------------------------+
@@ -18,7 +18,7 @@ Economical Parameters
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`k_{vct}^\text{bs}`  |€/MWh    |Buy/Sell Commodity Buy/Sell Costs                |
 	+---------------------------+---------+-------------------------------------------------+
-	|**Process Economical Parameters**                                                      |
+	|**Process Economic Parameters**                                                        |
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`i_{vp}`             | _       |Weighted Average Cost of Capital for Process     |
 	+---------------------------+---------+-------------------------------------------------+
@@ -30,7 +30,7 @@ Economical Parameters
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`k_{vp}^\text{var}`  |€/MWh    |Process Variable Costs                           |
 	+---------------------------+---------+-------------------------------------------------+
-	|**Storage Economical Parameters**                                                      |
+	|**Storage Economic Parameters**                                                        |
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`i_{vs}`             | _       |Weighted Average Cost of Capital for Storage     |
 	+---------------------------+---------+-------------------------------------------------+
@@ -48,7 +48,7 @@ Economical Parameters
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`k_{vs}^\text{c,var}`|€/MWh    |Storage Usage Variable Costs                     |
 	+---------------------------+---------+-------------------------------------------------+
-	|**Transmission Economical Parameters**                                                 |
+	|**Transmission Economic Parameters**                                                   |
 	+---------------------------+---------+-------------------------------------------------+
 	|:math:`i_{vf}`             | _       |Weighted Average Cost of Capital for Transmission|
 	+---------------------------+---------+-------------------------------------------------+
@@ -94,14 +94,14 @@ This derived parameter is calculated by the helper function :func:`annuity facto
 
   :return: value of the expression :math:`\frac{(1+i)^n i}{(1+i)^n - 1}`
 
-Commodity Economical Parameters
--------------------------------
+Commodity Economic Parameters
+-----------------------------
 
 **Stock Commodity Fuel Costs**, :math:`k_{vc}^\text{fuel}`, ``m.commodity.loc[c]['price']``: The parameter :math:`k_{vc}^\text{fuel}` represents the purchase cost for purchasing one unit (1 MWh) of a stock commodity :math:`c` (:math:`\forall c \in C_\text{stock}`) in a site :math:`v` (:math:`\forall v \in V`). The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of stock commodity tuples (:math:`\forall q = "Stock"`) in this sheet with the header label "price" represents the corresponding parameter :math:`k_{vc}^\text{fuel}`.
 
 **Environmental Commodity Costs**, :math:`k_{vc}^\text{env}`, ``m.commodity.loc[c]['price']``: The parameter :math:`k_{vc}^\text{env}` represents the cost for producing/emitting one unit (1 t, 1 kg, ...) of an environmentcal commodity :math:`c` (:math:`\forall c \in C_\text{env}`) in a site :math:`v` (:math:`\forall v \in V`). The unit of this parameter is €/t (i.e. per unit of output). The related section for this parameter in the spreadsheet is the "Commodity" sheet. Here, each row represents a commodity tuple :math:`c_{vq}` and the fourth column of environmental commodity tuples (:math:`\forall q = "Env"`) in this sheet with the header label "price" represents the corresponding parameter :math:`k_{vc}^\text{env}`.
 
-**Buy/Sell Commodity Buy/Sell Costs**, :math:`k_{vct}^\text{bs}`, ``com_prices[c].loc[tm]``: The parameter :math:`k_{vct}^\text{bs}` represents the purchase/buy cost for purchasing/selling one unit(1 MWh) of a buy/sell commodity :math:`c` (:math:`\forall c \in C_\text{buy}`)/(:math:`\forall c \in C_\text{sell}`) in a site :math:`v` (:math:`\forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_m`). The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of buy/sell commodity tuples (:math:`\forall q = "Buy"`)/(:math:`\forall q = "Sell"`) in this sheet with the header label "price" represents how the parameter :math:`k_{vct}^\text{bs}` will be defined. There are two options for this parameter. This parameter will either be a fix value for the whole simulation duration or will vary with the timesteps :math:`t`. For the first option, if the buy/sell price of a buy/sell commodity is a fix value for the whole simulation duration, this value can be entered directly into the corresponding cell with the unit €/MWh. For the second option, if the buy/sell price of a buy/sell commodity depends on time, accordingly on timesteps, a string (a linear sequence of characters, words, or other data) should be written in the corresponding cell. An example string looks like this: "1,25xBuy" where the first numbers (1,25) represent a coefficient for the price. This value is than multiplied by values from another list given with timeseries. Here the word "Buy" refers to a timeseries located in ""Buy-Sell-Price"" sheet with commodity names, types and timesteps. This timeseries should be filled with time dependent buy/sell price variables. The parameter :math:`k_{vct}^\text{bs}` is then calculated by the product of the price coefficient and the related time variable for a given timestep :math:`t`. This calculation and the decision for one of the two options is executed by the helper function :func:`get_com_price`.
+**Buy/Sell Commodity Buy/Sell Costs**, :math:`k_{vct}^\text{bs}`, ``com_prices[c].loc[tm]``: The parameter :math:`k_{vct}^\text{bs}` represents the purchase/buy cost for purchasing/selling one unit(1 MWh) of a buy/sell commodity :math:`c` (:math:`\forall c \in C_\text{buy}`)/(:math:`\forall c \in C_\text{sell}`) in a site :math:`v` (:math:`\forall v \in V`) at a timestep :math:`t` (:math:`\forall t \in T_m`). The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Commodity" sheet. Here each row represents another commodity tuple :math:`c_{vq}` and the fourth column of buy/sell commodity tuples (:math:`\forall q = "Buy"`)/(:math:`\forall q = "Sell"`) in this sheet with the header label "price" represents how the parameter :math:`k_{vct}^\text{bs}` will be defined. There are two options for this parameter. This parameter will either be a fix value for the whole simulation duration or will vary with the timesteps :math:`t`. For the first option, if the buy/sell price of a buy/sell commodity is a fix value for the whole simulation duration, this value can be entered directly into the corresponding cell with the unit €/MWh. For the second option, if the buy/sell price of a buy/sell commodity depends on time, accordingly on timesteps, a string (a linear sequence of characters, words, or other data) should be written in the corresponding cell. An example string looks like this: "1.25xBuy" where the first numbers (1.25) represent a coefficient for the price. This value is than multiplied by values from another list given with timeseries. Here the word "Buy" refers to a timeseries located in ""Buy-Sell-Price"" sheet with commodity names, types and timesteps. This timeseries should be filled with time dependent buy/sell price variables. The parameter :math:`k_{vct}^\text{bs}` is then calculated by the product of the price coefficient and the related time variable for a given timestep :math:`t`. This calculation and the decision for one of the two options is executed by the helper function :func:`get_com_price`.
 
 .. function:: get_com_price(instance, tuples)
 
@@ -113,10 +113,10 @@ Commodity Economical Parameters
   Calculate commodity prices for each modelled timestep.
   Checks whether the input is a float. If it is a float it gets the input value as a fix value for commodity price. Otherwise if the input value is not a float, but a string, it extracts the price coefficient from the string and  multiplies it with a timeseries of commodity price variables.
 
-Process Economical Parameters
------------------------------
+Process Economic Parameters
+---------------------------
 
-**Weighted Average Cost of Capital for Process**, :math:`i_{vp}`, : The parameter :math:`i_{vp}` represents the weighted average cost of capital for a process technology :math:`p` in a site :math:`v`. The weighted average cost of capital gives the interest rate (%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the tenth column with the header label "wacc" represents the parameters :math:`i_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%
+**Weighted Average Cost of Capital for Process**, :math:`i_{vp}`, : The parameter :math:`i_{vp}` represents the weighted average cost of capital for a process technology :math:`p` in a site :math:`v`. The weighted average cost of capital gives the interest rate (%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the tenth column with the header label "wacc" represents the parameters :math:`i_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations. The parameter is given as a percentage, where "0.07" means 7%
 
 **Process Depreciation Period**, :math:`z_{vp}`, (a): The parameter :math:`z_{vp}` represents the depreciation period of a process :math:`p` in a site :math:`v`. The depreciation period gives the economic lifetime (more conservative than technical lifetime) of a process investment. The unit of this parameter is "a", where "a" represents a year of 8760 hours. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the eleventh column with the header label "depreciation" represents the parameters :math:`z_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
@@ -126,10 +126,10 @@ Process Economical Parameters
 
 **Process Variable Costs**, :math:`k_{vp}^\text{var}`, ``m.process.loc[p]['var-cost']``: The parameter :math:`k_{vp}^\text{var}` represents the variable cost per one unit energy throughput :math:`\tau_{vpt}` through a process technology :math:`p` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the ninth column with the header label "var-cost" represents the parameters :math:`k_{vp}^\text{var}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
-Storage Economical Parameters
------------------------------
+Storage Economic Parameters
+---------------------------
 
-**Weighted Average Cost of Capital for Storage**, :math:`i_{vs}`, : The parameter :math:`i_{vs}` represents the weighted average cost of capital for a storage technology :math:`s` in a site :math:`v`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the nineteenth column with the header label "wacc" represents the parameters :math:`i_{vs}` of the corresponding storage :math:`s` and site :math:`v` combinations. The parameter is given as a percentage, where "0,07" means 7%.
+**Weighted Average Cost of Capital for Storage**, :math:`i_{vs}`, : The parameter :math:`i_{vs}` represents the weighted average cost of capital for a storage technology :math:`s` in a site :math:`v`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the nineteenth column with the header label "wacc" represents the parameters :math:`i_{vs}` of the corresponding storage :math:`s` and site :math:`v` combinations. The parameter is given as a percentage, where "0.07" means 7%.
 
 **Storage Depreciation Period**, :math:`z_{vs}`, (a): The parameter :math:`z_{vs}` represents the depreciation period of a storage :math:`s` in a site :math:`v`. The depreciation period gives the economic lifetime (more conservative than technical lifetime) of a storage investment. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the eighteenth column with the header label "depreciation" represents the parameters :math:`z_{vs}` of the corresponding storage :math:`s` and site :math:`v` combinations.
 
@@ -145,10 +145,10 @@ Storage Economical Parameters
 
 **Storage Usage Variable Costs**, :math:`k_{vs}^\text{c,var}`, ``m.storage.loc[s]['var-cost-c']``: The parameter :math:`k_{vs}^\text{p,var}` represents the variable cost per unit energy, that is conserved in a storage technology :math:`s` in a site :math:`v`. The unit of this parameter is €/MWh. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents another storage :math:`s` in a site :math:`v` and the seventeenth column with the header label "var-cost-c" represents the parameters :math:`k_{vs}^\text{c,var}` of the corresponding storage :math:`s` and site :math:`v` combinations. The value of this parameter is usually set to zero, but the parameter can be taken advantage of if the storage has a short term usage or has an increased devaluation due to usage, compared to amount of energy stored. 
 
-Transmission Economical Parameters
-----------------------------------
+Transmission Economic Parameters
+--------------------------------
 
-**Weighted Average Cost of Capital for Transmission**, :math:`i_{vf}`, : The parameter :math:`i_{vf}` represents the weighted average cost of capital for a transmission :math:`f` transferring commodities through an arc :math:`a`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the twelfth column with the header label "wacc" represents the parameters :math:`i_{vf}` of the corresponding transmission :math:`f` and arc :math:`a` combinations. The parameter is given as a percentage, where "0,07" means 7%.
+**Weighted Average Cost of Capital for Transmission**, :math:`i_{vf}`, : The parameter :math:`i_{vf}` represents the weighted average cost of capital for a transmission :math:`f` transferring commodities through an arc :math:`a`. The weighted average cost of capital gives the interest rate(%) of costs for capital after taxes. The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the twelfth column with the header label "wacc" represents the parameters :math:`i_{vf}` of the corresponding transmission :math:`f` and arc :math:`a` combinations. The parameter is given as a percentage, where "0.07" means 7%.
 
 **Transmission Depreciation Period**, :math:`z_{af}`, (a): The parameter :math:`z_{af}` represents the depreciation period of a transmission :math:`f` transferring commodities through an arc :math:`a`. The depreciation period of gives the economic lifetime (more conservative than technical lifetime) of a transmission investment. The unit of this parameter is €/ (MW a). The related section for this parameter in the spreadsheet can be found under the "Transmission" sheet. Here each row represents another transmission :math:`f` transferring commodities through an arc :math:`a` and the thirteenth column with the header label "depreciation" represents the parameters :math:`z_{af}` of the corresponding transmission :math:`f` and arc :math:`a` combinations.
 

@@ -66,3 +66,9 @@ def validate_input(data):
     # Identify SupIm values larger than 1, which lead to an infeasible model
     if (data['supim'] > 1).sum().sum() > 0:
         raise ValueError('All values in Sheet SupIm must be <= 1.')
+
+    if 'maxperstep' in list(data['commodity']):
+        raise KeyError('Maximum allowable commodities are defined by per hour. '
+                       'Please change the column name to maxperhour and ensure '
+					   'that the input values are adjusted correspondingly.')
+					   

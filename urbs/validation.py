@@ -67,8 +67,11 @@ def validate_input(data):
     if (data['supim'] > 1).sum().sum() > 0:
         raise ValueError('All values in Sheet SupIm must be <= 1.')
 
+    # Identify outdated column label 'maxperstep' on the commodity tab and
+    # suggest a rename to 'maxperhour'
     if 'maxperstep' in list(data['commodity']):
-        raise KeyError('Maximum allowable commodities are defined by per hour. '
-                       'Please change the column name to maxperhour and ensure '
-					   'that the input values are adjusted correspondingly.')
+        raise KeyError('Maximum allowable commodities are defined by per '
+                       'hour. Please change the column name to maxperhour '
+                       'and ensure that the input values are adjusted ' 
+                       'correspondingly.')
 					   

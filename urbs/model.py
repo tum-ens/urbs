@@ -587,8 +587,8 @@ def res_vertex_rule(m, tm, sit, com, com_type):
         power_surplus += sum(m.dsm_down[t, tm, sit, com]
                              for t in dsm_time_tuples(
                                  tm, m.timesteps[1:],
-                                 max(int(m.dsm_dict['delay'][(sit, com)]
-                                     / m.dt), 1)))
+                                 max(int(1 / m.dt *
+                                     m.dsm_dict['delay'][(sit, com)]), 1)))
     return power_surplus == 0
 
 # demand side management (DSM) constraints
@@ -599,8 +599,8 @@ def def_dsm_variables_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for tt in dsm_time_tuples(tm,
                               m.timesteps[1:],
-                              max(int(m.dsm_dict['delay'][(sit, com)]
-                                  / m.dt), 1)):
+                              max(int(1 / m.dt *
+                                  m.dsm_dict['delay'][(sit, com)]), 1)):
         dsm_down_sum += m.dsm_down[tm, tt, sit, com]
     return dsm_down_sum == (m.dsm_up[tm, sit, com] *
                             m.dsm_dict['eff'][(sit, com)])
@@ -608,8 +608,8 @@ def def_dsm_variables_rule(m, tm, sit, com):
 
 # DSMup <= Cup (threshold capacity of DSMup)
 def res_dsm_upward_rule(m, tm, sit, com):
-    return m.dsm_up[tm, sit, com] <= (m.dsm_dict['cap-max-up'][(sit, com)]
-                                      * m.dt)
+    return m.dsm_up[tm, sit, com] <= (m.dt *
+                                      m.dsm_dict['cap-max-up'][(sit, com)])
 
 
 # DSMdo <= Cdo (threshold capacity of DSMdo)
@@ -617,10 +617,10 @@ def res_dsm_downward_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             max(int(m.dsm_dict['delay'][(sit, com)]
-                                 / m.dt), 1)):
+                             max(int(1 / m.dt *
+                                 m.dsm_dict['delay'][(sit, com)]), 1)):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
-    return dsm_down_sum <= (m.dsm_dict['cap-max-do'][(sit, com)] * m.dt)
+    return dsm_down_sum <= (m.dt * m.dsm_dict['cap-max-do'][(sit, com)])
 
 
 # DSMup + DSMdo <= max(Cup,Cdo)
@@ -628,12 +628,12 @@ def res_dsm_maximum_rule(m, tm, sit, com):
     dsm_down_sum = 0
     for t in dsm_time_tuples(tm,
                              m.timesteps[1:],
-                             max(int(m.dsm_dict['delay'][(sit, com)]
-                                 / m.dt), 1)):
+                             max(int(1 / m.dt *
+                                 m.dsm_dict['delay'][(sit, com)]), 1)):
         dsm_down_sum += m.dsm_down[t, tm, sit, com]
 
-    max_dsm_limit = max(m.dsm_dict['cap-max-up'][(sit, com)],
-                        m.dsm_dict['cap-max-do'][(sit, com)]) * m.dt
+    max_dsm_limit = m.dt * max(m.dsm_dict['cap-max-up'][(sit, com)],
+                               m.dsm_dict['cap-max-do'][(sit, com)])
     return m.dsm_up[tm, sit, com] + dsm_down_sum <= max_dsm_limit
 
 
@@ -642,7 +642,8 @@ def res_dsm_recovery_rule(m, tm, sit, com):
     dsm_up_sum = 0
     for t in dsm_recovery(tm,
                           m.timesteps[1:],
-                          max(int(m.dsm_dict['recov'][(sit, com)] / m.dt), 1)):
+                          max(int(1 / m.dt *
+                              m.dsm_dict['recov'][(sit, com)]), 1)):
         dsm_up_sum += m.dsm_up[t, sit, com]
     return dsm_up_sum <= (m.dsm_dict['cap-max-up'][(sit, com)] *
                           m.dsm_dict['delay'][(sit, com)])
@@ -656,7 +657,7 @@ def res_stock_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_stock[tm, sit, com, com_type] <=
-                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
+                m.dt * m.commodity_dict['maxperhour'][(sit, com, com_type)])
 
 
 # limit stock commodity use in total (scaled to annual consumption, thanks
@@ -681,7 +682,7 @@ def res_sell_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_sell[tm, sit, com, com_type] <=
-                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
+                m.dt * m.commodity_dict['maxperhour'][(sit, com, com_type)])
 
 
 # limit sell commodity use in total (scaled to annual consumption, thanks
@@ -706,7 +707,7 @@ def res_buy_step_rule(m, tm, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         return (m.e_co_buy[tm, sit, com, com_type] <=
-                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
+                m.dt * m.commodity_dict['maxperhour'][(sit, com, com_type)])
 
 
 # limit buy commodity use in total (scaled to annual consumption, thanks
@@ -735,7 +736,7 @@ def res_env_step_rule(m, tm, sit, com, com_type):
     else:
         environmental_output = - commodity_balance(m, tm, sit, com)
         return (environmental_output <=
-                m.commodity_dict['maxperhour'][(sit, com, com_type)] * m.dt)
+                m.dt * m.commodity_dict['maxperhour'][(sit, com, com_type)])
 
 
 # limit environmental commodity output in total (scaled to annual
@@ -785,7 +786,7 @@ def def_intermittent_supply_rule(m, tm, sit, pro, coin):
 
 # process throughput <= process capacity
 def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
-    return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro] * m.dt)
+    return (m.tau_pro[tm, sit, pro] <= m.dt * m.cap_pro[sit, pro])
 
 
 def res_process_maxgrad_lower_rule(m, t, sit, pro):
@@ -889,7 +890,7 @@ def def_transmission_output_rule(m, tm, sin, sout, tra, com):
 # transmission input <= transmission capacity
 def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
     return (m.e_tra_in[tm, sin, sout, tra, com] <=
-            m.cap_tra[sin, sout, tra, com] * m.dt)
+            m.dt * m.cap_tra[sin, sout, tra, com])
 
 
 # lower bound <= transmission capacity <= upper bound
@@ -912,7 +913,7 @@ def res_transmission_symmetry_rule(m, sin, sout, tra, com):
 def def_storage_state_rule(m, t, sit, sto, com):
     return (m.e_sto_con[t, sit, sto, com] ==
             m.e_sto_con[t-1, sit, sto, com] *
-            (1 - m.storage_dict['discharge'][(sit, sto, com)])**m.dt +
+            (1 - m.storage_dict['discharge'][(sit, sto, com)]) ** m.dt.value +
             m.e_sto_in[t, sit, sto, com] *
             m.storage_dict['eff-in'][(sit, sto, com)] -
             m.e_sto_out[t, sit, sto, com] /
@@ -935,12 +936,12 @@ def def_storage_capacity_rule(m, sit, sto, com):
 
 # storage input <= storage power
 def res_storage_input_by_power_rule(m, t, sit, sto, com):
-    return m.e_sto_in[t, sit, sto, com] <= m.cap_sto_p[sit, sto, com] * m.dt
+    return m.e_sto_in[t, sit, sto, com] <= m.dt * m.cap_sto_p[sit, sto, com]
 
 
 # storage output <= storage power
 def res_storage_output_by_power_rule(m, t, sit, sto, co):
-    return m.e_sto_out[t, sit, sto, co] <= m.cap_sto_p[sit, sto, co] * m.dt
+    return m.e_sto_out[t, sit, sto, co] <= m.dt * m.cap_sto_p[sit, sto, co]
 
 
 # storage content <= storage capacity

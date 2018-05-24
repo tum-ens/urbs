@@ -70,8 +70,8 @@ def validate_input(data):
     # Identify outdated column label 'maxperstep' on the commodity tab and
     # suggest a rename to 'maxperhour'
     if 'maxperstep' in list(data['commodity']):
-        raise KeyError('Maximum allowable commodities are defined by per '
-                       'hour. Please change the column name to maxperhour '
-                       'and ensure that the input values are adjusted ' 
-                       'correspondingly.')
-					   
+        raise KeyError("Maximum allowable commodities are defined by per "
+                       "hour. Please change the column name 'maxperstep' "
+                       "in the commodity worksheet to 'maxperhour' and "
+                       "ensure that the input values are adjusted "
+                       "correspondingly.")

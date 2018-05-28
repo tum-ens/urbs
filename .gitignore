@@ -3,3 +3,4 @@
 result/*
 results/*
 doc/_build/*
+*.ipynb

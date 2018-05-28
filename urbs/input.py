@@ -1,10 +1,18 @@
 import pandas as pd
+import os
+import glob
 from xlrd import XLRDError
 import pyomo.core as pyomo
 from .modelhelper import *
 
 
-def read_excel(filename):
+def read_intertemporal(folder):
+    glob_input = os.path.join(folder, '*.xlsx')
+    input_files = sorted(glob.glob(glob_input))
+    return input_files
+
+
+def read_excel(input_files):
     """Read Excel input file and prepare URBS input dict.
 
     Reads an Excel spreadsheet that adheres to the structure shown in
@@ -27,45 +35,101 @@ def read_excel(filename):
         >>> data['global_prop'].loc['CO2 limit', 'value']
         150000000
     """
-    with pd.ExcelFile(filename) as xls:
-        site = xls.parse('Site').set_index(['Name'])
-        commodity = (
-            xls.parse('Commodity').set_index(['Site', 'Commodity', 'Type']))
-        process = xls.parse('Process').set_index(['Site', 'Process'])
-        process_commodity = (
-            xls.parse('Process-Commodity')
-               .set_index(['Process', 'Commodity', 'Direction']))
-        transmission = (
-            xls.parse('Transmission')
-               .set_index(['Site In', 'Site Out',
-                           'Transmission', 'Commodity']))
-        storage = (
-            xls.parse('Storage').set_index(['Site', 'Storage', 'Commodity']))
-        demand = xls.parse('Demand').set_index(['t'])
-        supim = xls.parse('SupIm').set_index(['t'])
-        buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
-        dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        global_prop = xls.parse('Global').set_index(['Property'])
 
-    # prepare input data
-    # split columns by dots '.', so that 'DE.Elec' becomes the two-level
-    # column index ('DE', 'Elec')
-    demand.columns = split_columns(demand.columns, '.')
-    supim.columns = split_columns(supim.columns, '.')
-    buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
+    gl = []
+    sit = []
+    com = []
+    pro = []
+    pro_com = []
+    tra = []
+    sto = []
+    dem = []
+    sup = []
+    bsp = []
+    ds = []
+
+    for filename in input_files:
+        with pd.ExcelFile(filename) as xls:
+            global_prop = xls.parse('Global').set_index(['Property'])
+            support_timeframe = global_prop.loc['Support timeframe']['value']
+            global_prop = (
+                global_prop.drop(['Support timeframe'])
+                .drop(['description'], axis=1))
+
+            global_prop = pd.concat([global_prop], keys=[support_timeframe],
+                                    names=['support_timeframe'])
+            gl.append(global_prop)
+            site = xls.parse('Site').set_index(['Name'])
+            site = pd.concat([site], keys=[support_timeframe],
+                             names=['support_timeframe'])
+            sit.append(site)
+            commodity = (
+                xls.parse('Commodity')
+                   .set_index(['Site', 'Commodity', 'Type']))
+            commodity = pd.concat([commodity], keys=[support_timeframe],
+                                  names=['support_timeframe'])
+            com.append(commodity)
+            process = xls.parse('Process').set_index(['Site', 'Process'])
+            process = pd.concat([process], keys=[support_timeframe],
+                                names=['support_timeframe'])
+            pro.append(process)
+            process_commodity = (
+                xls.parse('Process-Commodity')
+                   .set_index(['Process', 'Commodity', 'Direction']))
+            process_commodity = pd.concat([process_commodity],
+                                          keys=[support_timeframe],
+                                          names=['support_timeframe'])
+            pro_com.append(process_commodity)
+            transmission = (
+                xls.parse('Transmission')
+                   .set_index(['Site In', 'Site Out',
+                              'Transmission', 'Commodity']))
+            transmission = pd.concat([transmission], keys=[support_timeframe],
+                                     names=['support_timeframe'])
+            tra.append(transmission)
+            storage = (
+                xls.parse('Storage')
+                   .set_index(['Site', 'Storage', 'Commodity']))
+            storage = pd.concat([storage], keys=[support_timeframe],
+                                names=['support_timeframe'])
+            sto.append(storage)
+            demand = xls.parse('Demand').set_index(['t'])
+            demand = pd.concat([demand], keys=[support_timeframe],
+                               names=['support_timeframe'])
+            dem.append(demand)
+            supim = xls.parse('SupIm').set_index(['t'])
+            supim = pd.concat([supim], keys=[support_timeframe],
+                              names=['support_timeframe'])
+            sup.append(supim)
+            buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
+            buy_sell_price = pd.concat([buy_sell_price],
+                                       keys=[support_timeframe],
+                                       names=['support_timeframe'])
+            bsp.append(buy_sell_price)
+            dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
+            dsm = pd.concat([dsm], keys=[support_timeframe],
+                            names=['support_timeframe'])
+            ds.append(dsm)
+
+        # prepare input data
+        # split columns by dots '.', so that 'DE.Elec' becomes the two-level
+        # column index ('DE', 'Elec')
+        demand.columns = split_columns(demand.columns, '.')
+        supim.columns = split_columns(supim.columns, '.')
+        buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
 
     data = {
-        'global_prop': global_prop,
-        'site': site,
-        'commodity': commodity,
-        'process': process,
-        'process_commodity': process_commodity,
-        'transmission': transmission,
-        'storage': storage,
-        'demand': demand,
-        'supim': supim,
-        'buy_sell_price': buy_sell_price,
-        'dsm': dsm
+        'global_prop': pd.concat(gl),
+        'site': pd.concat(sit),
+        'commodity': pd.concat(com),
+        'process': pd.concat(pro),
+        'process_commodity': pd.concat(pro_com),
+        'transmission': pd.concat(tra),
+        'storage': pd.concat(sto),
+        'demand': pd.concat(dem),
+        'supim': pd.concat(sup),
+        'buy_sell_price': pd.concat(bsp),
+        'dsm': pd.concat(ds)
         }
 
     # sort nested indexes to make direct assignments work
@@ -86,7 +150,7 @@ def pyomo_model_prep(data, timesteps):
     #
     #     m.storage.loc[site, storage, commodity][attribute]
     #
-    m.global_prop = data['global_prop'].drop('description', axis=1)
+    m.global_prop = data['global_prop']
     m.site = data['site']
     m.commodity = data['commodity']
     m.process = data['process']
@@ -99,11 +163,21 @@ def pyomo_model_prep(data, timesteps):
     m.timesteps = timesteps
     m.dsm = data['dsm']
 
+    # Create columns of support timeframe values
+    m.commodity['support_timeframe'] = (m.commodity.index.
+                                        get_level_values('support_timeframe'))
+    m.process['support_timeframe'] = (m.process.index.
+                                      get_level_values('support_timeframe'))
+    m.transmission['support_timeframe'] = (m.transmission.index.
+                                           get_level_values
+                                           ('support_timeframe'))
+    m.storage['support_timeframe'] = (m.storage.index.
+                                      get_level_values('support_timeframe'))
+
     # Converting Data frames to dict
-    m.commodity_dict = m.commodity.to_dict()  # Changed
-    m.demand_dict = m.demand.to_dict()  # Changed
-    m.supim_dict = m.supim.to_dict()  # Changed
-    m.dsm_dict = m.dsm.to_dict()  # Changed
+    m.demand_dict = m.demand.to_dict()
+    m.supim_dict = m.supim.to_dict()
+    m.dsm_dict = m.dsm.to_dict()
     m.buy_sell_price_dict = m.buy_sell_price.to_dict()
 
     # process input/output ratios
@@ -117,6 +191,14 @@ def pyomo_model_prep(data, timesteps):
     m.sit_area = m.site['area']
     m.proc_area = m.proc_area[m.proc_area >= 0]
     m.sit_area = m.sit_area[m.sit_area >= 0]
+
+    # installed units for intertemporal planning
+    m.inst_pro = m.process['inst-cap']
+    m.inst_pro = m.inst_pro[m.inst_pro > 0]
+    m.inst_tra = m.transmission['inst-cap']
+    m.inst_tra = m.inst_tra[m.inst_tra > 0]
+    m.inst_sto = m.storage['inst-cap-p']
+    m.inst_sto = m.inst_sto[m.inst_sto > 0]
 
     # input ratios for partial efficiencies
     # only keep those entries whose values are
@@ -134,19 +216,80 @@ def pyomo_model_prep(data, timesteps):
     m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
     m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
 
-    # derive annuity factor from WACC and depreciation duration
-    m.process['annuity-factor'] = annuity_factor(
+    # derive invest factor from WACC, depreciation and discount untility
+    m.process['invcost-factor'] = invcost_factor(
+        m,
         m.process['depreciation'],
-        m.process['wacc'])
-    m.transmission['annuity-factor'] = annuity_factor(
+        m.process['wacc'], m.process['support_timeframe'])
+    m.transmission['invcost-factor'] = invcost_factor(
+        m,
         m.transmission['depreciation'],
-        m.transmission['wacc'])
-    m.storage['annuity-factor'] = annuity_factor(
+        m.transmission['wacc'], m.transmission['support_timeframe'])
+    m.storage['invcost-factor'] = invcost_factor(
+        m,
         m.storage['depreciation'],
-        m.storage['wacc'])
+        m.storage['wacc'], m.storage['support_timeframe'])
+
+    # derive rest value factor from WACC, depreciation and discount untility
+    m.process['rv-factor'] = rv_factor(
+        m,
+        m.process['depreciation'],
+        m.process['wacc'], m.process['support_timeframe'])
+    m.process.loc[(m.process['rv-factor'] < 0) |
+                  (m.process['rv-factor'].isnull()), 'rv-factor'] = 0
+    m.transmission['rv-factor'] = rv_factor(
+        m,
+        m.transmission['depreciation'],
+        m.transmission['wacc'], m.transmission['support_timeframe'])
+    try:
+        m.transmission.loc[(m.transmission['rv-factor'] < 0) |
+                           (m.transmission['rv-factor'].isnull()),
+                           'rv-factor'] = 0
+    except TypeError:
+        pass
+    m.storage['rv-factor'] = rv_factor(
+        m,
+        m.storage['depreciation'],
+        m.storage['wacc'], m.storage['support_timeframe'])
+    try:
+        m.storage.loc[(m.storage['rv-factor'] < 0) |
+                      (m.storage['rv-factor'].isnull()), 'rv-factor'] = 0
+    except TypeError:
+        pass
+
+    # Derive multiplier for all energy based costs
+    m.commodity['stf_dist'] = (m.commodity['support_timeframe'].
+                               apply(stf_dist, m=m))
+    m.commodity['c_helper'] = (m.commodity['support_timeframe'].
+                               apply(cost_helper, m=m))
+    m.commodity['c_helper2'] = m.commodity['stf_dist'].apply(cost_helper2, m=m)
+    m.commodity['cost_factor'] = (m.commodity['c_helper'] *
+                                  m.commodity['c_helper2'])
+
+    m.process['stf_dist'] = m.process['support_timeframe'].apply(stf_dist, m=m)
+    m.process['c_helper'] = (m.process['support_timeframe'].
+                             apply(cost_helper, m=m))
+    m.process['c_helper2'] = m.process['stf_dist'].apply(cost_helper2, m=m)
+    m.process['cost_factor'] = m.process['c_helper'] * m.process['c_helper2']
+
+    m.transmission['stf_dist'] = (m.transmission['support_timeframe'].
+                                  apply(stf_dist, m=m))
+    m.transmission['c_helper'] = (m.transmission['support_timeframe'].
+                                  apply(cost_helper, m=m))
+    m.transmission['c_helper2'] = (m.transmission['stf_dist'].
+                                   apply(cost_helper2, m=m))
+    m.transmission['cost_factor'] = (m.transmission['c_helper'] *
+                                     m.transmission['c_helper2'])
+
+    m.storage['stf_dist'] = m.storage['support_timeframe'].apply(stf_dist, m=m)
+    m.storage['c_helper'] = (m.storage['support_timeframe']
+                             .apply(cost_helper, m=m))
+    m.storage['c_helper2'] = m.storage['stf_dist'].apply(cost_helper2, m=m)
+    m.storage['cost_factor'] = m.storage['c_helper'] * m.storage['c_helper2']
 
     # Converting Data frames to dictionaries
     #
+    m.commodity_dict = m.commodity.to_dict()
     m.process_dict = m.process.to_dict()  # Changed
     m.transmission_dict = m.transmission.to_dict()  # Changed
     m.storage_dict = m.storage.to_dict()  # Changed

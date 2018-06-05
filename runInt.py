@@ -109,12 +109,12 @@ def run_scenario(input_files, timesteps, scenario, result_dir,
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = urbs.read_excel(input_files)
+    data, mode = urbs.read_files(input_files)
     data = scenario(data)
     urbs.validate_input(data)
 
     # create model
-    prob = urbs.create_model(data, timesteps)
+    prob = urbs.create_model(data, mode, timesteps)
     #prob.write('test.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile

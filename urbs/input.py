@@ -163,19 +163,19 @@ def read_files(input_files):
             'dsm': dsm
             }
 
-    modes = tra,sto,dsm,int
+    mode = tra,sto,dsm,int
     
     # sort nested indexes to make direct assignments work
     for key in data:
         if isinstance(data[key].index, pd.core.index.MultiIndex):
             data[key].sort_index(inplace=True)
-    return data,modes
+    return data,mode
 
 
 # preparing the pyomo model
-def pyomo_model_prep(data, modes, timesteps):
+def pyomo_model_prep(data, mode, timesteps):
     m = pyomo.ConcreteModel()
-    tra,sto,dsm,int = modes
+    tra,sto,dsm,int = mode
     # Preparations
     # ============
     # Data import. Syntax to access a value within equation definitions looks
@@ -351,7 +351,7 @@ def pyomo_model_prep(data, modes, timesteps):
     m.process_dict = m.process.to_dict()  # Changed
     m.transmission_dict = m.transmission.to_dict()  # Changed
     m.storage_dict = m.storage.to_dict()  # Changed
-    return m, modes
+    return m
 
 
 def split_columns(columns, sep='.'):

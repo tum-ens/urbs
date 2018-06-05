@@ -5,12 +5,13 @@ from .modelhelper import *
 from .input import *
 
 
-def create_model(data, timesteps=None, dt=1, dual=False):
+def create_model(data, mode, timesteps=None, dt=1, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
         data: a dict of 6 DataFrames with the keys 'commodity', 'process',
             'transmission', 'storage', 'demand' and 'supim'.
+        mode: a bool vector giving the mode in the model should be run
         timesteps: optional list of timesteps, default: demand timeseries
         dt: timestep duration in hours (default: 1)
         dual: set True to add dual variables to model (slower); default: False
@@ -23,7 +24,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     if not timesteps:
         timesteps = data['demand'].index.tolist()
 
-    m = pyomo_model_prep(data, timesteps)  # preparing pyomo model
+    m = pyomo_model_prep(data, mode, timesteps)  # preparing pyomo model
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
@@ -35,18 +36,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     #       domain: set domain for tuple sets, a cartesian set product
     #       values: set values, a list or array of element tuples
 
-    # generate ordered time step sets
-    m.t = pyomo.Set(
-        initialize=m.timesteps,
-        ordered=True,
-        doc='Set of timesteps')
 
-    # modelled (i.e. excluding init time step for storage) time steps
-    m.tm = pyomo.Set(
-        within=m.t,
-        initialize=m.timesteps[1:],
-        ordered=True,
-        doc='Set of modelled timesteps within each stf')
 
     # modelled Demand Side Management time steps (downshift):
     # downshift effective in tt to compensate for upshift in t
@@ -62,25 +52,11 @@ def create_model(data, timesteps=None, dt=1, dual=False):
                     .unique()),
         doc='Set of modeled support timeframes (e.g. years)')
 
-    # site (e.g. north, middle, south...)
-    m.sit = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Site').unique(),
-        doc='Set of sites')
 
-    # commodity (e.g. solar, wind, coal...)
-    m.com = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Commodity').unique(),
-        doc='Set of commodities')
 
-    # commodity type (i.e. SupIm, Demand, Stock, Env)
-    m.com_type = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Type').unique(),
-        doc='Set of commodity types')
 
-    # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
-    m.pro = pyomo.Set(
-        initialize=m.process.index.get_level_values('Process').unique(),
-        doc='Set of conversion processes')
+
+
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
     m.tra = pyomo.Set(
@@ -93,17 +69,13 @@ def create_model(data, timesteps=None, dt=1, dual=False):
         initialize=m.storage.index.get_level_values('Storage').unique(),
         doc='Set of storage technologies')
 
-    # cost_type
-    m.cost_type = pyomo.Set(
-        initialize=['Invest', 'Fixed', 'Variable', 'Fuel', 'Revenue',
-                    'Purchase', 'Environmental'],
-        doc='Set of cost types (hard-coded)')
+
 
     # tuple sets
     m.sit_tuples = pyomo.Set(
         within=m.stf*m.sit,
         initialize=m.site.index,
-        doc='Combinations of support imeframes and sites')
+        doc='Combinations of support timeframes and sites')
     m.com_tuples = pyomo.Set(
         within=m.stf*m.sit*m.com*m.com_type,
         initialize=m.commodity.index,
@@ -318,23 +290,7 @@ def create_model(data, timesteps=None, dt=1, dual=False):
     m.storage['c_helper2'] = m.storage['stf_dist'].apply(cost_helper2, m=m)
     m.storage['cost_factor'] = m.storage['c_helper'] * m.storage['c_helper2']
 
-    # Parameters
 
-    # weight = length of year (hours) / length of simulation (hours)
-    # weight scales costs and emissions from length of simulation to a full
-    # year, making comparisons among cost types (invest is annualized, fixed
-    # costs are annual by default, variable costs are scaled by weight) and
-    # among different simulation durations meaningful.
-    m.weight = pyomo.Param(
-        initialize=float(8760) / (len(m.tm) * dt),
-        doc='Pre-factor for variable costs and emissions for an annual result')
-
-    # dt = spacing between timesteps. Required for storage equation that
-    # converts between energy (storage content, e_sto_con) and power (all other
-    # quantities that start with "e_")
-    m.dt = pyomo.Param(
-        initialize=dt,
-        doc='Time step duration (in hours), default: 1')
 
     # Variables
 

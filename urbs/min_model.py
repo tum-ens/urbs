@@ -1,6 +1,7 @@
 import math
 import pyomo.core as pyomo
 from .modelhelper import*
+from .objective import*
 
 def create_min_model_sets(m):
     # generate ordered time step sets
@@ -27,10 +28,10 @@ def create_min_model_sets(m):
         initialize=m.commodity.index.get_level_values('Type').unique(),
         doc='Set of commodity types')
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
-    if not m.process_exp.empty:
-        m.pro_exp = pyomo.Set(
-            initialize=m.process_exp.index.get_level_values('Process').unique(),
-            doc='Set of conversion processes')
+        # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
+    m.pro = pyomo.Set(
+        initialize=m.process.index.get_level_values('Process').unique(),
+        doc='Set of conversion processes')   
     # cost_type
     m.cost_type = pyomo.Set(
         initialize=['Invest', 'Fixed', 'Variable', 'Fuel', 'Revenue',
@@ -39,29 +40,58 @@ def create_min_model_sets(m):
     
     return m
 
-def create_min_model_tuples(m):
+def create_min_model_tuples(m,dt=1):
     m.com_tuples = pyomo.Set(
         within=m.sit*m.com*m.com_type,
         initialize=m.commodity.index,
         doc='Combinations of defined commodities, e.g. (Mid,Elec,Demand)')
+    # commodity type subsets
+    m.com_supim = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'SupIm'),
+        doc='Commodities that have intermittent (timeseries) input')
+    m.com_stock = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Stock'),
+        doc='Commodities that can be purchased at some site(s)')
+    m.com_sell = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Sell'),
+        doc='Commodities that can be sold')
+    m.com_buy = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Buy'),
+        doc='Commodities that can be purchased')
+    m.com_demand = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Demand'),
+        doc='Commodities that have a demand (implies timeseries)')
+    m.com_env = pyomo.Set(
+        within=m.com,
+        initialize=commodity_subset(m.com_tuples, 'Env'),
+        doc='Commodities that (might) have a maximum creation limit')
+    #process tuples    
     m.pro_tuples = pyomo.Set(
-        within=m.sit*m.pro_exp,
+        within=m.sit*m.pro,
         initialize=m.process.index,
         doc='Combinations of possible processes, e.g. (North,Coal plant)')
     # process expansion tuples
-    m.pro_tuples_exp = pyomo.Set(
-        within=m.sit*m.pro_exp,
-        initialize=m.process.index,
-        doc='Combinations of possible processes, e.g. (North,Coal plant)')  
+    if not m.process_exp.empty:
+        m.pro_tuples_exp = pyomo.Set(
+            within=m.sit*m.pro,
+            initialize=m.process_exp.index,
+            doc='Combinations of possible processes with expansion, e.g. (North,Coal plant)')  
     # process tuples for area rule
-    m.pro_area_tuples_exp = pyomo.Set(
-        within=m.sit*m.pro_exp,
-        initialize=m.proc_area.index,
-        doc='Processes and Sites with area Restriction')
-    m.pro_area_tuples_const = pyomo.Set(
-        within=m.sit*m.pro_const,
-        initialize=m.proc_area.index,
-        doc='Processes and Sites with area Restriction')
+    if not m.proc_area_exp.empty:
+        m.pro_area_tuples_exp = pyomo.Set(
+            within=m.sit*m.pro,
+            initialize=m.proc_area_exp.index,
+            doc='Processes and Sites with area Restriction')
+    if not m.proc_area_const.empty:
+        m.pro_area_tuples_const = pyomo.Set(
+            within=m.sit*m.pro,
+            initialize=m.proc_area_const.index,
+            doc='Processes and Sites with area Restriction')
     # process input/output
     m.pro_input_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
@@ -108,37 +138,8 @@ def create_min_model_tuples(m):
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
     
     return m
-
-def create_com_type_subsets(m):
-    # commodity type subsets
-    m.com_supim = pyomo.Set(
-        within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'SupIm'),
-        doc='Commodities that have intermittent (timeseries) input')
-    m.com_stock = pyomo.Set(
-        within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Stock'),
-        doc='Commodities that can be purchased at some site(s)')
-    m.com_sell = pyomo.Set(
-        within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Sell'),
-        doc='Commodities that can be sold')
-    m.com_buy = pyomo.Set(
-        within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Buy'),
-        doc='Commodities that can be purchased')
-    m.com_demand = pyomo.Set(
-        within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Demand'),
-        doc='Commodities that have a demand (implies timeseries)')
-    m.com_env = pyomo.Set(
-        within=m.com,
-        initialize=commodity_subset(m.com_tuples, 'Env'),
-        doc='Commodities that (might) have a maximum creation limit')
     
-    return m
-    
-def create_params(m):
+def create_params(m,dt=1):
     # Parameters
 
     # weight = length of year (hours) / length of simulation (hours)
@@ -155,7 +156,7 @@ def create_params(m):
     # quantities that start with "e_")
     m.dt = pyomo.Param(
         initialize=dt,
-        doc='Time step duration (in hours), default: 1')>
+        doc='Time step duration (in hours), default: 1')
         
     return m
     
@@ -191,15 +192,15 @@ def create_min_model_vars(m):
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
     m.tau_pro = pyomo.Var(
-        m.t, m.pro_tuples_exp,m.pro_tuples_const,
+        m.t, m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow (MW) through process')
     m.e_pro_in = pyomo.Var(
-        m.tm, m.pro_tuples_exp,m.pro_tuples_const, m.com,
+        m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Power flow of commodity into process (MW) per timestep')
     m.e_pro_out = pyomo.Var(
-        m.tm, m.pro_tuples_exp,m.pro_tuples_const, m.com,
+        m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
         
@@ -308,8 +309,18 @@ def declare_min_model_equations(m):
     m.res_global_co2_limit = pyomo.Constraint(
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
-    
+    # costs
+    m.def_costs = pyomo.Constraint(
+        m.cost_type,
+        rule=def_costs_rule,
+        doc='main cost function by cost type')
+    m.obj = pyomo.Objective(
+        rule=obj_rule,
+        sense=pyomo.minimize,
+        doc='minimize(cost = sum of all cost types)')    
+
     return m
+
 
 # commodity
 
@@ -364,59 +375,6 @@ def res_vertex_rule(m, tm, sit, com, com_type):
                                  tm, m.timesteps[1:],
                                  m.dsm_dict['delay'][(sit, com)]))
     return power_surplus == 0
-
-# demand side management (DSM) constraints
-
-
-# DSMup == DSMdo * efficiency factor n
-def def_dsm_variables_rule(m, tm, sit, com):
-    dsm_down_sum = 0
-    for tt in dsm_time_tuples(tm,
-                              m.timesteps[1:],
-                              m.dsm_dict['delay'][(sit, com)]):
-        dsm_down_sum += m.dsm_down[tm, tt, sit, com]
-    return dsm_down_sum == (m.dsm_up[tm, sit, com] *
-                            m.dsm_dict['eff'][(sit, com)])
-
-
-# DSMup <= Cup (threshold capacity of DSMup)
-def res_dsm_upward_rule(m, tm, sit, com):
-    return m.dsm_up[tm, sit, com] <= int(m.dsm_dict['cap-max-up'][(sit, com)])
-
-
-# DSMdo <= Cdo (threshold capacity of DSMdo)
-def res_dsm_downward_rule(m, tm, sit, com):
-    dsm_down_sum = 0
-    for t in dsm_time_tuples(tm,
-                             m.timesteps[1:],
-                             m.dsm_dict['delay'][(sit, com)]):
-        dsm_down_sum += m.dsm_down[t, tm, sit, com]
-    return dsm_down_sum <= m.dsm_dict['cap-max-do'][(sit, com)]
-
-
-# DSMup + DSMdo <= max(Cup,Cdo)
-def res_dsm_maximum_rule(m, tm, sit, com):
-    dsm_down_sum = 0
-    for t in dsm_time_tuples(tm,
-                             m.timesteps[1:],
-                             m.dsm_dict['delay'][(sit, com)]):
-        dsm_down_sum += m.dsm_down[t, tm, sit, com]
-
-    max_dsm_limit = max(m.dsm_dict['cap-max-up'][(sit, com)],
-                        m.dsm_dict['cap-max-do'][(sit, com)])
-    return m.dsm_up[tm, sit, com] + dsm_down_sum <= max_dsm_limit
-
-
-# DSMup(t, t + recovery time R) <= Cup * delay time L
-def res_dsm_recovery_rule(m, tm, sit, com):
-    dsm_up_sum = 0
-    for t in dsm_recovery(tm,
-                          m.timesteps[1:],
-                          m.dsm_dict['recov'][(sit, com)]):
-        dsm_up_sum += m.dsm_up[t, sit, com]
-    return dsm_up_sum <= (m.dsm_dict['cap-max-up'][(sit, com)] *
-                          m.dsm_dict['delay'][(sit, com)])
-
 
 # stock commodity purchase == commodity consumption, according to
 # commodity_balance of current (time step, site, commodity);
@@ -699,3 +657,5 @@ def res_global_co2_limit_rule(m):
         return (co2_output_sum <= m.global_prop.loc['CO2 limit', 'value'])
     else:
         return pyomo.Constraint.Skip
+
+        

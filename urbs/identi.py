@@ -20,29 +20,29 @@ def identify_mode(input_files):
         result: a bool vector which defines the urbs mode"""
     
     # Set minimal mode as default
-    tra,sto,dsm,int = False
+    tra = sto = dsm = Int = False
     
     # Intertemporal mode 
     if len(input_files)>1:
-        int = True
+        Int = True
     
     for filename in input_files:
         with pd.ExcelFile(filename) as xls:
         # Transmission mode
-        if 'Transmission' in xls.sheet_names and 
-        not xls.parse('Transmission').set_index(['Site In', 'Site Out',
-                               'Transmission', 'Commodity']).empty:
-            tra = True
-        # Storage mode
-        if 'Storage' in xls.sheet_names and
-        not xls.parse('Storage').set_index(['Site', 'Storage', 'Commodity']).empty:
-            sto = True
-        # Demand side management mode
-        if 'DSM' in xls.sheet_names and
-        not xls.parse('DSM').set_index(['Site', 'Commodity']).empty:
-            dsm = True
+            if 'Transmission' in xls.sheet_names \
+                and not xls.parse('Transmission').set_index(['Site In', 'Site Out',
+                                'Transmission', 'Commodity']).empty:
+                tra = True
+            # Storage mode
+            if 'Storage' in xls.sheet_names \
+            and not xls.parse('Storage').set_index(['Site', 'Storage', 'Commodity']).empty:
+                sto = True
+            # Demand side management mode
+            if 'DSM' in xls.sheet_names \
+            and not xls.parse('DSM').set_index(['Site', 'Commodity']).empty:
+                dsm = True
     
-    return tra,sto,dsm,int
+    return tra,sto,dsm,Int
         
     
     

@@ -109,9 +109,9 @@ def run_scenario(input_files, timesteps, scenario, result_dir,
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data, mode = urbs.read_files(input_files)
+    data, mode = urbs.read_input(input_files)
     data = scenario(data)
-    urbs.validate_input(data)
+    #urbs.validate_input(data)
 
     # create model
     prob = urbs.create_model(data, mode, timesteps)
@@ -149,7 +149,7 @@ def run_scenario(input_files, timesteps, scenario, result_dir,
     return prob
 
 if __name__ == '__main__':
-    input_files = urbs.read_intertemporal('Input')
+    input_files = 'Input'
     result_name = 'Intertemporal'
     result_dir = prepare_result_directory(result_name)  # name + time stamp
 

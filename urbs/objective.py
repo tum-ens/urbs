@@ -1,6 +1,6 @@
 import math
 import pyomo.core as pyomo
-from .constraints.modelhelper import*
+from .modelhelper import*
 
 # Objective
 def def_costs_rule(m, mode, cost_type):
@@ -22,7 +22,7 @@ def def_costs_rule(m, mode, cost_type):
 
     """                                   
     
-    tra,sto,dsm,int = mode
+    tra,sto,dsm,Int = mode
     
     if cost_type == 'Invest':
         m.costs[cost_type] == \
@@ -66,7 +66,7 @@ def def_costs_rule(m, mode, cost_type):
             sum(m.cap_pro[p] * m.process_dict['fix-cost'][p]
                 for p in m.pro_tuples_exp) + \
             sum(m.process_dict['inst-cap'][(p)] * m.process_dict['fix-cost'][p]
-                for p in (m.pro_tuples-m.pro_tuples_expansion)) + \
+                for p in (m.pro_tuples-m.pro_tuples_expansion))
         if tra:
                     """sum(m.cap_tra[t] * m.transmission_dict['fix-cost'][t]
                         for t in m.tra_tuples) + \ """

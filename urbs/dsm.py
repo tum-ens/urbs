@@ -1,7 +1,34 @@
+import math
+import pyomo.core as pyomo
+
+# demand side management
+
+def create_dsm_model(m)
 
 
- 
-    # demand side management
+    # modelled Demand Side Management time steps (downshift):
+    # downshift effective in tt to compensate for upshift in t
+    m.tt = pyomo.Set(
+        within=m.t,
+        initialize=m.timesteps[1:],
+        ordered=True,
+        doc='Set of additional DSM time steps')
+    # Tuples
+    m.dsm_site_tuples = pyomo.Set(
+        within=m.sit*m.com,
+        initialize=m.dsm.index,
+        doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
+    m.dsm_down_tuples = pyomo.Set(
+        within=m.tm*m.tm*m.sit*m.com,
+        initialize=[(t, tt, site, commodity)
+                    for (t, tt, site, commodity)
+                    in dsm_down_time_tuples(m.timesteps[1:],
+                                            m.dsm_site_tuples,
+                                            m)],
+        doc='Combinations of possible dsm_down combinations, e.g. '
+            '(5001,5003,Mid,Elec)')
+            
+    # Variables
     m.dsm_up = pyomo.Var(
         m.tm, m.dsm_site_tuples,
         within=pyomo.NonNegativeReals,
@@ -11,16 +38,7 @@
         within=pyomo.NonNegativeReals,
         doc='DSM downshift')
 
-    # modelled Demand Side Management time steps (downshift):
-    # downshift effective in tt to compensate for upshift in t
-    m.tt = pyomo.Set(
-        within=m.t,
-        initialize=m.timesteps[1:],
-        ordered=True,
-        doc='Set of additional DSM time steps')
-
-
-    # demand side management
+    # Constraints
     m.def_dsm_variables = pyomo.Constraint(
         m.tm, m.dsm_site_tuples,
         rule=def_dsm_variables_rule,
@@ -50,8 +68,8 @@
         m.stf,
         rule=res_global_co2_limit_rule,
         doc='total co2 commodity output <= global.prop CO2 limit')
-
-# demand side management (DSM) constraints
+    
+    return m
 
 
 # DSMup == DSMdo * efficiency factor n

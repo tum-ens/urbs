@@ -201,7 +201,7 @@ def pyomo_model_prep(data, mode, timesteps):
     m.buy_sell_price = data['buy_sell_price']
     m.timesteps = timesteps
     
-    #Create expansion and const processes
+    #Create expandable and const processes
     m.process_exp = m.process[m.process['inst-cap'] < m.process['cap-up']]
     m.process_const = m.process[m.process['inst-cap'] >= m.process['cap-up']]
     
@@ -209,18 +209,21 @@ def pyomo_model_prep(data, mode, timesteps):
     # Transmission
     if tra:
         m.transmission = data['transmission']  
+        # expandable and const transmission
         m.transmission_exp = m.transmission[m.transmission['inst-cap'] < m.transmission['cap-up']]
         m.transmission_const = m.transmission[m.transmission['inst-cap'] >= m.transmission['cap-up']]
     # Storage
     if sto:
         m.storage = data['storage']
+        # expandable and const storage
         m.storage_exp_c = m.storage[m.storage['inst-cap-c'] < m.storage['cap-up-c']]
         m.storage_const_c = m.storage[m.storage['inst-cap-c'] >= m.storage['cap-up-c']]
         m.storage_exp_p = m.storage[m.storage['inst-cap-p'] < m.storage['cap-up-p']]
         m.storage_const_p = m.storage[m.storage['inst-cap-p'] >= m.storage['cap-up-p']]
     # DSM
     if dsm:
-        m.dsm = data['dsm'] 
+        m.dsm = data['dsm']
+        
         
     # Create columns of support timeframe values
     if Int:
@@ -246,7 +249,7 @@ def pyomo_model_prep(data, mode, timesteps):
     m.proc_area = m.proc_area[m.proc_area >= 0]
     m.sit_area = m.sit_area[m.sit_area >= 0]
 
-    #create expansion and const process areas
+    #create expandable and const process areas
     m.proc_area_exp = m.proc_area[m.process['inst-cap'] < m.process['cap-up']] 
     m.proc_area_const = m.proc_area[m.process['inst-cap'] >= m.process['cap-up']]
     

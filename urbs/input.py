@@ -170,7 +170,12 @@ def read_input(input_files):
         if dsm_mod:
             data['dsm'] = dsm
 
-    mode = tra_mod,sto_mod,dsm_mod,int_mod
+    mode = {
+        'tra': tra_mod,
+        'sto': sto_mod,
+        'dsm': dsm_mod,
+        'int': int_mod
+        }
     
     # sort nested indexes to make direct assignments work
     for key in data:
@@ -183,7 +188,8 @@ def read_input(input_files):
 # preparing the pyomo model
 def pyomo_model_prep(data, mode, timesteps):
     m = pyomo.ConcreteModel()
-    tra,sto,dsm,Int = mode
+    #create mode
+    m.mode = mode
     # Preparations
     # ============
     # Data import. Syntax to access a value within equation definitions looks
@@ -191,6 +197,7 @@ def pyomo_model_prep(data, mode, timesteps):
     #
     #     m.storage.loc[site, storage, commodity][attribute]
     #
+
     m.global_prop = data['global_prop']
     m.site = data['site']
     m.commodity = data['commodity']
@@ -207,13 +214,13 @@ def pyomo_model_prep(data, mode, timesteps):
     
     # Data for optional modes
     # Transmission
-    if tra:
+    if m.mode['tra']:
         m.transmission = data['transmission']  
         # expandable and const transmission
         m.transmission_exp = m.transmission[m.transmission['inst-cap'] < m.transmission['cap-up']]
         m.transmission_const = m.transmission[m.transmission['inst-cap'] >= m.transmission['cap-up']]
     # Storage
-    if sto:
+    if m.mode['sto']:
         m.storage = data['storage']
         # expandable and const storage
         m.storage_exp_c = m.storage[m.storage['inst-cap-c'] < m.storage['cap-up-c']]
@@ -221,12 +228,12 @@ def pyomo_model_prep(data, mode, timesteps):
         m.storage_exp_p = m.storage[m.storage['inst-cap-p'] < m.storage['cap-up-p']]
         m.storage_const_p = m.storage[m.storage['inst-cap-p'] >= m.storage['cap-up-p']]
     # DSM
-    if dsm:
+    if m.mode['dsm']:
         m.dsm = data['dsm']
         
         
     # Create columns of support timeframe values
-    if Int:
+    if m.mode['int']:
         m.commodity['support_timeframe'] = (m.commodity.index.
                                             get_level_values('support_timeframe'))
         m.process['support_timeframe'] = (m.process.index.
@@ -253,14 +260,14 @@ def pyomo_model_prep(data, mode, timesteps):
     m.proc_area_exp = m.proc_area[m.process['inst-cap'] < m.process['cap-up']] 
     m.proc_area_const = m.proc_area[m.process['inst-cap'] >= m.process['cap-up']]
     
-    if Int:
+    if m.mode['int']:
         # installed units for intertemporal planning
         m.inst_pro = m.process['inst-cap']
         m.inst_pro = m.inst_pro[m.inst_pro > 0]
-        if tra:
+        if m.mode['tra']:
             m.inst_tra = m.transmission['inst-cap']
             m.inst_tra = m.inst_tra[m.inst_tra > 0]
-        if sto:
+        if m.mode['sto']:
             m.inst_sto = m.storage['inst-cap-p']
             m.inst_sto = m.inst_sto[m.inst_sto > 0]
 
@@ -280,23 +287,12 @@ def pyomo_model_prep(data, mode, timesteps):
     m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
     m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
 
-    if Int:
+    if m.mode['int']:
         # derive invest factor from WACC, depreciation and discount untility
         m.process['invcost-factor'] = invcost_factor(
             m,
             m.process['depreciation'],
             m.process['wacc'], m.process['support_timeframe'])
-        if tra:
-            m.transmission['invcost-factor'] = invcost_factor(
-                m,
-                m.transmission['depreciation'],
-                m.transmission['wacc'], m.transmission['support_timeframe'])
-        if sto:
-            m.storage['invcost-factor'] = invcost_factor(
-                m,
-                m.storage['depreciation'],
-                m.storage['wacc'], m.storage['support_timeframe'])
-
         # derive rest value factor from WACC, depreciation and discount untility
         m.process['rv-factor'] = rv_factor(
             m,
@@ -304,30 +300,7 @@ def pyomo_model_prep(data, mode, timesteps):
             m.process['wacc'], m.process['support_timeframe'])
         m.process.loc[(m.process['rv-factor'] < 0) |
                     (m.process['rv-factor'].isnull()), 'rv-factor'] = 0
-        if tra:
-            m.transmission['rv-factor'] = rv_factor(
-                m,
-                m.transmission['depreciation'],
-                m.transmission['wacc'], m.transmission['support_timeframe'])
-            try:
-                m.transmission.loc[(m.transmission['rv-factor'] < 0) |
-                                (m.transmission['rv-factor'].isnull()),
-                                'rv-factor'] = 0
-            except TypeError:
-                pass
-        if sto:
-            m.storage['rv-factor'] = rv_factor(
-                m,
-                m.storage['depreciation'],
-                m.storage['wacc'], m.storage['support_timeframe'])
-            try:
-                m.storage.loc[(m.storage['rv-factor'] < 0) |
-                            (m.storage['rv-factor'].isnull()), 'rv-factor'] = 0
-            except TypeError:
-                pass
-
-        # Derive multiplier for all energy based costs
-    
+        # Derive multiplier for all energy based costs  
         m.commodity['stf_dist'] = (m.commodity['support_timeframe'].
                                    apply(stf_dist, m=m))
         m.commodity['c_helper'] = (m.commodity['support_timeframe'].
@@ -342,7 +315,21 @@ def pyomo_model_prep(data, mode, timesteps):
         m.process['c_helper2'] = m.process['stf_dist'].apply(cost_helper2, m=m)
         m.process['cost_factor'] = m.process['c_helper'] * m.process['c_helper2']
         
-        if tra:
+        if m.mode['tra']:
+            m.transmission['invcost-factor'] = invcost_factor(
+                m,
+                m.transmission['depreciation'],
+                m.transmission['wacc'], m.transmission['support_timeframe'])
+            m.transmission['rv-factor'] = rv_factor(
+                m,
+                m.transmission['depreciation'],
+                m.transmission['wacc'], m.transmission['support_timeframe'])               
+            try:
+                m.transmission.loc[(m.transmission['rv-factor'] < 0) |
+                                (m.transmission['rv-factor'].isnull()),
+                                'rv-factor'] = 0
+            except TypeError:
+                pass
             m.transmission['stf_dist'] = (m.transmission['support_timeframe'].
                                           apply(stf_dist, m=m))
             m.transmission['c_helper'] = (m.transmission['support_timeframe'].
@@ -351,22 +338,37 @@ def pyomo_model_prep(data, mode, timesteps):
                                            apply(cost_helper2, m=m))
             m.transmission['cost_factor'] = (m.transmission['c_helper'] *
                                              m.transmission['c_helper2'])
-        if sto:
+        if m.mode['sto']:
+            m.storage['invcost-factor'] = invcost_factor(
+                m,
+                m.storage['depreciation'],
+                m.storage['wacc'], m.storage['support_timeframe'])
+
+            m.storage['rv-factor'] = rv_factor(
+                m,
+                m.storage['depreciation'],
+                m.storage['wacc'], m.storage['support_timeframe'])
+            try:
+                m.storage.loc[(m.storage['rv-factor'] < 0) |
+                            (m.storage['rv-factor'].isnull()), 'rv-factor'] = 0
+            except TypeError:
+                pass
             m.storage['stf_dist'] = m.storage['support_timeframe'].apply(stf_dist, m=m)
             m.storage['c_helper'] = (m.storage['support_timeframe']
                                      .apply(cost_helper, m=m))
             m.storage['c_helper2'] = m.storage['stf_dist'].apply(cost_helper2, m=m)
             m.storage['cost_factor'] = m.storage['c_helper'] * m.storage['c_helper2']
+
     else:
         # derive annuity factor from WACC and depreciation duration
         m.process['annuity-factor'] = annuity_factor(
             m.process['depreciation'],
             m.process['wacc'])
-        if tra:
+        if m.mode['tra']:
             m.transmission['annuity-factor'] = annuity_factor(
                 m.transmission['depreciation'],
                 m.transmission['wacc'])
-        if sto:
+        if m.mode['sto']:
             m.storage['annuity-factor'] = annuity_factor(
                 m.storage['depreciation'],
                 m.storage['wacc'])
@@ -377,11 +379,11 @@ def pyomo_model_prep(data, mode, timesteps):
     m.demand_dict = m.demand.to_dict()
     m.supim_dict = m.supim.to_dict()
     m.buy_sell_price_dict = m.buy_sell_price.to_dict()
-    if tra:
+    if m.mode['tra']:
         m.transmission_dict = m.transmission.to_dict()
-    if sto:
+    if m.mode['sto']:
         m.storage_dict = m.storage.to_dict() 
-    if dsm:
+    if m.mode['dsm']:
         m.dsm_dict = m.dsm.to_dict()
     return m
 

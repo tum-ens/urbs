@@ -263,7 +263,7 @@ def declare_min_model_equations(m):
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio') 
     m.def_intermittent_supply = pyomo.Constraint(                           
-        m.tm, m.pro_input_tuples-m.pro_input_tuples_const_cap,
+        m.tm, m.pro_input_tuples,
         rule=def_intermittent_supply_rule,
         doc='process output = process capacity * supim timeseries')       
     m.res_process_throughput_by_capacity = pyomo.Constraint(                
@@ -341,7 +341,7 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     #                       amount of commodity com
     # if power_surplus < 0: production/storage/exports consume a net
     #                       amount of the commodity com
-    power_surplus = - commodity_balance(m, tm, sit, com)
+    power_surplus = - commodity_balance( m, tm, sit, com)
 
     # if com is a stock commodity, the commodity source term e_co_stock
     # can supply a possibly negative power_surplus
@@ -368,12 +368,13 @@ def res_vertex_rule(m, tm, sit, com, com_type):
             pass
     # if sit com is a dsm tuple, the power surplus is decreased by the
     # upshifted demand and increased by the downshifted demand.
-    if (sit, com) in m.dsm_site_tuples:
-        power_surplus -= m.dsm_up[tm, sit, com]
-        power_surplus += sum(m.dsm_down[t, tm, sit, com]
-                             for t in dsm_time_tuples(
-                                 tm, m.timesteps[1:],
-                                 m.dsm_dict['delay'][(sit, com)]))
+    if m.mode['dsm']:
+        if (sit, com) in m.dsm_site_tuples:
+            power_surplus -= m.dsm_up[tm, sit, com]
+            power_surplus += sum(m.dsm_down[t, tm, sit, com]
+                                for t in dsm_time_tuples(
+                                    tm, m.timesteps[1:],
+                                    m.dsm_dict['delay'][(sit, com)]))
     return power_surplus == 0
 
 # stock commodity purchase == commodity consumption, according to
@@ -599,22 +600,28 @@ def def_partial_process_output_rule(m, tm, sit, pro, coo):
 
 
 # used process area <= maximal process area
-def res_area_rule(m, sit):                                                     
-    if m.site.loc[sit]['area'] >= 0 and sum(
-                         m.process.loc[(s, p), 'area-per-cap']
-                         for (s, p) in m.pro_area_tuples_exp
-                         if s == sit) +\
-                         sum(m.process.loc[(s, p), 'area-per-cap']
-                         for (s, p) in m.pro_area_tuples_const
-                         if s == sit) > 0:
-        total_area = sum(m.cap_pro[s, p] *
-                        m.process.loc[(s, p), 'area-per-cap']
+def res_area_rule(m, sit):
+    proc_area = 0
+    if not m.proc_area_exp.empty:
+        proc_area += sum(m.process.loc[(s, p), 'area-per-cap']
                         for (s, p) in m.pro_area_tuples_exp
-                        if s == sit) + \
-                     sum(m.process_dict['inst-cap'][(s, p)] *
-                        m.process.loc[(s, p), 'area-per-cap']
-                        for (s, p) in m.pro_area_tuples_const
                         if s == sit)
+    if not m.proc_area_const.empty:
+        proc_area += sum(m.process.loc[(s, p), 'area-per-cap']
+                        for (s, p) in m.pro_area_tuples_const
+                        if s == sit)                                                    
+    if m.site.loc[sit]['area'] >= 0 and  proc_area >0:                        
+        total_area = 0
+        if not m.proc_area_exp.empty:
+            total_area += sum(m.cap_pro[s, p] *
+                                m.process.loc[(s, p), 'area-per-cap']
+                                for (s, p) in m.pro_area_tuples_exp
+                                if s == sit)
+        if not m.proc_area_const.empty:                       
+            total_area += sum(m.process_dict['inst-cap'][(s, p)] *
+                                m.process.loc[(s, p), 'area-per-cap']
+                                for (s, p) in m.pro_area_tuples_const
+                                if s == sit)
         return total_area <= m.site.loc[sit]['area']
     else:
         # Skip constraint, if area is not numeric

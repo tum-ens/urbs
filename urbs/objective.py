@@ -3,7 +3,7 @@ import pyomo.core as pyomo
 from .modelhelper import*
 
 # Objective
-def def_costs_rule(m, mode, cost_type):
+def def_costs_rule(m, cost_type):
     """Calculate total costs by cost type.
 
     Sums up process activity and capacity expansions
@@ -22,21 +22,19 @@ def def_costs_rule(m, mode, cost_type):
 
     """                                   
     
-    tra,sto,dsm,Int = mode
-    
     if cost_type == 'Invest':
         m.costs[cost_type] == \
             sum(m.cap_pro_new[p] *
                 m.process_dict['inv-cost'][p] *
                 m.process_dict['annuity-factor'][p]
 				for p in m.pro_tuples_exp)
-        if tra:
+        if m.mode['tra']:
             """m.costs[cost_type] += \
 				sum(m.cap_tra_new[t] *
 					m.transmission_dict['inv-cost'][t] *
 					m.transmission_dict['annuity-factor'][t]
 					for t in m.tra_tuples_expansion)"""
-        if sto:
+        if m.mode['sto']:
             """m.costs[cost_type] += \
             	sum(m.cap_sto_p_new[s] *
 					m.storage_dict['inv-cost-p'][s] *
@@ -67,10 +65,10 @@ def def_costs_rule(m, mode, cost_type):
                 for p in m.pro_tuples_exp) + \
             sum(m.process_dict['inst-cap'][(p)] * m.process_dict['fix-cost'][p]
                 for p in (m.pro_tuples-m.pro_tuples_expansion))
-        if tra:
+        if m.mode['tra']:
                     """sum(m.cap_tra[t] * m.transmission_dict['fix-cost'][t]
                         for t in m.tra_tuples) + \ """
-        if sto:
+        if m.mode['sto']:
                     """sum(m.cap_sto_p[s] * m.storage_dict['fix-cost-p'][s] +
                         m.cap_sto_c[s] * m.storage_dict['fix-cost-c'][s]
                         for s in m.sto_tuples_p_expansion.intersection(m.sto_tuples_c_expansion)) + \
@@ -91,12 +89,12 @@ def def_costs_rule(m, mode, cost_type):
                 m.process_dict['var-cost'][p]
                 for tm in m.tm
                 for p in m.pro_tuples)
-        if tra:
+        if m.mode['tra']:
                    """ sum(m.e_tra_in[(tm,) + t] * m.dt * m.weight *
                         m.transmission_dict['var-cost'][t]
                         for tm in m.tm
                         for t in m.tra_tuples) """
-        if sto:               
+        if m.mode['sto']:           
                     """sum(m.e_sto_con[(tm,) + s] * m.weight *
                         m.storage_dict['var-cost-c'][s] +
                         m.dt * m.weight *

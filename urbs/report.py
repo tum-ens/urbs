@@ -27,8 +27,10 @@ def report(instance, filename, report_tuples=None):
         # write constants to spreadsheet
         costs.to_frame().to_excel(writer, 'Costs')
         cpro.to_excel(writer, 'Process caps')
-        ctra.to_excel(writer, 'Transmission caps')
-        csto.to_excel(writer, 'Storage caps')
+        if instance.mode['tra']:
+            ctra.to_excel(writer, 'Transmission caps')
+        if instance.mode['sto']:
+            csto.to_excel(writer, 'Storage caps')
 
         # initialize timeseries tableaus
         energies = []

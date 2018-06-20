@@ -1,4 +1,3 @@
-import math
 import pyomo.core as pyomo
 from .modelhelper import*
 
@@ -23,11 +22,11 @@ def def_costs_rule(m, cost_type):
     """                                   
     
     if cost_type == 'Invest':
-        m.costs[cost_type] == \
-            sum(m.cap_pro_new[p] *
-                m.process_dict['inv-cost'][p] *
-                m.process_dict['annuity-factor'][p]
-				for p in m.pro_tuples_exp)
+        return m.costs[cost_type] == \
+					sum(m.cap_pro_new[p] *
+						m.process_dict['inv-cost'][p] *
+						m.process_dict['annuity-factor'][p]
+						for p in m.pro_tuples_exp)
         if m.mode['tra']:
             """m.costs[cost_type] += \
 				sum(m.cap_tra_new[t] *
@@ -57,14 +56,14 @@ def def_costs_rule(m, cost_type):
 					m.storage_dict['inv-cost-c'][s] *
 					m.storage_dict['annuity-factor'][s]
 					for s in m.sto_tuples_c_expansion.difference(m.sto_tuples_p_expansion)) """
-        return m.costs[cost_type]
+        #return m.costs[cost_type]
 
     elif cost_type == 'Fixed':
-        m.costs[cost_type] == \
-            sum(m.cap_pro[p] * m.process_dict['fix-cost'][p]
-                for p in m.pro_tuples_exp) + \
-            sum(m.process_dict['inst-cap'][(p)] * m.process_dict['fix-cost'][p]
-                for p in (m.pro_tuples-m.pro_tuples_expansion))
+        return m.costs[cost_type] == \
+				sum(m.cap_pro[p] * m.process_dict['fix-cost'][p]
+					for p in m.pro_tuples_exp) + \
+				sum(m.process_dict['inst-cap'][(p)] * m.process_dict['fix-cost'][p]
+					for p in (m.pro_tuples-m.pro_tuples_exp))
         if m.mode['tra']:
                     """sum(m.cap_tra[t] * m.transmission_dict['fix-cost'][t]
                         for t in m.tra_tuples) + \ """
@@ -81,14 +80,14 @@ def def_costs_rule(m, cost_type):
                     sum(m.storage_dict['inst-cap-p'][(s)] * m.storage_dict['fix-cost-p'][s] +
                         m.storage_dict['inst-cap-c'][(s)] * m.storage_dict['fix-cost-c'][s]
                         for s in m.sto_tuples-m.sto_tuples_c_expansion-m.sto_tuples_p_expansion) """
-        return m.costs[cost_type]
+        #return m.costs[cost_type]
 
     elif cost_type == 'Variable':
-        m.costs[cost_type] == \
-            sum(m.tau_pro[(tm,) + p] * m.dt * m.weight *
-                m.process_dict['var-cost'][p]
-                for tm in m.tm
-                for p in m.pro_tuples)
+        return m.costs[cost_type] == \
+					sum(m.tau_pro[(tm,) + p] * m.dt * m.weight *
+						m.process_dict['var-cost'][p]
+						for tm in m.tm
+						for p in m.pro_tuples)
         if m.mode['tra']:
                    """ sum(m.e_tra_in[(tm,) + t] * m.dt * m.weight *
                         m.transmission_dict['var-cost'][t]
@@ -103,7 +102,7 @@ def def_costs_rule(m, cost_type):
                         for tm in m.tm
                         for s in m.sto_tuples) """
 
-        return m.costs[cost_type]
+        #return m.costs[cost_type]
 
     elif cost_type == 'Fuel':
         return m.costs[cost_type] == sum(

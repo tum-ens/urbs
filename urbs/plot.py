@@ -56,7 +56,7 @@ def sort_plot_elements(elements):
     return elements_sorted
 
 
-def plot(prob, com, sit, dt, timesteps=None,
+def plot(prob, com, sit, dt, timesteps, timesteps_plot,
          power_name='Power', energy_name='Energy',
          power_unit='MW', energy_unit='MWh', time_unit='h',
          figure_size=(16, 12)):
@@ -70,7 +70,8 @@ def plot(prob, com, sit, dt, timesteps=None,
         com: commodity name to plot
         sit: site name to plot
         dt: length of each time step (unit: hours)
-        timesteps: optional list of timesteps to plot; default: prob.tm
+        timesteps: modelled timesteps
+        timesteps_plot: timesteps to be plotted
 
         power_name: optional string for 'power' label; default: 'Power'
         power_unit: optional string for unit; default: 'MW'
@@ -91,6 +92,7 @@ def plot(prob, com, sit, dt, timesteps=None,
 
     # convert timesteps to hour series for the plots
     hoursteps = timesteps * dt[0]
+    hoursteps_plot = timesteps_plot * dt[0]
 
     if is_string(sit):
         # wrap single site in 1-element list for consistent behaviour
@@ -161,11 +163,10 @@ def plot(prob, com, sit, dt, timesteps=None,
     # PLOT CONSUMED
 
     # stack plot for consumed commodities (divided by dt for power)
-    sp00 = ax0.stackplot(hoursteps,
+    sp00 = ax0.stackplot(hoursteps[1:],
                          -consumed.as_matrix().T/dt[0],
                          labels=tuple(consumed.columns),
                          linewidth=0.15)
-
     # color
     for k, commodity in enumerate(consumed.columns):
         commodity_color = to_color(commodity)
@@ -176,7 +177,7 @@ def plot(prob, com, sit, dt, timesteps=None,
     # PLOT CREATED
 
     # stack plot for created commodities (divided by dt for power)
-    sp0 = ax0.stackplot(hoursteps,
+    sp0 = ax0.stackplot(hoursteps[1:],
                         created.as_matrix().T/dt[0],
                         labels=tuple(created.columns),
                         linewidth=0.15)
@@ -228,7 +229,7 @@ def plot(prob, com, sit, dt, timesteps=None,
              color=to_color('Unshifted'))
 
     # line plot for demand (shifted) commodities (divided by dt for power)
-    ax0.plot(hoursteps, demand.values/dt[0], linewidth=1.0,
+    ax0.plot(hoursteps[1:], demand.values/dt[0], linewidth=1.0,
              color=to_color('Shifted'))
 
     # PLOT STORAGE
@@ -270,25 +271,25 @@ def plot(prob, com, sit, dt, timesteps=None,
         ax2.set_ylabel('{} ({})'.format(power_name, power_unit))
 
     # make xtick distance duration-dependent
-    if len(timesteps) > 26 * 168 / dt[0]:          # time horizon > half a year
+    if len(timesteps_plot) > 26 * 168 / dt[0]:    # time horizon > half a year
         steps_between_ticks = int(168 * 4 / dt[0])  # tick every four weeks
-    elif len(timesteps) > 3 * 168 / dt[0]:         # time horizon > three weeks
-        steps_between_ticks = int(168 / dt[0])     # tick every week
-    elif len(timesteps) > 2 * 24 / dt[0]:          # time horizon > two days
-        steps_between_ticks = int(24 / dt[0])      # tick every day
-    elif len(timesteps) > 24 / dt[0]:              # time horizon > a day
-        steps_between_ticks = int(6 / dt[0])       # tick every six hours
-    else:                                          # time horizon <= a day
-        steps_between_ticks = int(3 / dt[0])       # tick every three hours
+    elif len(timesteps_plot) > 3 * 168 / dt[0]:   # time horizon > three weeks
+        steps_between_ticks = int(168 / dt[0])      # tick every week
+    elif len(timesteps_plot) > 2 * 24 / dt[0]:    # time horizon > two days
+        steps_between_ticks = int(24 / dt[0])       # tick every day
+    elif len(timesteps_plot) > 24 / dt[0]:        # time horizon > a day
+        steps_between_ticks = int(6 / dt[0])        # tick every six hours
+    else:                                         # time horizon <= a day
+        steps_between_ticks = int(3 / dt[0])        # tick every three hours
 
-    hoursteps_ = hoursteps[(steps_between_ticks-1):]
-    hoursteps_ = hoursteps_[::steps_between_ticks]   # create hour timeseries
-    xticks = np.insert(hoursteps_, 0, hoursteps[0])  # add first timestep
+    hoursteps_plot_ = hoursteps_plot[(steps_between_ticks-1):]
+    hoursteps_plot_ = hoursteps_plot_[::steps_between_ticks]  # take whole h's
+    xticks = np.insert(hoursteps_plot_, 0, hoursteps_plot[0])  # add 1st t.step
 
     # set limits and ticks for all axes
     for ax in all_axes:
         ax.set_frame_on(False)
-        ax.set_xlim(hoursteps[0], hoursteps[-1])
+        ax.set_xlim(hoursteps_plot[0], hoursteps_plot[-1])
         ax.set_xticks(xticks)
         ax.xaxis.grid(True, 'major', color=to_color('Grid'),
                       linestyle='-')
@@ -312,7 +313,7 @@ def plot(prob, com, sit, dt, timesteps=None,
     return fig
 
 
-def result_figures(prob, figure_basename, plot_title_prefix=None,
+def result_figures(prob, figure_basename, timesteps, plot_title_prefix=None,
                    plot_tuples=None, plot_sites_name={},
                    periods=None, extensions=None, **kwds):
     """Create plots for multiple periods and sites and save them to files.
@@ -360,9 +361,9 @@ def result_figures(prob, figure_basename, plot_title_prefix=None,
         except:
             plot_sites_name[sit] = str(sit)
 
-        for period, timesteps in periods.items():
+        for period, periodrange in periods.items():
             # do the plotting
-            fig = plot(prob, com, help_sit, dt, timesteps=timesteps, **kwds)
+            fig = plot(prob, com, help_sit, dt, timesteps, periodrange, **kwds)
 
             # change the figure title
             ax0 = fig.get_axes()[0]

@@ -143,6 +143,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     urbs.result_figures(
         prob,
         os.path.join(result_dir, '{}'.format(sce)),
+        timesteps,
         plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,
         plot_sites_name=plot_sites_name,

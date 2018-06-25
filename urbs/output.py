@@ -74,7 +74,7 @@ def get_constants(instance):
     return costs, cpro, ctra, csto
 
 
-def get_timeseries(instance, stf, com, sites, timesteps=None):
+def get_timeseries(instance, com, sites, stf=None, timesteps=None):
     """Return DataFrames of all timeseries referring to given commodity
 
     Usage:
@@ -186,6 +186,12 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             # to be discussed: increase demand by internal transmission losses
             internal_transmission_losses = internal_export - internal_import
             demand = demand + internal_transmission_losses
+
+        else:
+            imported = pd.DataFrame(index=timesteps)
+            exported = pd.DataFrame(index=timesteps)
+            internal_export = pd.Series(0, index=timesteps)
+            internal_import = pd.Series(0, index=timesteps)
             
         # STORAGE
         if instance.mode['sto']:
@@ -201,7 +207,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 stored = pd.DataFrame(0, index=timesteps,
                                       columns=['Level', 'Stored', 'Retrieved'])
         else:
-            stored = pd.DataFrame()
+            stored = pd.DataFrame(0, index=timesteps,
+                                      columns=['Level', 'Stored', 'Retrieved'])
     
         # DEMAND SIDE MANAGEMENT (load shifting)
         if instance.mode['dsm']:
@@ -326,7 +333,9 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         else:
             imported = pd.DataFrame(index=timesteps)
             exported = pd.DataFrame(index=timesteps)
-    
+            internal_export = pd.Series(0, index=timesteps)
+            internal_import = pd.Series(0, index=timesteps)
+
         # STORAGE
         if instance.mode['sto']:
             # group storage energies by commodity
@@ -341,7 +350,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 stored = pd.DataFrame(0, index=timesteps,
                                       columns=['Level', 'Stored', 'Retrieved'])
         else:
-            stored = pd.DataFrame()
+            stored = pd.DataFrame(0, index=timesteps,
+                                      columns=['Level', 'Stored', 'Retrieved'])
             
         # DEMAND SIDE MANAGEMENT (load shifting)
         if instance.mode['dsm']:

@@ -37,33 +37,62 @@ def report(instance, filename, report_tuples=None):
         timeseries = {}
 
         # collect timeseries data
-        for stf, sit, com in report_tuples:
-            (created, consumed, stored, imported, exported,
-             dsm) = get_timeseries(instance, stf, com, sit)
+        if instance.mode['int']:    
+            for stf, sit, com in report_tuples:
+                (created, consumed, stored, imported, exported,
+                dsm) = get_timeseries(instance, com, sit, stf)
 
-            overprod = pd.DataFrame(
-                columns=['Overproduction'],
-                data=created.sum(axis=1) - consumed.sum(axis=1) +
-                imported.sum(axis=1) - exported.sum(axis=1) +
-                stored['Retrieved'] - stored['Stored'])
+                overprod = pd.DataFrame(
+                    columns=['Overproduction'],
+                    data=created.sum(axis=1) - consumed.sum(axis=1) +
+                    imported.sum(axis=1) - exported.sum(axis=1) +
+                    stored['Retrieved'] - stored['Stored'])
 
-            tableau = pd.concat(
-                [created, consumed, stored, imported, exported, overprod,
-                 dsm],
-                axis=1,
-                keys=['Created', 'Consumed', 'Storage', 'Import from',
-                      'Export to', 'Balance', 'DSM'])
-            timeseries[(stf, sit, com)] = tableau.copy()
+                tableau = pd.concat(
+                    [created, consumed, stored, imported, exported, overprod,
+                    dsm],
+                    axis=1,
+                    keys=['Created', 'Consumed', 'Storage', 'Import from',
+                        'Export to', 'Balance', 'DSM'])
+                timeseries[(stf, sit, com)] = tableau.copy()
 
-            # timeseries sums
-            sums = pd.concat([created.sum(), consumed.sum(),
-                              stored.sum().drop('Level'),
-                              imported.sum(), exported.sum(), overprod.sum(),
-                              dsm.sum()],
-                             axis=0,
-                             keys=['Created', 'Consumed', 'Storage', 'Import',
-                                   'Export', 'Balance', 'DSM'])
-            energies.append(sums.to_frame("{}.{}".format(stf, sit, com)))
+                # timeseries sums
+                sums = pd.concat([created.sum(), consumed.sum(),
+                                stored.sum().drop('Level'),
+                                imported.sum(), exported.sum(), overprod.sum(),
+                                dsm.sum()],
+                                axis=0,
+                                keys=['Created', 'Consumed', 'Storage', 'Import',
+                                    'Export', 'Balance', 'DSM'])
+                energies.append(sums.to_frame("{}.{}".format(stf, sit, com)))
+        else:
+            for sit, com in report_tuples:
+                (created, consumed, stored, imported, exported,
+                dsm) = get_timeseries(instance, com, sit)
+
+                overprod = pd.DataFrame(
+                    columns=['Overproduction'],
+                    data=created.sum(axis=1) - consumed.sum(axis=1) +
+                    imported.sum(axis=1) - exported.sum(axis=1) +
+                    stored['Retrieved'] - stored['Stored'])
+
+                tableau = pd.concat(
+                    [created, consumed, stored, imported, exported, overprod,
+                    dsm],
+                    axis=1,
+                    keys=['Created', 'Consumed', 'Storage', 'Import from',
+                        'Export to', 'Balance', 'DSM'])
+                timeseries[(sit, com)] = tableau.copy()
+
+                # timeseries sums
+                sums = pd.concat([created.sum(), consumed.sum(),
+                                stored.sum().drop('Level'),
+                                imported.sum(), exported.sum(), overprod.sum(),
+                                dsm.sum()],
+                                axis=0,
+                                keys=['Created', 'Consumed', 'Storage', 'Import',
+                                    'Export', 'Balance', 'DSM'])
+                energies.append(sums.to_frame("{}.{}".format(sit, com)))
 
         # write timeseries data (if any)
         if timeseries:
@@ -71,8 +100,16 @@ def report(instance, filename, report_tuples=None):
             energy = pd.concat(energies, axis=1).fillna(0)
             energy.to_excel(writer, 'Commodity sums')
 
-            # write timeseries to individual sheets
-            for stf, sit, com in report_tuples:
-                # sheet names cannot be longer than 31 characters...
-                sheet_name = "{}.{}.{} timeseries".format(stf, sit, com)[:31]
-                timeseries[(stf, sit, com)].to_excel(writer, sheet_name)
+            if instance.mode['int']:               
+                # write timeseries to individual sheets
+                for stf, sit, com in report_tuples:
+                    # sheet names cannot be longer than 31 characters...
+                    sheet_name = "{}.{}.{} timeseries".format(stf, sit, com)[:31]
+                    timeseries[(stf, sit, com)].to_excel(writer, sheet_name)
+            else:
+                # write timeseries to individual sheets
+                for sit, com in report_tuples:
+                    # sheet names cannot be longer than 31 characters...
+                    sheet_name = "{}.{} timeseries".format(sit, com)[:31]
+                    timeseries[(sit, com)].to_excel(
+                        writer, sheet_name)

@@ -80,7 +80,12 @@ def create_min_model_tuples(m,dt=1):
         m.pro_tuples_exp = pyomo.Set(
             within=m.sit*m.pro,
             initialize=m.process_exp.index,
-            doc='Combinations of possible processes with expansion, e.g. (North,Coal plant)')  
+            doc='Combinations of possible processes with expansion, e.g. (North,Coal plant)')
+    if not m.process_const.empty:
+        m.pro_tuples_const = pyomo.Set(
+            within=m.sit*m.pro,
+            initialize=m.process_const.index,
+            doc='Combinations of possible processes without expansion, e.g. (North,Coal plant)') 
     # process tuples for area rule
     if not m.proc_area_exp.empty:
         m.pro_area_tuples_exp = pyomo.Set(
@@ -266,10 +271,14 @@ def declare_min_model_equations(m):
         m.tm, m.pro_input_tuples,
         rule=def_intermittent_supply_rule,
         doc='process output = process capacity * supim timeseries')       
-    m.res_process_throughput_by_capacity = pyomo.Constraint(                
-        m.tm, m.pro_tuples,
-        rule=res_process_throughput_by_capacity_rule,
-        doc='process throughput <= total process capacity')       
+    m.res_exp_process_throughput_by_capacity = pyomo.Constraint(                
+        m.tm, m.pro_tuples_exp,
+        rule=res_exp_process_throughput_by_capacity_rule,
+        doc='process throughput <= total process capacity')   
+    m.res_const_process_throughput_by_capacity = pyomo.Constraint(                
+        m.tm, m.pro_tuples_const,
+        rule=res_const_process_throughput_by_capacity_rule,
+        doc='process throughput <= total process capacity')        
     m.res_process_maxgrad_lower = pyomo.Constraint(                                     
         m.tm, m.pro_maxgrad_tuples,
         rule=res_process_maxgrad_lower_rule,
@@ -516,11 +525,10 @@ def def_intermittent_supply_rule(m, tm, sit, pro, coin):
 
 
 # process throughput <= process capacity                                    
-def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
-    if (sit,pro) in m.pro_tuples_exp:               
-        return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
-    else:
-        return (m.tau_pro[tm, sit, pro] <= m.process_dict['inst-cap'][(sit, pro)])   
+def res_exp_process_throughput_by_capacity_rule(m, tm, sit, pro):
+    return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
+def res_const_process_throughput_by_capacity_rule(m, tm, sit, pro):
+    return (m.tau_pro[tm, sit, pro] <= m.process_dict['inst-cap'][(sit, pro)])   
 
 
 def res_process_maxgrad_lower_rule(m, t, sit, pro): 
@@ -639,9 +647,9 @@ def res_sell_buy_symmetry_rule(m, sit_in, pro_in, coin):
         else:
             if (sit_in, pro_in) in m.pro_tuples_exp:
                 return (m.cap_pro[sit_in, pro_in] == m.cap_pro[sit_in, sell_pro])
-            else:
-                return (m.process_dict['inst-cap'][(sit_in, pro_in)] 
-                        == m.process_dict['inst-cap'][(sit_in, sell_pro)])
+            #else:
+            #    return (m.process_dict['inst-cap'][(sit_in, pro_in)] 
+            #            == m.process_dict['inst-cap'][(sit_in, sell_pro)])
     else:
         return pyomo.Constraint.Skip
 

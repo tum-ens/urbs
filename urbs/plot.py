@@ -56,7 +56,7 @@ def sort_plot_elements(elements):
     return elements_sorted
 
 
-def plot(prob, stf, com, sit, timesteps=None,
+def plot(prob, com, sit, stf, timesteps=None, 
          power_name='Power', energy_name='Energy',
          power_unit='MW', energy_unit='MWh', time_unit='h',
          figure_size=(16, 12)):
@@ -92,8 +92,12 @@ def plot(prob, stf, com, sit, timesteps=None,
         # wrap single site in 1-element list for consistent behaviour
         sit = [sit]
 
-    (created, consumed, stored, imported, exported,
-     dsm) = get_timeseries(prob, stf, com, sit, timesteps)
+    if stf is None:
+       (created, consumed, stored, imported, exported,
+        dsm) = get_timeseries(prob, com, sit,None,timesteps)
+    else: 
+        (created, consumed, stored, imported, exported,
+        dsm) = get_timeseries(prob, com, sit, stf, timesteps)
 
     costs, cpro, ctra, csto = get_constants(prob)
 
@@ -115,14 +119,19 @@ def plot(prob, stf, com, sit, timesteps=None,
     demand = consumed.pop('Demand')
     original = dsm.pop('Unshifted')
     deltademand = dsm.pop('Delta')
-    try:
-        # detect whether DSM could be used in this plot
-        # if so, show DSM subplot (even if delta == 0 for the whole time)
-        df_dsm = get_input(prob, 'dsm')
-        plot_dsm = df_dsm.loc[(sit, com),
-                              ['cap-max-do', 'cap-max-up']].sum().sum() > 0
-    except (KeyError, TypeError):
+    if prob.mode['dsm']:
+        try:
+            # detect whether DSM could be used in this plot
+            # if so, show DSM subplot (even if delta == 0 for the whole time)
+            df_dsm = get_input(prob, 'dsm')
+            plot_dsm = df_dsm.loc[(sit, com),
+                                ['cap-max-do', 'cap-max-up']].sum().sum() > 0
+        except (KeyError, TypeError):
+            plot_dsm = False
+    else:
         plot_dsm = False
+
+
 
     # remove all columns from created which are all-zeros in both created and
     # consumed (except the last one, to prevent a completely empty frame)
@@ -323,31 +332,59 @@ def result_figures(prob, figure_basename, plot_title_prefix=None,
     if extensions is None:
         extensions = ['png', 'pdf']
 
-    # create timeseries plot for each demand (site, commodity) timeseries
-    for stf, sit, com in plot_tuples:
-        # wrap single site name in 1-element list for consistent behaviour
-        if is_string(sit):
-            sit = [sit]
+    if prob.mode['int']:
+        # create timeseries plot for each demand (site, commodity) timeseries
+        for stf, sit, com in plot_tuples:
+            # wrap single site name in 1-element list for consistent behaviour
+            if is_string(sit):
+                sit = [sit]
 
-        for period, timesteps in periods.items():
-            # do the plotting
-            fig = plot(prob, stf, com, sit, timesteps=timesteps, **kwds)
+            for period, timesteps in periods.items():
+                # do the plotting
+                fig = plot(prob, com, sit, stf, timesteps=timesteps, **kwds)
 
-            # change the figure title
-            ax0 = fig.get_axes()[0]
-            # if no custom title prefix is specified, use the figure basenmae
-            if not plot_title_prefix:
-                plot_title_prefix = os.path.basename(figure_basename)
-            new_figure_title = ax0.get_title().replace(
-                'Commodity balance of ', '{}: '.format(plot_title_prefix))
-            ax0.set_title(new_figure_title)
+                # change the figure title
+                ax0 = fig.get_axes()[0]
+                # if no custom title prefix is specified, use the figure basenmae
+                if not plot_title_prefix:
+                    plot_title_prefix = os.path.basename(figure_basename)
+                new_figure_title = ax0.get_title().replace(
+                    'Commodity balance of ', '{}: '.format(plot_title_prefix))
+                ax0.set_title(new_figure_title)
 
-            # save plot to files
-            for ext in extensions:
-                fig_filename = '{}-{}-{}-{}-{}.{}'.format(
-                    figure_basename, stf, com, '-'.join(sit), period, ext)
-                fig.savefig(fig_filename, bbox_inches='tight')
-            plt.close(fig)
+                # save plot to files
+                for ext in extensions:
+                    fig_filename = '{}-{}-{}-{}-{}.{}'.format(
+                        figure_basename, stf, com, '-'.join(sit), period, ext)
+                    fig.savefig(fig_filename, bbox_inches='tight')
+                plt.close(fig)
+    else:
+        # create timeseries plot for each demand (site, commodity) timeseries
+        for sit, com in plot_tuples:
+            # wrap single site name in 1-element list for consistent behaviour
+            if is_string(sit):
+                sit = [sit]
+
+            for period, timesteps in periods.items():
+                # do the plotting
+                fig = plot(prob, com, sit,stf=None, timesteps=timesteps, **kwds)
+
+                # change the figure title
+                ax0 = fig.get_axes()[0]
+                # if no custom title prefix is specified, use the figure_basename
+                if not plot_title_prefix:
+                    plot_title_prefix = os.path.basename(figure_basename)
+
+                new_figure_title = ax0.get_title().replace(
+                    'Commodity balance of ', '{}: '.format(plot_title_prefix))
+                ax0.set_title(new_figure_title)
+
+                # save plot to files
+                for ext in extensions:
+                    fig_filename = '{}-{}-{}-{}.{}'.format(
+                        figure_basename, com, ''.join(sit), period, ext)
+                    fig.savefig(fig_filename, bbox_inches='tight')
+                plt.close(fig)
 
 
 def to_color(obj=None):

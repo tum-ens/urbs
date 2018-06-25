@@ -107,15 +107,22 @@ def run_scenario(input_files, timesteps, scenario, result_dir,
         the urbs model instance
     """
 
+    #start time for measuring runtime
+    scenario_start = datetime.now()
+
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data, mode = urbs.read_input(input_files)
     data = scenario(data)
     #urbs.validate_input(data)
 
+    print("Time to read input file: ", datetime.now() - scenario_start)
+
     # create model
     prob = urbs.create_model(data, mode, timesteps)
     #prob.write('test.lp', io_options={'symbolic_solver_labels':True})
+
+    print("Time to create model: ", datetime.now() - scenario_start)
 
     # refresh time stamp string and create filename for logfile
     now = prob.created
@@ -164,24 +171,15 @@ if __name__ == '__main__':
 
     # plotting commodities/sites
     plot_tuples = [
-        (2020, 'North', 'Elec'),
-        (2020, 'Mid', 'Elec'),
-        (2020, 'South', 'Elec'),
-        (2020, ['North', 'Mid', 'South'], 'Elec'),
-        (2030, ['North', 'Mid', 'South'], 'Elec'),
-        (2040, ['North', 'Mid', 'South'], 'Elec'),
-        (2050, ['North', 'Mid', 'South'], 'Elec')]
+        ('North', 'Elec'),
+        ('Mid', 'Elec'),
+        ('South', 'Elec'),
+        (['North', 'Mid', 'South'], 'Elec')]
 
     # detailed reporting commodity/sites
     report_tuples = [
-        (2020, 'North', 'Elec'), (2020, 'Mid', 'Elec'), (2020, 'South', 'Elec'),
-        (2020, 'North', 'CO2'), (2020, 'Mid', 'CO2'), (2020, 'South', 'CO2'),
-        (2030, 'North', 'Elec'), (2030, 'Mid', 'Elec'), (2030, 'South', 'Elec'),
-        (2030, 'North', 'CO2'), (2030, 'Mid', 'CO2'), (2030, 'South', 'CO2'),
-        (2040, 'North', 'Elec'), (2040, 'Mid', 'Elec'), (2040, 'South', 'Elec'),
-        (2040, 'North', 'CO2'), (2040, 'Mid', 'CO2'), (2040, 'South', 'CO2'),
-        (2050, 'North', 'Elec'), (2050, 'Mid', 'Elec'), (2050, 'South', 'Elec'),
-        (2050, 'North', 'CO2'), (2050, 'Mid', 'CO2'), (2050, 'South', 'CO2')]
+        ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
+        ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
 
     # plotting timesteps
     plot_periods = {

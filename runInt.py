@@ -120,7 +120,7 @@ def run_scenario(input_files, timesteps, scenario, result_dir,
 
     # create model
     prob = urbs.create_model(data, mode, timesteps)
-    #prob.write('test.lp', io_options={'symbolic_solver_labels':True})
+    prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     print("Time to create model: ", datetime.now() - scenario_start)
 
@@ -129,7 +129,7 @@ def run_scenario(input_files, timesteps, scenario, result_dir,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('gurobi')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 

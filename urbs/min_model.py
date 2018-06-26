@@ -337,7 +337,7 @@ def declare_min_model_equations(m):
 # contains implicit constraints for process activity, import/export and
 # storage activity (calculated by function commodity_balance);
 # contains implicit constraint for stock commodity source term
-def res_vertex_rule(m, tm, sit, com, com_type):
+def res_vertex_rule(m, tm, sit, com, com_type,stf=None):
     # environmental or supim commodities don't have this constraint (yet)
     if com in m.com_env:
         return pyomo.Constraint.Skip
@@ -350,29 +350,42 @@ def res_vertex_rule(m, tm, sit, com, com_type):
     #                       amount of commodity com
     # if power_surplus < 0: production/storage/exports consume a net
     #                       amount of the commodity com
-    power_surplus = - commodity_balance( m, tm, sit, com)
+    power_surplus = - commodity_balance( m, tm, sit, com, stf)
 
-    # if com is a stock commodity, the commodity source term e_co_stock
-    # can supply a possibly negative power_surplus
-    if com in m.com_stock:
-        power_surplus += m.e_co_stock[tm, sit, com, com_type]
+    if stf is None:
+        # if com is a stock commodity, the commodity source term e_co_stock
+        # can supply a possibly negative power_surplus
+        if com in m.com_stock:
+            power_surplus += m.e_co_stock[tm, sit, com, com_type]
+    
+        # if com is a sell commodity, the commodity source term e_co_sell
+        # can supply a possibly positive power_surplus
+        if com in m.com_sell:
+            power_surplus -= m.e_co_sell[tm, sit, com, com_type]
+    
+        # if com is a buy commodity, the commodity source term e_co_buy
+        # can supply a possibly negative power_surplus
+        if com in m.com_buy:
+            power_surplus += m.e_co_buy[tm, sit, com, com_type]
+    else:
+        if com in m.com_stock:
+            power_surplus += m.e_co_stock[tm, stf, sit, com, com_type]
+    
+        if com in m.com_sell:
+            power_surplus -= m.e_co_sell[tm, stf, sit, com, com_type]
 
-    # if com is a sell commodity, the commodity source term e_co_sell
-    # can supply a possibly positive power_surplus
-    if com in m.com_sell:
-        power_surplus -= m.e_co_sell[tm, sit, com, com_type]
-
-    # if com is a buy commodity, the commodity source term e_co_buy
-    # can supply a possibly negative power_surplus
-    if com in m.com_buy:
-        power_surplus += m.e_co_buy[tm, sit, com, com_type]
+        if com in m.com_buy:
+            power_surplus += m.e_co_buy[tm, stf, sit, com, com_type]
 
     # if com is a demand commodity, the power_surplus is reduced by the
     # demand value; no scaling by m.dt or m.weight is needed here, as this
     # constraint is about power (MW), not energy (MWh)
     if com in m.com_demand:
         try:
-            power_surplus -= m.demand_dict[(sit, com)][tm]
+            #if stf is None:
+                #power_surplus -= m.demand_dict[(sit, com)][tm]
+            #else:
+            power_surplus -= m.demand_dict[(sit, com)][(stf, tm)]
         except KeyError:
             pass
     # if sit com is a dsm tuple, the power surplus is decreased by the

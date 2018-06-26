@@ -1,0 +1,67 @@
+\ Model obj_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ c_e_res_vertex(3565_South_Elec_Demand)_:
+   - e_pro_in(3565_South_Feed_in_Elec)
+   + e_pro_out(3565_South_Biomass_plant_Elec)
+   + e_pro_out(3565_South_Coal_plant_Elec)
+   + e_pro_out(3565_South_Gas_plant_Elec)
+   + e_pro_out(3565_South_Hydro_plant_Elec)
+   + e_pro_out(3565_South_Photovoltaics_Elec)
+   + e_pro_out(3565_South_Purchase_Elec)
+   + e_pro_out(3565_South_Slack_powerplant_Elec)
+   + e_pro_out(3565_South_Wind_park_Elec) = 0
+ c_e_def_process_input(3565_South_Feed_in_Elec)_:
+   e_pro_in(3565_South_Feed_in_Elec) - tau_pro(3565_South_Feed_in) = 0
+ c_e_def_process_input(3565_South_Photovoltaics_Solar)_:
+   e_pro_in(3565_South_Photovoltaics_Solar)
+   - tau_pro(3565_South_Photovoltaics) = 0
+ c_e_def_process_output(3565_South_Biomass_plant_Elec)_:
+   e_pro_out(3565_South_Biomass_plant_Elec)
+   - 0.35 tau_pro(3565_South_Biomass_plant) = 0
+ c_e_def_process_output(3565_South_Coal_plant_Elec)_:
+   e_pro_out(3565_South_Coal_plant_Elec)
+   - 0.4 tau_pro(3565_South_Coal_plant) = 0
+ c_e_def_process_output(3565_South_Gas_plant_Elec)_:
+   e_pro_out(3565_South_Gas_plant_Elec) - 0.6 tau_pro(3565_South_Gas_plant)
+   = 0
+ c_e_def_process_output(3565_South_Hydro_plant_Elec)_:
+   e_pro_out(3565_South_Hydro_plant_Elec) - tau_pro(3565_South_Hydro_plant)
+   = 0
+ c_e_def_process_output(3565_South_Photovoltaics_Elec)_:
+   e_pro_out(3565_South_Photovoltaics_Elec)
+   - tau_pro(3565_South_Photovoltaics) = 0
+ c_e_def_process_output(3565_South_Purchase_Elec)_:
+   e_pro_out(3565_South_Purchase_Elec) - tau_pro(3565_South_Purchase) = 0
+ c_e_def_process_output(3565_South_Slack_powerplant_Elec)_:
+   e_pro_out(3565_South_Slack_powerplant_Elec)
+   - tau_pro(3565_South_Slack_powerplant) = 0
+ c_e_def_process_output(3565_South_Wind_park_Elec)_:
+   e_pro_out(3565_South_Wind_park_Elec) - tau_pro(3565_South_Wind_park)
+   = 0
+ c_e_def_intermittent_supply(3565_South_Photovoltaics_Solar)_:
+   - 0.6776442142085195 cap_pro(South_Photovoltaics)
+   + e_pro_in(3565_South_Photovoltaics_Solar) = 0
+ c_u_res_exp_process_throughput_by_capacity(3565_South_Feed_in)_:
+   - cap_pro(South_Feed_in) + tau_pro(3565_South_Feed_in) <= 0
+ r_u_res_process_capacity(South_Feed_in)_: cap_pro(South_Feed_in) <= 1500
+ r_l_res_process_capacity(South_Photovoltaics)_:
+   cap_pro(South_Photovoltaics) >= 20000
+Bounds
+ e_pro_in(3565_South_Feed_in_Elec) free
+ e_pro_out(3565_South_Biomass_plant_Elec) free
+ e_pro_out(3565_South_Coal_plant_Elec) free
+ e_pro_out(3565_South_Gas_plant_Elec) free
+ e_pro_out(3565_South_Hydro_plant_Elec) free
+ e_pro_out(3565_South_Photovoltaics_Elec) free
+ e_pro_out(3565_South_Purchase_Elec) free
+ e_pro_out(3565_South_Slack_powerplant_Elec) free
+ e_pro_out(3565_South_Wind_park_Elec) free
+ cap_pro(South_Feed_in) free
+ cap_pro(South_Photovoltaics) free
+ tau_pro(3565_South_Feed_in) free
+ e_pro_in(3565_South_Photovoltaics_Solar) free
+ tau_pro(3565_South_Photovoltaics) free
+End

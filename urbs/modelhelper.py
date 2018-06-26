@@ -1,5 +1,6 @@
 import pandas as pd
 import urbs
+
 def annuity_factor(n, i):
     """Annuity factor formula.
 
@@ -22,7 +23,7 @@ def annuity_factor(n, i):
     return (1+i)**n * i / ((1+i)**n - 1)
 
 
-def commodity_balance(m, tm, sit, com):
+def commodity_balance(m, tm, sit, com,stf=None):
     """Calculate commodity balance at given timestep.
 
     For a given commodity co and timestep tm, calculate the balance of
@@ -40,38 +41,66 @@ def commodity_balance(m, tm, sit, com):
         balance: net value of consumed (positive) or provided (negative) power
 
     """
-        
-    balance =   sum(m.e_pro_in[(tm, site, process, com)]
-                    # usage as input for process increases balance
-                    for site, process in m.pro_tuples
-                    if site == sit and (process, com) in m.r_in_dict) \
-              - sum(m.e_pro_out[(tm, site, process, com)]
-                    # output from processes decreases balance
-                    for site, process in m.pro_tuples
-                    if site == sit and (process, com) in m.r_out_dict)
-               
-    if m.mode['tra']:
-        balance +=  sum(m.e_tra_in[(tm, site_in, site_out, transmission, com)]
-                        # exports increase balance
-                        for site_in, site_out, transmission, commodity
-                        in m.tra_tuples
-                        if site_in == sit and commodity == com) \
-                  - sum(m.e_tra_out[(tm, site_in, site_out, transmission, com)]
-                        # imports decrease balance
-                        for site_in, site_out, transmission, commodity
-                        in m.tra_tuples
-                        if site_out == sit and commodity == com)
-    if m.mode['sto']:
-        balance += sum(m.e_sto_in[(tm, site, storage, com)] -
-                     m.e_sto_out[(tm, site, storage, com)]
-                     # usage as input for storage increases consumption
-                     # output from storage decreases consumption
-                     for site, storage, commodity in m.sto_tuples
-                     if site == sit and commodity == com)
-    return balance
-
+    if stf is None:
+        balance =   sum(m.e_pro_in[(tm, site, process, com)]
+                        # usage as input for process increases balance
+                        for site, process in m.pro_tuples
+                        if site == sit and (process, com) in m.r_in_dict) \
+                  - sum(m.e_pro_out[(tm, site, process, com)]
+                        # output from processes decreases balance
+                        for site, process in m.pro_tuples
+                        if site == sit and (process, com) in m.r_out_dict)
+                   
+        if m.mode['tra']:
+            balance +=  sum(m.e_tra_in[(tm, site_in, site_out, transmission, com)]
+                            # exports increase balance
+                            for site_in, site_out, transmission, commodity
+                            in m.tra_tuples
+                            if site_in == sit and commodity == com) \
+                      - sum(m.e_tra_out[(tm, site_in, site_out, transmission, com)]
+                            # imports decrease balance
+                            for site_in, site_out, transmission, commodity
+                            in m.tra_tuples
+                            if site_out == sit and commodity == com)
+        if m.mode['sto']:
+            balance += sum(m.e_sto_in[(tm, site, storage, com)] -
+                         m.e_sto_out[(tm, site, storage, com)]
+                         # usage as input for storage increases consumption
+                         # output from storage decreases consumption
+                         for site, storage, commodity in m.sto_tuples
+                         if site == sit and commodity == com)
+        return balance 
+    else:
+        balance = sum(m.e_pro_in[(tm, stframe, site, process, com)]
+                       # usage as input for process increases balance
+                       for stframe, site, process in m.pro_tuples
+                       if site == sit and stframe == stf and (stframe, process, com) in m.r_in_dict) \
+                - sum(m.e_pro_out[(tm, stframe, site, process, com)]
+                         # output from processes decreases balance
+                         for stframe, site, process in m.pro_tuples
+                         if site == sit and stframe == stf and (stframe, process, com) in m.r_out_dict)
+        if m.mode['tra']:
+            balance += sum(m.e_tra_in[(tm, stframe, site_in, site_out, transmission, com)]
+                         # exports increase balance
+                         for stframe, site_in, site_out, transmission, commodity
+                         in m.tra_tuples
+                         if site_in == sit and stframe == stf and commodity == com) \
+                    - sum(m.e_tra_out[(tm, stframe, site_in, site_out, transmission, com)]
+                         # imports decrease balance
+                         for stframe, site_in, site_out, transmission, commodity
+                         in m.tra_tuples
+                         if site_out == sit and stframe == stf and commodity == com)
+        if m.mode['sto']:
+            balance += sum(m.e_sto_in[(tm, stframe, site, storage, com)] -
+                         m.e_sto_out[(tm, stframe, site, storage, com)]
+                         # usage as input for storage increases consumption
+                         # output from storage decreases consumption
+                         for stframe, site, storage, commodity in m.sto_tuples
+                         if site == sit and stframe == stf and commodity == com)
+        return balance
     
 
+    
 
 def dsm_down_time_tuples(time, sit_com_tuple, m):
     """ Dictionary for the two time instances of DSM_down
@@ -152,7 +181,7 @@ def dsm_recovery(timestep, time, recov):
     return time_list
 
 
-def commodity_subset(com_tuples, type_name):
+def commodity_subset(com_tuples, type_name,stf=None):
     """ Unique list of commodity names for given type.
 
     Args:
@@ -162,18 +191,30 @@ def commodity_subset(com_tuples, type_name):
     Returns:
         The set (unique elements/list) of commodity names of the desired type
     """
-    if type(type_name) is str:
-        # type_name: ('Stock', 'SupIm', 'Env' or 'Demand')
-        return set(com for sit, com, com_type in com_tuples
-                   if com_type == type_name)
+    if stf is None:
+        if type(type_name) is str:
+            # type_name: ('Stock', 'SupIm', 'Env' or 'Demand')
+            return set(com for sit, com, com_type in com_tuples
+                       if com_type == type_name)
+        else:
+            # type(type_name) is a class 'pyomo.base.sets.SimpleSet'
+            # type_name: ('Buy')=>('Elec buy', 'Heat buy')
+            return set((sit, com, com_type) for sit, com, com_type in com_tuples
+                       if com in type_name)
     else:
-        # type(type_name) is a class 'pyomo.base.sets.SimpleSet'
-        # type_name: ('Buy')=>('Elec buy', 'Heat buy')
-        return set((sit, com, com_type) for sit, com, com_type in com_tuples
-                   if com in type_name)
+        if type(type_name) is str:
+            # type_name: ('Stock', 'SupIm', 'Env' or 'Demand')
+            return set(com for stf, sit, com, com_type in com_tuples
+                       if com_type == type_name)
+        else:
+            # type(type_name) is a class 'pyomo.base.sets.SimpleSet'
+            # type_name: ('Buy')=>('Elec buy', 'Heat buy')
+            return set((stf, sit, com, com_type) for stf, sit, com, com_type
+                       in com_tuples if com in type_name)        
 
 
-def search_sell_buy_tuple(instance, sit_in, pro_in, coin):
+
+def search_sell_buy_tuple(instance, sit_in, pro_in, coin, stf=None):
     """ Return the equivalent sell-process for a given buy-process.
 
     Args:

@@ -162,6 +162,11 @@ def create_params(m,dt=1):
     m.dt = pyomo.Param(
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
+    """m.cap_pro = pyomo.Param(
+        m.pro_tupels_const,                                                   !!!look at dis!!!
+        initialize=m.const_process_dict['inst-cap'],
+        doc = 'Constant Process Capacity'
+    )"""
         
     return m
     

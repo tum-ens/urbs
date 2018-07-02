@@ -375,7 +375,9 @@ def pyomo_model_prep(data, mode, timesteps):
 
     # Converting Data frames to dictionaries
     m.commodity_dict = m.commodity.to_dict()
-    m.process_dict = m.process.to_dict()    
+    m.process_dict = m.process.to_dict()
+    m.exp_process_dict = m.process_exp.to_dict()
+    m.const_process_dict = m.process_const.to_dict()
     m.demand_dict = m.demand.to_dict()
     m.supim_dict = m.supim.to_dict()
     m.buy_sell_price_dict = m.buy_sell_price.to_dict()

@@ -139,28 +139,74 @@ In script ``model.py`` the constraint storage capacity limit rule is defined and
 .. literalinclude:: /../urbs/model.py
    :pyobject: res_storage_capacity_rule
 
-**Initial And Final Storage State Rule**: The constraint initial and final storage state rule defines and restricts the variable storage energy content :math:`\epsilon_{vst}^\text{con}` of a storage :math:`s` in a site :math:`v` at the initial timestep :math:`t_1` and at the final timestep :math:`t_N`.  
+**Initial And Final Storage State Rule**:
+The constraint initial and final storage state rule defines and restricts the
+variable storage energy content :math:`\epsilon_{vst}^\text{con}` of a storage
+:math:`s` in a site :math:`v` at the initial timestep :math:`t_1` and at the
+final timestep :math:`t_N`.There are two distinct cases:
 
-Initial Storage:  Initial storage represents how much energy is installed in a storage at the beginning of the simulation. The variable storage energy content :math:`\epsilon_{vst}^\text{con}` at the initial timestep :math:`t_1` is defined by this constraint. The constraint states that the variable :math:`\epsilon_{vst_1}^\text{con}` must be equal to the product of the parameters storage content installed :math:`K_{vs}^\text{c}` and  initial and final state of charge :math:`I_{vs}`. In mathematical notation this is expressed as: 
+1. The initial and final storage states are specified by a value of the
+parameter :math:`I_{vs}` between 0 and 1.
+2. :math:`I_{vs}` is not specified (e.g. by setting it '#NV' in the input
+sheet). In this case the initial and final storage state are still equal but
+variable.
+
+In case 1 the constraints are written in the following way:
+
+Initial Storage:  Initial storage represents the storage state in a
+storage at the beginning of the simulation. The variable storage energy content
+:math:`\epsilon_{vst}^\text{con}` at the initial timestep :math:`t_1` is
+defined by this constraint. The constraint states that the variable
+:math:`\epsilon_{vst_1}^\text{con}` must be equal to the product of the
+parameters storage content installed :math:`K_{vs}^\text{c}` and  initial and
+final state of charge :math:`I_{vs}`. In mathematical notation this is
+expressed as: 
 
 .. math::
 
 	\forall v\in V, s\in S\colon\ \epsilon_{vst_1}^\text{con} = \kappa_{vs}^\text{c} I_{vs}
 
-Final Storage: Final storage represents how much energy is installed in a storage at the end of the simulation. The variable storage energy content :math:`\epsilon_{vst}^\text{con}` at the final timestep :math:`t_N` is restricted by this constraint. The constraint states that the variable :math:`\epsilon_{vst_N}^\text{con}` must be greater than or equal to the product of the parameters storage content installed :math:`K_{vs}^\text{c}` and  initial and final state of charge :math:`I_{vs}`. In mathematical notation this is expressed as:
+Final Storage: Final storage represents the storage state in a storage at the
+end of the simulation. The variable storage energy content
+:math:`\epsilon_{vst}^\text{con}` at the final timestep :math:`t_N` is
+restricted by this constraint. The constraint states that the variable
+:math:`\epsilon_{vst_N}^\text{con}` must be greater than or equal to the
+product of the parameters storage content installed :math:`K_{vs}^\text{c}` and
+initial and final state of charge :math:`I_{vs}`. In mathematical notation this
+is expressed as:
 
 .. math::
 
 	\forall v\in V, s\in S\colon\ \epsilon_{vst_N}^\text{con} \geq \kappa_{vs}^\text{c} I_{vs}
 
-In script ``model.py`` the constraint initial and final storage state rule is defined and calculated by the following code fragment:
+In script ``model.py`` the constraint initial and final storage state rule is
+defined and calculated by the following code fragment:
 ::
 
     m.res_initial_and_final_storage_state = pyomo.Constraint(
-        m.t, m.sto_tuples,
+        m.t, m.sto_init_bound_tuples,
         rule=res_initial_and_final_storage_state_rule,
         doc='storage content initial == and final >= storage.init * capacity')
 
 .. literalinclude:: /../urbs/model.py
    :pyobject: res_initial_and_final_storage_state_rule
+
+In case 2 the constraint becomes a lot easier, since the initial and final
+state are simply compared by the following inequality:
+
+.. math::
+
+	\forall v\in V, s\in S\colon\ \epsilon_{vst_1}^\text{con} \leq \epsilon_{vst_N}^\text{con}
+
+In script ``model.py`` the constraint initial and final storage state rule is
+then defined and calculated by the following code fragment:
+::
+
+    m.res_initial_and_final_storage_state_var = pyomo.Constraint(
+        m.t, m.sto_tuples - m.sto_init_bound_tuples,
+        rule=res_initial_and_final_storage_state_var_rule,
+        doc='storage content initial <= final, both variable')
+
+.. literalinclude:: /../urbs/model.py
+   :pyobject: res_initial_and_final_storage_state_var_rule
 

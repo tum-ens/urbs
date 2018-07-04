@@ -197,10 +197,12 @@ def create_model(data, dt=1, timesteps=None, dual=False):
                     if process == pro],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
 
+    # storage tuples for stirages with fixed initial state
+
     m.sto_init_bound_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
         initialize=m.stor_init_bound.index,
-        doc='storages with variable initial state')
+        doc='storages with fixed initial state')
 
     # commodity type subsets
     m.com_supim = pyomo.Set(

@@ -46,6 +46,8 @@ def read_excel(filename):
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
         global_prop = xls.parse('Global').set_index(['Property'])
+        eff_factor = (xls.parse('Efficiency-factor-timeseries')
+                         .set_index(['t']))
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -53,6 +55,7 @@ def read_excel(filename):
     demand.columns = split_columns(demand.columns, '.')
     supim.columns = split_columns(supim.columns, '.')
     buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
+    eff_factor.columns = split_columns(eff_factor.columns, '.')
 
     data = {
         'global_prop': global_prop,
@@ -65,7 +68,8 @@ def read_excel(filename):
         'demand': demand,
         'supim': supim,
         'buy_sell_price': buy_sell_price,
-        'dsm': dsm
+        'dsm': dsm,
+        'eff_factor': eff_factor
         }
 
     # sort nested indexes to make direct assignments work
@@ -98,13 +102,15 @@ def pyomo_model_prep(data, timesteps):
     m.buy_sell_price = data['buy_sell_price']
     m.timesteps = timesteps
     m.dsm = data['dsm']
+    m.eff_factor = data['eff_factor']
 
     # Converting Data frames to dict
-    m.commodity_dict = m.commodity.to_dict()  # Changed
-    m.demand_dict = m.demand.to_dict()  # Changed
-    m.supim_dict = m.supim.to_dict()  # Changed
-    m.dsm_dict = m.dsm.to_dict()  # Changed
+    m.commodity_dict = m.commodity.to_dict()
+    m.demand_dict = m.demand.to_dict()
+    m.supim_dict = m.supim.to_dict()
+    m.dsm_dict = m.dsm.to_dict()
     m.buy_sell_price_dict = m.buy_sell_price.to_dict()
+    m.eff_factor_dict = m.eff_factor.to_dict()
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']

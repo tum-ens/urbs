@@ -28,6 +28,9 @@ def read_excel(filename):
         150000000
     """
     with pd.ExcelFile(filename) as xls:
+
+        sheetnames = xls.sheet_names
+
         site = xls.parse('Site').set_index(['Name'])
         commodity = (
             xls.parse('Commodity').set_index(['Site', 'Commodity', 'Type']))
@@ -45,9 +48,18 @@ def read_excel(filename):
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        global_prop = xls.parse('Global').set_index(['Property'])
-        eff_factor = (xls.parse('Efficiency-factor-timeseries')
-                         .set_index(['t']))
+        if 'Global' in sheetnames:
+            global_prop = xls.parse('Global').set_index(['Property'])
+        else:
+            raise KeyError('Rename worksheet "Hacks" to "Global" and the ' +
+                             'line "Global CO2 limit" into "CO2 limit"!')
+        if 'Efficiency-factor-timeseries' in sheetnames:
+            eff_factor = (xls.parse('Efficiency-factor-timeseries')
+                            .set_index(['t']))
+
+            eff_factor.columns = split_columns(eff_factor.columns, '.')
+        else:
+            eff_factor = pd.DataFrame()
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -55,7 +67,6 @@ def read_excel(filename):
     demand.columns = split_columns(demand.columns, '.')
     supim.columns = split_columns(supim.columns, '.')
     buy_sell_price.columns = split_columns(buy_sell_price.columns, '.')
-    eff_factor.columns = split_columns(eff_factor.columns, '.')
 
     data = {
         'global_prop': global_prop,

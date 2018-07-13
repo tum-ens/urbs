@@ -224,13 +224,13 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
 
     # process tuples for time variable efficiency
-    m.pro_eff_timevar_output_tuples = pyomo.Set(
+    m.pro_timevar_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
                     for (site, process) in m.eff_factor.columns.values
                     for (pro, commodity) in m.r_out.index
                     if process == pro],
-        doc='Processes with time dependent efficiency')
+        doc='Outputs of processes with time dependent efficiency')
 
     # Variables
 
@@ -387,7 +387,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         doc='process input = process throughput * input ratio')
     m.def_process_output = pyomo.Constraint(
         m.tm, (m.pro_output_tuples - m.pro_partial_output_tuples -
-               m.pro_eff_timevar_output_tuples),
+               m.pro_timevar_output_tuples),
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
     m.def_intermittent_supply = pyomo.Constraint(
@@ -437,9 +437,9 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         doc='e_pro_out = '
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
-    m.def_eff_timevar_output = pyomo.Constraint(
-        m.tm, m.pro_eff_timevar_output_tuples,
-        rule=def_eff_timevar_output_rule,
+    m.def_process_timevar_output = pyomo.Constraint(
+        m.tm, m.pro_timevar_output_tuples,
+        rule=def_pro_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
     # transmission
@@ -848,7 +848,7 @@ def def_partial_process_output_rule(m, tm, sit, pro, coo):
             m.tau_pro[tm, sit, pro] * throughput_factor)
 
 
-def def_eff_timevar_output_rule(m, tm, sit, pro, com):
+def def_pro_timevar_output_rule(m, tm, sit, pro, com):
     if com in m.com_env:
         return(m.e_pro_out[tm, sit, pro, com] ==
                m.tau_pro[tm, sit, pro] * m.r_out_dict[(pro, com)])

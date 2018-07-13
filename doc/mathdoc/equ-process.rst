@@ -65,7 +65,8 @@ In script ``model.py`` the constraint process output rule is defined and calcula
 ::
 
     m.def_process_output = pyomo.Constraint(
-        m.tm, m.pro_output_tuples,
+        m.tm, (m.pro_output_tuples - m.pro_partial_output_tuples -
+               m.pro_timevar_output_tuples),
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
 
@@ -210,7 +211,27 @@ calculated by the following code fragment:
    :pyobject: res_sell_buy_symmetry_rule
 
 
+**Process time variable output rule**: This constraint multiplies the process
+efficiency with the parameter time series :math:`f_{vpt}^\text{out}`. The
+process output for all commodities is thus manipulated depending on time. This
+contraint is not valid for environmental commodities since these are typically
+linked to an input commodity flow rather than an output commodity flow.
+
+In script ``model.py`` the constraint process time variable output rule is
+defined and calculated by the following code fragment:
+
+::
+
+    m.def_process_timevar_output = pyomo.Constraint(
+        m.tm, m.pro_timevar_output_tuples,
+        rule=def_pro_timevar_output_rule,
+        doc='e_pro_out = tau_pro * r_out * eff_factor')
+
+.. literalinclude:: /../urbs/model.py
+   :pyobject: def_pro_timevar_output_rule
+
 .. _sec-partial-startup-constr:
+
 
 Process Constraints for partial operation
 -----------------------------------------

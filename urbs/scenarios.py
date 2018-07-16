@@ -4,6 +4,7 @@ import pandas as pd
 # In this script a variety of scenario generator functions are defined to
 # facilitate scenario definitions.
 
+
 def scenario_base(data):
     # do nothing
     return data

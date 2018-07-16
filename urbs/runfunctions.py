@@ -43,7 +43,7 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_file, Solver, timesteps, scenario, result_dir, dt,
+def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -78,7 +78,7 @@ def run_scenario(input_file, Solver, timesteps, scenario, result_dir, dt,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory(solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 

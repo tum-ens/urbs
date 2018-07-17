@@ -856,12 +856,12 @@ def def_partial_process_output_rule(m, tm, sit, pro, coo):
 
 def def_pro_timevar_output_rule(m, tm, sit, pro, com):
     if com in m.com_env:
-        return(m.e_pro_out[tm, sit, pro, com] ==
-               m.tau_pro[tm, sit, pro] * m.r_out_dict[(pro, com)])
+        return (m.e_pro_out[tm, sit, pro, com] ==
+                m.tau_pro[tm, sit, pro] * m.r_out_dict[(pro, com)])
     else:
-        return(m.e_pro_out[tm, sit, pro, com] ==
-               m.tau_pro[tm, sit, pro] * m.r_out_dict[(pro, com)] *
-               m.eff_factor_dict[(sit, pro)][tm])
+        return (m.e_pro_out[tm, sit, pro, com] ==
+                m.tau_pro[tm, sit, pro] * m.r_out_dict[(pro, com)] *
+                m.eff_factor_dict[(sit, pro)][tm])
 
 
 def def_pro_partial_timevar_output_rule(m, tm, sit, pro, coo):
@@ -873,13 +873,13 @@ def def_pro_partial_timevar_output_rule(m, tm, sit, pro, coo):
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
     if coo in m.com_env:
         return (m.e_pro_out[tm, sit, pro, coo] ==
-            m.dt * m.cap_pro[sit, pro] * online_factor +
-            m.tau_pro[tm, sit, pro] * throughput_factor)
+                m.dt * m.cap_pro[sit, pro] * online_factor +
+                m.tau_pro[tm, sit, pro] * throughput_factor)
     else:
         return (m.e_pro_out[tm, sit, pro, coo] ==
-            (m.dt * m.cap_pro[sit, pro] * online_factor +
-            m.tau_pro[tm, sit, pro] * throughput_factor) *
-            m.eff_factor_dict[(sit, pro)][tm])
+                (m.dt * m.cap_pro[sit, pro] * online_factor +
+                 m.tau_pro[tm, sit, pro] * throughput_factor) *
+                m.eff_factor_dict[(sit, pro)][tm])
 
 
 # lower bound <= process capacity <= upper bound

@@ -24,7 +24,7 @@ def validate_input(data):
             simplified_com_index = ([(s, c) for s, c, t in data['commodity']
                                     .index.tolist()])
             if ((pro, com) in simplified_pro_com_index and
-                (sit, com) not in simplified_com_index):
+                    (sit, com) not in simplified_com_index):
                 raise ValueError('Commodities used in a process at a site must'
                                  ' be specified in the commodity input sheet'
                                  '! The pair (' + sit + ',' + com + ')'

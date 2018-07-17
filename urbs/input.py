@@ -52,10 +52,10 @@ def read_excel(filename):
             global_prop = xls.parse('Global').set_index(['Property'])
         else:
             raise KeyError('Rename worksheet "Hacks" to "Global" and the ' +
-                             'line "Global CO2 limit" into "CO2 limit"!')
-        if 'Efficiency-factor-timeseries' in sheetnames:
-            eff_factor = (xls.parse('Efficiency-factor-timeseries')
-                            .set_index(['t']))
+                           'line "Global CO2 limit" into "CO2 limit"!')
+        if 'TimeVarEff' in sheetnames:
+            eff_factor = (xls.parse('TimeVarEff')
+                          .set_index(['t']))
 
             eff_factor.columns = split_columns(eff_factor.columns, '.')
         else:

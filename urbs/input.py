@@ -135,15 +135,18 @@ def pyomo_model_prep(data, timesteps):
     m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
 
     # derive annuity factor from WACC and depreciation duration
-    m.process['annuity-factor'] = annuity_factor(
-        m.process['depreciation'],
-        m.process['wacc'])
-    m.transmission['annuity-factor'] = annuity_factor(
-        m.transmission['depreciation'],
-        m.transmission['wacc'])
-    m.storage['annuity-factor'] = annuity_factor(
-        m.storage['depreciation'],
-        m.storage['wacc'])
+    m.process['annuity-factor'] = (m.process.apply(lambda x:
+                                   annuity_factor(x['depreciation'],
+                                                  x['wacc']),
+                                   axis=1))
+    m.transmission['annuity-factor'] = (m.transmission.apply(lambda x:
+                                        annuity_factor(x['depreciation'],
+                                                       x['wacc']),
+                                        axis=1))
+    m.storage['annuity-factor'] = (m.storage.apply(lambda x:
+                                   annuity_factor(x['depreciation'],
+                                                  x['wacc']),
+                                   axis=1))
 
     # Converting Data frames to dictionaries
     #

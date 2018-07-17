@@ -20,7 +20,10 @@ def annuity_factor(n, i):
         0.09439
 
     """
-    return (1+i)**n * i / ((1+i)**n - 1)
+    if i == 0:
+        return 1 / n
+    else:
+        return (1+i)**n * i / ((1+i)**n - 1)
 
 
 def commodity_balance(m, tm, sit, com):

@@ -20,7 +20,10 @@ def annuity_factor(n, i):
         0.09439
 
     """
-    return (1+i)**n * i / ((1+i)**n - 1)
+    if i == 0:
+        return 1 / n
+    else:
+        return (1+i)**n * i / ((1+i)**n - 1)
 
 
 def commodity_balance(m, tm, sit, com):
@@ -94,9 +97,8 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
             for step2 in range(step1 -
                                max(int(delay[site, commodity] /
                                        m.dt.value), 1),
-                               step1 +
-                               max(int(delay[site, commodity] /
-                                       m.dt.value), 1) + 1):
+                               step1 + max(int(delay[site, commodity] /
+                                               m.dt.value), 1) + 1):
                 if lb <= step2 <= ub:
                     time_list.append((step1, step2, site, commodity))
 

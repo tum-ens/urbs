@@ -67,7 +67,7 @@ if __name__ == '__main__':
         urbs.scenario_all_together]
 
     for scenario in scenarios:
-        prob = urbs. run_scenario(input_file, solver, timesteps, scenario,
+        prob = urbs.run_scenario(input_file, solver, timesteps, scenario,
                             result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,

@@ -48,27 +48,27 @@ def commodity_balance(m, tm, sit, com):
     balance = (sum(m.e_pro_in[(tm, site, process, com)]
                    # usage as input for process increases balance
                    for site, process in m.pro_tuples
-                   if site == sit and (process, com) in m.r_in_dict)
-               - sum(m.e_pro_out[(tm, site, process, com)]
-                     # output from processes decreases balance
-                     for site, process in m.pro_tuples
-                     if site == sit and (process, com) in m.r_out_dict)
-               + sum(m.e_tra_in[(tm, site_in, site_out, transmission, com)]
-                     # exports increase balance
-                     for site_in, site_out, transmission, commodity
-                     in m.tra_tuples
-                     if site_in == sit and commodity == com)
-               - sum(m.e_tra_out[(tm, site_in, site_out, transmission, com)]
-                     # imports decrease balance
-                     for site_in, site_out, transmission, commodity
-                     in m.tra_tuples
-                     if site_out == sit and commodity == com)
-               + sum(m.e_sto_in[(tm, site, storage, com)] -
-                     m.e_sto_out[(tm, site, storage, com)]
-                     # usage as input for storage increases consumption
-                     # output from storage decreases consumption
-                     for site, storage, commodity in m.sto_tuples
-                     if site == sit and commodity == com))
+                   if site == sit and (process, com) in m.r_in_dict) -
+               sum(m.e_pro_out[(tm, site, process, com)]
+                   # output from processes decreases balance
+                   for site, process in m.pro_tuples
+                   if site == sit and (process, com) in m.r_out_dict) +
+               sum(m.e_tra_in[(tm, site_in, site_out, transmission, com)]
+                   # exports increase balance
+                   for site_in, site_out, transmission, commodity
+                   in m.tra_tuples
+                   if site_in == sit and commodity == com) -
+               sum(m.e_tra_out[(tm, site_in, site_out, transmission, com)]
+                   # imports decrease balance
+                   for site_in, site_out, transmission, commodity
+                   in m.tra_tuples
+                   if site_out == sit and commodity == com) +
+               sum(m.e_sto_in[(tm, site, storage, com)] -
+                   m.e_sto_out[(tm, site, storage, com)]
+                   # usage as input for storage increases consumption
+                   # output from storage decreases consumption
+                   for site, storage, commodity in m.sto_tuples
+                   if site == sit and commodity == com))
     return balance
 
 
@@ -94,12 +94,11 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
 
     for (site, commodity) in sit_com_tuple:
         for step1 in time:
-            for step2 in range(step1
-                               - max(int(delay[site, commodity]
-                                     / m.dt.value), 1),
-                               step1
-                               + max(int(delay[site, commodity]
-                                     / m.dt.value), 1) + 1):
+            for step2 in range(step1 -
+                               max(int(delay[site, commodity] /
+                                       m.dt.value), 1),
+                               step1 + max(int(delay[site, commodity] /
+                                               m.dt.value), 1) + 1):
                 if lb <= step2 <= ub:
                     time_list.append((step1, step2, site, commodity))
 

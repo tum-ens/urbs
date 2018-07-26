@@ -53,22 +53,27 @@ def commodity_balance(m, tm, sit, com):
                    # output from processes decreases balance
                    for site, process in m.pro_tuples
                    if site == sit and (process, com) in m.r_out_dict) +
-               sum(m.e_tra_in[(tm, site_in, site_out, transmission, com)]
-                   # exports increase balance
-                   for site_in, site_out, transmission, commodity
-                   in m.tra_tuples
-                   if site_in == sit and commodity == com) -
-               sum(m.e_tra_out[(tm, site_in, site_out, transmission, com)]
-                   # imports decrease balance
-                   for site_in, site_out, transmission, commodity
-                   in m.tra_tuples
-                   if site_out == sit and commodity == com) +
                sum(m.e_sto_in[(tm, site, storage, com)] -
                    m.e_sto_out[(tm, site, storage, com)]
                    # usage as input for storage increases consumption
                    # output from storage decreases consumption
                    for site, storage, commodity in m.sto_tuples
                    if site == sit and commodity == com))
+
+    try:
+        balance += (sum(m.e_tra_in[(tm, site_in, site_out, transmission, com)]
+                        # exports increase balance
+                        for site_in, site_out, transmission, commodity
+                        in m.tra_tuples
+                        if site_in == sit and commodity == com) -
+                    sum(m.e_tra_out[(tm, site_in, site_out, transmission, com)]
+                        # imports decrease balance
+                        for site_in, site_out, transmission, commodity
+                        in m.tra_tuples
+                        if site_out == sit and commodity == com))
+    except AttributeError:
+        pass
+
     return balance
 
 

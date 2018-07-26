@@ -28,6 +28,9 @@ def read_excel(filename):
         150000000
     """
     with pd.ExcelFile(filename) as xls:
+
+        sheetnames = xls.sheet_names
+
         site = xls.parse('Site').set_index(['Name'])
         commodity = (
             xls.parse('Commodity').set_index(['Site', 'Commodity', 'Type']))
@@ -45,7 +48,18 @@ def read_excel(filename):
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        global_prop = xls.parse('Global').set_index(['Property'])
+        if 'Global' in sheetnames:
+            global_prop = xls.parse('Global').set_index(['Property'])
+        else:
+            raise KeyError('Rename worksheet "Hacks" to "Global" and the ' +
+                           'line "Global CO2 limit" into "CO2 limit"!')
+        if 'TimeVarEff' in sheetnames:
+            eff_factor = (xls.parse('TimeVarEff')
+                          .set_index(['t']))
+
+            eff_factor.columns = split_columns(eff_factor.columns, '.')
+        else:
+            eff_factor = pd.DataFrame()
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -65,7 +79,8 @@ def read_excel(filename):
         'demand': demand,
         'supim': supim,
         'buy_sell_price': buy_sell_price,
-        'dsm': dsm
+        'dsm': dsm,
+        'eff_factor': eff_factor
         }
 
     # sort nested indexes to make direct assignments work
@@ -98,13 +113,15 @@ def pyomo_model_prep(data, timesteps):
     m.buy_sell_price = data['buy_sell_price']
     m.timesteps = timesteps
     m.dsm = data['dsm']
+    m.eff_factor = data['eff_factor']
 
     # Converting Data frames to dict
-    m.commodity_dict = m.commodity.to_dict()  # Changed
-    m.demand_dict = m.demand.to_dict()  # Changed
-    m.supim_dict = m.supim.to_dict()  # Changed
-    m.dsm_dict = m.dsm.to_dict()  # Changed
+    m.commodity_dict = m.commodity.to_dict()
+    m.demand_dict = m.demand.to_dict()
+    m.supim_dict = m.supim.to_dict()
+    m.dsm_dict = m.dsm.to_dict()
     m.buy_sell_price_dict = m.buy_sell_price.to_dict()
+    m.eff_factor_dict = m.eff_factor.to_dict()
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
@@ -135,15 +152,18 @@ def pyomo_model_prep(data, timesteps):
     m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
 
     # derive annuity factor from WACC and depreciation duration
-    m.process['annuity-factor'] = annuity_factor(
-        m.process['depreciation'],
-        m.process['wacc'])
-    m.transmission['annuity-factor'] = annuity_factor(
-        m.transmission['depreciation'],
-        m.transmission['wacc'])
-    m.storage['annuity-factor'] = annuity_factor(
-        m.storage['depreciation'],
-        m.storage['wacc'])
+    m.process['annuity-factor'] = (m.process.apply(lambda x:
+                                   annuity_factor(x['depreciation'],
+                                                  x['wacc']),
+                                   axis=1))
+    m.transmission['annuity-factor'] = (m.transmission.apply(lambda x:
+                                        annuity_factor(x['depreciation'],
+                                                       x['wacc']),
+                                        axis=1))
+    m.storage['annuity-factor'] = (m.storage.apply(lambda x:
+                                   annuity_factor(x['depreciation'],
+                                                  x['wacc']),
+                                   axis=1))
 
     # Converting Data frames to dictionaries
     #

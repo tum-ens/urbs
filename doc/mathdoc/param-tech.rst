@@ -50,6 +50,8 @@ Technical Parameters
     +-------------------------------------+----+---------------------------------------------+
     |:math:`\underline{P}_{vp}`           | _  |Process Minimum Part Load Fraction           |
     +-------------------------------------+----+---------------------------------------------+
+    |:math:`f_{vpt}^\text{out}`           | _  |Process Output Ratio multiplyer              |
+    +-------------------------------------+----+---------------------------------------------+
     |:math:`r_{pc}^\text{in}`             | _  |Process Input Ratio                          |
     +-------------------------------------+----+---------------------------------------------+
     |:math:`\underline{r}_{pc}^\text{in}` | _  |Process Partial Input Ratio                  |
@@ -157,11 +159,20 @@ Process Technical Parameters
 
 **Process Minimum Part Load Fraction**, :math:`\underline{P}_{vp}`, ``m.process_dict['min-fraction'][(sit, pro)]``: The parameter :math:`\underline{P}_{vp}` represents the minimum allowable part load of a process :math:`p` at a site :math:`v` as a fraction of the total process capacity. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the twelfth column with the header label "partial" represents the parameters :math:`\underline{P}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
+**Process Output Ratio multiplyer**, :math:`f_{vpt}^\text{out}`,
+``m.eff_factor_dict[(sit, pro)]``: The parameter time series
+:math:`f_{vpt}^\text{out}` allows for a time dependent modification of process
+outputs and by extension of the process efficiency. It can be used, e.g., to
+model temperature dependent efficiencies of processes or to include scheduled
+maintenance intervals. Note that the output of environmental commodities is not
+manipulated by this factor as it is typially linked to an input commodity as
+, e.g., CO2 output is linked to a fossil input.
+
 **Process Input Ratio**, :math:`r_{pc}^\text{in}`, ``m.r_in_dict[(pro, co)]``: The parameter :math:`r_{pc}^\text{in}` represents the ratio of the input amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep. The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
 
 **Process Partial Input Ratio**, :math:`\underline{r}_{pc}^\text{in}`, ``m.r_in_min_fraction[pro, coin]``: The parameter :math:`\underline{r}_{pc}^\text{in}` represents the ratio of the amount of input commodity :math:`c` a process :math:`p` consumes if it is at its minimum allowable partial operation. More precisely, when its throughput :math:`\tau_{vpt}` has the minimum value :math:`\omega_{vpt} \underline{P}_{vp}`.
 
-**Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out_dict[(pro, co)]``: The parameter :math:`r_{pc}^\text{out}` represents the ratio of the output amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep.  The related section for this parameter in the spreadsheet can be found under the "Process-Commodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
+**Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out_dict[(pro, co)]``: The parameter :math:`r_{pc}^\text{out}` represents the ratio of the output amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep.  The related section for this parameter in the spreadsheet can be found under the "Process-Commodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations. 
 
 Process input and output ratios are, in general, dimensionless since the majority of output and input commodities are represented in MW. Exceptionally, some process input and output ratios can be assigned units e.g. the environmental commodity (``Env``) ':math:`\text{CO}_2` could have a process output ratio with the unit of :math:`Mt/MWh`.
 

@@ -205,10 +205,11 @@ Commodity Tuples
 ^^^^^^^^^^^^^^^^
 
 Commodity tuples represent combinations of defined commodities.
-These are represented by the set :math:`C_{vq}`.
-A member :math:`c_{vq}` in set :math:`C_{vq}` is a commodity :math:`c` of commodity type :math:`q` in site :math:`v`.
-For example, `(Mid, Elec, Demand)` is interpreted as commodity `Elec` of commodity type `Demand` in site `Mid`.
-This set is defined as ``com_tuples`` and given by the code fragment:
+These are represented by the set :math:`C_{vq}`. A member :math:`c_{vq}` in set
+:math:`C_{vq}` is a commodity :math:`c` of commodity type :math:`q` in site
+:math:`v`. For example, `(Mid, Elec, Demand)` is interpreted as commodity
+`Elec` of commodity type `Demand` in site `Mid`. This set is defined as
+``com_tuples`` and given by the code fragment:
 
 ::
 
@@ -222,7 +223,9 @@ Process Tuples
 ^^^^^^^^^^^^^^
 
 Process tuples represent combinations of possible processes.
-These are represented by the set :math:`P_v`. A member :math:`p_v` in set :math:`P_v` is a process :math:`p` in site :math:`v`. For example, `(North, Coal Plant)` is interpreted as process `Coal Plant` in site `North`.
+These are represented by the set :math:`P_v`. A member :math:`p_v` in set
+:math:`P_v` is a process :math:`p` in site :math:`v`. For example,
+`(North, Coal Plant)` is interpreted as process `Coal Plant` in site `North`.
 This set is defined as ``pro_tuples`` and given by the code fragment:
 
 ::
@@ -233,8 +236,11 @@ This set is defined as ``pro_tuples`` and given by the code fragment:
         doc='Combinations of possible processes, e.g. (North,Coal plant)')
 		
 
-A subset of these process tuples ``pro_partial_tuples`` :math:`P_v^\text{partial}` is formed in order to identify processes that have partial & startup properties. 
-Programmatically, they are identified by those processes, which have the parameter ``ratio-min`` set for one of their input commodities in table *Process-Commodity*. The tuple set is defined as:
+A subset of these process tuples ``pro_partial_tuples``
+:math:`P_v^\text{partial}` is formed in order to identify processes that have
+partial & startup properties. Programmatically, they are identified by those
+processes, which have the parameter ``ratio-min`` set for one of their input
+commodities in table *Process-Commodity*. The tuple set is defined as:
         
 ::
 
@@ -246,8 +252,11 @@ Programmatically, they are identified by those processes, which have the paramet
                     if process == pro],
         doc='Processes with partial input')        
 
-A second subset is formed in order to caputure all processes that take up a certain area and are thus subject to the area constraint at the given site.
-These processes are identified by the parameter ``area-per-cap`` set in table *Process*, if at the same time a value for ``area`` is set in table *Site*. The tuple set is defined as:
+Another subset is formed in order to capture all processes that take up a
+certain area and are thus subject to the area constraint at the given site.
+These processes are identified by the parameter ``area-per-cap`` set in table
+*Process*, if at the same time a value for ``area`` is set in table *Site*. The
+tuple set is defined as:
   
 ::
 
@@ -346,6 +355,20 @@ This set is defined as ``pro_output_tuples`` and given by the code fragment:
         doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
 		
 Where: ``r_out`` represents the process output ratio.
+
+The output of all processes that have a time dependent efficiency are collected
+in an additional tuple set. The set contains all outputs corresponding to
+processes that are specified as column indices in the input file worksheet
+``Efficiency-factor-timeseries``.
+::
+
+    m.pro_timevar_output_tuples = pyomo.Set(
+        within=m.sit*m.pro*m.com,
+        initialize=[(site, process, commodity)
+                    for (site, process) in m.eff_factor.columns.values
+                    for (pro, commodity) in m.r_out.index
+                    if process == pro],
+        doc='Outputs of processes with time dependent efficiency')
 
 Demand Side Management Tuples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

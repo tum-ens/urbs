@@ -113,7 +113,7 @@ def pyomo_model_prep(data, timesteps):
     m.timesteps = timesteps
     m.dsm = data['dsm']
     m.eff_factor = data['eff_factor']
-    if not data['transmission'].sum().sum()==0:
+    if not data['transmission'].sum().sum() == 0:
         m.transmission = data['transmission']
 
     # Converting Data frames to dict

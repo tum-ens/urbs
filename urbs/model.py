@@ -98,12 +98,14 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         initialize=m.storage.index.get_level_values('Storage').unique(),
         doc='Set of storage technologies')
 
-    if not data['transmission'].sum().sum() == 0:
+    try:
         # tranmission (e.g. hvac, hvdc, pipeline...)
         m.tra = pyomo.Set(
             initialize=m.transmission.index.get_level_values('Transmission')
                                            .unique(),
             doc='Set of transmission technologies')
+    except AttributeError:
+        pass
 
     # cost_type
     m.cost_type = pyomo.Set(
@@ -120,12 +122,14 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         within=m.sit*m.pro,
         initialize=m.process.index,
         doc='Combinations of possible processes, e.g. (North,Coal plant)')
-    if not data['transmission'].sum().sum() == 0:
+    try:
         m.tra_tuples = pyomo.Set(
             within=m.sit*m.sit*m.tra*m.com,
             initialize=m.transmission.index,
             doc='Combinations of possible transmissions, e.g. '
                 '(South,Mid,hvac,Elec)')
+    except AttributeError:
+        pass
     m.sto_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
         initialize=m.storage.index,
@@ -278,7 +282,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
 
-    if not data['transmission'].sum().sum() == 0:
+    try:
         # transmission
         m.cap_tra = pyomo.Var(
             m.tra_tuples,
@@ -296,6 +300,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
             m.tm, m.tra_tuples,
             within=pyomo.NonNegativeReals,
             doc='Power flow out of transmission line (MW) per timestep')
+    except AttributeError:
+        pass
 
     # storage
     m.cap_sto_c = pyomo.Var(
@@ -451,7 +457,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         rule=def_pro_partial_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
-    if not data['transmission'].sum().sum() == 0:
+    try:
         # transmission
         m.def_transmission_capacity = pyomo.Constraint(
             m.tra_tuples,
@@ -473,7 +479,10 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         m.res_transmission_symmetry = pyomo.Constraint(
             m.tra_tuples,
             rule=res_transmission_symmetry_rule,
-            doc='total transmission capacity must be symmetric in both directions')
+            doc='total transmission capacity must be symmetric in both '
+                'directions')
+    except AttributeError:
+        pass
 
     # storage
     m.def_storage_state = pyomo.Constraint(

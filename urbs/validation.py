@@ -76,7 +76,7 @@ def validate_input(data):
                        "ensure that the input values are adjusted "
                        "correspondingly.")
 
-    # Identify inconsistencies in site names thorughout worksheets
+    # Identify inconsistencies in site names throughout worksheets
     for site in data['site'].index.tolist():
         if site not in data['commodity'].index.levels[0].tolist():
             raise KeyError("All names in the column 'Site' in input worksheet "

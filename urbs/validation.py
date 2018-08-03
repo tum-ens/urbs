@@ -89,14 +89,16 @@ def validate_input(data):
                            "'Process' must be from the list of site names "
                            "specified in the worksheet 'Site'.")
 
-    for site in data['site'].index.tolist():
-        if site not in data['storage'].index.levels[0].tolist():
-            raise KeyError("All names in the column 'Site' in input worksheet "
-                           "'Storage' must be from the list of site names "
-                           "specified in the worksheet 'Site'.")
+    if not data['storage'].empty:
+        for site in data['site'].index.tolist():
+            if site not in data['storage'].index.levels[0].tolist():
+                raise KeyError("All names in the column 'Site' in input "
+                               "worksheet 'Storage' must be from the list of "
+                               "site names specified in the worksheet 'Site'.")
 
-    for site in data['site'].index.tolist():
-        if site not in data['dsm'].index.levels[0].tolist():
-            raise KeyError("All names in the column 'Site' in input worksheet "
-                           "'DSM' must be from the list of site names "
-                           "specified in the worksheet 'Site'.")
+    if not data['storage'].empty == 0:
+        for site in data['site'].index.tolist():
+            if site not in data['dsm'].index.levels[0].tolist():
+                raise KeyError("All names in the column 'Site' in input "
+                               "worksheet 'DSM' must be from the list of site "
+                               "names specified in the worksheet 'Site'.")

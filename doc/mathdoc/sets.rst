@@ -301,6 +301,16 @@ This set is defined as ``sto_tuples`` and given by the code fragment:
         within=m.sit*m.sto*m.com,
         initialize=m.storage.index,
         doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
+
+A subset of the storage tuples are all storages that have a user defined fixed
+value for the initial state.
+
+::
+    
+    m.sto_init_bound_tuples = pyomo.Set(
+        within=m.sit*m.sto*m.com,
+        initialize=m.stor_init_bound.index,
+        doc='storages with fixed initial state')
 		
 
 Process Input Tuples

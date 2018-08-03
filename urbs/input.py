@@ -151,6 +151,10 @@ def pyomo_model_prep(data, timesteps):
     m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
     m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
 
+    # storages with fixed initial state
+    m.stor_init_bound = m.storage['init']
+    m.stor_init_bound = m.stor_init_bound[m.stor_init_bound >= 0]
+
     # derive annuity factor from WACC and depreciation duration
     m.process['annuity-factor'] = (m.process.apply(lambda x:
                                    annuity_factor(x['depreciation'],

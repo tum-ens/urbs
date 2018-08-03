@@ -232,6 +232,12 @@ def create_model(data, dt=1, timesteps=None, dual=False):
                     if process == pro],
         doc='Outputs of processes with time dependent efficiency')
 
+    # storage tuples for storages with fixed initial state
+    m.sto_init_bound_tuples = pyomo.Set(
+        within=m.sit*m.sto*m.com,
+        initialize=m.stor_init_bound.index,
+        doc='storages with fixed initial state')
+
     # Variables
 
     # costs
@@ -505,9 +511,13 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         rule=res_storage_capacity_rule,
         doc='storage.cap-lo-c <= storage capacity <= storage.cap-up-c')
     m.res_initial_and_final_storage_state = pyomo.Constraint(
-        m.t, m.sto_tuples,
+        m.t, m.sto_init_bound_tuples,
         rule=res_initial_and_final_storage_state_rule,
         doc='storage content initial == and final >= storage.init * capacity')
+    m.res_initial_and_final_storage_state_var = pyomo.Constraint(
+        m.t, m.sto_tuples - m.sto_init_bound_tuples,
+        rule=res_initial_and_final_storage_state_var_rule,
+        doc='storage content initial <= final, both variable')
 
     # costs
     m.def_costs = pyomo.Constraint(
@@ -1025,6 +1035,11 @@ def res_initial_and_final_storage_state_rule(m, t, sit, sto, com):
                 m.storage_dict['init'][(sit, sto, com)])
     else:
         return pyomo.Constraint.Skip
+
+
+def res_initial_and_final_storage_state_var_rule(m, t, sit, sto, com):
+    return (m.e_sto_con[m.t[1], sit, sto, com] <=
+            m.e_sto_con[m.t[len(m.t)], sit, sto, com])
 
 
 # total CO2 output <= Global CO2 limit

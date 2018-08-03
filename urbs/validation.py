@@ -96,7 +96,7 @@ def validate_input(data):
                                "worksheet 'Storage' must be from the list of "
                                "site names specified in the worksheet 'Site'.")
 
-    if not data['storage'].empty == 0:
+    if not data['dsm'].empty == 0:
         for site in data['site'].index.tolist():
             if site not in data['dsm'].index.levels[0].tolist():
                 raise KeyError("All names in the column 'Site' in input "

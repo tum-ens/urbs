@@ -160,14 +160,20 @@ def pyomo_model_prep(data, timesteps):
                                    annuity_factor(x['depreciation'],
                                                   x['wacc']),
                                    axis=1))
-    m.transmission['annuity-factor'] = (m.transmission.apply(lambda x:
-                                        annuity_factor(x['depreciation'],
-                                                       x['wacc']),
-                                        axis=1))
-    m.storage['annuity-factor'] = (m.storage.apply(lambda x:
-                                   annuity_factor(x['depreciation'],
-                                                  x['wacc']),
-                                   axis=1))
+    try:
+        m.transmission['annuity-factor'] = (m.transmission.apply(lambda x:
+                                            annuity_factor(x['depreciation'],
+                                                           x['wacc']),
+                                            axis=1))
+    except ValueError:
+        pass
+    try:
+        m.storage['annuity-factor'] = (m.storage.apply(lambda x:
+                                       annuity_factor(x['depreciation'],
+                                                      x['wacc']),
+                                       axis=1))
+    except ValueError:
+        pass
 
     # Converting Data frames to dictionaries
     #

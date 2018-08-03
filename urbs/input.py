@@ -106,7 +106,6 @@ def pyomo_model_prep(data, timesteps):
     m.commodity = data['commodity']
     m.process = data['process']
     m.process_commodity = data['process_commodity']
-    m.transmission = data['transmission']
     m.storage = data['storage']
     m.demand = data['demand']
     m.supim = data['supim']
@@ -114,6 +113,8 @@ def pyomo_model_prep(data, timesteps):
     m.timesteps = timesteps
     m.dsm = data['dsm']
     m.eff_factor = data['eff_factor']
+    if not data['transmission'].sum().sum() == 0:
+        m.transmission = data['transmission']
 
     # Converting Data frames to dict
     m.commodity_dict = m.commodity.to_dict()
@@ -160,20 +161,27 @@ def pyomo_model_prep(data, timesteps):
                                    annuity_factor(x['depreciation'],
                                                   x['wacc']),
                                    axis=1))
-    m.transmission['annuity-factor'] = (m.transmission.apply(lambda x:
-                                        annuity_factor(x['depreciation'],
-                                                       x['wacc']),
-                                        axis=1))
     m.storage['annuity-factor'] = (m.storage.apply(lambda x:
                                    annuity_factor(x['depreciation'],
                                                   x['wacc']),
                                    axis=1))
+    try:
+        m.transmission['annuity-factor'] = (m.transmission.apply(lambda x:
+                                            annuity_factor(x['depreciation'],
+                                                           x['wacc']),
+                                            axis=1))
+    except AttributeError:
+        pass
 
     # Converting Data frames to dictionaries
     #
-    m.process_dict = m.process.to_dict()  # Changed
-    m.transmission_dict = m.transmission.to_dict()  # Changed
-    m.storage_dict = m.storage.to_dict()  # Changed
+    m.process_dict = m.process.to_dict()
+    m.storage_dict = m.storage.to_dict()
+    try:
+        m.transmission_dict = m.transmission.to_dict()
+    except AttributeError:
+        pass
+
     return m
 
 

@@ -1053,7 +1053,7 @@ def res_initial_and_final_storage_state_var_rule(m, t, sit, sto, com):
 
 def def_storage_energy_to_power_rule(m, sit, sto, com):
     return (m.cap_sto_c[sit, sto, com] ==
-            m.cap_sto_p[sit, sto, com] * m.storage['en-to-pow'][(sit, sto, com)])
+            m.cap_sto_p[sit, sto, com] * m.storage_dict['en-to-pow'][(sit, sto, com)])
             
 # total CO2 output <= Global CO2 limit
 def res_global_co2_limit_rule(m):

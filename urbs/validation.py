@@ -24,7 +24,7 @@ def validate_input(data):
             simplified_com_index = ([(s, c) for s, c, t in data['commodity']
                                     .index.tolist()])
             if ((pro, com) in simplified_pro_com_index and
-                (sit, com) not in simplified_com_index):
+                    (sit, com) not in simplified_com_index):
                 raise ValueError('Commodities used in a process at a site must'
                                  ' be specified in the commodity input sheet'
                                  '! The pair (' + sit + ',' + com + ')'
@@ -67,6 +67,13 @@ def validate_input(data):
     if (data['supim'] > 1).sum().sum() > 0:
         raise ValueError('All values in Sheet SupIm must be <= 1.')
 
+    # Identify non sensible values for inputs
+    if (data['storage']['init'] > 1).any():
+        raise ValueError("In worksheet 'storage' all values in column 'init'"
+                         " must be either in [0,1] (for a fixed initial"
+                         " storage level) or 'nan' for a variable initial"
+                         " storage level")
+
     # Identify outdated column label 'maxperstep' on the commodity tab and
     # suggest a rename to 'maxperhour'
     if 'maxperstep' in list(data['commodity']):
@@ -75,3 +82,30 @@ def validate_input(data):
                        "in the commodity worksheet to 'maxperhour' and "
                        "ensure that the input values are adjusted "
                        "correspondingly.")
+
+    # Identify inconsistencies in site names throughout worksheets
+    for site in data['site'].index.tolist():
+        if site not in data['commodity'].index.levels[0].tolist():
+            raise KeyError("All names in the column 'Site' in input worksheet "
+                           "'Commodity' must be from the list of site names "
+                           "specified in the worksheet 'Site'.")
+
+    for site in data['site'].index.tolist():
+        if site not in data['process'].index.levels[0].tolist():
+            raise KeyError("All names in the column 'Site' in input worksheet "
+                           "'Process' must be from the list of site names "
+                           "specified in the worksheet 'Site'.")
+
+    if not data['storage'].empty:
+        for site in data['site'].index.tolist():
+            if site not in data['storage'].index.levels[0].tolist():
+                raise KeyError("All names in the column 'Site' in input "
+                               "worksheet 'Storage' must be from the list of "
+                               "site names specified in the worksheet 'Site'.")
+
+    if not data['dsm'].empty:
+        for site in data['site'].index.tolist():
+            if site not in data['dsm'].index.levels[0].tolist():
+                raise KeyError("All names in the column 'Site' in input "
+                               "worksheet 'DSM' must be from the list of site "
+                               "names specified in the worksheet 'Site'.")

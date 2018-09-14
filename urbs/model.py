@@ -239,9 +239,9 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         doc='storages with fixed initial state')
 
     # storage tuples for storages with given energy to power ratio
-    m.sto_en_to_pow_tuples = pyomo.Set(
+    m.sto_ep_ratio_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
-        initialize=m.stor_en_to_pow.index,
+        initialize=m.sto_ep_ratio.index,
         doc='storages with given energy to power ratio')
         
     # Variables
@@ -524,9 +524,9 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         m.t, m.sto_tuples - m.sto_init_bound_tuples,
         rule=res_initial_and_final_storage_state_var_rule,
         doc='storage content initial <= final, both variable')
-    m.def_storage_energy_to_power = pyomo.Constraint(
-        m.sto_en_to_pow_tuples,
-        rule=def_storage_energy_to_power_rule,
+    m.def_storage_energy_power_ratio = pyomo.Constraint(
+        m.sto_ep_ratio_tuples,
+        rule=def_storage_energy_power_ratio_rule,
         doc='storage capacity = storage power * storage E2P ratio')
         
     # costs
@@ -1051,9 +1051,9 @@ def res_initial_and_final_storage_state_var_rule(m, t, sit, sto, com):
     return (m.e_sto_con[m.t[1], sit, sto, com] <=
             m.e_sto_con[m.t[len(m.t)], sit, sto, com])
 
-def def_storage_energy_to_power_rule(m, sit, sto, com):
+def def_storage_energy_power_ratio_rule(m, sit, sto, com):
     return (m.cap_sto_c[sit, sto, com] ==
-            m.cap_sto_p[sit, sto, com] * m.storage_dict['en-to-pow'][(sit, sto, com)])
+            m.cap_sto_p[sit, sto, com] * m.storage_dict['ep-ratio'][(sit, sto, com)])
             
 # total CO2 output <= Global CO2 limit
 def res_global_co2_limit_rule(m):

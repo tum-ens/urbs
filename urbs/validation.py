@@ -64,12 +64,12 @@ def validate_input(data):
                              ' for all storage capacities.')
 
     for index in data['storage'].index:
-        if pd.notna(data['storage'].loc[index]['en-to-pow']): 
+        if pd.notna(data['storage'].loc[index]['ep-ratio']): 
             if (data['storage'].loc[index]['cap-lo-p'] *
-                data['storage'].loc[index]['en-to-pow'] >
+                data['storage'].loc[index]['ep-ratio'] >
                 data['storage'].loc[index]['cap-up-c'] or
                 data['storage'].loc[index]['cap-up-p'] *
-                data['storage'].loc[index]['en-to-pow'] <
+                data['storage'].loc[index]['ep-ratio'] <
                 data['storage'].loc[index]['cap-lo-c']):
                 raise ValueError('Ensure that the upper and lower limits for'
                              ' power and energy capacities of the storage '

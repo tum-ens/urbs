@@ -216,7 +216,7 @@ independently sized but are dependent to each other. Hence, the constraint stora
 energy to power ratio rule sets a linear dependence between the capacities through a
 user-defined "energy to power ratio" :math:`k_{vs}^\text{E/P}`. It has to be noted
 that this constraint is only active for the storages with a positive value under the 
-column "e2p-ratio" in the input file, and when this value is not given, the power and
+column "ep-ratio" in the input file, and when this value is not given, the power and
 energy capacities can be sized independently. In mathematical notation this is expressed as:
 
 .. math::
@@ -227,11 +227,11 @@ In script ``model.py`` the constraint storage energy to power rule is
 then defined and calculated by the following code fragment:
 ::
 
-    m.def_storage_energy_to_power = pyomo.Constraint(
+    m.def_storage_energy_power_ratio = pyomo.Constraint(
         m.sto_en_to_pow_tuples,
-        rule=def_storage_energy_to_power_rule,
+        rule=def_storage_energy_power_ratio_rule,
         doc='storage capacity = storage power * storage E2P ratio')
 
 .. literalinclude:: /../urbs/model.py
-   :pyobject: def_storage_energy_to_power_rule   
+   :pyobject: def_storage_energy_power_ratio_rule   
 

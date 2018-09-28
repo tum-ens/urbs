@@ -528,16 +528,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         m.sto_ep_ratio_tuples,
         rule=def_storage_energy_power_ratio_rule,
         doc='storage capacity = storage power * storage E2P ratio')
-        
-    # costs
-    m.def_costs = pyomo.Constraint(
-        m.cost_type,
-        rule=def_costs_rule,
-        doc='main cost function by cost type')
-    m.obj = pyomo.Objective(
-        rule=obj_rule,
-        sense=pyomo.minimize,
-        doc='minimize(cost = sum of all cost types)')
 
     # demand side management
     m.def_dsm_variables = pyomo.Constraint(
@@ -565,9 +555,34 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         rule=res_dsm_recovery_rule,
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
 
-    m.res_global_co2_limit = pyomo.Constraint(
+    # costs
+    m.def_costs = pyomo.Constraint(
+        m.cost_type,
+        rule=def_costs_rule,
+        doc='main cost function by cost type')
+
+    # objective and global constraints
+    if m.global_prop.loc['Objective', 'value'] == 1:
+
+        m.res_global_co2_limit = pyomo.Constraint(
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
+
+        m.obj = pyomo.Objective(
+            rule=cost_rule,
+            sense=pyomo.minimize,
+            doc='minimize(cost = sum of all cost types)')
+
+    elif m.global_prop.loc['Objective', 'value'] == 2:
+
+        m.res_global_cost_limit = pyomo.Constraint(
+            rule=res_global_cost_limit_rule,
+            doc='total costs <= Global cost limit')
+
+        m.obj = pyomo.Objective(
+            rule=co2_rule,
+            sense=pyomo.minimize,
+            doc='minimize total CO2 emissions')
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
@@ -1195,5 +1210,26 @@ def def_costs_rule(m, cost_type):
         raise NotImplementedError("Unknown cost type.")
 
 
-def obj_rule(m):
+def cost_rule(m):
     return pyomo.summation(m.costs)
+
+
+def co2_rule(m):
+    co2_output_sum = 0
+    for tm in m.tm:
+        for sit in m.sit:
+            # minus because negative commodity_balance represents creation
+            # of that commodity.
+            co2_output_sum += (- commodity_balance(m, tm, sit, 'CO2'))
+
+    # scaling to annual output (cf. definition of m.weight)
+    co2_output_sum *= m.weight
+    return (co2_output_sum)
+
+
+def res_global_cost_limit_rule(m):
+    if math.isinf(m.global_prop.loc['Cost limit', 'value']):
+        return pyomo.Constraint.Skip
+    else:
+        return(pyomo.summation(m.costs) <= m.global_prop.
+                                           loc['Cost limit', 'value'])

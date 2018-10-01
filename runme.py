@@ -90,7 +90,7 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_file, timesteps, scenario, result_dir, dt,
+def run_scenario(input_file, timesteps, scenario, result_dir, dt, objective,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -118,7 +118,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     urbs.validate_input(data)
 
     # create model
-    prob = urbs.create_model(data, dt, timesteps)
+    prob = urbs.create_model(data, dt, objective, timesteps)
 
     # refresh time stamp string and create filename for logfile
     now = prob.created
@@ -162,6 +162,9 @@ if __name__ == '__main__':
     # copy runme.py to result directory
     shutil.copy(__file__, result_dir)
 
+    # objective function
+    objective = 'cost' # set either 'cost' or 'CO2' as objective
+
     # simulation timesteps
     (offset, length) = (3500, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
@@ -201,15 +204,17 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices,
-        scenario_co2_limit,
-        scenario_co2_tax_mid,
-        scenario_no_dsm,
-        scenario_north_process_caps,
-        scenario_all_together]
+        # scenario_stock_prices,
+        # scenario_co2_limit,
+        # scenario_co2_tax_mid,
+        # scenario_no_dsm,
+        # scenario_north_process_caps,
+        # scenario_all_together
+        ]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
+                            objective,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,

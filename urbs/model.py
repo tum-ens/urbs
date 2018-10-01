@@ -5,7 +5,7 @@ from .modelhelper import *
 from .input import *
 
 
-def create_model(data, dt=1, timesteps=None, dual=False):
+def create_model(data, dt=1, objective='cost', timesteps=None, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -44,6 +44,11 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.dt = pyomo.Param(
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
+
+    # import objective fundtion information
+    m.obj = pyomo.Param(
+        initialize=objective,
+        doc='Specification of minimized quantity, default: "cost"')
 
     # Sets
     # ====
@@ -562,7 +567,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         doc='main cost function by cost type')
 
     # objective and global constraints
-    if m.global_prop.loc['Objective', 'value'] == 1:
+    if m.obj.value == 'cost':
 
         m.res_global_co2_limit = pyomo.Constraint(
             rule=res_global_co2_limit_rule,
@@ -573,7 +578,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
             sense=pyomo.minimize,
             doc='minimize(cost = sum of all cost types)')
 
-    elif m.global_prop.loc['Objective', 'value'] == 2:
+    elif m.obj.value == 'CO2':
 
         m.res_global_cost_limit = pyomo.Constraint(
             rule=res_global_cost_limit_rule,
@@ -583,6 +588,11 @@ def create_model(data, dt=1, timesteps=None, dual=False):
             rule=co2_rule,
             sense=pyomo.minimize,
             doc='minimize total CO2 emissions')
+
+    else:
+        raise NotImplementedError("Non-implemented objective quantity. Set "
+                                  "either 'cost' or 'CO2' as the objective in "
+                                  "runme.py!")
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)

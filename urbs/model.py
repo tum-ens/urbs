@@ -5,7 +5,7 @@ from .modelhelper import *
 from .input import *
 
 
-def create_model(data, dt=1, objective='cost', timesteps=None, dual=False):
+def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -573,7 +573,7 @@ def create_model(data, dt=1, objective='cost', timesteps=None, dual=False):
             rule=res_global_co2_limit_rule,
             doc='total co2 commodity output <= Global CO2 limit')
 
-        m.obj = pyomo.Objective(
+        m.objective_function = pyomo.Objective(
             rule=cost_rule,
             sense=pyomo.minimize,
             doc='minimize(cost = sum of all cost types)')
@@ -584,7 +584,7 @@ def create_model(data, dt=1, objective='cost', timesteps=None, dual=False):
             rule=res_global_cost_limit_rule,
             doc='total costs <= Global cost limit')
 
-        m.obj = pyomo.Objective(
+        m.objective_function = pyomo.Objective(
             rule=co2_rule,
             sense=pyomo.minimize,
             doc='minimize total CO2 emissions')

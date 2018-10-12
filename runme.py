@@ -163,7 +163,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 168)  # time step selection
+    (offset, length) = (3500, 3)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -201,12 +201,13 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        scenario_stock_prices,
-        scenario_co2_limit,
-        scenario_co2_tax_mid,
-        scenario_no_dsm,
-        scenario_north_process_caps,
-        scenario_all_together]
+        #scenario_stock_prices,
+        #scenario_co2_limit,
+        #scenario_co2_tax_mid,
+        #scenario_no_dsm,
+        #scenario_north_process_caps,
+        #scenario_all_together
+        ]
 
     for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,

@@ -103,7 +103,7 @@ def pyomo_model_prep(data, timesteps):
     #
     m.global_prop = data['global_prop'].drop('description', axis=1)
     m.site = data['site']
-    m.commodity = data['commodity']
+    #m.commodity = data['commodity']
     m.process = data['process']
     m.process_commodity = data['process_commodity']
     m.transmission = data['transmission']
@@ -116,7 +116,7 @@ def pyomo_model_prep(data, timesteps):
     m.eff_factor = data['eff_factor']
 
     # Converting Data frames to dict
-    m.commodity_dict = m.commodity.to_dict()
+    m.commodity_dict = data["commodity"].to_dict()
     m.demand_dict = m.demand.to_dict()
     m.supim_dict = m.supim.to_dict()
     m.dsm_dict = m.dsm.to_dict()

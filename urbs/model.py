@@ -3,7 +3,7 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
 from .input import *
-
+import pdb
 
 def create_model(data, dt=1, timesteps=None, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
@@ -74,18 +74,25 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         doc='Set of additional DSM time steps')
 
     # site (e.g. north, middle, south...)
+    myset=set()
+    for key in m.commodity_dict["price"]: myset.add(tuple(key)[0])
     m.sit = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Site').unique(),
+        initialize=myset,
+        #initialize=m.commodity.index.get_level_values('Site').unique(),
         doc='Set of sites')
 
     # commodity (e.g. solar, wind, coal...)
+    for key in m.commodity_dict["price"]: myset.add(tuple(key)[1])
     m.com = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Commodity').unique(),
+        initialize=myset,
+        #initialize=m.commodity.index.get_level_values('Commodity').unique(),
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
+    for key in m.commodity_dict["price"]: myset.add(tuple(key)[2])
     m.com_type = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Type').unique(),
+        initialize=myset,
+        #initialize=m.commodity.index.get_level_values('Type').unique(),
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
@@ -113,7 +120,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     # tuple sets
     m.com_tuples = pyomo.Set(
         within=m.sit*m.com*m.com_type,
-        initialize=m.commodity.index,
+        #initialize=m.commodity.index,
+        initialize=tuple(m.commodity_dict["price"].keys()),
         doc='Combinations of defined commodities, e.g. (Mid,Elec,Demand)')
     m.pro_tuples = pyomo.Set(
         within=m.sit*m.pro,

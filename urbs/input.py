@@ -101,33 +101,36 @@ def pyomo_model_prep(data, timesteps):
     #
     #     m.storage.loc[site, storage, commodity][attribute]
     #
-    m.global_prop = data['global_prop'].drop('description', axis=1)
-    m.site = data['site']
+    m.global_prop = data['global_prop'].drop('description', axis=1) #no dictionary present, so DataFrame ok
+    m.site = data['site']                                           #no dictionary present, so DataFrame ok
     #m.commodity = data['commodity']
-    m.process = data['process']
-    m.process_commodity = data['process_commodity']
-    m.transmission = data['transmission']
-    m.storage = data['storage']
-    m.demand = data['demand']
-    m.supim = data['supim']
-    m.buy_sell_price = data['buy_sell_price']
-    m.timesteps = timesteps
-    m.dsm = data['dsm']
-    m.eff_factor = data['eff_factor']
+    m.process = data['process']                                     #no dictionary present, so DataFrame ok
+    m.process_commodity = data['process_commodity']                 #no dictionary present, so DataFrame ok
+    m.transmission = data['transmission']                           #no dictionary present, so DataFrame ok
+    m.storage = data['storage']                                     #no dictionary present, so DataFrame ok
+    #m.demand = data['demand']
+    #m.supim = data['supim']
+    #m.buy_sell_price = data['buy_sell_price']
+    m.timesteps = timesteps                                         #no dictionary present, so DataFrame ok
+    #m.dsm = data['dsm']
+    #m.eff_factor = data['eff_factor']
 
     # Converting Data frames to dict
     m.commodity_dict = data["commodity"].to_dict()
-    m.demand_dict = m.demand.to_dict()
-    m.supim_dict = m.supim.to_dict()
-    m.dsm_dict = m.dsm.to_dict()
-    m.buy_sell_price_dict = m.buy_sell_price.to_dict()
-    m.eff_factor_dict = m.eff_factor.to_dict()
+    m.demand_dict = data["demand"].to_dict()
+    m.supim_dict = data["supim"].to_dict()
+    m.dsm_dict = data["dsm"].to_dict()
+    m.buy_sell_price_dict = data["buy_sell_price"].to_dict()
+    m.eff_factor_dict = data["eff_factor"].to_dict()
 
     # process input/output ratios
     m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
     m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
-    m.r_in_dict = m.r_in.to_dict()
-    m.r_out_dict = m.r_out.to_dict()
+    #m.r_in_dict = m.r_in.to_dict()
+    #m.r_out_dict = m.r_out.to_dict()
+    m.r_in_dict = m.process_commodity.xs('In', level='Direction')['ratio'].to_dict()
+    m.r_out_dict = m.process_commodity.xs('Out', level='Direction')['ratio'].to_dict()    
+    
 
     # process areas
     m.proc_area = m.process['area-per-cap']
@@ -185,6 +188,7 @@ def pyomo_model_prep(data, timesteps):
     # Converting Data frames to dictionaries
     #
     m.process_dict = m.process.to_dict()  # Changed
+    m.del_component(m.process)
     m.transmission_dict = m.transmission.to_dict()  # Changed
     m.storage_dict = m.storage.to_dict()  # Changed
     return m

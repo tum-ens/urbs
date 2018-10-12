@@ -1,4 +1,5 @@
 import pandas as pd
+import pdb
 
 
 def annuity_factor(n, i):
@@ -84,10 +85,11 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
     Returns:
         A list of possible time tuples depending on site and commodity
     """
-    if m.dsm.empty:
+
+    if not m.dsm_dict:
         return []
 
-    delay = m.dsm['delay']
+    delay = m.dsm_dict['delay']
     ub = max(time)
     lb = min(time)
     time_list = []

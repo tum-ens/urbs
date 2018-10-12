@@ -138,7 +138,8 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
     m.dsm_site_tuples = pyomo.Set(
         within=m.sit*m.com,
-        initialize=m.dsm.index,
+        #initialize=m.dsm.index,
+        initialize=tuple(m.dsm_dict["delay"].keys()),
         doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
     m.dsm_down_tuples = pyomo.Set(
         within=m.tm*m.tm*m.sit*m.com,
@@ -187,14 +188,17 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
                     for (site, process) in m.pro_tuples
-                    for (pro, commodity) in m.r_in.index
+                    #for (pro, commodity) in m.r_in_dict.index
+                    for (pro, commodity) in tuple(m.r_in_dict.keys())
                     if process == pro],
+        #initialize=tuple(m.dsm_dict["delay"].keys())
         doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')
     m.pro_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
                     for (site, process) in m.pro_tuples
-                    for (pro, commodity) in m.r_out.index
+                    #for (pro, commodity) in m.r_out.index
+                    for (pro, commodity) in tuple(m.r_out_dict.keys())
                     if process == pro],
         doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
 

@@ -227,6 +227,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
                     if process == pro],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,Coal)')
 
+    
     m.pro_partial_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
@@ -239,8 +240,10 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.pro_timevar_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
-                    for (site, process) in m.eff_factor.columns.values
-                    for (pro, commodity) in m.r_out.index
+                    #for (site, process) in m.eff_factor.columns.values
+                    for (site, process) in tuple(m.eff_factor_dict.keys())
+                    #for (pro, commodity) in m.r_out.index
+                    for (pro, commodity) in tuple(m.r_out_dict.keys())
                     if process == pro],
         doc='Outputs of processes with time dependent efficiency')
 
@@ -874,7 +877,8 @@ def def_partial_process_input_rule(m, tm, sit, pro, coin):
 
 
 def def_partial_process_output_rule(m, tm, sit, pro, coo):
-    R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
+    #R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
+    R = m.r_out_dict[pro, coo]  # input ratio at maximum operation point
     r = m.r_out_min_fraction[pro, coo]  # input ratio at lowest operation point
     min_fraction = m.process_dict['min-fraction'][(sit, pro)]
 
@@ -897,7 +901,8 @@ def def_pro_timevar_output_rule(m, tm, sit, pro, com):
 
 
 def def_pro_partial_timevar_output_rule(m, tm, sit, pro, coo):
-    R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
+    #R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
+    R = m.r_out_dict[pro, coo]  # input ratio at maximum operation point
     r = m.r_out_min_fraction[pro, coo]  # input ratio at lowest operation point
     min_fraction = m.process_dict['min-fraction'][(sit, pro)]
 

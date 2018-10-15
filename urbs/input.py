@@ -104,10 +104,10 @@ def pyomo_model_prep(data, timesteps):
     m.global_prop = data['global_prop'].drop('description', axis=1) #no dictionary present, so DataFrame ok
     m.site = data['site']                                           #no dictionary present, so DataFrame ok
     #m.commodity = data['commodity']
-    m.process = data['process']                                     #no dictionary present, so DataFrame ok
-    m.process_commodity = data['process_commodity']                 #no dictionary present, so DataFrame ok
-    m.transmission = data['transmission']                           #no dictionary present, so DataFrame ok
-    m.storage = data['storage']                                     #no dictionary present, so DataFrame ok
+    m.process = data['process']                                     #deleted at end of function
+    #m.process_commodity = data['process_commodity']                 
+    m.transmission = data['transmission']                           #deleted at end of function
+    m.storage = data['storage']                                     #deleted at end of function
     #m.demand = data['demand']
     #m.supim = data['supim']
     #m.buy_sell_price = data['buy_sell_price']
@@ -124,12 +124,12 @@ def pyomo_model_prep(data, timesteps):
     m.eff_factor_dict = data["eff_factor"].to_dict()
 
     # process input/output ratios
-    m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
-    m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
+    #m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
+    #m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
     #m.r_in_dict = m.r_in.to_dict()
     #m.r_out_dict = m.r_out.to_dict()
-    m.r_in_dict = m.process_commodity.xs('In', level='Direction')['ratio'].to_dict()
-    m.r_out_dict = m.process_commodity.xs('Out', level='Direction')['ratio'].to_dict()    
+    m.r_in_dict = data['process_commodity'].xs('In', level='Direction')['ratio'].to_dict()
+    m.r_out_dict = data['process_commodity'].xs('Out', level='Direction')['ratio'].to_dict()    
     
 
     # process areas
@@ -142,7 +142,7 @@ def pyomo_model_prep(data, timesteps):
     # only keep those entries whose values are
     # a) positive and
     # b) numeric (implicitely, as NaN or NV compare false against 0)
-    m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')
+    m.r_in_min_fraction = data['process_commodity'].xs('In', level='Direction')
     m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
     m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
 
@@ -150,7 +150,7 @@ def pyomo_model_prep(data, timesteps):
     # only keep those entries whose values are
     # a) positive and
     # b) numeric (implicitely, as NaN or NV compare false against 0)
-    m.r_out_min_fraction = m.process_commodity.xs('Out', level='Direction')
+    m.r_out_min_fraction = data['process_commodity'].xs('Out', level='Direction')
     m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
     m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
 
@@ -186,11 +186,12 @@ def pyomo_model_prep(data, timesteps):
         pass
 
     # Converting Data frames to dictionaries
-    #
     m.process_dict = m.process.to_dict()  # Changed
     m.del_component(m.process)
     m.transmission_dict = m.transmission.to_dict()  # Changed
+    m.del_component(m.transmission)
     m.storage_dict = m.storage.to_dict()  # Changed
+    m.del_component(m.storage)
     return m
 
 

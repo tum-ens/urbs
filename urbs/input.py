@@ -94,28 +94,14 @@ def read_excel(filename):
 def pyomo_model_prep(data, timesteps):
     m = pyomo.ConcreteModel()
 
-    # Preparations
-    # ============
-    # Data import. Syntax to access a value within equation definitions looks
-    # like this:
-    #
-    #     m.storage.loc[site, storage, commodity][attribute]
-    #
-    m.global_prop = data['global_prop'].drop('description', axis=1) #no dictionary present, so DataFrame ok
-    m.site = data['site']                                           #no dictionary present, so DataFrame ok
-    #m.commodity = data['commodity']
-    m.process = data['process']                                     #deleted at end of function
-    #m.process_commodity = data['process_commodity']                 
-    m.transmission = data['transmission']                           #deleted at end of function
-    m.storage = data['storage']                                     #deleted at end of function
-    #m.demand = data['demand']
-    #m.supim = data['supim']
-    #m.buy_sell_price = data['buy_sell_price']
-    m.timesteps = timesteps                                         #no dictionary present, so DataFrame ok
-    #m.dsm = data['dsm']
-    #m.eff_factor = data['eff_factor']
-
+    m.timesteps = timesteps         #(m.t, m.tt, m.tm, m.timesteps all the same! Reduction possible?)
+    process = data['process']
+    transmission = data['transmission']  
+    storage = data['storage']
+    
     # Converting Data frames to dict
+    m.global_prop_dict = data['global_prop'].drop('description', axis=1).to_dict()
+    m.site_dict=data["site"].to_dict()
     m.commodity_dict = data["commodity"].to_dict()
     m.demand_dict = data["demand"].to_dict()
     m.supim_dict = data["supim"].to_dict()
@@ -124,61 +110,60 @@ def pyomo_model_prep(data, timesteps):
     m.eff_factor_dict = data["eff_factor"].to_dict()
 
     # process input/output ratios
-    #m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
-    #m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
-    #m.r_in_dict = m.r_in.to_dict()
-    #m.r_out_dict = m.r_out.to_dict()
     m.r_in_dict = data['process_commodity'].xs('In', level='Direction')['ratio'].to_dict()
     m.r_out_dict = data['process_commodity'].xs('Out', level='Direction')['ratio'].to_dict()    
     
-
     # process areas
-    m.proc_area = m.process['area-per-cap']
-    m.sit_area = m.site['area']
-    m.proc_area = m.proc_area[m.proc_area >= 0]
-    m.sit_area = m.sit_area[m.sit_area >= 0]
-
+    proc_area = data["process"]['area-per-cap']
+    proc_area = proc_area[proc_area >= 0]     
+    m.proc_area_dict=proc_area.to_dict()
+    sit_area = data["site"]['area']                     #What is this for? Program runs without m.sit_area, too!
+    sit_area = sit_area[sit_area >= 0]  
+    m.sit_area_dict=sit_area.to_dict()
+    
     # input ratios for partial efficiencies
     # only keep those entries whose values are
     # a) positive and
     # b) numeric (implicitely, as NaN or NV compare false against 0)
-    m.r_in_min_fraction = data['process_commodity'].xs('In', level='Direction')
-    m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
-    m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
+    r_in_min_fraction = data['process_commodity'].xs('In', level='Direction')
+    r_in_min_fraction = r_in_min_fraction['ratio-min']
+    r_in_min_fraction = r_in_min_fraction[r_in_min_fraction > 0]
+    m.r_in_min_fraction_dict=r_in_min_fraction.to_dict()
 
     # output ratios for partial efficiencies
     # only keep those entries whose values are
     # a) positive and
     # b) numeric (implicitely, as NaN or NV compare false against 0)
-    m.r_out_min_fraction = data['process_commodity'].xs('Out', level='Direction')
-    m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
-    m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
-
+    r_out_min_fraction = data['process_commodity'].xs('Out', level='Direction')
+    r_out_min_fraction = r_out_min_fraction['ratio-min']
+    r_out_min_fraction = r_out_min_fraction[r_out_min_fraction > 0]
+    m.r_out_min_fraction_dict=r_out_min_fraction.to_dict()
+    
     # storages with fixed initial state
-    m.stor_init_bound = m.storage['init']
-    m.stor_init_bound = m.stor_init_bound[m.stor_init_bound >= 0]
+    stor_init_bound = storage['init']
+    m.stor_init_bound_dict = stor_init_bound[stor_init_bound >= 0].to_dict()
 
     # storages with fixed energy-to-power ratio
     try:
-        m.sto_ep_ratio = m.storage['ep-ratio']
-        m.sto_ep_ratio = m.sto_ep_ratio[m.sto_ep_ratio >= 0]
+        sto_ep_ratio = storage['ep-ratio']
+        m.sto_ep_ratio_dict = sto_ep_ratio[sto_ep_ratio >= 0].to_dict()
     except:
-        m.sto_ep_ratio = pd.DataFrame() 
+        m.sto_ep_ratio_dict = pd.DataFrame() 
     
     # derive annuity factor from WACC and depreciation duration
-    m.process['annuity-factor'] = (m.process.apply(lambda x:
+    process['annuity-factor'] = (process.apply(lambda x:
                                    annuity_factor(x['depreciation'],
                                                   x['wacc']),
                                    axis=1))
     try:
-        m.transmission['annuity-factor'] = (m.transmission.apply(lambda x:
+        transmission['annuity-factor'] = (transmission.apply(lambda x:
                                             annuity_factor(x['depreciation'],
                                                            x['wacc']),
                                             axis=1))
     except ValueError:
         pass
     try:
-        m.storage['annuity-factor'] = (m.storage.apply(lambda x:
+        storage['annuity-factor'] = (storage.apply(lambda x:
                                        annuity_factor(x['depreciation'],
                                                       x['wacc']),
                                        axis=1))
@@ -186,12 +171,9 @@ def pyomo_model_prep(data, timesteps):
         pass
 
     # Converting Data frames to dictionaries
-    m.process_dict = m.process.to_dict()  # Changed
-    m.del_component(m.process)
-    m.transmission_dict = m.transmission.to_dict()  # Changed
-    m.del_component(m.transmission)
-    m.storage_dict = m.storage.to_dict()  # Changed
-    m.del_component(m.storage)
+    m.process_dict = process.to_dict()
+    m.transmission_dict = transmission.to_dict()
+    m.storage_dict = storage.to_dict()
     return m
 
 
@@ -235,6 +217,7 @@ def get_input(prob, name):
         the corresponding input DataFrame
 
     """
+
     if hasattr(prob, name):
         # classic case: input data DataFrames are accessible via named
         # attributes, e.g. `prob.process`.

@@ -90,7 +90,7 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_file, timesteps, scenario, result_dir,
+def run_scenario(input_file, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -100,6 +100,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
+        dt: length of each time step (unit: hours)
         plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
         plot_sites_name: (optional) dict of names for sites in plot_tuples
         plot_periods: (optional) dict of plot periods(c.f. urbs.result_figures)
@@ -117,7 +118,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     urbs.validate_input(data)
 
     # create model
-    prob = urbs.create_model(data, timesteps)
+    prob = urbs.create_model(data, dt, timesteps)
 
     # refresh time stamp string and create filename for logfile
     now = prob.created
@@ -142,12 +143,14 @@ def run_scenario(input_file, timesteps, scenario, result_dir,
     urbs.result_figures(
         prob,
         os.path.join(result_dir, '{}'.format(sce)),
+        timesteps,
         plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
     return prob
+
 
 if __name__ == '__main__':
     input_file = 'mimo-example.xlsx'
@@ -162,6 +165,7 @@ if __name__ == '__main__':
     # simulation timesteps
     (offset, length) = (3500, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
+    dt = 1  # length of each time step (unit: hours)
 
     # plotting commodities/sites
     plot_tuples = [
@@ -171,7 +175,7 @@ if __name__ == '__main__':
         (['North', 'Mid', 'South'], 'Elec')]
 
     # optional: define names for sites in plot_tuples
-    plot_sites_name = {('North', 'Mid', 'South'):'All'}
+    plot_sites_name = {('North', 'Mid', 'South'): 'All'}
 
     # detailed reporting commodity/sites
     report_tuples = [
@@ -205,7 +209,7 @@ if __name__ == '__main__':
         scenario_all_together]
 
     for scenario in scenarios:
-        prob = run_scenario(input_file, timesteps, scenario, result_dir,
+        prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,

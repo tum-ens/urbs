@@ -22,24 +22,16 @@ Imports
 
 ::
 
-    try:
-        import pyomo.environ
-        from pyomo.opt.base import SolverFactory
-        PYOMO3 = False
-    except ImportError:
-        import coopr.environ
-        from coopr.opt.base import SolverFactory
-        PYOMO3 = True
-    import os
-    import shutil
-    import urbs
-    from datetime import datetime
+	import os
+	import pandas as pd
+	import pyomo.environ
+	import shutil
+	import urbs
+	from datetime import datetime
+	from pyomo.opt.base import SolverFactory
 
    
 Several packages are included.
-
-* the try-except block checks for the version of Coopr/Pyomo installed and imports
-the necessary packages for the model creation and solution.
 
 * `os`_ is a builtin Python module, included here for its `os.path`_ submodule
   that offers operating system independent path manipulation routines. The 
@@ -52,9 +44,9 @@ the necessary packages for the model creation and solution.
       if not os.path.exists(result_dir):
           os.makedirs(result_dir)
   
-* `urbs`_ is the module whose functions are used mainly in this script. These
+* `urbs`_ is the directory which includes the modules, whose functions are used mainly in this script. These
   are :func:`read_excel`, :func:`create_model`, :func:`report` and
-  :func:`plot`. More functions can be found in the document :ref:`API`.
+  :func:`result_figures`. More functions can be found in the document :ref:`API`.
 
 * `pyomo.opt.base`_ is a utility package by `pyomo`_ and provides the function
   ``SolverFactory`` that allows creating a ``solver`` object. This objects 
@@ -74,18 +66,20 @@ From here on, the script is best read from the back.::
         result_name = os.path.splitext(input_file)[0]  # cut away file extension
         result_dir = prepare_result_directory(result_name)  # name + time stamp
     
-        (offset, length) = (4000, 5*24)  # time step selection
+        (offset, length) = (3500, 168)  # time step selection
         timesteps = range(offset, offset+length+1)
+        dt = 1
 
 Variable ``input_file`` defines the input spreadsheet, from which the
 optimization problem will draw all its set/parameter data.
    
 Variable ``timesteps`` is the list of timesteps to be simulated. Its members
 must be a subset of the labels used in ``input_file``'s sheets "Demand" and
-"SupIm". It is one of the two function arguments to :func:`create_model` and
-accessible directly, because one can quickly reduce the problem size by
+"SupIm". It is one of the function arguments to :func:`create_model` and
+accessible directly, so that one can quickly reduce the problem size by
 reducing the simulation ``length``, i.e. the number of timesteps to be
-optimised. 
+optimised. Variable ``dt`` is the duration of each timestep in the list
+(unit: hours). 
 
 :func:`range` is used to create a list of consecutive integers. The argument
 ``+1`` is needed, because ``range(a,b)`` only includes integers from ``a`` to
@@ -192,7 +186,7 @@ Run scenarios
 ::
 
     for scenario in scenarios:
-        prob = run_scenario(input_file, timesteps, scenario, result_dir)
+        prob = run_scenario(input_file, timesteps, scenario, result_dir, dt)
 
 Having prepared settings, input data and scenarios, the actual computations
 happen in the function :func:`run_scenario` of the script. It is executed 
@@ -232,9 +226,7 @@ Solving
 ::
 
     # create model
-    prob = urbs.create_model(data, timesteps)
-    if PYOMO3:
-        prob = prob.create()
+    prob = urbs.create_model(data, dt, timesteps)
 
     # refresh time stamp string and create filename for logfile
     now = prob.created
@@ -244,10 +236,6 @@ Solving
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
-    if PYOMO3:
-        prob.load(result)
-    else:
-        prob.solutions.load_from(result)
 
 This section is the "work horse", where most computation and time is spent. The
 optimization problem is first defined (:func:`create_model`), then filled with
@@ -255,7 +243,7 @@ values (``create``). The ``SolverFactory`` object is an abstract representation
 of the solver used. The returned object ``optim`` has a method
 :meth:`set_options` to set solver options (not used in this tutorial).
 
-The remaining two lines call the solver and read the ``result`` object back
+The remaining line calls the solver and reads the ``result`` object back
 into the ``prob`` object, which is queried to for variable values in the
 remaining script file. Argument ``tee=True`` enables the realtime console
 output for the solver. If you want less verbose output, simply set it to
@@ -270,7 +258,7 @@ Reporting
     urbs.report(
         prob,
         os.path.join(result_dir, '{}-{}.xlsx').format(sce, now),
-        ['Elec'], ['South', 'Mid', 'North'])
+        report_tuples=report_tuples, report_sites_name=report_sites_name)
    
 The :func:`urbs.report` function creates a spreadsheet from the main results.
 Summaries of costs, emissions, capacities (process, transmissions, storage) are

@@ -13,9 +13,9 @@ formulation and the DSM feature of urbs are explained.
 Introduction
 ------------
 
-The DSM feature of urbs has 2 variables **DSM upshift** and **DSM downshift**. 
+The DSM feature of urbs has 2 variables: **DSM upshift** and **DSM downshift**. 
 An upshift/downshift in time step :math:`t` means increased/decreased demand for that 
-time step. The DSM feature has 5 technical parameters **delay** (:math:`y_{vc}`), **eff** (:math:`e_{vc}`), 
+time step respectively. The DSM feature has 5 technical parameters: **delay** (:math:`y_{vc}`), **eff** (:math:`e_{vc}`), 
 **recov** (:math:`o_{vc}`), **cap-max-do** (:math:`\overline{K}_{vc}^\text{down}`) and **cap-max-up** (:math:`\overline{K}_{vc}^\text{up}`). 
 For detailed information, see :ref:`Demand Side Management Technical Parameters`.
 The input excel file of urbs requires an extra DSM sheet, with columns named 
@@ -27,11 +27,12 @@ For detailed information see :ref:`Demand Side Management Constraints`.
 Mathematical Description
 ------------------------
 
-Before getting started with examples, the :ref:`DSM Variables Rule` should be 
+Within this mathematical description, time steps with default step size of one hour (:math:`\Delta t = 1`)
+will be assumed. Before getting started with examples, the :ref:`DSM Variables Rule` should be 
 clarified, as it is vital in understanding the workflow of DSM. This rule 
 is about the relation between upshifts and their corresponding downshifts. An upshift (multiplied 
 with efficiency) must be compensated with multiple downshifts during a certain
-time intervall. The lower and upper bounds of this time intervall are :math:`t - y_{vc}` 
+time interval. The lower and upper bounds of this time interval are :math:`t - y_{vc}` 
 and :math:`t + y_{vc}`. While defining this time interval, another 
 time index :math:`tt` is required. Main idea behind this representation is to map every downshift 
 to an upshift. With :math:`tt` being included, our downshift process 
@@ -43,9 +44,9 @@ made in that time step :math:`t`.
    
 Another constraint of DSM is the **DSM downward rule** and also helpful realizing the 
 matrix representation of time indexes. This rule limits the maximum downshift 
-capacity in time step :math:`tt` during a certain time intervall. The lower and upper bounds 
-of this time intervall are :math:`tt - y_{vc}` and :math:`tt + y_{vc}`. For every :math:`tt`, 
-the **DSM downward rule** iterates through this time intervall vertically (:math:`tt` is constant, 
+capacity in time step :math:`tt` during a certain time interval. The lower and upper bounds 
+of this time interval are :math:`tt - y_{vc}` and :math:`tt + y_{vc}`. For every :math:`tt`, 
+the **DSM downward rule** iterates through this time interval vertically (:math:`tt` is constant, 
 :math:`t` varies between :math:`tt - y_{vc}` and :math:`tt + y_{vc}`) and sums every component of matrix. The sum may not 
 exceed a pre-defined value of maximum downshift capacity.
 
@@ -115,7 +116,7 @@ The purpose of this exemplification is to display effects of DSM parameter chang
 to the demand curve. Therefore, the input file without any changes is used as the 
 original one and every other result is compared with this one for better understanding.
 
-For the exemplification phase, the excel input file :download:`mimo-example.xlsx <mimo-example.xlsx>` is used and 
+For the exemplification phase, the excel input file :download:`mimo-example.xlsx <../mimo-example.xlsx>` is used and 
 the output plot scenario_base-Elec-South-all is regarded.
 
 

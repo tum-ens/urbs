@@ -1,5 +1,4 @@
 import pandas as pd
-import pdb
 
 
 def annuity_factor(n, i):
@@ -85,7 +84,6 @@ def dsm_down_time_tuples(time, sit_com_tuple, m):
     Returns:
         A list of possible time tuples depending on site and commodity
     """
-
     if not m.dsm_dict:
         return []
 

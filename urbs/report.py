@@ -2,7 +2,6 @@ import pandas as pd
 from .input import get_input
 from .output import get_constants, get_timeseries
 from .util import is_string
-#Todo:Check for proper usage of dsm dictionary
 
 def report(instance, filename, report_tuples=None, report_sites_name={}):
     """Write result summary to a spreadsheet file

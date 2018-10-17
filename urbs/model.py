@@ -3,7 +3,7 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
 from .input import *
-import pdb
+
 
 def create_model(data, dt=1, timesteps=None, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
@@ -140,7 +140,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         initialize=tuple(m.storage_dict["eff-in"].keys()),
         doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
     
-    #Raises Key Error, if DataFrame is deleted and corresponding empty dictionary is accessed.
+    #Generally: If DataFrame is deleted (like in no_dsm_scenario) and corresponding empty dictionary is accessed: Key Error. Example Workaround:
     try:
         myset=tuple(m.dsm_dict["delay"].keys())
     except KeyError:
@@ -148,9 +148,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.dsm_site_tuples = pyomo.Set(
         within=m.sit*m.com,
         initialize=myset,
-        #initialize=tuple(tuple(m.dsm_dict[Leon].keys())
-        #        for Leon in m.dsm_dict.keys()
-        #        if Leon=="delay"),             #Does not work
         doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
     m.dsm_down_tuples = pyomo.Set(
         within=m.tm*m.tm*m.sit*m.com,
@@ -201,7 +198,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
                     for (site, process) in m.pro_tuples
                     for (pro, commodity) in tuple(m.r_in_dict.keys())
                     if process == pro],
-        #initialize=tuple(m.dsm_dict["delay"].keys())
         doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')
     m.pro_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
@@ -236,7 +232,6 @@ def create_model(data, dt=1, timesteps=None, dual=False):
                     if process == pro],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,Coal)')
 
-    
     m.pro_partial_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
@@ -249,12 +244,11 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m.pro_timevar_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
-                    #for (site, process) in m.eff_factor.columns.values
                     for (site, process) in tuple(m.eff_factor_dict.keys())
                     for (pro, commodity) in tuple(m.r_out_dict.keys())
                     if process == pro],
         doc='Outputs of processes with time dependent efficiency')
-    
+
     # storage tuples for storages with fixed initial state
     m.sto_init_bound_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,

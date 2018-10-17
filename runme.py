@@ -127,7 +127,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result=optim.solve(prob, tee=True)
+    result = optim.solve(prob, tee=True)
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -149,10 +149,14 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
-    
+    return prob
 
 
 if __name__ == '__main__':
+    process = psutil.Process(os.getpid())
+    Speicherbelegung=list()
+    Speicherbelegung.append(process.memory_info().rss/1000000)
+    
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp
@@ -163,7 +167,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (0, 168)  # time step selection
+    (offset, length) = (3500, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -209,11 +213,10 @@ if __name__ == '__main__':
         scenario_all_together
         ]
 
-    for scenario in scenarios:
-        prob=run_scenario(input_file, timesteps, scenario, result_dir, dt,
+    for scenario in scenarios:      
+        prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
-        print(time.process_time()-t1)

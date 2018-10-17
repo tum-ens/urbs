@@ -5,7 +5,7 @@ import shutil
 import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
-
+#delete m._data (some functions need to be altered), remove prob @prob=run_scenario() and result @result=optim.solve()
 
 # SCENARIOS
 def scenario_base(data):
@@ -127,7 +127,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
+    result=optim.solve(prob, tee=True)
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -149,7 +149,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
-    return prob
+    
 
 
 if __name__ == '__main__':
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # simulation timesteps
-    (offset, length) = (3500, 3)  # time step selection
+    (offset, length) = (0, 168)  # time step selection
     timesteps = range(offset, offset+length+1)
     dt = 1  # length of each time step (unit: hours)
 
@@ -201,18 +201,19 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         scenario_base,
-        #scenario_stock_prices,
-        #scenario_co2_limit,
-        #scenario_co2_tax_mid,
-        #scenario_no_dsm,
-        #scenario_north_process_caps,
-        #scenario_all_together
+        scenario_stock_prices,
+        scenario_co2_limit,
+        scenario_co2_tax_mid,
+        scenario_no_dsm,
+        scenario_north_process_caps,
+        scenario_all_together
         ]
 
     for scenario in scenarios:
-        prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
+        prob=run_scenario(input_file, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,
                             report_tuples=report_tuples,
                             report_sites_name=report_sites_name)
+        print(time.process_time()-t1)

@@ -3,6 +3,7 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
 from .input import *
+import pdb
 
 def create_model(data, dt=1, timesteps=None, dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
@@ -24,7 +25,7 @@ def create_model(data, dt=1, timesteps=None, dual=False):
     m = pyomo_model_prep(data, timesteps)  # preparing pyomo model
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
-    m._data = data          #delete this?
+    m._data = data
 
     # Parameters
 
@@ -138,9 +139,18 @@ def create_model(data, dt=1, timesteps=None, dual=False):
         within=m.sit*m.sto*m.com,
         initialize=tuple(m.storage_dict["eff-in"].keys()),
         doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
+    
+    #Raises Key Error, if DataFrame is deleted and corresponding empty dictionary is accessed.
+    try:
+        myset=tuple(m.dsm_dict["delay"].keys())
+    except KeyError:
+        myset=()
     m.dsm_site_tuples = pyomo.Set(
         within=m.sit*m.com,
-        initialize=tuple(m.dsm_dict["delay"].keys()),
+        initialize=myset,
+        #initialize=tuple(tuple(m.dsm_dict[Leon].keys())
+        #        for Leon in m.dsm_dict.keys()
+        #        if Leon=="delay"),             #Does not work
         doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
     m.dsm_down_tuples = pyomo.Set(
         within=m.tm*m.tm*m.sit*m.com,

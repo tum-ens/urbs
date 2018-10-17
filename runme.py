@@ -153,10 +153,6 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
 
 
 if __name__ == '__main__':
-    process = psutil.Process(os.getpid())
-    Speicherbelegung=list()
-    Speicherbelegung.append(process.memory_info().rss/1000000)
-    
     input_file = 'mimo-example.xlsx'
     result_name = os.path.splitext(input_file)[0]  # cut away file extension
     result_dir = prepare_result_directory(result_name)  # name + time stamp

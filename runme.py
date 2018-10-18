@@ -93,7 +93,6 @@ def setup_solver(optim, logfile='solver.log'):
 def run_scenario(input_file, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
-                 
     """ run an urbs model for given input, time steps and scenario
     Args:
         input_file: filename to an Excel spreadsheet for urbs.read_excel
@@ -106,7 +105,6 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
         plot_periods: (optional) dict of plot periods(c.f. urbs.result_figures)
         report_tuples: (optional) list of (sit, com) tuples (c.f. urbs.report)
         report_sites_name: (optional) dict of names for sites in report_tuples
-
     Returns:
         the urbs model instance
     """

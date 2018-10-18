@@ -6,6 +6,7 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 
+
 # SCENARIOS
 def scenario_base(data):
     # do nothing
@@ -92,6 +93,7 @@ def setup_solver(optim, logfile='solver.log'):
 def run_scenario(input_file, timesteps, scenario, result_dir, dt,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
+                 
     """ run an urbs model for given input, time steps and scenario
     Args:
         input_file: filename to an Excel spreadsheet for urbs.read_excel
@@ -104,6 +106,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
         plot_periods: (optional) dict of plot periods(c.f. urbs.result_figures)
         report_tuples: (optional) list of (sit, com) tuples (c.f. urbs.report)
         report_sites_name: (optional) dict of names for sites in report_tuples
+
     Returns:
         the urbs model instance
     """
@@ -203,10 +206,9 @@ if __name__ == '__main__':
         scenario_co2_tax_mid,
         scenario_no_dsm,
         scenario_north_process_caps,
-        scenario_all_together
-        ]
+        scenario_all_together]
 
-    for scenario in scenarios:      
+    for scenario in scenarios:
         prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,

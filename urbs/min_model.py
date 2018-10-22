@@ -76,27 +76,23 @@ def create_min_model_tuples(m,dt=1):
         initialize=m.process.index,
         doc='Combinations of possible processes, e.g. (North,Coal plant)')
     # process expansion tuples
-    if not m.process_exp.empty:
-        m.pro_tuples_exp = pyomo.Set(
-            within=m.sit*m.pro,
-            initialize=m.process_exp.index,
-            doc='Combinations of possible processes with expansion, e.g. (North,Coal plant)')
-    if not m.process_const.empty:
-        m.pro_tuples_const = pyomo.Set(
-            within=m.sit*m.pro,
-            initialize=m.process_const.index,
-            doc='Combinations of possible processes without expansion, e.g. (North,Coal plant)') 
+    m.pro_tuples_exp = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=m.process_exp.index,
+        doc='Combinations of possible processes with expansion, e.g. (North,Coal plant)')
+    m.pro_tuples_const = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=m.process_const.index,
+        doc='Combinations of possible processes without expansion, e.g. (North,Coal plant)') 
     # process tuples for area rule
-    if not m.proc_area_exp.empty:
-        m.pro_area_tuples_exp = pyomo.Set(
-            within=m.sit*m.pro,
-            initialize=m.proc_area_exp.index,
-            doc='Processes and Sites with area Restriction')
-    if not m.proc_area_const.empty:
-        m.pro_area_tuples_const = pyomo.Set(
-            within=m.sit*m.pro,
-            initialize=m.proc_area_const.index,
-            doc='Processes and Sites with area Restriction')
+    m.pro_area_tuples_exp = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=m.proc_area_exp.index,
+        doc='Processes and Sites with area Restriction')
+    m.pro_area_tuples_const = pyomo.Set(
+        within=m.sit*m.pro,
+        initialize=m.proc_area_const.index,
+        doc='Processes and Sites with area Restriction')
     # process input/output
     m.pro_input_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
@@ -159,14 +155,17 @@ def create_params(m,dt=1):
     # dt = spacing between timesteps. Required for storage equation that
     # converts between energy (storage content, e_sto_con) and power (all other
     # quantities that start with "e_")
+    
     m.dt = pyomo.Param(
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
-    """m.cap_pro = pyomo.Param(
-        m.pro_tupels_const,                                                   !!!look at dis!!!
+    m.cap_pro = pyomo.Param(
+        m.pro_tuples_const,                                                  
         initialize=m.const_process_dict['inst-cap'],
         doc = 'Constant Process Capacity'
-    )"""
+        )
+
+    m.cap_pro.pprint()
         
     return m
     
@@ -196,7 +195,10 @@ def create_min_model_vars(m):
     m.cap_pro = pyomo.Var(
         m.pro_tuples_exp,
         within=pyomo.NonNegativeReals,
-        doc='Total process capacity (MW)')         
+        doc='Total process capacity (MW)')
+
+    m.cap_pro.pprint()
+
     m.cap_pro_new = pyomo.Var(
         m.pro_tuples_exp,
         within=pyomo.NonNegativeReals,
@@ -276,14 +278,10 @@ def declare_min_model_equations(m):
         m.tm, m.pro_input_tuples,
         rule=def_intermittent_supply_rule,
         doc='process output = process capacity * supim timeseries')       
-    m.res_exp_process_throughput_by_capacity = pyomo.Constraint(                
-        m.tm, m.pro_tuples_exp,
-        rule=res_exp_process_throughput_by_capacity_rule,
-        doc='process throughput <= total process capacity')   
-    m.res_const_process_throughput_by_capacity = pyomo.Constraint(                
-        m.tm, m.pro_tuples_const,
-        rule=res_const_process_throughput_by_capacity_rule,
-        doc='process throughput <= total process capacity')        
+    m.res_process_throughput_by_capacity = pyomo.Constraint(                
+        m.tm, m.pro_tuples,
+        rule=res_process_throughput_by_capacity_rule,
+        doc='process throughput <= total process capacity')          
     m.res_process_maxgrad_lower = pyomo.Constraint(                                     
         m.tm, m.pro_maxgrad_tuples,
         rule=res_process_maxgrad_lower_rule,
@@ -532,45 +530,27 @@ def def_process_output_rule(m, tm, sit, pro, co):
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, sit, pro, coin):                                 
     if coin in m.com_supim:
-        if (sit,pro) in m.pro_tuples_exp:
-            return (m.e_pro_in[tm, sit, pro, coin] ==
+        return (m.e_pro_in[tm, sit, pro, coin] ==
                     m.cap_pro[sit, pro] * m.supim_dict[(sit, coin)][tm])
-        else:
-            return (m.e_pro_in[tm, sit, pro, coin] ==
-                    m.process_dict['inst-cap'][(sit, pro)] * m.supim_dict[(sit, coin)][tm])
     else:
         return pyomo.Constraint.Skip
 
 
 # process throughput <= process capacity                                    
-def res_exp_process_throughput_by_capacity_rule(m, tm, sit, pro):
-    return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro])
-def res_const_process_throughput_by_capacity_rule(m, tm, sit, pro):
-    return (m.tau_pro[tm, sit, pro] <= m.process_dict['inst-cap'][(sit, pro)])   
+def res_process_throughput_by_capacity_rule(m, tm, sit, pro):
+    return (m.tau_pro[tm, sit, pro] <= m.cap_pro[sit, pro]) 
 
 
 def res_process_maxgrad_lower_rule(m, t, sit, pro): 
-    if (sit,pro) in m.pro_tuples_exp:
-        return (m.tau_pro[t-1, sit, pro] -
-                m.cap_pro[sit, pro] * m.process_dict['max-grad'][(sit, pro)] *
-                m.dt <= m.tau_pro[t, sit, pro])
-    else:
-        return (m.tau_pro[t-1, sit, pro] -
-                m.process_dict['inst-cap'][(sit, pro)] * 
-                m.process_dict['max-grad'][(sit, pro)] *
-                m.dt <= m.tau_pro[t, sit, pro])        
+    return (m.tau_pro[t-1, sit, pro] -
+            m.cap_pro[sit, pro] * m.process_dict['max-grad'][(sit, pro)] *
+            m.dt <= m.tau_pro[t, sit, pro])    
 
             
 def res_process_maxgrad_upper_rule(m, t, sit, pro):                            
-    if (sit,pro) in m.pro_tuples_exp:
-        return (m.tau_pro[t-1, sit, pro] +
-                m.cap_pro[sit, pro] * m.process_dict['max-grad'][(sit, pro)] *
-                m.dt >= m.tau_pro[t, sit, pro])
-    else:
-        return (m.tau_pro[t-1, sit, pro] +
-                m.process_dict['inst-cap'][(sit, pro)] * 
-                m.process_dict['max-grad'][(sit, pro)] *
-                m.dt >= m.tau_pro[t, sit, pro])
+    return (m.tau_pro[t-1, sit, pro] +
+            m.cap_pro[sit, pro] * m.process_dict['max-grad'][(sit, pro)] *
+            m.dt >= m.tau_pro[t, sit, pro])
                         
         
 # lower bound <= process capacity <= upper bound                          
@@ -580,14 +560,9 @@ def res_process_capacity_rule(m, sit, pro):
             m.process_dict['cap-up'][sit, pro])
 
 def res_throughput_by_capacity_min_rule(m, tm, sit, pro):
-    if (sit,pro) in m.pro_tuples_exp:
-        return (m.tau_pro[tm, sit, pro] >=
-                m.cap_pro[sit, pro] *
-                m.process_dict['min-fraction'][(sit, pro)])
-    else:
-        return (m.tau_pro[tm, sit, pro] >=
-                m.process_dict['inst-cap'][(sit, pro)] * 
-                m.process_dict['min-fraction'][(sit, pro)])        
+    return (m.tau_pro[tm, sit, pro] >=
+            m.cap_pro[sit, pro] *
+            m.process_dict['min-fraction'][(sit, pro)])      
 
 def def_partial_process_input_rule(m, tm, sit, pro, coin):   
     R = m.r_in_dict[(pro, coin)]  # input ratio at maximum operation point
@@ -598,14 +573,9 @@ def def_partial_process_input_rule(m, tm, sit, pro, coin):
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
-    if (sit,pro) in m.pro_tuples_exp:
-        return (m.e_pro_in[tm, sit, pro, coin] ==
-                m.cap_pro[sit, pro] * online_factor +
-                m.tau_pro[tm, sit, pro] * throughput_factor)
-    else:
-        return (m.e_pro_in[tm, sit, pro, coin] ==
-                m.process_dict['inst-cap'][(sit, pro)] * online_factor +
-                m.tau_pro[tm, sit, pro] * throughput_factor)                
+    return (m.e_pro_in[tm, sit, pro, coin] ==
+            m.cap_pro[sit, pro] * online_factor +
+            m.tau_pro[tm, sit, pro] * throughput_factor)            
 
 def def_partial_process_output_rule(m, tm, sit, pro, coo):                     
     R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
@@ -614,15 +584,10 @@ def def_partial_process_output_rule(m, tm, sit, pro, coo):
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-
-    if (sit,pro) in m.pro_tuples_exp:    
-        return (m.e_pro_out[tm, sit, pro, coo] ==
-                m.cap_pro[sit, pro] * online_factor +
-                m.tau_pro[tm, sit, pro] * throughput_factor)
-    else:
-        return (m.e_pro_out[tm, sit, pro, coo] ==
-                m.process_dict['inst-cap'][(sit, pro)] * online_factor +
-                m.tau_pro[tm, sit, pro] * throughput_factor)
+   
+    return (m.e_pro_out[tm, sit, pro, coo] ==
+            m.cap_pro[sit, pro] * online_factor +
+            m.tau_pro[tm, sit, pro] * throughput_factor)
 
 
 # used process area <= maximal process area

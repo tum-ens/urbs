@@ -1,0 +1,11 @@
+
+Gurobi 7.0.2 (win64, Python) logging started 10/18/18 14:23:31
+
+Read LP format model from file model.lp
+Reading time = 0.22 seconds
+obj: 22248 rows, 18195 columns, 52088 nonzeros
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+       0      handle free variables                          0s
+
+IIS computed: 15 constraints and 7 bounds
+IIS runtime: 0.05 seconds

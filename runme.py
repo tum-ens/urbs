@@ -4,6 +4,7 @@ import pyomo.environ
 import shutil
 import urbs
 from datetime import datetime
+import time
 from pyomo.opt.base import SolverFactory
 
 
@@ -110,6 +111,8 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     Returns:
         the urbs model instance
     """
+    # start time measurement
+    start_time = time.process_time()
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
@@ -117,9 +120,15 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     data = scenario(data)
     urbs.validate_input(data)
 
+    read_time = time.process_time()
+    print("Time to read file: %.2f sec" % read_time-start_time)
+	
     # create model
     prob = urbs.create_model(data, dt, timesteps)
 
+    model_time = time.process_time()
+    print("Time to create model: %.2f sec" % model_time-read_time)
+	
     # refresh time stamp string and create filename for logfile
     now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
@@ -131,7 +140,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
-
+	
     # write report to spreadsheet
     urbs.report(
         prob,
@@ -149,6 +158,14 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
+        
+    scenario_time = time.process_time();	
+    print("Time to run scenario: %.2f sec" %scenario_time-start_time)
+    timelog = open("timelog.txt", "a")
+    timelog.write("Time to read file: %.2f sec" % read_time-start_time)
+    timelog.write("Time to create model: %.2f sec" % model_time-read_time)
+    timelog.write("Time to run scenario: %.2f sec" %scenario_time-start_time)
+    
     return prob
 
 

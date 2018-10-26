@@ -45,7 +45,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
 
-    # import objective fundtion information
+    # import objective function information
     m.obj = pyomo.Param(
         initialize=objective,
         doc='Specification of minimized quantity, default: "cost"')

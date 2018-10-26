@@ -1099,7 +1099,17 @@ def res_global_co2_limit_rule(m):
         return pyomo.Constraint.Skip
 
 
-# Objective
+def res_global_cost_limit_rule(m):
+    if math.isinf(m.global_prop.loc['Cost limit', 'value']):
+        return pyomo.Constraint.Skip
+    elif m.global_prop.loc['Cost limit', 'value'] >= 0:
+        return(pyomo.summation(m.costs) <= m.global_prop.
+                                           loc['Cost limit', 'value'])
+    else:
+        return pyomo.Constraint.Skip
+
+
+# Costs and emissions
 def def_costs_rule(m, cost_type):
     """Calculate total costs by cost type.
 
@@ -1235,11 +1245,3 @@ def co2_rule(m):
     # scaling to annual output (cf. definition of m.weight)
     co2_output_sum *= m.weight
     return (co2_output_sum)
-
-
-def res_global_cost_limit_rule(m):
-    if math.isinf(m.global_prop.loc['Cost limit', 'value']):
-        return pyomo.Constraint.Skip
-    else:
-        return(pyomo.summation(m.costs) <= m.global_prop.
-                                           loc['Cost limit', 'value'])

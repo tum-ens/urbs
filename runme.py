@@ -115,7 +115,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt, objective,
     sce = scenario.__name__
     data = urbs.read_excel(input_file)
     data = scenario(data)
-    #urbs.validate_input(data)
+    urbs.validate_input(data)
 
     # create model
     prob = urbs.create_model(data, dt, timesteps, objective)
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # objective function
-    objective = 'CO2' # set either 'cost' or 'CO2' as objective
+    objective = 'cost' # set either 'cost' or 'CO2' as objective
 
     # simulation timesteps
     (offset, length) = (3500, 168)  # time step selection

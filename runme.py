@@ -127,7 +127,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory('cplex')  # cplex, glpk, gurobi, ...
+    optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
 

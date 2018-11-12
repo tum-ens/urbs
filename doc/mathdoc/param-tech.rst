@@ -36,7 +36,7 @@ Technical Parameters
     +-------------------------------------+----+---------------------------------------------+
     |:math:`\overline{B}_{vc}`            |MWh |Maximum Annual Buy Limit                     |
     +-------------------------------------+----+---------------------------------------------+
-    |:math:`\overline{L}_{CO_2}`          | t  |Maximum Global Annual CO2 Emission Limit     |
+    |:math:`\overline{L}_{\text{CO}_2}`   | t  |Maximum Global Annual CO2 Emission Limit     |
     +-------------------------------------+----+---------------------------------------------+
     |**Process Technical Parameters**                                                        |
     +-------------------------------------+----+---------------------------------------------+

@@ -166,7 +166,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # objective function
-    objective = 'cost' # set either 'cost' or 'CO2' as objective
+    objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
     # simulation timesteps
     (offset, length) = (3500, 168)  # time step selection

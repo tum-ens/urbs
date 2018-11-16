@@ -3,7 +3,7 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .modelhelper import *
 from .input import *
-
+import pdb
 
 def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     """Create a pyomo ConcreteModel urbs object from given input data.
@@ -1130,11 +1130,11 @@ def res_global_co2_limit_rule(m):
 
 
 def res_global_cost_limit_rule(m):
-    if math.isinf(m.global_prop.loc['Cost limit', 'value']):
+    if math.isinf(m.global_prop_dict["value"]["Cost limit"]):
         return pyomo.Constraint.Skip
-    elif m.global_prop.loc['Cost limit', 'value'] >= 0:
-        return(pyomo.summation(m.costs) <= m.global_prop.
-                                           loc['Cost limit', 'value'])
+    elif m.global_prop_dict["value"]["Cost limit"] >= 0:
+        return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
+                                            ["Cost limit"])
     else:
         return pyomo.Constraint.Skip
 

@@ -5,7 +5,7 @@ import shutil
 import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
-
+   
 
 # SCENARIOS
 def scenario_base(data):

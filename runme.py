@@ -5,57 +5,8 @@ import shutil
 import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
-   
-
-# SCENARIOS
-def scenario_base(data):
-    # do nothing
-    return data
-
-
-def scenario_stock_prices(data):
-    # change stock commodity prices
-    co = data['commodity']
-    stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
-    co.loc[stock_commodities_only, 'price'] *= 1.5
-    return data
-
-
-def scenario_co2_limit(data):
-    # change global CO2 limit
-    global_prop = data['global_prop']
-    global_prop.loc['CO2 limit', 'value'] *= 0.05
-    return data
-
-
-def scenario_co2_tax_mid(data):
-    # change CO2 price in Mid
-    co = data['commodity']
-    co.loc[('Mid', 'CO2', 'Env'), 'price'] = 50
-    return data
-
-
-def scenario_north_process_caps(data):
-    # change maximum installable capacity
-    pro = data['process']
-    pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
-    pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
-    return data
-
-
-def scenario_no_dsm(data):
-    # empty the DSM dataframe completely
-    data['dsm'] = pd.DataFrame()
-    return data
-
-
-def scenario_all_together(data):
-    # combine all other scenarios
-    data = scenario_stock_prices(data)
-    data = scenario_co2_limit(data)
-    data = scenario_north_process_caps(data)
-    return data
-
+from urbs.data import timeseries_number
+import pdb
 
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder """
@@ -92,13 +43,13 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_file, timesteps, scenario, result_dir, dt, objective,
+def run_scenario(prob, timesteps, scenario, result_dir, dt, objective,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
-        input_file: filename to an Excel spreadsheet for urbs.read_excel
+        prob: urbs model instance initialized with base scenario
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
@@ -115,15 +66,17 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt, objective,
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = urbs.read_excel(input_file)
-    data = scenario(data)
-    urbs.validate_input(data)
 
-    # create model
-    prob = urbs.create_model(data, dt, timesteps, objective)
+    # Only needed for scenario_new_timeseries, but handed to all functions:
+    filename = ""
+    # scenario_new_timeseries needs special treatment:
+    if str(sce).find("scenario_new_timeseries") >= 0:
+        sce = sce+str(timeseries_number.pop())
+        filename = os.path.join("input", "{}.xlsx").format(sce)
+    prob = scenario(prob, 0, filename)
+    # If possible: do validation of data
 
-    # refresh time stamp string and create filename for logfile
-    now = prob.created
+    # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
@@ -152,6 +105,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt, objective,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
+    prob = scenario(prob, 1, filename)
     return prob
 
 
@@ -192,9 +146,7 @@ if __name__ == '__main__':
     report_sites_name = {'North': 'Greenland'}
 
     # plotting timesteps
-    plot_periods = {
-        'all': timesteps[1:]
-    }
+    plot_periods = {'all': timesteps[1:]}
 
     # add or change plot colors
     my_colors = {
@@ -206,16 +158,23 @@ if __name__ == '__main__':
 
     # select scenarios to be run
     scenarios = [
-        scenario_base,
-        scenario_stock_prices,
-        scenario_co2_limit,
-        scenario_co2_tax_mid,
-        scenario_no_dsm,
-        scenario_north_process_caps,
-        scenario_all_together]
+        urbs.scenario_base,
+        #urbs.scenario_stock_prices,
+        #urbs.scenario_co2_limit,
+        #urbs.scenario_co2_tax_mid,
+        #urbs.scenario_no_dsm,
+        #urbs.scenario_north_process_caps,
+        urbs.scenario_all_together,
+        urbs.scenario_new_timeseries(timeseries_number,
+                                     "example_file_extension")
+        ]
+
+    # Read data from Excel Sheet and create model for use in scenarios
+    data = urbs.read_excel(input_file)
+    prob = urbs.create_model(data, dt, timesteps)
 
     for scenario in scenarios:
-        prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
+        prob = run_scenario(prob, timesteps, scenario, result_dir, dt,
                             objective,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,

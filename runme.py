@@ -84,6 +84,8 @@ def setup_solver(optim, logfile='solver.log'):
         optim.set_options("log={}".format(logfile))
         # optim.set_options("tmlim=7200")  # seconds
         # optim.set_options("mipgap=.0005")
+    elif optim.name == 'cplex':
+        optim.set_options("log={}".format(logfile))
     else:
         print("Warning from setup_solver: no options set for solver "
               "'{}'!".format(optim.name))
@@ -128,6 +130,7 @@ def run_scenario(input_file, timesteps, scenario, result_dir, dt, objective,
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
+    assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
     urbs.save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -163,7 +166,7 @@ if __name__ == '__main__':
     shutil.copy(__file__, result_dir)
 
     # objective function
-    objective = 'cost' # set either 'cost' or 'CO2' as objective
+    objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
     # simulation timesteps
     (offset, length) = (3500, 168)  # time step selection

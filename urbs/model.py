@@ -79,34 +79,51 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         doc='Set of additional DSM time steps')
 
     # site (e.g. north, middle, south...)
+    indexlist = set()
+    for key in m.commodity_dict["price"]:
+        indexlist.add(tuple(key)[0])
     m.sit = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Site').unique(),
+        initialize=indexlist,
         doc='Set of sites')
 
     # commodity (e.g. solar, wind, coal...)
+    indexlist = set()
+    for key in m.commodity_dict["price"]:
+        indexlist.add(tuple(key)[1])
     m.com = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Commodity').unique(),
+        initialize=indexlist,
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
+    indexlist = set()
+    for key in m.commodity_dict["price"]:
+        indexlist.add(tuple(key)[2])
     m.com_type = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Type').unique(),
+        initialize=indexlist,
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
+    indexlist = set()
+    for key in m.process_dict["inv-cost"]:
+        indexlist.add(tuple(key)[1])
     m.pro = pyomo.Set(
-        initialize=m.process.index.get_level_values('Process').unique(),
+        initialize=indexlist,
         doc='Set of conversion processes')
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
+    indexlist = set()
+    for key in m.transmission_dict["eff"]:
+        indexlist.add(tuple(key)[2])
     m.tra = pyomo.Set(
-        initialize=m.transmission.index.get_level_values('Transmission')
-                                       .unique(),
+        initialize=indexlist,
         doc='Set of transmission technologies')
 
     # storage (e.g. hydrogen, pump storage)
+    indexlist = set()
+    for key in m.storage_dict["eff-in"]:
+        indexlist.add(tuple(key)[1])
     m.sto = pyomo.Set(
-        initialize=m.storage.index.get_level_values('Storage').unique(),
+        initialize=indexlist,
         doc='Set of storage technologies')
 
     # cost_type
@@ -118,24 +135,32 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     # tuple sets
     m.com_tuples = pyomo.Set(
         within=m.sit*m.com*m.com_type,
-        initialize=m.commodity.index,
+        initialize=tuple(m.commodity_dict["price"].keys()),
         doc='Combinations of defined commodities, e.g. (Mid,Elec,Demand)')
     m.pro_tuples = pyomo.Set(
         within=m.sit*m.pro,
-        initialize=m.process.index,
+        initialize=tuple(m.process_dict["inv-cost"].keys()),
         doc='Combinations of possible processes, e.g. (North,Coal plant)')
     m.tra_tuples = pyomo.Set(
         within=m.sit*m.sit*m.tra*m.com,
-        initialize=m.transmission.index,
+        initialize=tuple(m.transmission_dict["eff"].keys()),
         doc='Combinations of possible transmissions, e.g. '
             '(South,Mid,hvac,Elec)')
     m.sto_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
-        initialize=m.storage.index,
+        initialize=tuple(m.storage_dict["eff-in"].keys()),
         doc='Combinations of possible storage by site, e.g. (Mid,Bat,Elec)')
+
+    # Generally: If DataFrame is deleted (like in no_dsm_scenario) and
+    # corresponding empty dictionary is accessed: Key Error.
+    # Example Workaround:
+    try:
+        indexlist = tuple(m.dsm_dict["delay"].keys())
+    except KeyError:
+        indexlist = ()
     m.dsm_site_tuples = pyomo.Set(
         within=m.sit*m.com,
-        initialize=m.dsm.index,
+        initialize=indexlist,
         doc='Combinations of possible dsm by site, e.g. (Mid, Elec)')
     m.dsm_down_tuples = pyomo.Set(
         within=m.tm*m.tm*m.sit*m.com,
@@ -176,7 +201,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     # process tuples for area rule
     m.pro_area_tuples = pyomo.Set(
         within=m.sit*m.pro,
-        initialize=m.proc_area.index,
+        initialize=tuple(m.proc_area_dict.keys()),
         doc='Processes and Sites with area Restriction')
 
     # process input/output
@@ -184,14 +209,14 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
                     for (site, process) in m.pro_tuples
-                    for (pro, commodity) in m.r_in.index
+                    for (pro, commodity) in tuple(m.r_in_dict.keys())
                     if process == pro],
         doc='Commodities consumed by process by site, e.g. (Mid,PV,Solar)')
     m.pro_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
                     for (site, process) in m.pro_tuples
-                    for (pro, commodity) in m.r_out.index
+                    for (pro, commodity) in tuple(m.r_out_dict.keys())
                     if process == pro],
         doc='Commodities produced by process by site, e.g. (Mid,PV,Elec)')
 
@@ -200,7 +225,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         within=m.sit*m.pro,
         initialize=[(sit, pro)
                     for (sit, pro) in m.pro_tuples
-                    if m.process.loc[sit, pro]['max-grad'] < 1.0 / dt],
+                    if m.process_dict['max-grad'][sit, pro] < 1.0 / dt],
         doc='Processes with maximum gradient smaller than timestep length')
 
     # process tuples for partial feature
@@ -208,7 +233,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         within=m.sit*m.pro,
         initialize=[(site, process)
                     for (site, process) in m.pro_tuples
-                    for (pro, _) in m.r_in_min_fraction.index
+                    for (pro, _) in tuple(m.r_in_min_fraction_dict.keys())
                     if process == pro],
         doc='Processes with partial input')
 
@@ -216,7 +241,8 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
                     for (site, process) in m.pro_partial_tuples
-                    for (pro, commodity) in m.r_in_min_fraction.index
+                    for (pro, commodity) in tuple(m.r_in_min_fraction_dict
+                                                  .keys())
                     if process == pro],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,Coal)')
 
@@ -224,7 +250,8 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
                     for (site, process) in m.pro_partial_tuples
-                    for (pro, commodity) in m.r_out_min_fraction.index
+                    for (pro, commodity) in tuple(m.r_out_min_fraction_dict
+                                                  .keys())
                     if process == pro],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
 
@@ -232,23 +259,23 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     m.pro_timevar_output_tuples = pyomo.Set(
         within=m.sit*m.pro*m.com,
         initialize=[(site, process, commodity)
-                    for (site, process) in m.eff_factor.columns.values
-                    for (pro, commodity) in m.r_out.index
+                    for (site, process) in tuple(m.eff_factor_dict.keys())
+                    for (pro, commodity) in tuple(m.r_out_dict.keys())
                     if process == pro],
         doc='Outputs of processes with time dependent efficiency')
 
     # storage tuples for storages with fixed initial state
     m.sto_init_bound_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
-        initialize=m.stor_init_bound.index,
+        initialize=tuple(m.stor_init_bound_dict.keys()),
         doc='storages with fixed initial state')
 
     # storage tuples for storages with given energy to power ratio
     m.sto_ep_ratio_tuples = pyomo.Set(
         within=m.sit*m.sto*m.com,
-        initialize=m.sto_ep_ratio.index,
+        initialize=tuple(m.sto_ep_ratio_dict.keys()),
         doc='storages with given energy to power ratio')
-        
+
     # Variables
 
     # costs
@@ -874,7 +901,7 @@ def res_throughput_by_capacity_min_rule(m, tm, sit, pro):
 
 def def_partial_process_input_rule(m, tm, sit, pro, coin):
     R = m.r_in_dict[(pro, coin)]  # input ratio at maximum operation point
-    r = m.r_in_min_fraction[pro, coin]  # input ratio at lowest
+    r = m.r_in_min_fraction_dict[pro, coin]  # input ratio at lowest
     # operation point
     min_fraction = m.process_dict['min-fraction'][(sit, pro)]
 
@@ -887,8 +914,8 @@ def def_partial_process_input_rule(m, tm, sit, pro, coin):
 
 
 def def_partial_process_output_rule(m, tm, sit, pro, coo):
-    R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
-    r = m.r_out_min_fraction[pro, coo]  # input ratio at lowest operation point
+    R = m.r_out_dict[pro, coo]  # input ratio at maximum operation point
+    r = m.r_out_min_fraction_dict[pro, coo]  # input ratio at lowest op. point
     min_fraction = m.process_dict['min-fraction'][(sit, pro)]
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
@@ -910,8 +937,8 @@ def def_pro_timevar_output_rule(m, tm, sit, pro, com):
 
 
 def def_pro_partial_timevar_output_rule(m, tm, sit, pro, coo):
-    R = m.r_out.loc[pro, coo]  # input ratio at maximum operation point
-    r = m.r_out_min_fraction[pro, coo]  # input ratio at lowest operation point
+    R = m.r_out_dict[pro, coo]  # input ratio at maximum operation point
+    r = m.r_out_min_fraction_dict[pro, coo]  # input ratio at lowest op. point
     min_fraction = m.process_dict['min-fraction'][(sit, pro)]
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
@@ -936,15 +963,15 @@ def res_process_capacity_rule(m, sit, pro):
 
 # used process area <= maximal process area
 def res_area_rule(m, sit):
-    if m.site.loc[sit]['area'] >= 0 and sum(
-                         m.process.loc[(s, p), 'area-per-cap']
+    if m.site_dict['area'][sit] >= 0 and sum(
+                         m.process_dict['area-per-cap'][s, p]
                          for (s, p) in m.pro_area_tuples
                          if s == sit) > 0:
         total_area = sum(m.cap_pro[s, p] *
-                         m.process.loc[(s, p), 'area-per-cap']
+                         m.process_dict['area-per-cap'][s, p]
                          for (s, p) in m.pro_area_tuples
                          if s == sit)
-        return total_area <= m.site.loc[sit]['area']
+        return total_area <= m.site_dict['area'][sit]
     else:
         # Skip constraint, if area is not numeric
         return pyomo.Constraint.Skip
@@ -1076,15 +1103,18 @@ def res_initial_and_final_storage_state_var_rule(m, t, sit, sto, com):
     return (m.e_sto_con[m.t[1], sit, sto, com] <=
             m.e_sto_con[m.t[len(m.t)], sit, sto, com])
 
+
 def def_storage_energy_power_ratio_rule(m, sit, sto, com):
     return (m.cap_sto_c[sit, sto, com] ==
-            m.cap_sto_p[sit, sto, com] * m.storage_dict['ep-ratio'][(sit, sto, com)])
-            
+            m.cap_sto_p[sit, sto, com] * m.storage_dict['ep-ratio']
+            [(sit, sto, com)])
+
+
 # total CO2 output <= Global CO2 limit
 def res_global_co2_limit_rule(m):
-    if math.isinf(m.global_prop.loc['CO2 limit', 'value']):
+    if math.isinf(m.global_prop_dict['value']['CO2 limit']):
         return pyomo.Constraint.Skip
-    elif m.global_prop.loc['CO2 limit', 'value'] >= 0:
+    elif m.global_prop_dict['value']['CO2 limit'] >= 0:
         co2_output_sum = 0
         for tm in m.tm:
             for sit in m.sit:
@@ -1094,17 +1124,17 @@ def res_global_co2_limit_rule(m):
 
         # scaling to annual output (cf. definition of m.weight)
         co2_output_sum *= m.weight
-        return (co2_output_sum <= m.global_prop.loc['CO2 limit', 'value'])
+        return (co2_output_sum <= m.global_prop_dict['value']['CO2 limit'])
     else:
         return pyomo.Constraint.Skip
 
 
 def res_global_cost_limit_rule(m):
-    if math.isinf(m.global_prop.loc['Cost limit', 'value']):
+    if math.isinf(m.global_prop_dict["value"]["Cost limit"]):
         return pyomo.Constraint.Skip
-    elif m.global_prop.loc['Cost limit', 'value'] >= 0:
-        return(pyomo.summation(m.costs) <= m.global_prop.
-                                           loc['Cost limit', 'value'])
+    elif m.global_prop_dict["value"]["Cost limit"] >= 0:
+        return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
+               ["Cost limit"])
     else:
         return pyomo.Constraint.Skip
 

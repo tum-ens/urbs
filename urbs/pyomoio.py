@@ -13,9 +13,10 @@ def get_entity(instance, name):
         a Pandas Series with domain as index and values (or 1's, for sets) of
         entity name. For constraints, it retrieves the dual values
     """
+    # The following would destroy many plots when model instances are reused.
     # magic: short-circuit if problem contains a result cache
-    if hasattr(instance, '_result') and name in instance._result:
-        return instance._result[name].copy(deep=True)
+    # if hasattr(instance, '_result') and name in instance._result:
+    #    return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names
     entity = instance.__getattribute__(name)
@@ -74,8 +75,7 @@ def get_entity(instance, name):
                 [(v[0], v[1].value) for v in entity.iteritems()])
         else:
             # assert(entity.dim() == 0)
-            results = pd.DataFrame(
-                [(v[0], v[1].value) for v in entity.iteritems()])
+            results = pd.DataFrame()
             labels = ['None']
 
     # check for duplicate onset names and append one to several "_" to make

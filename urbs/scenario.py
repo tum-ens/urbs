@@ -1,4 +1,4 @@
-from .model import *
+﻿from .model import *
 from .input import split_columns
 from .data import timeseries_number
 

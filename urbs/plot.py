@@ -124,9 +124,12 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
     try:
         # detect whether DSM could be used in this plot
         # if so, show DSM subplot (even if delta == 0 for the whole time)
-        df_dsm = get_input(prob, 'dsm')
-        plot_dsm = df_dsm.loc[(sit, com),
-                              ['cap-max-do', 'cap-max-up']].sum().sum() > 0
+        df_dsm = get_input(prob, 'dsm_dict')
+        plot_dsm=0
+        for s in sit:  #someone meant to cast sit to a list...
+            plot_dsm += (df_dsm["cap-max-do"][s,com] + df_dsm["cap-max-up"]
+                         [s,com])
+        plot_dsm=plot_dsm>0
     except (KeyError, TypeError):
         plot_dsm = False
 

@@ -6,7 +6,7 @@ import urbs
 from datetime import datetime
 from pyomo.opt.base import SolverFactory
 from urbs.data import timeseries_number
-import pdb
+
 
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder """
@@ -73,12 +73,15 @@ def run_scenario(prob, timesteps, scenario, result_dir, dt, objective,
     if str(sce).find("scenario_new_timeseries") >= 0:
         sce = sce+str(timeseries_number.pop())
         filename = os.path.join("input", "{}.xlsx").format(sce)
-    prob = scenario(prob, 0, filename)
+    prob = scenario(prob, False, filename)
     # If possible: do validation of data
 
     # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
-
+    #Write model to lp File
+    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
+    
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
@@ -105,7 +108,12 @@ def run_scenario(prob, timesteps, scenario, result_dir, dt, objective,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
-    prob = scenario(prob, 1, filename)
+    prob = scenario(prob, True, filename)
+    
+    #Write model to lp File
+    model_filename = os.path.join(result_dir, '{}_base.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
+    
     return prob
 
 
@@ -159,14 +167,14 @@ if __name__ == '__main__':
     # select scenarios to be run
     scenarios = [
         urbs.scenario_base,
-        #urbs.scenario_stock_prices,
-        #urbs.scenario_co2_limit,
-        #urbs.scenario_co2_tax_mid,
-        #urbs.scenario_no_dsm,
-        #urbs.scenario_north_process_caps,
+        urbs.scenario_stock_prices,
+        urbs.scenario_co2_limit,
+        urbs.scenario_co2_tax_mid,
+        urbs.scenario_no_dsm,
+        urbs.scenario_north_process_caps,
         urbs.scenario_all_together,
         urbs.scenario_new_timeseries(timeseries_number,
-                                     "example_file_extension")
+                                     "1")
         ]
 
     # Read data from Excel Sheet and create model for use in scenarios

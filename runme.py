@@ -43,9 +43,10 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(prob, timesteps, scenario, result_dir, dt, objective,
-                 plot_tuples=None,  plot_sites_name=None, plot_periods=None,
-                 report_tuples=None, report_sites_name=None):
+def run_scenario(prob, timesteps, scenario, result_dir, timeseries_number, dt,
+                 objective, plot_tuples=None,  plot_sites_name=None,
+                 plot_periods=None, report_tuples=None,
+                 report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
@@ -70,18 +71,16 @@ def run_scenario(prob, timesteps, scenario, result_dir, dt, objective,
     # Only needed for scenario_new_timeseries, but handed to all functions:
     filename = ""
     # scenario_new_timeseries needs special treatment:
+    # Add file extension to scenario name and create path to excel sheet
     if str(sce).find("scenario_new_timeseries") >= 0:
         sce = sce+str(timeseries_number.pop())
         filename = os.path.join("input", "{}.xlsx").format(sce)
+    # model instance, undo scenario changes?, path to excel sheet
     prob = scenario(prob, False, filename)
-    # If possible: do validation of data
 
     # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
-    #Write model to lp File
-    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
-    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
-    
+
     # solve model and read results
     optim = SolverFactory('glpk')  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
@@ -109,11 +108,6 @@ def run_scenario(prob, timesteps, scenario, result_dir, dt, objective,
         periods=plot_periods,
         figure_size=(24, 9))
     prob = scenario(prob, True, filename)
-    
-    #Write model to lp File
-    model_filename = os.path.join(result_dir, '{}_base.lp').format(sce)
-    prob.write(model_filename, io_options={"symbolic_solver_labels":True})
-    
     return prob
 
 
@@ -174,7 +168,7 @@ if __name__ == '__main__':
         urbs.scenario_north_process_caps,
         urbs.scenario_all_together,
         urbs.scenario_new_timeseries(timeseries_number,
-                                     "1")
+                                     "example_file_extension")
         ]
 
     # Read data from Excel Sheet and create model for use in scenarios
@@ -182,8 +176,8 @@ if __name__ == '__main__':
     prob = urbs.create_model(data, dt, timesteps)
 
     for scenario in scenarios:
-        prob = run_scenario(prob, timesteps, scenario, result_dir, dt,
-                            objective,
+        prob = run_scenario(prob, timesteps, scenario, result_dir,
+                            timeseries_number, dt, objective,
                             plot_tuples=plot_tuples,
                             plot_sites_name=plot_sites_name,
                             plot_periods=plot_periods,

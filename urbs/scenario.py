@@ -129,7 +129,7 @@ def scenario_all_together(prob, reverse, not_used):
 # value specifies the path/file extension in order to locate the excel file.
 # value will be appended to input\\scenario_new_timeseries_
 def scenario_new_timeseries(timeseries_number, number):
-    timeseries_number.insert(0, number)  # Is this an issue (memory not allocated)?
+    timeseries_number.insert(0, number)
     return scenario_new_timeseries_
 
 
@@ -305,7 +305,7 @@ def load_timeseries(prob, reverse, filename):
                     prob.eff_factor_dict = temp2.to_dict()
         if reverse:
             for temp in sheetnames:
-                if str(temp) == "demand":
+                if str(temp) == "Demand":
                     prob.demand_dict = prob._data["demand"].to_dict()
                 if str(temp) == "SupIm":
                     prob.supim_dict = prob._data["supim"].to_dict()

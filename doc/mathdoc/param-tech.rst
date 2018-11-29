@@ -36,7 +36,7 @@ Technical Parameters
     +-------------------------------------+----+---------------------------------------------+
     |:math:`\overline{B}_{vc}`            |MWh |Maximum Annual Buy Limit                     |
     +-------------------------------------+----+---------------------------------------------+
-    |:math:`\overline{L}_{CO_2}`          | t  |Maximum Global Annual CO2 Emission Limit     |
+    |:math:`\overline{L}_{\text{CO}_2}`   | t  |Maximum Global Annual CO2 Emission Limit     |
     +-------------------------------------+----+---------------------------------------------+
     |**Process Technical Parameters**                                                        |
     +-------------------------------------+----+---------------------------------------------+
@@ -49,6 +49,8 @@ Technical Parameters
     |:math:`\overline{PG}_{vp}`           |1/h |Process Maximal Power Gradient (relative)    |
     +-------------------------------------+----+---------------------------------------------+
     |:math:`\underline{P}_{vp}`           | _  |Process Minimum Part Load Fraction           |
+    +-------------------------------------+----+---------------------------------------------+
+    |:math:`f_{vpt}^\text{out}`           | _  |Process Output Ratio multiplyer              |
     +-------------------------------------+----+---------------------------------------------+
     |:math:`r_{pc}^\text{in}`             | _  |Process Input Ratio                          |
     +-------------------------------------+----+---------------------------------------------+
@@ -77,6 +79,8 @@ Technical Parameters
     |:math:`K_{vs}^\text{p}`              |MW  |Storage Power Installed                      |
     +-------------------------------------+----+---------------------------------------------+
     |:math:`\overline{K}_{vs}^\text{p}`   |MW  |Storage Power Upper Bound                    |
+    +-------------------------------------+----+---------------------------------------------+
+    |:math:`k_{vs}^\text{E/P}`            |h   |Storage Energy to Power Ratio                |    
     +-------------------------------------+----+---------------------------------------------+
     |**Transmission Technical Parameters**                                                   |
     +-------------------------------------+----+---------------------------------------------+
@@ -157,11 +161,20 @@ Process Technical Parameters
 
 **Process Minimum Part Load Fraction**, :math:`\underline{P}_{vp}`, ``m.process_dict['min-fraction'][(sit, pro)]``: The parameter :math:`\underline{P}_{vp}` represents the minimum allowable part load of a process :math:`p` at a site :math:`v` as a fraction of the total process capacity. The related section for this parameter in the spreadsheet can be found under the "Process" sheet. Here each row represents another process :math:`p` in a site :math:`v` and the twelfth column with the header label "partial" represents the parameters :math:`\underline{P}_{vp}` of the corresponding process :math:`p` and site :math:`v` combinations.
 
+**Process Output Ratio multiplyer**, :math:`f_{vpt}^\text{out}`,
+``m.eff_factor_dict[(sit, pro)]``: The parameter time series
+:math:`f_{vpt}^\text{out}` allows for a time dependent modification of process
+outputs and by extension of the process efficiency. It can be used, e.g., to
+model temperature dependent efficiencies of processes or to include scheduled
+maintenance intervals. Note that the output of environmental commodities is not
+manipulated by this factor as it is typially linked to an input commodity as
+, e.g., CO2 output is linked to a fossil input.
+
 **Process Input Ratio**, :math:`r_{pc}^\text{in}`, ``m.r_in_dict[(pro, co)]``: The parameter :math:`r_{pc}^\text{in}` represents the ratio of the input amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep. The related section for this parameter in the spreadsheet can be found under the "Process-Comodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
 
 **Process Partial Input Ratio**, :math:`\underline{r}_{pc}^\text{in}`, ``m.r_in_min_fraction[pro, coin]``: The parameter :math:`\underline{r}_{pc}^\text{in}` represents the ratio of the amount of input commodity :math:`c` a process :math:`p` consumes if it is at its minimum allowable partial operation. More precisely, when its throughput :math:`\tau_{vpt}` has the minimum value :math:`\omega_{vpt} \underline{P}_{vp}`.
 
-**Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out_dict[(pro, co)]``: The parameter :math:`r_{pc}^\text{out}` represents the ratio of the output amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep.  The related section for this parameter in the spreadsheet can be found under the "Process-Commodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations.
+**Process Output Ratio**, :math:`r_{pc}^\text{out}`, ``m.r_out_dict[(pro, co)]``: The parameter :math:`r_{pc}^\text{out}` represents the ratio of the output amount of a commodity :math:`c` in a process :math:`p`, relative to the process throughput at a given timestep.  The related section for this parameter in the spreadsheet can be found under the "Process-Commodity" sheet. Here each row represents another commodity :math:`c` that either goes in to or comes out of a process :math:`p`. The fourth column with the header label "ratio" represents the parameters of the corresponding process :math:`p`, commodity :math:`c` and direction (In,Out) combinations. 
 
 Process input and output ratios are, in general, dimensionless since the majority of output and input commodities are represented in MW. Exceptionally, some process input and output ratios can be assigned units e.g. the environmental commodity (``Env``) ':math:`\text{CO}_2` could have a process output ratio with the unit of :math:`Mt/MWh`.
 
@@ -170,7 +183,7 @@ Since process input and output ratios take the process throughput :math:`\tau_{v
 Storage Technical Parameters
 ----------------------------
 
-**Initial and Final State of Charge (relative)**, :math:`I_{vs}`, ``m.storage_dict['init'][(sit, sto, com)]``: The parameter :math:`I_{vs}` represents the initial load factor of a storage :math:`s` in a site :math:`v`. This parameter shows, as a percentage, how much of a storage is loaded at the beginning of the simulation. The same value should be preserved at the end of the simulation, to make sure that the optimization model doesn't consume the whole storage content at once and leave it empty at the end, otherwise this would disrupt the continuity of the optimization. The value of this parameter is expressed as a normalized percentage, where "1" represents a fully loaded storage and "0" represents an empty storage. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The twentieth column with the header label "init" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
+**Initial and Final State of Charge (relative)**, :math:`I_{vs}`, ``m.storage_dict['init'][(sit, sto, com)]``: The parameter :math:`I_{vs}` represents the initial load factor of a storage :math:`s` in a site :math:`v`. This parameter shows, as a percentage, how much of a storage is loaded at the beginning of the simulation. If this value is left unspecified the initial storage constraint is variable. The same value should be preserved at the end of the simulation, to make sure that the optimization model doesn't consume the whole storage content at once and leave it empty at the end, otherwise this would disrupt the continuity of the optimization. The value of this parameter is expressed as a normalized percentage, where "1" represents a fully loaded storage and "0" represents an empty storage. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The twentieth column with the header label "init" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
 **Storage Efficiency During Charge**, :math:`e_{vs}^\text{in}`, ``m.storage_dict['eff-in'][(sit, sto, com)]``: The parameter :math:`e_{vs}^\text{in}` represents the charge efficiency of a storage :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The charge efficiency shows, how much of a desired energy and accordingly power can be succesfully stored into a storage. The value of this parameter is expressed as a normalized percentage, where "1" represents a charge with no power or energy loss and "0" represents that storage technology consumes whole enery during charge. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The tenth column with the header label "eff-in" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
@@ -188,7 +201,9 @@ Storage Technical Parameters
 
 **Storage Power Installed**, :math:`K_{vs}^\text{p}`, ``m.storage_dict['inst-cap-p'][(sit, sto, com)]]``:  The parameter :math:`K_{vs}^\text{c}` represents the amount of power output capacity of a storage :math:`s` storing commodity :math:`c` in a site :math:`v`, that is already installed to the energy system at the beginning of the simulation. The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The seventh column with the header label "inst-cap-p" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations.
 
-**Storage Power Upper Bound**, :math:`\overline{K}_{vs}^\text{p}`, ``m.storage_dict['cap-up-p'][(sit, sto, com)]``: The parameter :math:`\overline{K}_{vs}^\text{p}` represents the maximum amount of power output capacity allowed of a storage :math:`s` storing a commodity :math:`c` in a site :math:`v`, that the energy system model is allowed to have.  The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The sixth column with the header label "cap-up-p" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations. If there is no desired maximum limit for the storage energy content capacitites, this parameter can be simply set to ""inf"" or an unrealistic high value, to ignore this parameter.
+**Storage Power Upper Bound**, :math:`\overline{K}_{vs}^\text{p}`, ``m.storage_dict['cap-up-p'][(sit, sto, com)]``: The parameter :math:`\overline{K}_{vs}^\text{p}` represents the maximum amount of power output capacity allowed of a storage :math:`s` storing a commodity :math:`c` in a site :math:`v`, that the energy system model is allowed to have.  The unit of this parameter is MW. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The ninth column with the header label "cap-up-p" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations. If there is no desired maximum limit for the storage energy content capacitites, this parameter can be simply set to ""inf"" or an unrealistic high value, to ignore this parameter.
+
+**Storage Energy to Power Ratio**, :math:`k_{vs}^\text{E/P}`, ``m.storage_dict['ep-ratio'][(sit, sto, com)]``: The parameter :math:`k_{vs}^\text{E/P}` represents the linear ratio between the energy and power capacities of a storage :math:`s` storing a commodity :math:`c` in a site :math:`v`. The unit of this parameter is hours. The related section for this parameter in the spreadsheet can be found under the "Storage" sheet. Here each row represents a storage technology :math:`s` in a site :math:`v` that stores a commodity :math:`c`. The 22th column with the header label "ep-ratio" represents the parameters for corresponding storage :math:`s`, site :math:`v`, commodity :math:`c` combinations. If there is no desired set ratio for the storage energy and power capacities (which means the storage energy and power capacities can be sized independently from each other), this cell can be left empty.
 
 Transmission Technical Parameters
 ---------------------------------

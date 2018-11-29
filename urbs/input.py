@@ -28,6 +28,9 @@ def read_excel(filename):
         150000000
     """
     with pd.ExcelFile(filename) as xls:
+
+        sheetnames = xls.sheet_names
+
         site = xls.parse('Site').set_index(['Name'])
         commodity = (
             xls.parse('Commodity').set_index(['Site', 'Commodity', 'Type']))
@@ -45,7 +48,18 @@ def read_excel(filename):
         supim = xls.parse('SupIm').set_index(['t'])
         buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
         dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
-        global_prop = xls.parse('Global').set_index(['Property'])
+        if 'Global' in sheetnames:
+            global_prop = xls.parse('Global').set_index(['Property'])
+        else:
+            raise KeyError('Rename worksheet "Hacks" to "Global" and the ' +
+                           'line "Global CO2 limit" into "CO2 limit"!')
+        if 'TimeVarEff' in sheetnames:
+            eff_factor = (xls.parse('TimeVarEff')
+                          .set_index(['t']))
+
+            eff_factor.columns = split_columns(eff_factor.columns, '.')
+        else:
+            eff_factor = pd.DataFrame()
 
     # prepare input data
     # split columns by dots '.', so that 'DE.Elec' becomes the two-level
@@ -65,7 +79,8 @@ def read_excel(filename):
         'demand': demand,
         'supim': supim,
         'buy_sell_price': buy_sell_price,
-        'dsm': dsm
+        'dsm': dsm,
+        'eff_factor': eff_factor
         }
 
     # sort nested indexes to make direct assignments work
@@ -79,77 +94,86 @@ def read_excel(filename):
 def pyomo_model_prep(data, timesteps):
     m = pyomo.ConcreteModel()
 
-    # Preparations
-    # ============
-    # Data import. Syntax to access a value within equation definitions looks
-    # like this:
-    #
-    #     m.storage.loc[site, storage, commodity][attribute]
-    #
-    m.global_prop = data['global_prop'].drop('description', axis=1)
-    m.site = data['site']
-    m.commodity = data['commodity']
-    m.process = data['process']
-    m.process_commodity = data['process_commodity']
-    m.transmission = data['transmission']
-    m.storage = data['storage']
-    m.demand = data['demand']
-    m.supim = data['supim']
-    m.buy_sell_price = data['buy_sell_price']
     m.timesteps = timesteps
-    m.dsm = data['dsm']
+    process = data['process']
+    transmission = data['transmission']
+    storage = data['storage']
 
     # Converting Data frames to dict
-    m.commodity_dict = m.commodity.to_dict()  # Changed
-    m.demand_dict = m.demand.to_dict()  # Changed
-    m.supim_dict = m.supim.to_dict()  # Changed
-    m.dsm_dict = m.dsm.to_dict()  # Changed
-    m.buy_sell_price_dict = m.buy_sell_price.to_dict()
+    m.global_prop_dict = (data['global_prop'].drop('description', axis=1)
+                          .to_dict())
+    m.site_dict = data["site"].to_dict()
+    m.commodity_dict = data["commodity"].to_dict()
+    m.demand_dict = data["demand"].to_dict()
+    m.supim_dict = data["supim"].to_dict()
+    m.dsm_dict = data["dsm"].to_dict()
+    m.buy_sell_price_dict = data["buy_sell_price"].to_dict()
+    m.eff_factor_dict = data["eff_factor"].to_dict()
 
     # process input/output ratios
-    m.r_in = m.process_commodity.xs('In', level='Direction')['ratio']
-    m.r_out = m.process_commodity.xs('Out', level='Direction')['ratio']
-    m.r_in_dict = m.r_in.to_dict()
-    m.r_out_dict = m.r_out.to_dict()
+    m.r_in_dict = (data['process_commodity'].xs('In', level='Direction')
+                   ['ratio'].to_dict())
+    m.r_out_dict = (data['process_commodity'].xs('Out', level='Direction')
+                    ['ratio'].to_dict())
 
     # process areas
-    m.proc_area = m.process['area-per-cap']
-    m.sit_area = m.site['area']
-    m.proc_area = m.proc_area[m.proc_area >= 0]
-    m.sit_area = m.sit_area[m.sit_area >= 0]
+    proc_area = data["process"]['area-per-cap']
+    proc_area = proc_area[proc_area >= 0]
+    m.proc_area_dict = proc_area.to_dict()
 
     # input ratios for partial efficiencies
     # only keep those entries whose values are
     # a) positive and
     # b) numeric (implicitely, as NaN or NV compare false against 0)
-    m.r_in_min_fraction = m.process_commodity.xs('In', level='Direction')
-    m.r_in_min_fraction = m.r_in_min_fraction['ratio-min']
-    m.r_in_min_fraction = m.r_in_min_fraction[m.r_in_min_fraction > 0]
+    r_in_min_fraction = data['process_commodity'].xs('In', level='Direction')
+    r_in_min_fraction = r_in_min_fraction['ratio-min']
+    r_in_min_fraction = r_in_min_fraction[r_in_min_fraction > 0]
+    m.r_in_min_fraction_dict = r_in_min_fraction.to_dict()
 
     # output ratios for partial efficiencies
     # only keep those entries whose values are
     # a) positive and
     # b) numeric (implicitely, as NaN or NV compare false against 0)
-    m.r_out_min_fraction = m.process_commodity.xs('Out', level='Direction')
-    m.r_out_min_fraction = m.r_out_min_fraction['ratio-min']
-    m.r_out_min_fraction = m.r_out_min_fraction[m.r_out_min_fraction > 0]
+    r_out_min_fraction = data['process_commodity'].xs('Out', level='Direction')
+    r_out_min_fraction = r_out_min_fraction['ratio-min']
+    r_out_min_fraction = r_out_min_fraction[r_out_min_fraction > 0]
+    m.r_out_min_fraction_dict = r_out_min_fraction.to_dict()
+
+    # storages with fixed initial state
+    stor_init_bound = storage['init']
+    m.stor_init_bound_dict = stor_init_bound[stor_init_bound >= 0].to_dict()
+
+    # storages with fixed energy-to-power ratio
+    try:
+        sto_ep_ratio = storage['ep-ratio']
+        m.sto_ep_ratio_dict = sto_ep_ratio[sto_ep_ratio >= 0].to_dict()
+    except:
+        m.sto_ep_ratio_dict = pd.DataFrame()
 
     # derive annuity factor from WACC and depreciation duration
-    m.process['annuity-factor'] = annuity_factor(
-        m.process['depreciation'],
-        m.process['wacc'])
-    m.transmission['annuity-factor'] = annuity_factor(
-        m.transmission['depreciation'],
-        m.transmission['wacc'])
-    m.storage['annuity-factor'] = annuity_factor(
-        m.storage['depreciation'],
-        m.storage['wacc'])
+    process['annuity-factor'] = (
+        process.apply(lambda x: annuity_factor(x['depreciation'],
+                                               x['wacc']),
+                      axis=1))
+    try:
+        transmission['annuity-factor'] = (
+            transmission.apply(lambda x: annuity_factor(x['depreciation'],
+                                                        x['wacc']),
+                               axis=1))
+    except ValueError:
+        pass
+    try:
+        storage['annuity-factor'] = (
+            storage.apply(lambda x: annuity_factor(x['depreciation'],
+                                                   x['wacc']),
+                          axis=1))
+    except ValueError:
+        pass
 
     # Converting Data frames to dictionaries
-    #
-    m.process_dict = m.process.to_dict()  # Changed
-    m.transmission_dict = m.transmission.to_dict()  # Changed
-    m.storage_dict = m.storage.to_dict()  # Changed
+    m.process_dict = process.to_dict()
+    m.transmission_dict = transmission.to_dict()
+    m.storage_dict = storage.to_dict()
     return m
 
 

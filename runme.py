@@ -17,7 +17,10 @@ shutil.copyfile(input_file, os.path.join(result_dir, input_file))
 shutil.copy(__file__, result_dir)
 
 # Choose solver (cplex, glpk, gurobi, ...)
-solver = 'gurobi'
+solver = 'glpk'
+
+# objective function
+objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
 # simulation timesteps
 (offset, length) = (3500, 168)  # time step selection
@@ -67,7 +70,7 @@ scenarios = [
 
 for scenario in scenarios:
     prob = urbs.run_scenario(input_file, solver, timesteps, scenario,
-                        result_dir, dt,
+                        result_dir, dt, objective,
                         plot_tuples=plot_tuples,
                         plot_sites_name=plot_sites_name,
                         plot_periods=plot_periods,

@@ -15,8 +15,10 @@ result_dir = urbs.prepare_result_directory(result_name)  # name+time stamp
 shutil.copyfile(input_file, os.path.join(result_dir, input_file))
 # copy runme.py to result directory
 shutil.copy(__file__, result_dir)
+# copy current version of scenario functions
+shutil.copy('urbs/scenarios.py', result_dir)
 
-# Choose solver (cplex, glpk, gurobi, ...)
+# choose solver (cplex, glpk, gurobi, ...)
 solver = 'glpk'
 
 # objective function
@@ -40,10 +42,11 @@ plot_sites_name = {('North', 'Mid', 'South'): 'All'}
 # detailed reporting commodity/sites
 report_tuples = [
     ('North', 'Elec'), ('Mid', 'Elec'), ('South', 'Elec'),
+    (['North', 'Mid', 'South'], 'Elec'),
     ('North', 'CO2'), ('Mid', 'CO2'), ('South', 'CO2')]
 
 # optional: define names for sites in report_tuples
-report_sites_name = {'North': 'Greenland'}
+report_sites_name = {('North', 'Mid', 'South'): 'Greenland'}
 
 # plotting timesteps
 plot_periods = {

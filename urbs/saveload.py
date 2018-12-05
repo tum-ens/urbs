@@ -39,8 +39,13 @@ def save(prob, filename):
         for name in prob.__dict__:
             if str(name).find("_dict") > 0:
                 name_no_dict = name.split("_dict")[0]  # remove _dict
-                store['data/'+name_no_dict] = (pd.DataFrame(getattr(prob, 
-                                               name), index=[0]))
+                try:
+                    store['data/'+name_no_dict] = (pd.DataFrame(getattr(prob,
+                                                   name)))
+                # 1D dictionaries need an index:
+                except ValueError:
+                    store['data/'+name_no_dict] = (pd.DataFrame(getattr(prob,
+                                                   name), index=[0]))
         for name in prob._result.keys():
             store['result/'+name] = prob._result[name]
 

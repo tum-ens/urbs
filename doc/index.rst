@@ -36,6 +36,7 @@ first running model.
    overview
    tutorial
    workflow
+   comparison
    
 Technical documentation
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -3,7 +3,7 @@
 .. _tutorial:
 
 Tutorial
-========
+=======
 
 The README file contains `installation notes`__. This tutorial
 expands on the steps that follow this installation.

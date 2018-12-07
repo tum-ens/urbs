@@ -10,6 +10,7 @@ from .validation import *
 from .saveload import *
 from .data import timeseries_number
 
+
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder """
     # timestamp for result directory
@@ -52,8 +53,12 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     """ run an urbs model for given input, time steps and scenario
 
     Args:
+<<<<<<< HEAD
         prob: urbs model instance initialized with base scenario
         solver: name of the solver to be used
+=======
+        input_file: filename to an Excel spreadsheet for urbs.read_excel
+>>>>>>> d2a86f73ce34ce553598fec145b6b39ee22a88e1
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots

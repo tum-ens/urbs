@@ -28,15 +28,16 @@ CONFIG = {'COMP_NAME_OUT': 'comparison',
           'RESULT_FILE_PATTERN': 'scenario_*.h5',
           'SUBPLOTS': ['costs',
                        'e_pro_out',
-                       'cap_tra_new',
-                       'cap_pro_new']}
+                       'cap_pro_new',
+                       'cap_tra',
+                       'cap_tra_new']}
 
 
 # predefined text with units for specific subgroups
 PLOT_LABEL = {'costs': 'Total costs (EUR/a)',
               'e_pro_out': 'Total energy produced (MWh) / Emitted CO2 (t)'}
 
-              
+
 def dec_name(value):
     # short function to translate numbers (to the power of 10)
     # into their names
@@ -169,11 +170,11 @@ def remove_zero(dataframe, cut=0.001, keep=CONFIG['KEEP_SMALL_VALUES']):
 
 def compare_scenarios(result_files, output_name):
     """ Compares result files of different scenarios.
-    
+
     Args:
         result_files: list with paths to result files
         output_name: filename for comparison results
-        
+
     Returns:
         Nothing
     """
@@ -226,11 +227,8 @@ def compare_scenarios(result_files, output_name):
         decimal[group] = (10**shf)
 
         # colors
-        try:
-            colors[group] = [urbs.to_color(com) for com in totalsum[group]]
-        except:
-            pass
-
+        # to_color() cannot handle things like tuples, therefore str()
+        colors[group] = [urbs.to_color(str(com)) for com in totalsum[group]]
     # PLOTTING
     num = len(CONFIG['SUBPLOTS'])  # number of subplots
     height = int(num**0.5)
@@ -242,7 +240,7 @@ def compare_scenarios(result_files, output_name):
     if height == 1:
         for num, group in enumerate(CONFIG['SUBPLOTS']):
             plot[num] = totalsum[group].plot.barh(stacked=True, ax=axes[num],
-                                                color=colors[group])
+                                                  color=colors[group])
         figure.subplots_adjust(wspace=.0)
 
     else:
@@ -250,12 +248,12 @@ def compare_scenarios(result_files, output_name):
         count = 0
         for row in range(height):
             for col in range(width):
-                try:
+                if count < len(key):
                     plot[count] = totalsum[key[count]].plot.barh(stacked=True,
                                                                  ax=axes[row][col],
                                                                  color=colors[key[count]])
                     count += 1
-                except:
+                else:
                     figure.delaxes(axes[row][col])
         figure.subplots_adjust(hspace=.250, wspace=.0)
 

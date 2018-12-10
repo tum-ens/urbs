@@ -37,7 +37,7 @@ first running model.
    tutorial
    workflow
    comparison
-   
+
 Technical documentation
 ^^^^^^^^^^^^^^^^^^^^^^^
 

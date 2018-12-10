@@ -65,12 +65,27 @@ for country, color in my_colors.items():
 # select scenarios to be run
 scenarios = [
     urbs.scenario_base,
-    urbs.scenario_stock_prices,
-    urbs.scenario_co2_limit,
-    urbs.scenario_co2_tax_mid,
-    urbs.scenario_no_dsm,
-    urbs.scenario_north_process_caps,
-    urbs.scenario_all_together]
+    urbs.scenario_base,
+    urbs.scenario_base,
+    urbs.scenario_base,
+    urbs.scenario_base,
+    urbs.scenario_base,
+    urbs.scenario_base,
+    urbs.scenario_base,
+    urbs.scenario_base,
+    urbs.scenario_base,
+    # urbs.scenario_stock_prices,
+    # urbs.scenario_co2_limit,
+    # urbs.scenario_co2_tax_mid,
+    # urbs.scenario_no_dsm,
+    # urbs.scenario_north_process_caps,
+    # urbs.scenario_all_together
+]
+
+# create timelog
+timelog = open(os.path.join(result_dir, "timelog.txt"), "a")
+timelog.write("Total\tread\tmodel\tsolve\tplot\r\n")
+timelog.close()
 
 for scenario in scenarios:
     prob = urbs.run_scenario(input_file, solver, timesteps, scenario,
@@ -80,3 +95,6 @@ for scenario in scenarios:
                         plot_periods=plot_periods,
                         report_tuples=report_tuples,
                         report_sites_name=report_sites_name)
+
+# open timelog file
+os.startfile(os.path.join(result_dir, "timelog.txt"))

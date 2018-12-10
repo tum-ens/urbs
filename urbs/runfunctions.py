@@ -1,5 +1,6 @@
 import os
 import pyomo.environ
+import time
 from pyomo.opt.base import SolverFactory
 from datetime import datetime
 from .model import *
@@ -65,26 +66,54 @@ def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
         the urbs model instance
     """
 
+    # start time measurement
+    t_start = time.time()
+
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = read_excel(input_file)
     data = scenario(data)
     validate_input(data)
 
+    # measure time to read file
+    t_read = time.time() - t_start
+    print("Time to read file: %.2f sec" % t_read)
+
+    t = time.time()
     # create model
     prob = create_model(data, dt, timesteps, objective)
+    # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
+
+    # measure time to create model
+    t_model = time.time() - t
+    print("Time to create model: %.2f sec" % t_model)
 
     # refresh time stamp string and create filename for logfile
-    now = prob.created
+    # now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
+
+    t = time.time()
 
     # solve model and read results
     optim = SolverFactory(solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
+    assert str(result.solver.termination_condition) == 'optimal'
+
+    # measure time to solve 
+    t_solve = time.time() - t
+    print("Time to solve model: %.2f sec" % t_solve)
+
+    t = time.time()
 
     # save problem solution (and input data) to HDF5 file
     save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+
+    # # measure time to save solution
+    # save_time = time.time() - t
+    # print("Time to save solution in HDF5 file: %.2f sec" % save_time)
+
+    # t = time.time()
 
     # write report to spreadsheet
     report(
@@ -103,4 +132,17 @@ def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
+
+    t_repplot = time.time() - t
+    print("Time to report and plot: %.2f sec" % t_repplot)
+
+    # measure time to run scenario
+    t_sce = time.time() - t_start
+    print("Time to run scenario: %.2f sec" % t_sce)
+
+    # write time measurements into file "timelog.txt" in result directory
+    timelog = open(os.path.join(result_dir, "timelog.txt"), "a")
+    timelog.write("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%s\n"
+                  % (t_sce, t_read, t_model, t_solve, t_repplot, sce))
+
     return prob

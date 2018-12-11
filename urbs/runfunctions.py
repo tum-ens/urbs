@@ -113,5 +113,5 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
         figure_size=(24, 9))
 
     # Undo all changes to model instance to retrieve base scenario model
-    prob = scenario(prob, 1)
+    prob = scenario(prob, True, filename)
     return prob

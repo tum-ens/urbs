@@ -53,12 +53,8 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     """ run an urbs model for given input, time steps and scenario
 
     Args:
-<<<<<<< HEAD
         prob: urbs model instance initialized with base scenario
         solver: name of the solver to be used
-=======
-        input_file: filename to an Excel spreadsheet for urbs.read_excel
->>>>>>> d2a86f73ce34ce553598fec145b6b39ee22a88e1
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
@@ -115,4 +111,7 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
         plot_sites_name=plot_sites_name,
         periods=plot_periods,
         figure_size=(24, 9))
+
+    # Undo all changes to model instance to retrieve base scenario model
+    prob = scenario(prob, 1)
     return prob

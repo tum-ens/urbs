@@ -113,10 +113,10 @@ def get_entities(instance, names):
 
     df = pd.DataFrame()
     for name in names:
-        other = get_entity(instance, name)
+        other = pd.DataFrame(instance[name])
 
         if df.empty:
-            df = other.to_frame()
+            df = other
         else:
             index_names_before = df.index.names
 

@@ -4,7 +4,7 @@ from .pyomoio import get_entity, get_entities
 from .util import is_string
 
 
-def get_constants(instance):
+def get_constants(h5):
     """Return summary DataFrames for important variables
 
     Usage:
@@ -15,27 +15,12 @@ def get_constants(instance):
 
     Returns:
         (costs, cpro, ctra, csto) tuple
-
-    Example:
-        >>> import pyomo.environ
-        >>> from pyomo.opt.base import SolverFactory
-        >>> data = read_excel('mimo-example.xlsx')
-        >>> prob = create_model(data, range(1,25))
-        >>> optim = SolverFactory('glpk')
-        >>> result = optim.solve(prob)
-        >>> cap_pro = get_constants(prob)[1]['Total']
-        >>> cap_pro.xs('Wind park', level='Process').apply(int)
-        Site
-        Mid      13000
-        North    23258
-        South        0
-        Name: Total, dtype: int64
     """
-    costs = get_entity(instance, 'costs')
-    cpro = get_entities(instance, ['cap_pro', 'cap_pro_new'])
-    ctra = get_entities(instance, ['cap_tra', 'cap_tra_new'])
-    csto = get_entities(instance, ['cap_sto_c', 'cap_sto_c_new',
-                                   'cap_sto_p', 'cap_sto_p_new'])
+    costs = h5._result["costs"].copy()
+    cpro = get_entities(h5._result, ['cap_pro', 'cap_pro_new']).copy()
+    ctra = get_entities(h5._result, ['cap_tra', 'cap_tra_new']).copy()
+    csto = get_entities(h5._result, ['cap_sto_c', 'cap_sto_c_new',
+                                     'cap_sto_p', 'cap_sto_p_new']).copy()
 
     # better labels and index names and return sorted
     if not cpro.empty:
@@ -53,7 +38,7 @@ def get_constants(instance):
     return costs, cpro, ctra, csto
 
 
-def get_timeseries(instance, com, sites, timesteps=None):
+def get_timeseries(h5, com, sites, timesteps=None):
     """Return DataFrames of all timeseries referring to given commodity
 
     Usage:
@@ -61,7 +46,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
          dsm) = get_timeseries(instance, commodity, sites, timesteps)
 
     Args:
-        instance: a urbs model instance
+        h5: loaded h5 file in form of data frame containing model
         com: a commodity name
         sites: a site name or list of site names
         timesteps: optional list of timesteps, default: all modelled timesteps
@@ -79,7 +64,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     """
     if timesteps is None:
         # default to all simulated timesteps
-        timesteps = sorted(get_entity(instance, 'tm').index)
+        timesteps = sorted(h5._result['tm'].index)
     else:
         timesteps = sorted(timesteps)  # implicit: convert range to list
 
@@ -92,15 +77,16 @@ def get_timeseries(instance, com, sites, timesteps=None):
     try:
         # select relevant timesteps (=rows)
         # select commodity (xs), then the sites from remaining simple columns
-        # and sum all together to form a Series
-        demand = (pd.DataFrame.from_dict(get_input(instance, 'demand_dict'))
-                  .loc[timesteps].xs(com, axis=1, level=1)[sites].sum(axis=1))
+        # and sum all together to form a Series.
+        # get_input will use h5._data["demand"]
+        demand = (get_input(h5, 'demand').loc[timesteps]
+                  .xs(com, axis=1, level=1)[sites].sum(axis=1))
     except KeyError:
         demand = pd.Series(0, index=timesteps)
     demand.name = 'Demand'
 
     # STOCK
-    eco = get_entity(instance, 'e_co_stock')
+    eco = h5._result['e_co_stock']
     eco = eco.xs([com, 'Stock'], level=['com', 'com_type'])
     try:
         stock = eco.unstack()[sites].sum(axis=1)
@@ -109,7 +95,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     stock.name = 'Stock'
 
     # PROCESS
-    created = get_entity(instance, 'e_pro_out')
+    created = h5._result['e_pro_out']
     created = created.xs(com, level='com').loc[timesteps]
     try:
         created = created.unstack(level='sit')[sites].fillna(0).sum(axis=1)
@@ -118,7 +104,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
     except KeyError:
         created = pd.DataFrame(index=timesteps)
 
-    consumed = get_entity(instance, 'e_pro_in')
+    consumed = h5._result['e_pro_in']
     consumed = consumed.xs(com, level='com').loc[timesteps]
     try:
         consumed = consumed.unstack(level='sit')[sites].fillna(0).sum(axis=1)
@@ -128,12 +114,12 @@ def get_timeseries(instance, com, sites, timesteps=None):
         consumed = pd.DataFrame(index=timesteps)
 
     # TRANSMISSION
-    other_sites = get_input(instance, 'site').index.difference(sites)
+    other_sites = get_input(h5, 'site').index.difference(sites)
 
     # if commodity is transportable
-    df_transmission = get_input(instance, 'transmission')
-    if com in set(df_transmission.index.get_level_values('Commodity')):
-        imported = get_entity(instance, 'e_tra_out')
+    df_transmission = get_input(h5, 'transmission')
+    if com in tuple(df_transmission.index)[0]:
+        imported = h5._result['e_tra_out']
         imported = imported.loc[timesteps].xs(com, level='com')
         imported = imported.unstack(level='tra').sum(axis=1)
         imported = imported.unstack(level='sit_')[sites].fillna(0).sum(axis=1)
@@ -144,7 +130,7 @@ def get_timeseries(instance, com, sites, timesteps=None):
         imported = imported[other_sites_im]  # ...from other_sites
         imported = drop_all_zero_columns(imported)
 
-        exported = get_entity(instance, 'e_tra_in')
+        exported = h5._result['e_tra_in']
         exported = exported.loc[timesteps].xs(com, level='com')
         exported = exported.unstack(level='tra').sum(axis=1)
         exported = exported.unstack(level='sit')[sites].fillna(0).sum(axis=1)
@@ -167,7 +153,9 @@ def get_timeseries(instance, com, sites, timesteps=None):
     # STORAGE
     # group storage energies by commodity
     # select all entries with desired commodity co
-    stored = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
+    stored = pd.DataFrame(h5._result['e_sto_con']).join(pd.DataFrame(
+                          h5._result['e_sto_in']).join(pd.DataFrame(
+                          h5._result['e_sto_out']), how='outer'), how='outer')
     try:
         stored = stored.loc[timesteps].xs(com, level='com')
         stored = stored.groupby(level=['t', 'sit']).sum()
@@ -178,8 +166,8 @@ def get_timeseries(instance, com, sites, timesteps=None):
                               columns=['Level', 'Stored', 'Retrieved'])
 
     # DEMAND SIDE MANAGEMENT (load shifting)
-    dsmup = get_entity(instance, 'dsm_up')
-    dsmdo = get_entity(instance, 'dsm_down')
+    dsmup = h5._result['dsm_up']
+    dsmdo = h5._result['dsm_down']
 
     if dsmup.empty:
         # if no DSM happened, the demand is not modified (delta = 0)

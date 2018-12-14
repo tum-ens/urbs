@@ -9,6 +9,9 @@ from .input import *
 from .validation import *
 from .saveload import *
 from .data import timeseries_number
+from .saveload import load
+# multiprocessing for serialized plotting
+import multiprocessing as mp
 
 
 def prepare_result_directory(result_name):
@@ -46,6 +49,26 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
+def serialized_plotting_reporting(result_dir, sce,  report_tuples,
+                                  report_sites_name, timesteps, plot_tuples,
+                                  plot_sites_name, plot_periods):
+
+    # load the model/h5 file corresponding to 'sce'
+    urbs_path = os.path.join(result_dir, "{}.h5").format(sce)
+    h5 = load(urbs_path)
+
+    # write report to spreadsheet
+    report(h5, os.path.join(result_dir, '{}.xlsx').format(sce),
+           report_tuples=report_tuples,
+           report_sites_name=report_sites_name)
+
+    # result plots
+    result_figures(h5, os.path.join(result_dir, '{}'.format(sce)), timesteps,
+                   plot_title_prefix=sce.replace('_', ' '),
+                   plot_tuples=plot_tuples, plot_sites_name=plot_sites_name,
+                   periods=plot_periods, figure_size=(24, 9))
+
+
 def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
                  objective,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
@@ -53,12 +76,8 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     """ run an urbs model for given input, time steps and scenario
 
     Args:
-<<<<<<< HEAD
         prob: urbs model instance initialized with base scenario
         solver: name of the solver to be used
-=======
-        input_file: filename to an Excel spreadsheet for urbs.read_excel
->>>>>>> d2a86f73ce34ce553598fec145b6b39ee22a88e1
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
@@ -72,7 +91,6 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     Returns:
         the urbs model instance
     """
-
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
 
@@ -86,6 +104,10 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     # model instance, undo scenario changes?, path to excel sheet
     prob = scenario(prob, False, filename)
 
+    # Write model to lp File
+    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
+    prob.write(model_filename, io_options={"symbolic_solver_labels": True})
+
     # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
@@ -98,21 +120,13 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     # save problem solution (and input data) to HDF5 file
     save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
-    # write report to spreadsheet
-    report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples,
-        report_sites_name=report_sites_name)
+    # start a new process and plot the results using the h5 file
+    plot_process = mp.Process(target=serialized_plotting_reporting,
+                              args=(result_dir, sce,  report_tuples,
+                                    report_sites_name, timesteps, plot_tuples,
+                                    plot_sites_name, plot_periods))
+    plot_process.start()
 
-    # result plots
-    result_figures(
-        prob,
-        os.path.join(result_dir, '{}'.format(sce)),
-        timesteps,
-        plot_title_prefix=sce.replace('_', ' '),
-        plot_tuples=plot_tuples,
-        plot_sites_name=plot_sites_name,
-        periods=plot_periods,
-        figure_size=(24, 9))
+    # Undo all changes to model instance to retrieve base scenario model
+    prob = scenario(prob, True, filename)
     return prob

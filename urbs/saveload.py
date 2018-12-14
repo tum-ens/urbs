@@ -31,9 +31,7 @@ def save(prob, filename):
     warnings.filterwarnings('ignore',
                             category=pd.io.pytables.PerformanceWarning)
 
-    if not hasattr(prob, '_result'):
-        prob._result = create_result_cache(prob)
-
+    prob._result = create_result_cache(prob)
     with pd.HDFStore(filename, mode='w') as store:
         # Search all attributes of prob for those containing the input data
         for name in prob.__dict__:

@@ -104,10 +104,6 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     # model instance, undo scenario changes?, path to excel sheet
     prob = scenario(prob, False, filename)
 
-    # Write model to lp File
-    model_filename = os.path.join(result_dir, '{}.lp').format(sce)
-    prob.write(model_filename, io_options={"symbolic_solver_labels": True})
-
     # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 

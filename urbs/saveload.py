@@ -13,7 +13,7 @@ def create_result_cache(prob):
 
     result_cache = {}
     for entity in entities:
-        result_cache[entity] = get_entity(prob, entity)
+        result_cache[entity] = get_entity(prob, entity, skip_result_cache=True)
     return result_cache
 
 

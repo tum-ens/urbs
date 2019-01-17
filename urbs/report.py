@@ -4,7 +4,7 @@ from .output import get_constants, get_timeseries
 from .util import is_string
 
 
-def report(instance, filename, report_tuples=None, report_sites_name=None):
+def report(instance, filename, report_tuples=None, report_sites_name={}):
     """Write result summary to a spreadsheet file
 
     Args:

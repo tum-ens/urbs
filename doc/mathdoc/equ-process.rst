@@ -65,7 +65,8 @@ In script ``model.py`` the constraint process output rule is defined and calcula
 ::
 
     m.def_process_output = pyomo.Constraint(
-        m.tm, m.pro_output_tuples,
+        m.tm, (m.pro_output_tuples - m.pro_partial_output_tuples -
+               m.pro_timevar_output_tuples),
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
 
@@ -79,13 +80,14 @@ processes :math:`p` that use a supply intermittent commodity
 commodity is an intermittent supply commodity :math:`c \in C_\text{sup}`. The
 variable process input commodity flow is defined by the constraint as the
 product of the variable total process capacity :math:`\kappa_{vp}` and the
-parameter intermittent supply capacity factor :math:`s_{vct}`. In mathematical
-notation this is expressed as:
+parameter intermittent supply capacity factor :math:`s_{vct}`, scaled by the 
+size of the time steps :math: `\Delta t`. In mathematical notation this is expressed 
+as:
 
 .. math::
 
 	\forall v\in V, p\in P, c\in C_\text{sup}, t\in T_m\colon\
-    \epsilon^\text{in}_{vpct} = \kappa_{vp} s_{vct}
+    \epsilon^\text{in}_{vpct} = \kappa_{vp} s_{vct} \Delta t
 
 
 In script ``model.py`` the constraint intermittent supply rule is defined and calculated by the following code fragment:
@@ -104,12 +106,12 @@ In script ``model.py`` the constraint intermittent supply rule is defined and ca
 capacity rule limits the variable process throughput :math:`\tau_{vpt}`. This
 constraint prevents processes from exceeding their capacity. The constraint
 states that the variable process throughput must be less than or equal to the
-variable total process capacity :math:`\kappa_{vp}`. In mathematical notation
-this is expressed as:
+variable total process capacity :math:`\kappa_{vp}`, scaled by the size
+of the time steps :math: `\Delta t`. In mathematical notation this is expressed as:
 
 .. math::
 
-    \forall v\in V, p\in P, t\in T_m\colon\ \tau_{vpt} \leq \kappa_{vp}
+    \forall v\in V, p\in P, t\in T_m\colon\ \tau_{vpt} \leq \kappa_{vp} \Delta t
 
 In script ``model.py`` the constraint process throughput by capacity rule is defined and calculated by the following code fragment:
 
@@ -209,12 +211,32 @@ calculated by the following code fragment:
    :pyobject: res_sell_buy_symmetry_rule
 
 
+**Process time variable output rule**: This constraint multiplies the process
+efficiency with the parameter time series :math:`f_{vpt}^\text{out}`. The
+process output for all commodities is thus manipulated depending on time. This
+contraint is not valid for environmental commodities since these are typically
+linked to an input commodity flow rather than an output commodity flow.
+
+In script ``model.py`` the constraint process time variable output rule is
+defined and calculated by the following code fragment:
+
+::
+
+    m.def_process_timevar_output = pyomo.Constraint(
+        m.tm, m.pro_timevar_output_tuples,
+        rule=def_pro_timevar_output_rule,
+        doc='e_pro_out = tau_pro * r_out * eff_factor')
+
+.. literalinclude:: /../urbs/model.py
+   :pyobject: def_pro_timevar_output_rule
+
 .. _sec-partial-startup-constr:
 
+
 Process Constraints for partial operation
--------------------------------------
+-----------------------------------------
 The process constraints for partial operation described in the following are
-only acitivated if in the input file there is a value set in the column
+only activated if in the input file there is a value set in the column
 **ratio-min** for an **input commodity** in the **process-commodity** sheet for
 the process in question. Values for the **output commodities** do not have any
 effect.
@@ -231,7 +253,7 @@ fraction is honored.
 
 .. math::
     \forall t\in T_\text{m}, (v, p)\in P_v^\text{partial}\colon\ 
-    \tau_{vpt} \geq \kappa_{vp} \underline{P}_{vp}
+    \tau_{vpt} \geq \underline{P}_{vp} (\kappa_{vp} \Delta t)
 
     
 And here as code:
@@ -281,7 +303,7 @@ process is a function of :math:`\tau_{vpt}`:
 .. math::
     \forall t\in T_\text{m}, (v, p, c)\in C_{vp}^\text{in,partial}\colon\  
     \epsilon_{vpct}^\text{in} = 
-      \kappa_{vp} \cdot \frac{
+      (\kappa_{vp} \Delta t) \cdot \frac{
           \underline{r}_{pc}^\text{in} - r_{pc}^\text{in}}{
           1 - \underline{P}_{vp}} \cdot \underline{P}_{vp} 
     + \tau_{vpt} \cdot \frac{
@@ -307,8 +329,8 @@ For a given process capacity :math:`\kappa_{vp}` the efficiency of the process
 is then only dependent on the process throughput :math:`\tau_{vpt}`. The
 input (or output) ratio varies then linearly between :math:`r^{in}_{pc}` and
 :math:`r^{in}_{pc}` for throughputs in the desired operational region, i.e.,
-between full load :math:`\kappa_{vp}` and the minimal part load state
-:math:`\kappa_{vp}\underline P_{vp}`. The efficiency is then of the form:
+between full load :math:`\kappa_{vp} \Delta t` and the minimal part load state
+:math:`\underline P_{vp}(\kappa_{vp} \Delta t)`. The efficiency is then of the form:
 
 .. math::
     \eta = \frac{\epsilon_{vpct}^\text{out}}{\epsilon_{vpct}^\text{in}} =

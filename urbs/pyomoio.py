@@ -35,12 +35,12 @@ def get_entity(instance, name):
         # unconstrained supersets
         if not labels:
             labels = [name]
-            name = name+'_'
+            name = name + '_'
 
     elif isinstance(entity, pyomo.Param):
         if entity.dim() > 1:
             results = pd.DataFrame(
-                [v[0]+(v[1],) for v in entity.iteritems()])
+                [v[0] + (v[1],) for v in entity.iteritems()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
                 [(v[0], v[1]) for v in entity.iteritems()])
@@ -51,8 +51,46 @@ def get_entity(instance, name):
 
     elif isinstance(entity, pyomo.Constraint):
         if entity.dim() > 1:
-            results = pd.DataFrame(
-                [v[0] + (instance.dual[v[1]],) for v in entity.iteritems()])
+            try:
+                results = pd.DataFrame(
+                    [v[0] + (instance.dual[v[1]],) for v in entity.iteritems()])
+            except KeyError:
+                # For some constraints, there is no entry. i.e. the interpretation is
+                # that the constraint is not important for the solution.
+                # It is necessary to test every item for the key error,
+                # because if there would be a nonzero entry, it would be lost.
+                #
+                # check whether for all second entries, if there is a key error
+                # e.g. in case of res_buy_step the second entry is 'sit'
+                try:
+                    second_index = entity._index.set_tuple[1].domain.set_tuple[0].data()
+                    for idx in second_index:
+                        # extract keys with specific second index
+                        entity_keys = [key for key in entity.keys() if key[1] == idx]
+                        entity_items = [entity.__getitem__(key) for key in entity_keys]
+                        # try to access second index
+                        try:
+                            results = pd.DataFrame(
+                                [entity_keys[v] + (instance.dual[entity_items[v]],) for v in
+                                 range(0, len(entity_items))])
+                        except KeyError:
+                            results = pd.DataFrame(
+                                [entity_keys[v] + (0,) for v in range(0, len(entity_items))])
+                except AttributeError:
+                    # in case of a non-time dependent constraint, the entity._index does not have set_tuples
+                    first_index = entity._index.domain.set_tuple[0].data()
+                    for idx in first_index:
+                        # extract keys with specific second index
+                        entity_keys = [key for key in entity.keys() if key[0] == idx]
+                        entity_items = [entity.__getitem__(key) for key in entity_keys]
+                        # try to access second index
+                        try:
+                            results = pd.DataFrame(
+                                [entity_keys[v] + (instance.dual[entity_items[v]],) for v in
+                                 range(0, len(entity_items))])
+                        except KeyError:
+                            results = pd.DataFrame(
+                                [entity_keys[v] + (0,) for v in range(0, len(entity_items))])
         elif entity.dim() == 1:
             results = pd.DataFrame(
                 [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
@@ -67,7 +105,7 @@ def get_entity(instance, name):
             # concatenate index tuples with value if entity has
             # multidimensional indices v[0]
             results = pd.DataFrame(
-                [v[0]+(v[1].value,) for v in entity.iteritems()])
+                [v[0] + (v[1].value,) for v in entity.iteritems()])
         elif entity.dim() == 1:
             # otherwise, create tuple from scalar index v[0]
             results = pd.DataFrame(
@@ -219,7 +257,13 @@ def _get_onset_names(entity):
                     # if that fails, too, a constructed (union, difference,
                     # intersection, ...) set exists. In that case, the
                     # attribute _setA holds the domain for the base set
-                    domains = entity._setA.domain.set_tuple
+                    try:
+                        domains = entity._setA.domain.set_tuple
+                    except AttributeError:
+                        # if that fails, too, a constructed (union, difference,
+                        # intersection, ...) set exists. In that case, the
+                        # attribute _setB holds the domain for the base set
+                        domains = entity._setB.domain.set_tuple
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))
@@ -236,7 +280,7 @@ def _get_onset_names(entity):
             pass
 
     elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Constraint,
-                    pyomo.Objective)):
+                             pyomo.Objective)):
         if entity.dim() > 0 and entity._index:
             labels = _get_onset_names(entity._index)
         else:

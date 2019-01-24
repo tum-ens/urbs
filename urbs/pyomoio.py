@@ -51,46 +51,11 @@ def get_entity(instance, name):
 
     elif isinstance(entity, pyomo.Constraint):
         if entity.dim() > 1:
-            try:
-                results = pd.DataFrame(
-                    [v[0] + (instance.dual[v[1]],) for v in entity.iteritems()])
-            except KeyError:
-                # For some constraints, there is no entry. i.e. the interpretation is
-                # that the constraint is not important for the solution.
-                # It is necessary to test every item for the key error,
-                # because if there would be a nonzero entry, it would be lost.
-                #
-                # check whether for all second entries, if there is a key error
-                # e.g. in case of res_buy_step the second entry is 'sit'
-                try:
-                    second_index = entity._index.set_tuple[1].domain.set_tuple[0].data()
-                    for idx in second_index:
-                        # extract keys with specific second index
-                        entity_keys = [key for key in entity.keys() if key[1] == idx]
-                        entity_items = [entity.__getitem__(key) for key in entity_keys]
-                        # try to access second index
-                        try:
-                            results = pd.DataFrame(
-                                [entity_keys[v] + (instance.dual[entity_items[v]],) for v in
-                                 range(0, len(entity_items))])
-                        except KeyError:
-                            results = pd.DataFrame(
-                                [entity_keys[v] + (0,) for v in range(0, len(entity_items))])
-                except AttributeError:
-                    # in case of a non-time dependent constraint, the entity._index does not have set_tuples
-                    first_index = entity._index.domain.set_tuple[0].data()
-                    for idx in first_index:
-                        # extract keys with specific second index
-                        entity_keys = [key for key in entity.keys() if key[0] == idx]
-                        entity_items = [entity.__getitem__(key) for key in entity_keys]
-                        # try to access second index
-                        try:
-                            results = pd.DataFrame(
-                                [entity_keys[v] + (instance.dual[entity_items[v]],) for v in
-                                 range(0, len(entity_items))])
-                        except KeyError:
-                            results = pd.DataFrame(
-                                [entity_keys[v] + (0,) for v in range(0, len(entity_items))])
+            # check whether all entries of the constraint have an existing dual variable
+            # in that case add to results
+            results = pd.DataFrame(
+                [key + (instance.dual[entity.__getitem__(key)],)
+                 for (id, key) in entity.id_index_map().items() if id in instance.dual._dict.keys()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
                 [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])

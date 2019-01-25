@@ -302,6 +302,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     m.cap_pro = pyomo.Var(
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
+        bounds=res_process_capacity_rule,
         doc='Total process capacity (MW)')
     m.cap_pro_new = pyomo.Var(
         m.pro_tuples,
@@ -324,6 +325,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     m.cap_tra = pyomo.Var(
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
+        bounds=res_transmission_capacity_rule,
         doc='Total transmission capacity (MW)')
     m.cap_tra_new = pyomo.Var(
         m.tra_tuples,
@@ -342,6 +344,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     m.cap_sto_c = pyomo.Var(
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
+        bounds=res_storage_capacity_rule,
         doc='Total storage size (MWh)')
     m.cap_sto_c_new = pyomo.Var(
         m.sto_tuples,
@@ -350,6 +353,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
     m.cap_sto_p = pyomo.Var(
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
+        bounds=res_storage_power_rule,
         doc='Total storage power (MW)')
     m.cap_sto_p_new = pyomo.Var(
         m.sto_tuples,
@@ -450,10 +454,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         m.tm, m.pro_maxgrad_tuples,
         rule=res_process_maxgrad_upper_rule,
         doc='throughput may not increase faster than maximal gradient')
-    m.res_process_capacity = pyomo.Constraint(
-        m.pro_tuples,
-        rule=res_process_capacity_rule,
-        doc='process.cap-lo <= total process capacity <= process.cap-up')
 
     m.res_area = pyomo.Constraint(
         m.sit,
@@ -505,11 +505,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         m.tm, m.tra_tuples,
         rule=res_transmission_input_by_capacity_rule,
         doc='transmission input <= total transmission capacity')
-    m.res_transmission_capacity = pyomo.Constraint(
-        m.tra_tuples,
-        rule=res_transmission_capacity_rule,
-        doc='transmission.cap-lo <= total transmission capacity <= '
-            'transmission.cap-up')
     m.res_transmission_symmetry = pyomo.Constraint(
         m.tra_tuples,
         rule=res_transmission_symmetry_rule,
@@ -540,14 +535,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost', dual=False):
         m.t, m.sto_tuples,
         rule=res_storage_state_by_capacity_rule,
         doc='storage content <= storage capacity')
-    m.res_storage_power = pyomo.Constraint(
-        m.sto_tuples,
-        rule=res_storage_power_rule,
-        doc='storage.cap-lo-p <= storage power <= storage.cap-up-p')
-    m.res_storage_capacity = pyomo.Constraint(
-        m.sto_tuples,
-        rule=res_storage_capacity_rule,
-        doc='storage.cap-lo-c <= storage capacity <= storage.cap-up-c')
     m.res_initial_and_final_storage_state = pyomo.Constraint(
         m.t, m.sto_init_bound_tuples,
         rule=res_initial_and_final_storage_state_rule,
@@ -957,7 +944,6 @@ def def_pro_partial_timevar_output_rule(m, tm, sit, pro, coo):
 # lower bound <= process capacity <= upper bound
 def res_process_capacity_rule(m, sit, pro):
     return (m.process_dict['cap-lo'][sit, pro],
-            m.cap_pro[sit, pro],
             m.process_dict['cap-up'][sit, pro])
 
 
@@ -1016,7 +1002,6 @@ def res_transmission_input_by_capacity_rule(m, tm, sin, sout, tra, com):
 # lower bound <= transmission capacity <= upper bound
 def res_transmission_capacity_rule(m, sin, sout, tra, com):
     return (m.transmission_dict['cap-lo'][(sin, sout, tra, com)],
-            m.cap_tra[sin, sout, tra, com],
             m.transmission_dict['cap-up'][(sin, sout, tra, com)])
 
 
@@ -1072,14 +1057,12 @@ def res_storage_state_by_capacity_rule(m, t, sit, sto, com):
 # lower bound <= storage power <= upper bound
 def res_storage_power_rule(m, sit, sto, com):
     return (m.storage_dict['cap-lo-p'][(sit, sto, com)],
-            m.cap_sto_p[sit, sto, com],
             m.storage_dict['cap-up-p'][(sit, sto, com)])
 
 
 # lower bound <= storage capacity <= upper bound
 def res_storage_capacity_rule(m, sit, sto, com):
     return (m.storage_dict['cap-lo-c'][(sit, sto, com)],
-            m.cap_sto_c[sit, sto, com],
             m.storage_dict['cap-up-c'][(sit, sto, com)])
 
 

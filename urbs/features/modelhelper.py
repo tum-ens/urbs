@@ -48,7 +48,7 @@ def overpay_factor(dep_prd, interest, discount, year_built, stf_min, stf_end):
         dep_prd: depreciation period (years)
         interest: interest rate (e.g. 0.06 means 6 %)
         year_built: year utility is built
-        discount: discount rate for intertmeporal planning
+        discount: discount rate for intertemporal planning
         k: operational time after simulation horizon
     """
 

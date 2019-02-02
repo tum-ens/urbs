@@ -368,7 +368,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                 ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
     else:
         m.def_partial_process_output = pyomo.Constraint(
-            m.tm, (m.pro_partial_output_tuples - m.pro_partial_output_tuples),
+            m.tm, m.pro_partial_output_tuples,
             rule=def_partial_process_output_rule,
             doc='e_pro_out = '
                 ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'

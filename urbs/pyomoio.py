@@ -18,8 +18,11 @@ def get_entity(instance, name):
         return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names
-    entity = instance.__getattribute__(name)
-    labels = _get_onset_names(entity)
+    try:
+        entity = instance.__getattribute__(name)
+        labels = _get_onset_names(entity)
+    except AttributeError:
+        return pd.Series(name=name)
 
     # extract values
     if isinstance(entity, pyomo.Set):
@@ -47,6 +50,18 @@ def get_entity(instance, name):
         else:
             results = pd.DataFrame(
                 [(v[0], v[1].value) for v in entity.iteritems()])
+            labels = ['None']
+
+    elif isinstance(entity, pyomo.Expression):
+        if entity.dim() > 1:
+            results = pd.DataFrame(
+                [v[0]+(v[1](),) for v in entity.iteritems()])
+        elif entity.dim() == 1:
+            results = pd.DataFrame(
+                [(v[0], v[1]()) for v in entity.iteritems()])
+        else:
+            results = pd.DataFrame(
+                [(v[0], v[1]()) for v in entity.iteritems()])
             labels = ['None']
 
     elif isinstance(entity, pyomo.Constraint):
@@ -244,8 +259,8 @@ def _get_onset_names(entity):
             # no domain, so no labels needed
             pass
 
-    elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Constraint,
-                             pyomo.Objective)):
+    elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Expression,
+                     pyomo.Constraint, pyomo.Objective)):
         if entity.dim() > 0 and entity._index:
             labels = _get_onset_names(entity._index)
         else:

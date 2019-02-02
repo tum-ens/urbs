@@ -3,7 +3,7 @@ import pyomo.environ
 import time
 from pyomo.opt.base import SolverFactory
 from datetime import datetime
-from .model import *
+from .model import create_model
 from .report import *
 from .plot import *
 from .input import *
@@ -38,16 +38,18 @@ def setup_solver(optim, logfile='solver.log'):
         optim.set_options("log={}".format(logfile))
         # optim.set_options("tmlim=7200")  # seconds
         # optim.set_options("mipgap=.0005")
+    elif optim.name == 'cplex':
+        optim.set_options("log={}".format(logfile))
     else:
         print("Warning from setup_solver: no options set for solver "
               "'{}'!".format(optim.name))
     return optim
 
 
-def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
-                 objective,
-                 plot_tuples=None,  plot_sites_name=None, plot_periods=None,
-                 report_tuples=None, report_sites_name=None):
+def run_scenario(input_files, year, Solver, timesteps, scenario, result_dir, 
+                 dt, objective, plot_tuples=None,  plot_sites_name=None,
+                 plot_periods=None, report_tuples=None,
+                 report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
@@ -71,7 +73,7 @@ def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = read_excel(input_file)
+    data = read_input(input_files,year)
     data = scenario(data)
     validate_input(data)
 
@@ -95,12 +97,12 @@ def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
     t = time.time()
 
     # solve model and read results
-    optim = SolverFactory(solver)  # cplex, glpk, gurobi, ...
+    optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
 
-    # measure time to solve 
+    # measure time to solve
     t_solve = time.time() - t
     print("Time to solve model: %.2f sec" % t_solve)
 

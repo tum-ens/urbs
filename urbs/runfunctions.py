@@ -8,7 +8,6 @@ from .plot import *
 from .input import *
 from .validation import *
 from .saveload import *
-from .data import timeseries_number
 from .saveload import load
 # multiprocessing for serialized plotting
 import multiprocessing as mp
@@ -69,14 +68,14 @@ def serialized_plotting_reporting(result_dir, sce,  report_tuples,
                    periods=plot_periods, figure_size=(24, 9))
 
 
-def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
+def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
                  objective,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
-        prob: urbs model instance initialized with base scenario
+        input_file: filename to an Excel spreadsheet for urbs.read_excel
         solver: name of the solver to be used
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
@@ -93,16 +92,12 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     """
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
+    data = read_excel(input_file)
+    data = scenario(data)
+    validate_input(data)
 
-    # Only needed for scenario_new_timeseries, but handed to all functions:
-    filename = ""
-    # scenario_new_timeseries needs special treatment:
-    # Add file extension to scenario name and create path to excel sheet
-    if str(sce).find("scenario_new_timeseries") >= 0:
-        sce = sce+str(timeseries_number.pop())
-        filename = os.path.join("input", "{}.xlsx").format(sce)
-    # model instance, undo scenario changes?, path to excel sheet
-    prob = scenario(prob, False, filename)
+    # create model
+    prob = create_model(data, dt, timesteps, objective)
 
     # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
@@ -122,7 +117,4 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
                                     report_sites_name, timesteps, plot_tuples,
                                     plot_sites_name, plot_periods))
     plot_process.start()
-
-    # Undo all changes to model instance to retrieve base scenario model
-    prob = scenario(prob, True, filename)
     return prob

@@ -47,7 +47,6 @@ def scenario_no_dsm(data):
     data['dsm'] = pd.DataFrame()
     return data
 
-
 def scenario_all_together(data):
     # combine all other scenarios
     data = scenario_stock_prices(data)

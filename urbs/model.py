@@ -278,6 +278,10 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m = add_buy_sell_price(m)
     if m.mode['tve']:
         m = add_time_variable_efficiency(m)
+    else:
+        m.pro_timevar_output_tuples = pyomo.Set(
+            within=m.stf*m.sit*m.pro*m.com,
+            doc='empty set needed for (partial) process output')
 
     # Equation declarations
     # equation bodies are defined in separate functions, referred to here by
@@ -310,17 +314,11 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.tm, m.pro_input_tuples - m.pro_partial_input_tuples,
         rule=def_process_input_rule,
         doc='process input = process throughput * input ratio')
-    if m.mode['tve']:
-        m.def_process_output = pyomo.Constraint(
-            m.tm, (m.pro_output_tuples - m.pro_partial_output_tuples -
-                   m.pro_timevar_output_tuples),
-            rule=def_process_output_rule,
-            doc='process output = process throughput * output ratio')
-    else:
-        m.def_process_output = pyomo.Constraint(
-            m.tm, (m.pro_output_tuples - m.pro_partial_output_tuples),
-            rule=def_process_output_rule,
-            doc='process output = process throughput * output ratio')
+    m.def_process_output = pyomo.Constraint(
+        m.tm, (m.pro_output_tuples - m.pro_partial_output_tuples -
+                m.pro_timevar_output_tuples),
+        rule=def_process_output_rule,
+        doc='process output = process throughput * output ratio')
     m.def_intermittent_supply = pyomo.Constraint(
         m.tm, m.pro_input_tuples,
         rule=def_intermittent_supply_rule,
@@ -357,22 +355,14 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='e_pro_in = '
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
-    if m.mode['tve']:
-        m.def_partial_process_output = pyomo.Constraint(
-            m.tm,
-            (m.pro_partial_output_tuples -
-             (m.pro_partial_output_tuples & m.pro_timevar_output_tuples)),
-            rule=def_partial_process_output_rule,
-            doc='e_pro_out = '
-                ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
-                ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
-    else:
-        m.def_partial_process_output = pyomo.Constraint(
-            m.tm, m.pro_partial_output_tuples,
-            rule=def_partial_process_output_rule,
-            doc='e_pro_out = '
-                ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
-                ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
+    m.def_partial_process_output = pyomo.Constraint(
+        m.tm,
+        (m.pro_partial_output_tuples -
+            (m.pro_partial_output_tuples & m.pro_timevar_output_tuples)),
+        rule=def_partial_process_output_rule,
+        doc='e_pro_out = '
+            ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
+            ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
     if m.mode['int']:
         m.res_global_co2_limit = pyomo.Constraint(
@@ -406,10 +396,9 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     elif m.obj.value == 'CO2':
 
-        if m.mode['int']:
-            m.res_global_cost_limit = pyomo.Constraint(
-                rule=res_global_cost_limit_rule,
-                doc='total costs <= Global cost limit')
+        m.res_global_cost_limit = pyomo.Constraint(
+            rule=res_global_cost_limit_rule,
+            doc='total costs <= Global cost limit')
 
         m.objective_function = pyomo.Objective(
             rule=co2_rule,

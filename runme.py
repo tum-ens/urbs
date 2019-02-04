@@ -26,7 +26,7 @@ year = date.today().year
 objective = 'cost' # set either 'cost' or 'CO2' as objective
 
 # Choose Solver (cplex, glpk, gurobi, ...)
-Solver = 'gurobi'
+Solver = 'glpk'
 
 # simulation timesteps
 (offset, length) = (3500, 168)  # time step selection

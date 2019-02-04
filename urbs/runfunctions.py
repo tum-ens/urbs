@@ -46,14 +46,16 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
+def run_scenario(input_file, prob, solver, timesteps, scenario, result_dir, dt,
                  objective,
                  plot_tuples=None,  plot_sites_name=None, plot_periods=None,
                  report_tuples=None, report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
-        prob: urbs model instance initialized with base scenario
+        input_file: filename to an Excel spreadsheet for urbs.read_excel
+        prob: urbs model instance initialized with base scenario if alternative
+            scenario
         solver: name of the solver to be used
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
@@ -72,15 +74,24 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
 
-    # Only needed for scenario_new_timeseries, but handed to all functions:
-    filename = ""
-    # scenario_new_timeseries needs special treatment:
-    # Add file extension to scenario name and create path to excel sheet
-    if str(sce).find("scenario_new_timeseries") >= 0:
-        sce = sce+str(timeseries_number.pop())
-        filename = os.path.join("input", "{}.xlsx").format(sce)
-    # model instance, undo scenario changes?, path to excel sheet
-    prob = scenario(prob, False, filename)
+    # if alternative scenario: special scenario function treatment is necessary
+    if str(sce).find("alternative") >= 0:
+        # Only needed for scenario_new_timeseries, but handed to all functions:
+        filename = ""
+        # scenario_new_timeseries needs special treatment:
+        # Add file extension to scenario name and create path to excel sheet
+        if str(sce).find("scenario_new_timeseries") >= 0:
+            sce = sce+str(timeseries_number.pop())
+            filename = os.path.join("input", "{}.xlsx").format(sce)
+        # model instance, undo scenario changes?, path to excel sheet
+        prob = scenario(prob, False, filename)
+        instance = prob
+    else:
+        # it is a normal scenario: load data and build new model instance
+        data = read_excel(input_file)
+        data = scenario(data)
+        validate_input(data)
+        instance = create_model(data, dt, timesteps)
 
     # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
@@ -88,22 +99,22 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory(solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
+    result = optim.solve(instance, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
-    save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    save(instance, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # write report to spreadsheet
     report(
-        prob,
+        instance,
         os.path.join(result_dir, '{}.xlsx').format(sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
 
     # result plots
     result_figures(
-        prob,
+        instance,
         os.path.join(result_dir, '{}'.format(sce)),
         timesteps,
         plot_title_prefix=sce.replace('_', ' '),
@@ -112,6 +123,10 @@ def run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
 
-    # Undo all changes to model instance to retrieve base scenario model
-    prob = scenario(prob, True, filename)
+    if str(sce).find("alternative") >= 0:
+        # Undo all changes to model instance to retrieve base scenario model
+        prob = scenario(prob, True, filename)
+    if str(sce).find("scenario_base") >= 0:
+        # use base scenario model instance for future alternative scenarios
+        return instance
     return prob

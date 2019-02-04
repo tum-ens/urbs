@@ -2,6 +2,58 @@ from .model import *
 from .input import split_columns
 from .data import timeseries_number
 
+
+# SCENARIOS
+def scenario_base(data):
+    # do nothing
+    return data
+
+
+def scenario_stock_prices(data):
+    # change stock commodity prices
+    co = data['commodity']
+    stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
+    co.loc[stock_commodities_only, 'price'] *= 1.5
+    return data
+
+
+def scenario_co2_limit(data):
+    # change global CO2 limit
+    global_prop = data['global_prop']
+    global_prop.loc['CO2 limit', 'value'] *= 0.05
+    return data
+
+
+def scenario_co2_tax_mid(data):
+    # change CO2 price in Mid
+    co = data['commodity']
+    co.loc[('Mid', 'CO2', 'Env'), 'price'] = 50
+    return data
+
+
+def scenario_north_process_caps(data):
+    # change maximum installable capacity
+    pro = data['process']
+    pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
+    pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
+    return data
+
+
+def scenario_no_dsm(data):
+    # empty the DSM dataframe completely
+    data['dsm'] = pd.DataFrame()
+    return data
+
+
+def scenario_all_together(data):
+    # combine all other scenarios
+    data = scenario_stock_prices(data)
+    data = scenario_co2_limit(data)
+    data = scenario_north_process_caps(data)
+    return data
+
+
+
 '''
 These Scenarios don´t built up a whole new model. Instead they save time by
 using an existing base model and by manipulating the dictionaries containing
@@ -38,12 +90,12 @@ or do the following steps:
 '''
 
 
-def scenario_base(prob, reverse, not_used):
+def alternative_scenario_base(prob, reverse, not_used):
     # do nothing
     return prob
 
 
-def scenario_stock_prices(prob, reverse, not_used):
+def alternative_scenario_stock_prices(prob, reverse, not_used):
     # change stock commodity prices
     if not reverse:
         for x in tuple(prob.commodity_dict["price"].keys()):
@@ -59,7 +111,7 @@ def scenario_stock_prices(prob, reverse, not_used):
         return prob
 
 
-def scenario_co2_limit(prob, reverse, not_used):
+def alternative_scenario_co2_limit(prob, reverse, not_used):
     # change global CO2 limit
     if not reverse:
         prob.global_prop_dict["value"]["CO2 limit"] *= 0.05
@@ -71,7 +123,7 @@ def scenario_co2_limit(prob, reverse, not_used):
         return prob
 
 
-def scenario_co2_tax_mid(prob, reverse, not_used):
+def alternative_scenario_co2_tax_mid(prob, reverse, not_used):
     # change CO2 price in Mid
     if not reverse:
         prob.commodity_dict["price"][('Mid', 'CO2', 'Env')] = 50
@@ -84,7 +136,7 @@ def scenario_co2_tax_mid(prob, reverse, not_used):
         return prob
 
 
-def scenario_north_process_caps(prob, reverse, not_used):
+def alternative_scenario_north_process_caps(prob, reverse, not_used):
     # change maximum installable capacity
     if not reverse:
         prob.process_dict["cap-up"][('North', 'Hydro plant')] *= 0.5
@@ -98,7 +150,7 @@ def scenario_north_process_caps(prob, reverse, not_used):
         return prob
 
 
-def scenario_no_dsm(prob, reverse, not_used):
+def alternative_scenario_no_dsm(prob, reverse, not_used):
     if not reverse:
         del_dsm(prob)
         return prob
@@ -107,17 +159,17 @@ def scenario_no_dsm(prob, reverse, not_used):
         return prob
 
 
-def scenario_all_together(prob, reverse, not_used):
-    # combine all other scenarios
+def alternative_scenario_all_together(prob, reverse, not_used):
+    # combine all other alternative_scenarios
     if not reverse:
-        prob = scenario_stock_prices(prob, 0, not_used)
-        prob = scenario_co2_limit(prob, 0, not_used)
-        prob = scenario_north_process_caps(prob, 0, not_used)
+        prob = alternative_scenario_stock_prices(prob, 0, not_used)
+        prob = alternative_scenario_co2_limit(prob, 0, not_used)
+        prob = alternative_scenario_north_process_caps(prob, 0, not_used)
         return prob
     if reverse:
-        prob = scenario_stock_prices(prob, 1, not_used)
-        prob = scenario_co2_limit(prob, 1, not_used)
-        prob = scenario_north_process_caps(prob, 1, not_used)
+        prob = alternative_scenario_stock_prices(prob, 1, not_used)
+        prob = alternative_scenario_co2_limit(prob, 1, not_used)
+        prob = alternative_scenario_north_process_caps(prob, 1, not_used)
         return prob
 
 
@@ -125,15 +177,15 @@ def scenario_all_together(prob, reverse, not_used):
 # information to the scenario function it is necessary to define an external
 # data structure to store the additional information in. This function should
 # be called like this:
-# scenario_new_timeseries(timeseries_number, <value>)
+# alternative_scenario_new_timeseries(timeseries_number, <value>)
 # value specifies the path/file extension in order to locate the excel file.
-# value will be appended to input\\scenario_new_timeseries_
-def scenario_new_timeseries(timeseries_number, number):
+# value will be appended to input\\alternative_scenario_new_timeseries_
+def alternative_scenario_new_timeseries(timeseries_number, number):
     timeseries_number.insert(0, number)
-    return scenario_new_timeseries_
+    return alternative_scenario_new_timeseries_
 
 
-def scenario_new_timeseries_(prob, reverse,
+def alternative_scenario_new_timeseries_(prob, reverse,
                              filename="input\\scenario_new_timeseries.xlsx"):
     if not reverse:
         sheetnames = load_timeseries(prob, reverse, filename)

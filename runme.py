@@ -65,18 +65,23 @@ scenarios = [
     urbs.scenario_no_dsm,
     urbs.scenario_north_process_caps,
     urbs.scenario_all_together,
-    urbs.scenario_new_timeseries(timeseries_number,
+    urbs.alternative_scenario_base,
+    urbs.alternative_scenario_new_timeseries(timeseries_number,
                                  "example_file_extension")
     ]
 
-# Read data from Excel Sheet and create model for use in scenarios
-data = urbs.read_excel(input_file)
-prob = urbs.create_model(data, dt, timesteps)
-
+prob = None
 for scenario in scenarios:
-    prob = urbs.run_scenario(prob, solver, timesteps, scenario, result_dir, dt,
-                        objective, plot_tuples=plot_tuples,
-                        plot_sites_name=plot_sites_name,
-                        plot_periods=plot_periods,
-                        report_tuples=report_tuples,
-                        report_sites_name=report_sites_name)
+    if str(scenario.__name__).find("alternative") >= 0:
+        # if alternative scenario: check if model instance already exists
+        try: 
+            prob.data
+        except AttributeError:
+            data = urbs.read_excel(input_file)
+            prob = urbs.create_model(data, dt, timesteps)
+    prob = urbs.run_scenario(input_file, prob, solver, timesteps, scenario,
+                      result_dir, dt, objective, plot_tuples=plot_tuples,
+                      plot_sites_name=plot_sites_name,
+                      plot_periods=plot_periods,
+                      report_tuples=report_tuples,
+                      report_sites_name=report_sites_name)

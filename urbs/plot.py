@@ -237,7 +237,11 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
     all_axes.append(ax1)
 
     # stack plot for stored commodities
-    sp1 = ax1.stackplot(hoursteps, stored.values, linewidth=0.15)
+    try:
+        sp1 = ax1.stackplot(hoursteps, stored.values, linewidth=0.15)
+    except:
+        stored = pd.Series(0, index=hoursteps)
+        sp1 = ax1.stackplot(hoursteps, stored.values, linewidth=0.15)
     if plot_dsm:
         # hide xtick labels only if DSM plot follows
         plt.setp(ax1.get_xticklabels(), visible=False)

@@ -3,29 +3,27 @@
 .. _tutorial:
 
 Tutorial
-========
+=======
 
 The README file contains `installation notes`__. This tutorial
 expands on the steps that follow this installation.
 
 .. __: https://github.com/tum-ens/urbs/blob/master/README.md#installation
 
-This tutorial is a commented walk-through through the script ``runme.py``,
-which is a demonstration user script that can serve as a good basis for one's 
-own script.
+This tutorial is a commented walk-through through the script ``runme.py`` and 
+``scenrario.py``, which is a demonstration user script that can serve as a good
+basis for one's own script. ``scenrario.py`` is contained in the subfolder
+`urbs`.
 
 Imports
 -------
 
 ::
 
-	import os
-    import pandas as pd
-    import pyomo.environ
+    import os
     import shutil
     import urbs
-    from datetime import datetime
-    from pyomo.opt.base import SolverFactory
+    from urbs.data import timeseries_number
 
    
 Several packages are included.
@@ -46,14 +44,7 @@ Several packages are included.
   :func:`create_model`, :func:`report`, :func:`result_figures` and all scenario
   functions. More functions can be found in the document :ref:`API`.
 
-* `pyomo.opt.base`_ is a utility package by `pyomo`_ and provides the function
-  ``SolverFactory`` that allows creating a ``solver`` object. This objects 
-  hides the differences in input/output formats among solvers from the user.
-  More on that in section `Solving`_ below.
-  
-* `datetime` is used to append the current date and time to the result
-  directory name (used in :func:`prepare_result_directory`)
- 
+
 In the following sections the user definded input, output and scenario settings
 are described.
 
@@ -69,7 +60,9 @@ located in the same folder as script ``runme.py``::
     # copy input file to result directory
     shutil.copyfile(input_file, os.path.join(result_dir, input_file))
     # copy runme.py to result directory
-    shutil.copy(__file__, result_dir
+    shutil.copy(__file__, result_dir)
+    # copy current version of scenario functions
+    shutil.copy('urbs/scenarios.py', result_dir)                                                                          
 
 Variable ``input_file`` defines the input spreadsheet, from which the
 optimization problem will draw all its set/parameter data. The input file and
@@ -103,7 +96,7 @@ must be a subset of the labels used in ``input_file``'s sheets "Demand" and
 accessible directly, so that one can quickly reduce the problem size by
 reducing the simulation ``length``, i.e. the number of timesteps to be
 optimised. Variable ``dt`` is the duration of each timestep in the list in
-hours, where any positiv real value is allowed. 
+hours, where any positiv real value is allowed.
 
 :func:`range` is used to create a list of consecutive integers. The argument
 ``+1`` is needed, because ``range(a,b)`` only includes integers from ``a`` to
@@ -117,7 +110,7 @@ Output Settings
 The desired output is also specified by the user in script ``runme.py``. It is
 split into two parts: reporting and plotting. The former is used to generate
 an excel output file and the latter for standard graphs.
- 
+
 Reporting
 ^^^^^^^^^
 
@@ -145,7 +138,7 @@ sums") and as individual timeseries (in sheet "... timeseries").
     # optional: define names for sites in report_tuples
     report_sites_name = {['North', 'Mid', 'South']: 'Greenland'}
 
-Optional it is possible to define ``report_tuples`` to control what shall be
+Optional it is possible to define ``report_tuples`` to control what should be
 reported. And with ``report_sites_name`` it is possible to define, if the sites
 inside the report tuples should be named differently. If they are empty, the
 default value will be taken. See also :ref:`report-function` for a detailed
@@ -219,7 +212,7 @@ manually to modify some aspects of a plot without having to recreate the
 plotting function from scratch. For more ideas for adaptations, look into
 :func:`plot`'s code or the `matplotlib documentation`_.
 
-The last paragraph uses the :meth:`~matplotlib.figure.Figure.savefig` method
+The second paragraph uses the :meth:`~matplotlib.figure.Figure.savefig` method
 to save the figure as a pixel ``png`` (raster) and ``pdf`` (vector) image. The
 ``bbox_inches='tight'`` argument eliminates whitespace around the plot.
 
@@ -237,8 +230,10 @@ the same base scenarios, defined by the data in ``input_file``, they serve as a
 short way of defining the difference in input data. If needed, completely
 separate input data files could be loaded as well.
 
-The ``scenarios`` list in the end of the input file allows then to select the
-scenarios to be actually run. ::
+The ``scenarios`` list in the end of the script ``runme.py`` allows then to
+select the scenarios to be actually run.
+In Python, functions are objects, so they can be put into data structures just
+like any variable could be. ::
 
     scenarios = [
     urbs.scenario_base,
@@ -254,69 +249,120 @@ script ``scenarios.py``.
 
 Scenario functions
 ^^^^^^^^^^^^^^^^^^
-A scenario is simply a function that takes the input ``data`` and modifies it
-in a certain way. with the required argument ``data``, the input
-data :class:`dict`.::
-    
+
+A scenario is a function that takes an existing pyomo concrete model ``prob``, 
+modifies its data and updates the corresponding constraints. ::
+
     # SCENARIOS
-    def scenario_base(data):
+    def scenario_base(prob, reverse, not_used):
         # do nothing
-        return data
+        return prob
     
-The simplest scenario does not change anything in the original input file. It
+The simplest scenario does not change anything in the original model. It
 usually is called "base" scenario for that reason. All other scenarios are
-defined by 1 or 2 distinct changes in parameter values, relative to this common
-foundation.::
+defined by 1 or 2 distinct changes in parameter values. In order to actually 
+have an effect on the model to be solved updating the corresponding constraints
+is necessary. See how the changes get undone if the function is called with 
+reverse=True. This enables further use of the model in the following scenarios.
+Cloning of the model is very expensive and for this reason not recommended.
+``not_used`` is only needed for the :func:`scenario_new_timeseries` and will
+contain file extensions in that case. For all other scenarios it is unused. ::
     
-    def scenario_stock_prices(data):
+    def scenario_stock_prices(prob, reverse, not_used):
         # change stock commodity prices
-        co = data['commodity']
-        stock_commodities_only = (co.index.get_level_values('Type') == 'Stock')
-        co.loc[stock_commodities_only, 'price'] *= 1.5
-        return data
+        if not reverse:
+            for x in tuple(prob.commodity_dict["price"].keys()):
+                if x[2] == "Stock":
+                    prob.commodity_dict["price"][x] *= 1.5
+            update_cost(prob)
+            return prob
+        if reverse:
+            for x in tuple(prob.commodity_dict["price"].keys()):
+                if x[2] == "Stock":
+                    prob.commodity_dict["price"][x] *= 1/1.5
+            update_cost(prob)
+            return prob
     
 For example, :func:`scenario_stock_prices` selects all stock commodities from
-the :class:`DataFrame` ``commodity``, and increases their *price* value by 50%.
-See also pandas documentation :ref:`Selection by label <pandas:indexing.label>`
-for more information about the ``.loc`` function to access fields. Also note
-the use of `Augmented assignment statements`_ (``*=``) to modify data 
-in-place.::
+the :class:`Dictionary` ``commodity_dict``, and increases their *price* value
+by 50%. Also note the use of `Augmented assignment statements`_ (``*=``) to
+modify data in-place.::
     
-    def scenario_co2_limit(data):
+    def scenario_co2_limit(prob, reverse, not_used):
         # change global CO2 limit
-        hacks = data['hacks']
-        hacks.loc['Global CO2 limit', 'Value'] *= 0.05
-        return data
+        if not reverse:
+            prob.global_prop_dict["value"]["CO2 limit"] *= 0.05
+            update_co2_limit(prob)
+            return prob
+        if reverse:
+            prob.global_prop_dict["value"]["CO2 limit"] *= 1/0.05
+            update_co2_limit(prob)
+            return prob
 
 Scenario :func:`scenario_co2_limit` shows the simple case of changing a single
 input data value. In this case, a 95% CO2 reduction compared to the base
 scenario must be accomplished. This drastically limits the amount of coal and
 gas that may be used by all three sites.::
     
-    def scenario_north_process_caps(data):
+    def scenario_north_process_caps(prob, reverse, not_used):
         # change maximum installable capacity
-        pro = data['process']
-        pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
-        pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
-        return data
+        if not reverse:
+            prob.process_dict["cap-up"][('North', 'Hydro plant')] *= 0.5
+            prob.process_dict["cap-up"][('North', 'Biomass plant')] *= 0.25
+            update_process_capacity(prob)
+            return prob
+        if reverse:
+            prob.process_dict["cap-up"][('North', 'Hydro plant')] *= 2
+            prob.process_dict["cap-up"][('North', 'Biomass plant')] *= 4
+            update_process_capacity(prob)
+            return prob
     
 Scenario :func:`scenario_north_process_caps` demonstrates accessing single
 values in the ``process`` :class:`~pandas.DataFrame`. By reducing the amount of
 renewable energy conversion processes (hydropower and biomass), this scenario
 explores the "second best" option for this region to supply its demand.::
     
-    def scenario_all_together(data):
+    def scenario_all_together(prob, reverse, not_used):
         # combine all other scenarios
-        data = scenario_stock_prices(data)
-        data = scenario_co2_limit(data)
-        data = scenario_north_process_caps(data)
-        return data 
+        if not reverse:
+            prob = scenario_stock_prices(prob, 0, not_used)
+            prob = scenario_co2_limit(prob, 0, not_used)
+            prob = scenario_north_process_caps(prob, 0, not_used)
+            return prob
+        if reverse:
+            prob = scenario_stock_prices(prob, 1, not_used)
+            prob = scenario_co2_limit(prob, 1, not_used)
+            prob = scenario_north_process_caps(prob, 1, not_used)
+            return prob
 
 Scenario :func:`scenario_all_together` finally shows that scenarios can also be
 combined by chaining other scenario functions, making them dependent. This way,
 complex scenario trees can written with any single input change coded at a
 single place and then building complex composite scenarios from those.
-   
+
+
+
+ 
+Reading input & model creation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+    # Read data from Excel Sheet and create model for use in scenarios
+    data = urbs.read_excel(input_file)
+    prob = urbs.create_model(data, dt, timesteps)
+
+Function :func:`read_excel` returns a dict ``data`` of up to 12 pandas
+DataFrames with hard-coded column names that correspond to the parameters of
+the optimization problem (like ``eff`` for efficiency or ``inv-cost-c`` for
+capacity investment costs). The row labels on the other hand may be freely
+chosen (like site names, process identifiers or commodity names). By
+convention, it must contain the six keys ``commodity``, ``process``,
+``storage``, ``transmission``, ``demand``, and ``supim``. Each value must be a
+:class:`pandas.DataFrame`, whose index (row labels) and columns (column labels)
+conforms to the specification given by the example dataset in the spreadsheet
+:file:`mimo-example.xlsx`.
+``prob`` is then modified by applying the :func:`scenario` function to it.
+    
 Run scenarios
 -------------
 
@@ -335,45 +381,27 @@ Having prepared settings, input data and scenarios, the actual computations
 happen in the function :func:`run_scenario` of the script ``runfunctions.py``
 in subfolder ``urbs``. It is executed for each of the scenarios included in the
 scenario list. The following sections describe the content of function
-:func:`run_scenario`. In a nutshell, it reads the input data from its argument
-``input_file``, modifies it with the supplied ``scenario``, runs the
-optimisation for the given ``timesteps`` and writes report and plots to
-``result_dir``.
+:func:`run_scenario`. In a nutshell, it modifies the input 
+model instance ``prob`` by applying the :func:`scenario` function to it. It 
+then runs the optimization for the given ``timesteps`` and writes report and
+plots to ``result_dir``.
 
-Reading input
+Scenario creation
 ^^^^^^^^^^^^^
 
 ::
 
-    # scenario name, read and modify data for scenario
+    # scenario name and modify data for scenario
     sce = scenario.__name__
-    data = read_excel(input_file)
-    data = scenario(data)
-    validate_input(data)
+    prob = scenario(prob, 0)
 
-Function :func:`read_excel` returns a dict ``data`` of up to 12 pandas
-DataFrames with hard-coded column names that correspond to the parameters of
-the optimization problem (like ``eff`` for efficiency or ``inv-cost-c`` for
-capacity investment costs). The row labels on the other hand may be freely
-chosen (like site names, process identifiers or commodity names). By
-convention, it must contain the six keys ``commodity``, ``process``,
-``storage``, ``transmission``, ``demand``, and ``supim``. Each value must be a
-:class:`pandas.DataFrame`, whose index (row labels) and columns (column labels)
-conforms to the specification given by the example dataset in the spreadsheet
-:file:`mimo-example.xlsx`.
 
-``data`` is then modified by applying the :func:`scenario` function to it. To
-then rule out a list of known errors, that accumulate through growing user
-experience, a variety of validation functions specified in script
-``validate.py`` in subfolder ``urbs`` is run on the dict ``data``.
+The pyomo model instance ``prob`` now contains the scenario to be solved.
 
 Solving
 ^^^^^^^
 
 ::
-
-    # create model
-    prob = urbs.create_model(data, dt, timesteps)
 
     # refresh time stamp string and create filename for logfile
     now = prob.created
@@ -385,18 +413,27 @@ Solving
     result = optim.solve(prob, tee=True)
 
 This section is the "work horse", where most computation and time is spent. The
-optimization problem is first defined (:func:`create_model`), then filled with
-values (``create``). The ``SolverFactory`` object is an abstract representation
-of the solver used. The returned object ``optim`` has a method
-:meth:`set_options` to set solver options (not used in this tutorial).
+optimization problem is already well defined. The ``SolverFactory`` object is 
+an abstract representation of the solver used. The returned object ``optim`` 
+has a method :meth:`set_options` to set solver options (not used in this 
+tutorial).
 
 The remaining line calls the solver and reads the ``result`` object back
 into the ``prob`` object, which is queried to for variable values in the
 remaining script file. Argument ``tee=True`` enables the realtime console
 output for the solver. If you want less verbose output, simply set it to
 ``False`` or remove it.
-   
 
+Rebuilding of base scenario
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::
+
+    prob = scenario(prob, 1, filename)
+
+This line calls the :func:`scenario` function with the codeword reverse=True.
+The function is built such that it undoes all changes done to ``prob`` if
+called with this codeword. Afterwards prob again contains the base scenario for
+correct usage in the next scenario.
    
 .. _augmented assignment statements:
     http://docs.python.org/2/reference/\

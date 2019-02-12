@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import os
 import pandas as pd
@@ -56,7 +57,7 @@ def sort_plot_elements(elements):
     return elements_sorted
 
 
-def plot(prob, com, sit, dt, timesteps, timesteps_plot,
+def plot(h5, com, sit, dt, timesteps, timesteps_plot,
          power_name='Power', energy_name='Energy',
          power_unit='MW', energy_unit='MWh', time_unit='h',
          figure_size=(16, 12)):
@@ -66,7 +67,7 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
     with stored energy in a second subplot.
 
     Args:
-        prob: urbs model instance
+        h5: loaded h5 file in form of data frame containing model
         com: commodity name to plot
         sit: site name to plot
         dt: length of each time step (unit: hours)
@@ -83,25 +84,20 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
     Returns:
         fig: figure handle
     """
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
 
     if timesteps is None:
         # default to all simulated timesteps
-        timesteps = sorted(get_entity(prob, 'tm').index)
+        timesteps = sorted(h5._result['tm'].index)
 
     # convert timesteps to hour series for the plots
     hoursteps = timesteps * dt[0]
     hoursteps_plot = timesteps_plot * dt[0]
-
     if is_string(sit):
         # wrap single site in 1-element list for consistent behaviour
         sit = [sit]
-
     (created, consumed, stored, imported, exported,
-     dsm) = get_timeseries(prob, com, sit, timesteps)
-
-    costs, cpro, ctra, csto = get_constants(prob)
+     dsm) = get_timeseries(h5, com, sit, timesteps)
+    costs, cpro, ctra, csto = get_constants(h5)
 
     # move retrieved/stored storage timeseries to created/consumed and
     # rename storage columns back to 'storage' for color mapping
@@ -124,9 +120,12 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
     try:
         # detect whether DSM could be used in this plot
         # if so, show DSM subplot (even if delta == 0 for the whole time)
-        df_dsm = get_input(prob, 'dsm')
-        plot_dsm = df_dsm.loc[(sit, com),
-                              ['cap-max-do', 'cap-max-up']].sum().sum() > 0
+        df_dsm = get_input(h5, 'dsm')  # get_input will use h5._data["dsm"]
+        plot_dsm = 0
+        for s in sit:
+            plot_dsm += (df_dsm["cap-max-do"][s, com] + df_dsm["cap-max-up"]
+                         [s, com])
+        plot_dsm = plot_dsm > 0
     except (KeyError, TypeError):
         plot_dsm = False
 
@@ -313,17 +312,16 @@ def plot(prob, com, sit, dt, timesteps, timesteps_plot,
             skip_lowest = mpl.ticker.FuncFormatter(
                 lambda y, pos: '' if pos == 0 else y)
             ax.yaxis.set_major_formatter(skip_lowest)
-
     return fig
 
 
-def result_figures(prob, figure_basename, timesteps, plot_title_prefix=None,
+def result_figures(h5, figure_basename, timesteps, plot_title_prefix=None,
                    plot_tuples=None, plot_sites_name={},
                    periods=None, extensions=None, **kwds):
     """Create plots for multiple periods and sites and save them to files.
 
     Args:
-        prob: urbs model instance
+        h5: loaded h5 file in form of data frame containing model
         figure_basename: relative filename prefix that is shared
         plot_title_prefix: (optional) plot title identifier
         plot_tuples: (optional) list of (sit, com) tuples to plot
@@ -337,15 +335,15 @@ def result_figures(prob, figure_basename, timesteps, plot_title_prefix=None,
         **kwds: (optional) keyword arguments are forwarded to urbs.plot()
     """
     # retrieve parameter 'dt' from the model
-    dt = get_entity(prob, 'dt')
+    dt = h5._result['dt']
 
     # default to all demand (sit, com) tuples if none are specified
     if plot_tuples is None:
-        plot_tuples = get_input(prob, 'demand').columns
+        plot_tuples = get_input(h5, 'demand').columns
 
     # default to all timesteps if no periods are given
     if periods is None:
-        periods = {'all': sorted(get_entity(prob, 'tm').index)}
+        periods = {'all': sorted(h5._result['tm'].index)}
 
     # default to PNG and PDF plots if no filetypes are specified
     if extensions is None:
@@ -367,7 +365,7 @@ def result_figures(prob, figure_basename, timesteps, plot_title_prefix=None,
 
         for period, periodrange in periods.items():
             # do the plotting
-            fig = plot(prob, com, help_sit, dt, timesteps, periodrange, **kwds)
+            fig = plot(h5, com, help_sit, dt, timesteps, periodrange, **kwds)
 
             # change the figure title
             ax0 = fig.get_axes()[0]

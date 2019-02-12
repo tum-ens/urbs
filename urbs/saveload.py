@@ -13,7 +13,7 @@ def create_result_cache(prob):
 
     result_cache = {}
     for entity in entities:
-        result_cache[entity] = get_entity(prob, entity)
+        result_cache[entity] = get_entity(prob, entity, skip_result_cache=True)
     return result_cache
 
 
@@ -31,8 +31,7 @@ def save(prob, filename):
     warnings.filterwarnings('ignore',
                             category=pd.io.pytables.PerformanceWarning)
 
-    if not hasattr(prob, '_result'):
-        prob._result = create_result_cache(prob)
+    prob._result = create_result_cache(prob)
 
     with pd.HDFStore(filename, mode='w') as store:
         for name in prob._data.keys():

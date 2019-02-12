@@ -8,6 +8,9 @@ from .plot import *
 from .input import *
 from .validation import *
 from .saveload import *
+from .saveload import load
+# multiprocessing for serialized plotting
+import multiprocessing as mp
 
 
 def prepare_result_directory(result_name):
@@ -37,10 +40,32 @@ def setup_solver(optim, logfile='solver.log'):
         optim.set_options("log={}".format(logfile))
         # optim.set_options("tmlim=7200")  # seconds
         # optim.set_options("mipgap=.0005")
+    elif optim.name == 'cplex':
+        optim.set_options("log={}".format(logfile))
     else:
         print("Warning from setup_solver: no options set for solver "
               "'{}'!".format(optim.name))
     return optim
+
+
+def serialized_plotting_reporting(result_dir, sce,  report_tuples,
+                                  report_sites_name, timesteps, plot_tuples,
+                                  plot_sites_name, plot_periods):
+
+    # load the model/h5 file corresponding to 'sce'
+    urbs_path = os.path.join(result_dir, "{}.h5").format(sce)
+    h5 = load(urbs_path)
+
+    # write report to spreadsheet
+    report(h5, os.path.join(result_dir, '{}.xlsx').format(sce),
+           report_tuples=report_tuples,
+           report_sites_name=report_sites_name)
+
+    # result plots
+    result_figures(h5, os.path.join(result_dir, '{}'.format(sce)), timesteps,
+                   plot_title_prefix=sce.replace('_', ' '),
+                   plot_tuples=plot_tuples, plot_sites_name=plot_sites_name,
+                   periods=plot_periods, figure_size=(24, 9))
 
 
 def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
@@ -51,6 +76,7 @@ def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
 
     Args:
         input_file: filename to an Excel spreadsheet for urbs.read_excel
+        solver: name of the solver to be used
         timesteps: a list of timesteps, e.g. range(0,8761)
         scenario: a scenario function that modifies the input data dict
         result_dir: directory name for result spreadsheet and plots
@@ -64,7 +90,6 @@ def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
     Returns:
         the urbs model instance
     """
-
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = read_excel(input_file)
@@ -74,33 +99,22 @@ def run_scenario(input_file, solver, timesteps, scenario, result_dir, dt,
     # create model
     prob = create_model(data, dt, timesteps, objective)
 
-    # refresh time stamp string and create filename for logfile
-    now = prob.created
+    # create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
     optim = SolverFactory(solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
+    assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
     save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
-    # write report to spreadsheet
-    report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples,
-        report_sites_name=report_sites_name)
-
-    # result plots
-    result_figures(
-        prob,
-        os.path.join(result_dir, '{}'.format(sce)),
-        timesteps,
-        plot_title_prefix=sce.replace('_', ' '),
-        plot_tuples=plot_tuples,
-        plot_sites_name=plot_sites_name,
-        periods=plot_periods,
-        figure_size=(24, 9))
+    # start a new process and plot the results using the h5 file
+    plot_process = mp.Process(target=serialized_plotting_reporting,
+                              args=(result_dir, sce,  report_tuples,
+                                    report_sites_name, timesteps, plot_tuples,
+                                    plot_sites_name, plot_periods))
+    plot_process.start()
     return prob

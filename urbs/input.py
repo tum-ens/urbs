@@ -210,7 +210,7 @@ def get_input(prob, name):
     separation, e.g. 'process_commodity'.
 
     Args:
-        prob: a urbs model instance
+        prob: a urbs model instance or a model instance loaded from an h5 file
         name: an input DataFrame name ('commodity', 'process', ...)
 
     Returns:

@@ -41,29 +41,29 @@ def validate_input(data):
     #             data['process'].loc[index]['cap-up']):
     #         raise ValueError('Ensure cap_lo <= cap_up and inst_cap <= cap_up'
     #                             ' for all processes.')
-    # if mode['tra]:
-    #     for index in data['transmission'].index:
-    #         if not (data['transmission'].loc[index]['cap-lo'] <=
-    #                 data['transmission'].loc[index]['cap-up'] and
-    #                 data['transmission'].loc[index]['inst-cap'] <=
-    #                 data['transmission'].loc[index]['cap-up']):
-    #             raise ValueError('Ensure cap_lo <= cap_up and'
-    #                              'inst_cap <= cap_up for all transmissions.')
-    # if mode['sto]:
-    #     for index in data['storage'].index:
-    #         if not (data['storage'].loc[index]['cap-lo-p'] <=
-    #                 data['storage'].loc[index]['cap-up-p'] and
-    #                 data['storage'].loc[index]['inst-cap-p'] <=
-    #                 data['storage'].loc[index]['cap-up-p']):
-    #             raise ValueError('Ensure cap_lo <= cap_up and'
-    #                              'inst_cap <= cap_up for all storage powers.')
+    
+    # for index in data['transmission'].index:
+    #     if not (data['transmission'].loc[index]['cap-lo'] <=
+    #             data['transmission'].loc[index]['cap-up'] and
+    #             data['transmission'].loc[index]['inst-cap'] <=
+    #             data['transmission'].loc[index]['cap-up']):
+    #         raise ValueError('Ensure cap_lo <= cap_up and'
+    #                             'inst_cap <= cap_up for all transmissions.')
 
-    #         elif not (data['storage'].loc[index]['cap-lo-c'] <=
-    #                 data['storage'].loc[index]['cap-up-c'] and
-    #                 data['storage'].loc[index]['inst-cap-c'] <=
-    #                 data['storage'].loc[index]['cap-up-c']):
-    #             raise ValueError('Ensure cap_lo <= cap_up and inst_cap <= cap_up'
-    #                             ' for all storage capacities.')
+    # for index in data['storage'].index:
+    # if not (data['storage'].loc[index]['cap-lo-p'] <=
+    #         data['storage'].loc[index]['cap-up-p'] and
+    #         data['storage'].loc[index]['inst-cap-p'] <=
+    #         data['storage'].loc[index]['cap-up-p']):
+    #     raise ValueError('Ensure cap_lo <= cap_up and'
+    #                         'inst_cap <= cap_up for all storage powers.')
+
+    # elif not (data['storage'].loc[index]['cap-lo-c'] <=
+    #         data['storage'].loc[index]['cap-up-c'] and
+    #         data['storage'].loc[index]['inst-cap-c'] <=
+    #         data['storage'].loc[index]['cap-up-c']):
+    #     raise ValueError('Ensure cap_lo <= cap_up and inst_cap <= cap_up'
+    #                     ' for all storage capacities.')
 
     # Identify SupIm values larger than 1, which lead to an infeasible model
     # if (data['supim'] > 1).sum().sum() >= 0:
@@ -87,28 +87,28 @@ def validate_input(data):
                        "correspondingly.")
 
     # Identify inconsistencies in site names throughout worksheets
-    for site in data['site'].index.levels[1].tolist():
-        if site not in data['commodity'].index.levels[1].tolist():
+    for site in data['commodity'].index.levels[1].tolist():
+        if site not in data['site'].index.levels[1].tolist():
             raise KeyError("All names in the column 'Site' in input worksheet "
                            "'Commodity' must be from the list of site names "
                            "specified in the worksheet 'Site'.")
 
-    for site in data['site'].index.levels[1].tolist():
-        if site not in data['process'].index.levels[1].tolist():
+    for site in data['process'].index.levels[1].tolist():
+        if site not in data['site'].index.levels[1].tolist():
             raise KeyError("All names in the column 'Site' in input worksheet "
                            "'Process' must be from the list of site names "
                            "specified in the worksheet 'Site'.")
 
     if not data['storage'].empty:
-        for site in data['site'].index.levels[1].tolist():
-            if site not in data['storage'].index.levels[1].tolist():
+        for site in data['storage'].index.levels[1].tolist():
+            if site not in data['site'].index.levels[1].tolist():
                 raise KeyError("All names in the column 'Site' in input "
                             "worksheet 'Storage' must be from the list of "
                             "site names specified in the worksheet 'Site'.")
-    
+
     if not data['dsm'].empty:
-        for site in data['site'].index.levels[1].tolist():
-            if site not in data['dsm'].index.levels[1].tolist():
+        for site in data['dsm'].index.levels[1].tolist():
+            if site not in data['site'].index.levels[1].tolist():
                 raise KeyError("All names in the column 'Site' in input "
                             "worksheet 'DSM' must be from the list of site "
                             "names specified in the worksheet 'Site'.")

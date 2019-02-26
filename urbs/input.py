@@ -208,7 +208,6 @@ def pyomo_model_prep(data, timesteps):
 
     # create no expansion dataframes
     pro_const_cap = process[process['inst-cap'] == process['cap-up']]
-    pro_const_cap = pro_const_cap[process['inst-cap'] == process['cap-lo']]
 
     # create list with all support timeframe values
     m.stf_list = m.global_prop.index.levels[0].tolist()
@@ -227,18 +226,12 @@ def pyomo_model_prep(data, timesteps):
         # create no expansion dataframes
         tra_const_cap = transmission[
             transmission['inst-cap'] == transmission['cap-up']]
-        tra_const_cap = tra_const_cap[
-            transmission['inst-cap'] == transmission['cap-lo']]
         
     if m.mode['sto']:
         storage = data['storage'].dropna(axis=0, how='all')
         # create no expansion dataframes 
         sto_const_cap_c = storage[storage['inst-cap-c'] == storage['cap-up-c']]
         sto_const_cap_p = storage[storage['inst-cap-p'] == storage['cap-up-p']]
-        sto_const_cap_c = sto_const_cap_c[
-            storage['inst-cap-c'] == storage['cap-lo-c']]
-        sto_const_cap_p = sto_const_cap_p[
-            storage['inst-cap-p'] == storage['cap-lo-p']]
         
     if m.mode['dsm']:
         m.dsm_dict = data["dsm"].dropna(axis=0, how='all').to_dict()
@@ -325,9 +318,7 @@ def pyomo_model_prep(data, timesteps):
             if (not stf_process['cap-up'].max(axis=0) == 
                 pro_const_cap.loc[index]['inst-cap']):
                 pro_const_cap = pro_const_cap.drop(index)
-            elif (not stf_process['cap-lo'].min(axis=0) == 
-                  pro_const_cap.loc[index]['inst-cap']):
-                pro_const_cap = pro_const_cap.drop(index)
+
         # derive invest factor from WACC, depreciation and discount untility
         process['discount'] = (m.global_prop.xs('Discount rate', level=1)
                                 .loc[m.global_prop.index.min()[0]]['value'])
@@ -388,9 +379,6 @@ def pyomo_model_prep(data, timesteps):
                 if (not stf_transmission['cap-up'].max(axis=0) == 
                     tra_const_cap.loc[index]['inst-cap']):
                     tra_const_cap = tra_const_cap.drop(index)
-                elif (not stf_transmission['cap-lo'].min(axis=0) == 
-                    tra_const_cap.loc[index]['inst-cap']):
-                    tra_const_cap = tra_const_cap.drop(index)
             # derive invest factor from WACC, depreciation and 
             # discount untility
             transmission['discount'] = (
@@ -441,16 +429,10 @@ def pyomo_model_prep(data, timesteps):
                 if (not stf_storage['cap-up-c'].max(axis=0) == 
                     sto_const_cap_c.loc[index]['inst-cap-c']):
                     sto_const_cap_c = sto_const_cap_c.drop(index)
-                elif (not stf_storage['cap-lo-c'].min(axis=0) == 
-                    sto_const_cap_c.loc[index]['inst-cap-c']):
-                    sto_const_cap_p = sto_const_cap_c.drop(index)
             
             for index in tuple(sto_const_cap_p.index):
                 stf_storage = storage.xs((index[1,2,3]),level = (1,2,3))
                 if (not stf_storage['cap-up-p'].max(axis=0) == 
-                    sto_const_cap_p.loc[index]['inst-cap-p']):
-                    sto_const_cap_p = sto_const_cap_p.drop(index)
-                elif (not stf_storage['cap-lo-p'].min(axis=0) == 
                     sto_const_cap_p.loc[index]['inst-cap-p']):
                     sto_const_cap_p = sto_const_cap_p.drop(index)
 

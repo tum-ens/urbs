@@ -170,9 +170,6 @@ def def_storage_power_rule(m, stf, sit, sto, com):
             if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
                 cap_sto_p = m.storage_dict['inst-cap-p'][
                     (stf, sit, sto, com)]
-            elif(m.storage_dict['cap-up-p'][(stf, sit, sto, com)] ==
-                 m.storage_dict['cap-lo-p'][(stf, sit, sto, com)]):
-                cap_sto_p = m.storage_dict['cap-up-p'][(stf, sit, sto, com)]
             else:
                 cap_sto_p = (
                     sum(m.cap_sto_p_new[stf_built, sit, sto, com]

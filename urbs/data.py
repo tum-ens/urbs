@@ -28,3 +28,8 @@ COLORS = {
     'Purchase': (0, 51, 89),
     'Startup': (105, 8, 90),
     'Variable': (128, 153, 172)}
+
+
+# Helper list used for global declaration of current timeseries data sheet.
+# Automatically filled by scenario_new_timeseries function
+timeseries_number = []

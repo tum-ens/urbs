@@ -13,7 +13,7 @@ def create_result_cache(prob):
 
     result_cache = {}
     for entity in entities:
-        result_cache[entity] = get_entity(prob, entity)
+        result_cache[entity] = get_entity(prob, entity, skip_result_cache=True)
     return result_cache
 
 
@@ -31,12 +31,20 @@ def save(prob, filename):
     warnings.filterwarnings('ignore',
                             category=pd.io.pytables.PerformanceWarning)
 
-    if not hasattr(prob, '_result'):
-        prob._result = create_result_cache(prob)
+    prob._result = create_result_cache(prob)
 
     with pd.HDFStore(filename, mode='w') as store:
-        for name in prob._data.keys():
-            store['data/'+name] = prob._data[name]
+        # Search all attributes of prob for those containing the input data
+        for name in prob.__dict__:
+            if str(name).find("_dict") > 0:
+                name_no_dict = name.split("_dict")[0]  # remove _dict
+                try:
+                    store['data/'+name_no_dict] = (pd.DataFrame(getattr(prob,
+                                                   name)))
+                # 1D dictionaries need an index:
+                except ValueError:
+                    store['data/'+name_no_dict] = (pd.DataFrame(getattr(prob,
+                                                   name), index=[0]))
         for name in prob._result.keys():
             store['result/'+name] = prob._result[name]
 

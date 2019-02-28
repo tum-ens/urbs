@@ -448,18 +448,28 @@ a script can automate these. This is where a ``runme.py`` script becomes handy.
 Create a copy of the script file ``runme.py`` and give it a suitable name, 
 e.g. ``runns.py``.
 
-Modify the ``scenario_co2_limit`` function. As the base scenario now has no
-limit, reducing it by 95 % does not make it finite. Therefore you set a fixed
-hard (annual) limit of 40 million tonnes of CO2 equivalent:
+Modify the ``scenario_co2_limit`` function in ``scenario.py´´ in the subfolder 
+urbs and reduce the fixed hard (annual) limit by the factor of 20.
+The scenario function modifies the model of the existing base scenario. 
+Therefore it is necessary to undo all changes of the model once it is solved. 
+This makes it possible to reuse the model without expensive cloning.
+# Modify the ``scenario_co2_limit`` function. As the base scenario now has no
+# limit, reducing it by 95 % does not make it finite. Therefore you set a fixed
+# hard (annual) limit of 40 million tonnes of CO2 equivalent:
     
 .. code-block:: python
    :emphasize-lines: 4
 
-    def scenario_co2_limit(data):
-        # change global CO2 limit
-        global_prop = data['global_prop']
-		global_prop.loc['CO2 limit', 'value'] = 40000
-        return data
+def scenario_co2_limit(prob, reverse, not_used):
+    # change global CO2 limit
+    if not reverse:
+        prob.global_prop_dict["value"]["CO2 limit"] *= 0.05
+        update_co2_limit(prob)
+        return prob
+    if reverse:
+        prob.global_prop_dict["value"]["CO2 limit"] *= 1/0.05
+        update_co2_limit(prob)
+        return prob
 
 Next, set adjust the plot_tuples and report_tuples by replacing ``North``, 
 ``Mid`` and ``South`` by the four islands of Newsealand. 
@@ -472,28 +482,32 @@ custom colors. So you modify the ``my_colors`` :class:`dict` like this::
         'Qlyph Archipelago': (200, 200, 230),
         'Jepid Island': (215,215,215)}
 
-Finally, you head down to the ``if __name__ == '__main__'`` section that is
-executed when the script is called. There, you change the ``input_file`` to
-your spreadsheet ``newsealand.xlsx`` and increase the optimisation duration to
-14 days (``14*24`` time steps). For now, you don't need the other scenarios,
-so you exclude them from the ``scenarios`` :class:`list`:
+Finally, you head up to the beginning of the code. There you change the 
+``input_file`` toyour spreadsheet ``newsealand.xlsx`` and increase the 
+optimisation duration to 14 days (``14*24`` time steps). For now, you don't
+need the other scenarios, so you exclude them from the
+``scenarios`` :class:`list`:
+# Finally, you head down to the ``if __name__ == '__main__'`` section that is
+# executed when the script is called. There, you change the ``input_file`` to
+# your spreadsheet ``newsealand.xlsx`` and increase the optimisation duration to
+# 14 days (``14*24`` time steps). For now, you don't need the other scenarios,
+# so you exclude them from the ``scenarios`` :class:`list`:
 
 .. code-block:: python
-   :emphasize-lines: 2,6,10,11,12 
-   
-    if __name__ == '__main__':
-        input_file = 'newsealand.xlsx'
-        result_name = os.path.splitext(input_file)[0]  # cut away file extension
-        result_dir = prepare_result_directory(result_name)  # name + time stamp
+   :emphasize-lines: 1,5,10,11,12   
+
+    input_file = 'newsealand.xlsx'
+    result_name = os.path.splitext(input_file)[0]  # cut away file extension
+    result_dir = prepare_result_directory(result_name)  # name + time stamp
+
+    (offset, length) = (3500, 14*24)  # time step selection
+    timesteps = range(offset, offset+length+1)
+    dt = 1 
     
-        (offset, length) = (3500, 14*24)  # time step selection
-        timesteps = range(offset, offset+length+1)
-        dt = 1 
-		
-        # select scenarios to be run
-        scenarios = [
-            scenario_base,
-            scenario_co2_limit]
+    # select scenarios to be run
+    scenarios = [
+        urbs.scenario_base,
+        urbs.scenario_co2_limit]
 
     # define the commodities/sites to be plotted
     plot_tuples = [
@@ -515,17 +529,19 @@ so you exclude them from the ``scenarios`` :class:`list`:
     report_sites_name = {'Vled Haven': 'Another name for Vled Haven'}
 
     # define the time periods to be plotted
-    plot_periods = {
-        'all': timesteps[1:]
-    }
-			
-        for scenario in scenarios:
-            prob = run_scenario(input_file, timesteps, scenario, result_dir, dt,
-                            plot_tuples=plot_tuples,
-                            plot_sites_name=plot_sites_name,
-                            plot_periods=plot_periods,
-                            report_tuples=report_tuples,
-                            report_sites_name=report_sites_name)
+    plot_periods = {'all': timesteps[1:]}
+	# Read data from Excel Sheet and create model for use in scenarios
+    data = urbs.read_excel(input_file)
+    prob = urbs.create_model(data, dt, timesteps)
+
+    for scenario in scenarios:
+        prob = run_scenario(prob, timesteps, scenario, result_dir, dt,
+                        objective,
+                        plot_tuples=plot_tuples,
+                        plot_sites_name=plot_sites_name,
+                        plot_periods=plot_periods,
+                        report_tuples=report_tuples,
+                        report_sites_name=report_sites_name)
 
             
 .. note::

@@ -1,15 +1,12 @@
 import os
-import pandas as pd
-import pyomo.environ
 import shutil
 import urbs
-from datetime import datetime
-from pyomo.opt.base import SolverFactory
+from urbs.data import timeseries_number
 
 
 input_file = 'mimo-example.xlsx'
 result_name = os.path.splitext(input_file)[0]  # cut away file extension
-result_dir = urbs.prepare_result_directory(result_name)  # name+time stamp
+result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
 shutil.copyfile(input_file, os.path.join(result_dir, input_file))
@@ -49,9 +46,7 @@ report_tuples = [
 report_sites_name = {('North', 'Mid', 'South'): 'Greenland'}
 
 # plotting timesteps
-plot_periods = {
-    'all': timesteps[1:]
-}
+plot_periods = {'all': timesteps[1:]}
 
 # add or change plot colors
 my_colors = {
@@ -69,13 +64,24 @@ scenarios = [
     urbs.scenario_co2_tax_mid,
     urbs.scenario_no_dsm,
     urbs.scenario_north_process_caps,
-    urbs.scenario_all_together]
+    urbs.scenario_all_together,
+    urbs.alternative_scenario_base,
+    urbs.alternative_scenario_new_timeseries(timeseries_number,
+                                 "example_file_extension")
+    ]
 
+prob = None
 for scenario in scenarios:
-    prob = urbs.run_scenario(input_file, solver, timesteps, scenario,
-                        result_dir, dt, objective,
-                        plot_tuples=plot_tuples,
-                        plot_sites_name=plot_sites_name,
-                        plot_periods=plot_periods,
-                        report_tuples=report_tuples,
-                        report_sites_name=report_sites_name)
+    if str(scenario.__name__).find("alternative") >= 0:
+        # if alternative scenario: check if model instance already exists
+        try: 
+            prob.data
+        except AttributeError:
+            data = urbs.read_excel(input_file)
+            prob = urbs.create_model(data, dt, timesteps)
+    prob = urbs.run_scenario(input_file, prob, solver, timesteps, scenario,
+                      result_dir, dt, objective, plot_tuples=plot_tuples,
+                      plot_sites_name=plot_sites_name,
+                      plot_periods=plot_periods,
+                      report_tuples=report_tuples,
+                      report_sites_name=report_sites_name)

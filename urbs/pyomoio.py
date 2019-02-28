@@ -2,7 +2,7 @@ import pandas as pd
 import pyomo.core as pyomo
 
 
-def get_entity(instance, name):
+def get_entity(instance, name, skip_result_cache=False):
     """ Retrieve values (or duals) for an entity in a model instance.
 
     Args:
@@ -13,8 +13,10 @@ def get_entity(instance, name):
         a Pandas Series with domain as index and values (or 1's, for sets) of
         entity name. For constraints, it retrieves the dual values
     """
+
     # magic: short-circuit if problem contains a result cache
-    if hasattr(instance, '_result') and name in instance._result:
+    if (not skip_result_cache and hasattr(instance, '_result') and name in 
+        instance._result):
         return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names
@@ -77,8 +79,7 @@ def get_entity(instance, name):
                 [(v[0], v[1].value) for v in entity.iteritems()])
         else:
             # assert(entity.dim() == 0)
-            results = pd.DataFrame(
-                [(v[0], v[1].value) for v in entity.iteritems()])
+            results = pd.DataFrame()
             labels = ['None']
 
     # check for duplicate onset names and append one to several "_" to make

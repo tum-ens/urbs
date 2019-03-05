@@ -177,8 +177,8 @@ def read_input(input_files,year):
         'transmission': transmission,
         'storage': storage,
         'dsm': dsm,
-        'buy_sell_price': buy_sell_price,
-        'eff_factor': eff_factor
+        'buy_sell_price': buy_sell_price.dropna(axis=1,how='all'),
+        'eff_factor': eff_factor.dropna(axis=1,how='all')
         }
 
     # sort nested indexes to make direct assignments work
@@ -199,6 +199,7 @@ def pyomo_model_prep(data, timesteps):
     #
     #     storage.loc[site, storage, commodity][attribute]
     #
+
 
     m.mode = identify_mode(data)
     m.timesteps = timesteps
@@ -238,7 +239,7 @@ def pyomo_model_prep(data, timesteps):
     if m.mode['bsp']:
         m.buy_sell_price_dict = \
             data["buy_sell_price"].dropna(axis=0, how='all').to_dict()
-        # adding Revenue and Pruchase to cost types
+        # adding Revenue and Purchase to cost types
         m.cost_type_list.extend(['Revenue', 'Purchase'])
     if m.mode['tve']:
         m.eff_factor_dict = \

@@ -7,7 +7,7 @@ from .features.modelhelper import *
 from .identify import *
 
 
-def read_input(input_files,year):
+def read_input(input_files, year):
     """Read Excel input file and prepare URBS input dict.
 
     Reads an Excel spreadsheet that adheres to the structure shown in
@@ -49,13 +49,12 @@ def read_input(input_files,year):
     ds = []
     ef = []
 
-
     for filename in input_files:
         with pd.ExcelFile(filename) as xls:
 
             global_prop = xls.parse('Global').set_index(['Property'])
             # create support timeframe index
-            if ('Support timeframe' in 
+            if ('Support timeframe' in
                 xls.parse('Global').set_index('Property').value):
                 support_timeframe = (
                     global_prop.loc['Support timeframe']['value'])
@@ -91,7 +90,7 @@ def read_input(input_files,year):
             demand = xls.parse('Demand').set_index(['t'])
             demand = pd.concat([demand], keys=[support_timeframe],
                                names=['support_timeframe'])
-            # split columns by dots '.', so that 'DE.Elec' becomes 
+            # split columns by dots '.', so that 'DE.Elec' becomes
             # the two-level column index ('DE', 'Elec')
             demand.columns = split_columns(demand.columns, '.')
             dem.append(demand)
@@ -133,8 +132,8 @@ def read_input(input_files,year):
             if 'Buy-Sell-Price'in xls.sheet_names:
                 buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
                 buy_sell_price = pd.concat([buy_sell_price],
-                                        keys=[support_timeframe],
-                                        names=['support_timeframe'])
+                                           keys=[support_timeframe],
+                                           names=['support_timeframe'])
                 buy_sell_price.columns = \
                     split_columns(buy_sell_price.columns, '.')
             else:
@@ -177,8 +176,8 @@ def read_input(input_files,year):
         'transmission': transmission,
         'storage': storage,
         'dsm': dsm,
-        'buy_sell_price': buy_sell_price.dropna(axis=1,how='all'),
-        'eff_factor': eff_factor.dropna(axis=1,how='all')
+        'buy_sell_price': buy_sell_price.dropna(axis=1, how='all'),
+        'eff_factor': eff_factor.dropna(axis=1, how='all')
         }
 
     # sort nested indexes to make direct assignments work
@@ -200,12 +199,11 @@ def pyomo_model_prep(data, timesteps):
     #     storage.loc[site, storage, commodity][attribute]
     #
 
-
     m.mode = identify_mode(data)
     m.timesteps = timesteps
     m.global_prop = data['global_prop']
     commodity = data['commodity']
-    process = data['process'] 
+    process = data['process']
 
     # create no expansion dataframes
     pro_const_cap = process[process['inst-cap'] == process['cap-up']]
@@ -214,7 +212,7 @@ def pyomo_model_prep(data, timesteps):
     m.stf_list = m.global_prop.index.levels[0].tolist()
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
-    
+
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification
     m.site_dict = data['site'].to_dict()
@@ -227,13 +225,13 @@ def pyomo_model_prep(data, timesteps):
         # create no expansion dataframes
         tra_const_cap = transmission[
             transmission['inst-cap'] == transmission['cap-up']]
-        
+
     if m.mode['sto']:
         storage = data['storage'].dropna(axis=0, how='all')
-        # create no expansion dataframes 
+        # create no expansion dataframes
         sto_const_cap_c = storage[storage['inst-cap-c'] == storage['cap-up-c']]
         sto_const_cap_p = storage[storage['inst-cap-p'] == storage['cap-up-p']]
-        
+
     if m.mode['dsm']:
         m.dsm_dict = data["dsm"].dropna(axis=0, how='all').to_dict()
     if m.mode['bsp']:
@@ -315,8 +313,8 @@ def pyomo_model_prep(data, timesteps):
     if m.mode['int']:
         # modify pro_const_cap for intertemporal mode
         for index in tuple(pro_const_cap.index):
-            stf_process = process.xs((index[1],index[2]),level = (1,2))
-            if (not stf_process['cap-up'].max(axis=0) == 
+            stf_process = process.xs((index[1], index[2]), level=(1, 2))
+            if (not stf_process['cap-up'].max(axis=0) ==
                 pro_const_cap.loc[index]['inst-cap']):
                 pro_const_cap = pro_const_cap.drop(index)
 
@@ -328,7 +326,7 @@ def pyomo_model_prep(data, timesteps):
                               m.global_prop.loc[
                               (max(commodity.index.get_level_values
                                    ('support_timeframe').unique()),
-                                    'Weight')]['value'] - 1)
+                               'Weight')]['value'] - 1)
         process['invcost-factor'] = (process.apply(
                                      lambda x: invcost_factor(
                                       x['depreciation'],
@@ -375,12 +373,12 @@ def pyomo_model_prep(data, timesteps):
         if m.mode['tra']:
             # modify tra_const_cap for intertemporal mode
             for index in tuple(tra_const_cap.index):
-                stf_transmission = transmission.xs((index[1,2,3,4]),
-                    level = (1,2,3,4))
-                if (not stf_transmission['cap-up'].max(axis=0) == 
+                stf_transmission = transmission.xs((index[1, 2, 3, 4]),
+                                                   level=(1, 2, 3, 4))
+                if (not stf_transmission['cap-up'].max(axis=0) ==
                     tra_const_cap.loc[index]['inst-cap']):
                     tra_const_cap = tra_const_cap.drop(index)
-            # derive invest factor from WACC, depreciation and 
+            # derive invest factor from WACC, depreciation and
             # discount untility
             transmission['discount'] = (
                 m.global_prop.xs('Discount rate', level=1)
@@ -399,7 +397,7 @@ def pyomo_model_prep(data, timesteps):
                                               x['support_timeframe'],
                                               x['stf_min']),
                                    axis=1))
-            # derive overpay-factor from WACC, depreciation and 
+            # derive overpay-factor from WACC, depreciation and
             # discount untility
             transmission['overpay-factor'] = (
                 transmission.apply(lambda x: overpay_factor(
@@ -426,18 +424,18 @@ def pyomo_model_prep(data, timesteps):
         if m.mode['sto']:
             # modify sto_const_cap_c and sto_const_cap_p for intertemporal mode
             for index in tuple(sto_const_cap_c.index):
-                stf_storage = storage.xs((index[1,2,3]),level = (1,2,3))
-                if (not stf_storage['cap-up-c'].max(axis=0) == 
+                stf_storage = storage.xs((index[1, 2, 3]), level=(1, 2, 3))
+                if (not stf_storage['cap-up-c'].max(axis=0) ==
                     sto_const_cap_c.loc[index]['inst-cap-c']):
                     sto_const_cap_c = sto_const_cap_c.drop(index)
-            
+
             for index in tuple(sto_const_cap_p.index):
-                stf_storage = storage.xs((index[1,2,3]),level = (1,2,3))
-                if (not stf_storage['cap-up-p'].max(axis=0) == 
+                stf_storage = storage.xs((index[1, 2, 3]), level=(1, 2, 3))
+                if (not stf_storage['cap-up-p'].max(axis=0) ==
                     sto_const_cap_p.loc[index]['inst-cap-p']):
                     sto_const_cap_p = sto_const_cap_p.drop(index)
 
-            # derive invest factor from WACC, depreciation and 
+            # derive invest factor from WACC, depreciation and
             # discount untility
             storage['discount'] = m.global_prop.xs('Discount rate', level=1) \
                                    .loc[m.global_prop.index.min()[0]]['value']
@@ -462,26 +460,26 @@ def pyomo_model_prep(data, timesteps):
                                          x['support_timeframe'],
                                          x['stf_min'],
                                          x['stf_end']),
-                               axis=1))
+                              axis=1))
 
             storage.loc[(storage['overpay-factor'] < 0) |
                         (storage['overpay-factor'].isnull()),
                         'overpay-factor'] = 0
 
             storage['stf_dist'] = (storage['support_timeframe']
-                                    .apply(stf_dist, m=m))
-            storage['discount-factor'] = (storage['support_timeframe'].
-                                            apply(discount_factor, m=m))
-            storage['eff-distance'] = (storage['stf_dist'].
-                                        apply(effective_distance, m=m))
+                                   .apply(stf_dist, m=m))
+            storage['discount-factor'] = (storage['support_timeframe']
+                                          .apply(discount_factor, m=m))
+            storage['eff-distance'] = (storage['stf_dist']
+                                       .apply(effective_distance, m=m))
             storage['cost_factor'] = (storage['discount-factor'] *
-                                        storage['eff-distance']) 
+                                      storage['eff-distance'])
     else:
         # for one year problems
         process['invcost-factor'] = (process.apply(lambda x:
-                                       invcost_factor(x['depreciation'],
-                                                      x['wacc']),
-                                       axis=1))
+                                     invcost_factor(x['depreciation'],
+                                                    x['wacc']),
+                                     axis=1))
 
         # cost factor will be set to 1 for non intertemporal problems
         commodity['cost_factor'] = 1
@@ -490,17 +488,18 @@ def pyomo_model_prep(data, timesteps):
         # additional features
         if m.mode['tra']:
             transmission['invcost-factor'] = (
-                    transmission.apply(lambda x:
-                    invcost_factor(x['depreciation'], x['wacc']),
-                    axis=1))
+                transmission.apply(lambda x:
+                                   invcost_factor(x['depreciation'],
+                                                  x['wacc']),
+                                   axis=1))
             transmission['cost_factor'] = 1
         if m.mode['sto']:
             storage['invcost-factor'] = (
-                    storage.apply(lambda x:
-                    invcost_factor(x['depreciation'], x['wacc']),
-                    axis=1))
+                storage.apply(lambda x:
+                              invcost_factor(x['depreciation'],
+                                             x['wacc']),
+                              axis=1))
             storage['cost_factor'] = 1
-        
 
     # Converting Data frames to dictionaries
     m.global_prop_dict = m.global_prop.to_dict()
@@ -513,14 +512,15 @@ def pyomo_model_prep(data, timesteps):
     if m.mode['sto']:
         m.storage_dict = storage.to_dict()
 
-    #update m.mode['exp'] and write dictionaries with constant capacities
+    # update m.mode['exp'] and write dictionaries with constant capacities
     m.mode['exp']['pro'] = identify_expansion(pro_const_cap['inst-cap'],
-        process['inst-cap'].dropna()) 
+                                              process['inst-cap'].dropna())
     m.pro_const_cap_dict = pro_const_cap['inst-cap'].to_dict()
 
     if m.mode['tra']:
-        m.mode['exp']['tra'] = identify_expansion(tra_const_cap['inst-cap'],
-            transmission['inst-cap'].dropna())
+        m.mode['exp']['tra'] = identify_expansion(
+                                    tra_const_cap['inst-cap'],
+                                    transmission['inst-cap'].dropna())
         m.tra_const_cap_dict = tra_const_cap['inst-cap'].to_dict()
 
     if m.mode['sto']:
@@ -528,7 +528,7 @@ def pyomo_model_prep(data, timesteps):
             sto_const_cap_c['inst-cap-c'], storage['inst-cap-c'].dropna())
         m.sto_const_cap_c_dict = sto_const_cap_c['inst-cap-c'].to_dict()
         m.mode['exp']['sto-p'] = identify_expansion(
-            sto_const_cap_c['inst-cap-p'],storage['inst-cap-p'].dropna())
+            sto_const_cap_c['inst-cap-p'], storage['inst-cap-p'].dropna())
         m.sto_const_cap_p_dict = sto_const_cap_p['inst-cap-p'].to_dict()
 
     print(m.mode)

@@ -150,18 +150,18 @@ def read_input(input_files, year):
 
     # prepare input data
     try:
-        global_prop = pd.concat(gl)
-        site = pd.concat(sit)
-        commodity = pd.concat(com)
-        process = pd.concat(pro)
-        process_commodity = pd.concat(pro_com)
-        demand = pd.concat(dem)
-        supim = pd.concat(sup)
-        transmission = pd.concat(tra)
-        storage = pd.concat(sto)
-        dsm = pd.concat(ds)
-        buy_sell_price = pd.concat(bsp)
-        eff_factor = pd.concat(ef)
+        global_prop = pd.concat(gl, sort=False)
+        site = pd.concat(sit, sort=False)
+        commodity = pd.concat(com, sort=False)
+        process = pd.concat(pro, sort=False)
+        process_commodity = pd.concat(pro_com, sort=False)
+        demand = pd.concat(dem, sort=False)
+        supim = pd.concat(sup, sort=False)
+        transmission = pd.concat(tra, sort=False)
+        storage = pd.concat(sto, sort=False)
+        dsm = pd.concat(ds, sort=False)
+        buy_sell_price = pd.concat(bsp, sort=False)
+        eff_factor = pd.concat(ef, sort=False)
     except KeyError:
         pass
 

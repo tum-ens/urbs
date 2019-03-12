@@ -1,7 +1,7 @@
 import os
 import pyomo.environ
 from pyomo.opt.base import SolverFactory
-from datetime import datetime
+from datetime import datetime, date
 from .model import create_model
 from .report import *
 from .plot import *
@@ -45,8 +45,8 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_files, year, Solver, timesteps, scenario, result_dir,
-                 dt, objective, plot_tuples=None, plot_sites_name=None,
+def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
+                 objective, plot_tuples=None,  plot_sites_name=None,
                  plot_periods=None, report_tuples=None,
                  report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -67,9 +67,13 @@ def run_scenario(input_files, year, Solver, timesteps, scenario, result_dir,
         the urbs model instance
     """
 
+    # sets a modeled year for non-intertemporal problems
+    #(necessary for consitency)
+    year = date.today().year
+
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = read_input(input_files, year)
+    data = read_input(input_files,year)
     data = scenario(data)
     validate_input(data)
 
@@ -78,7 +82,6 @@ def run_scenario(input_files, year, Solver, timesteps, scenario, result_dir,
     # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile
-    # now = prob.created
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results

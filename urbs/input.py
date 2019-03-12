@@ -531,8 +531,6 @@ def pyomo_model_prep(data, timesteps):
             sto_const_cap_c['inst-cap-p'], storage['inst-cap-p'].dropna())
         m.sto_const_cap_p_dict = sto_const_cap_p['inst-cap-p'].to_dict()
 
-    print(m.mode)
-
     return m
 
 

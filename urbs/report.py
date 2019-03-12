@@ -39,7 +39,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
 
         # collect timeseries data
         for stf, sit, com in report_tuples:
-        
+
             # wrap single site name in 1-element list for consistent behavior
             if is_string(sit):
                 help_sit = [sit]
@@ -50,12 +50,12 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
             # check existence of predefined names, else define them
             try:
                 report_sites_name[sit]
-            except:
+            except BaseException:
                 report_sites_name[sit] = str(sit)
 
             for lv in help_sit:
                 (created, consumed, stored, imported, exported,
-                dsm) = get_timeseries(instance, stf, com, lv)
+                 dsm) = get_timeseries(instance, stf, com, lv)
 
                 overprod = pd.DataFrame(
                     columns=['Overproduction'],
@@ -65,10 +65,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
 
                 tableau = pd.concat(
                     [created, consumed, stored, imported, exported, overprod,
-                    dsm],
+                     dsm],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
-                        'Export to', 'Balance', 'DSM'])
+                          'Export to', 'Balance', 'DSM'])
                 help_ts[(stf, lv, com)] = tableau.copy()
 
                 # timeseries sums
@@ -81,11 +81,11 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
                                             'Import', 'Export', 'Balance',
                                             'DSM'])
                 try:
-                    timeseries[(stf, report_sites_name[sit], com)] = timeseries[
-                            (stf, report_sites_name[sit], com)].add(
-                            help_ts[(stf, lv, com)], axis=1, fill_value=0)
+                    timeseries[(stf, report_sites_name[sit], com)] = \
+                        timeseries[(stf, report_sites_name[sit], com)].add(
+                        help_ts[(stf, lv, com)], axis=1, fill_value=0)
                     sums = sums.add(help_sums, fill_value=0)
-                except:
+                except BaseException:
                     timeseries[(stf, report_sites_name[sit], com)] = help_ts[
                         (stf, lv, com)]
                     sums = help_sums

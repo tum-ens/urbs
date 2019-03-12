@@ -19,12 +19,12 @@ def validate_input(data):
     for (stf, sit, pro) in data['process'].index:
         for com in data['commodity'].index.get_level_values('Commodity'):
             simplified_pro_com_index = ([(st, p, c) for st, p, c, d in
-                                        data['process_commodity'].index
-                                        .tolist()])
+                                         data['process_commodity'].index
+                                         .tolist()])
             simplified_com_index = ([(st, s, c) for st, s, c, t in
-                                    data['commodity'].index.tolist()])
+                                     data['commodity'].index.tolist()])
             if ((stf, pro, com) in simplified_pro_com_index and
-                (stf, sit, com) not in simplified_com_index):
+                    (stf, sit, com) not in simplified_com_index):
                 raise ValueError('Commodities used in a process at a site must'
                                  ' be specified in the commodity input sheet'
                                  '! The tuple (' + stf + ',' + sit + ',' +
@@ -40,8 +40,8 @@ def validate_input(data):
                                  'sheet "Global"')
             else:
                 raise ValueError('The following indices are duplicated ' +
-                                str(data[key].index[data[key]
-                                .index.duplicated()].unique()))
+                                 str(data[key].index[data[key]
+                                     .index.duplicated()].unique()))
 
     # Identify infeasible process, transmission and storage capacity
     # constraints before solving

@@ -29,7 +29,7 @@ Solver = 'glpk'
 
 # simulation timesteps
 (offset, length) = (3500, 168)  # time step selection
-timesteps = range(offset, offset+length+1)
+timesteps = range(offset, offset + length + 1)
 dt = 1  # length of each time step (unit: hours)
 
 # plotting commodities/sites
@@ -50,7 +50,7 @@ plot_tuples = [
     (2034, 'Mid', 'Elec'),
     (2034, 'South', 'Elec'),
     (2034, ['North', 'Mid', 'South'], 'Elec'),
-    ]
+]
 
 # optional: define names for sites in plot_tuples
 plot_sites_name = {('North', 'Mid', 'South'): 'All'}
@@ -73,7 +73,7 @@ report_tuples = [
     (2034, 'Mid', 'Elec'),
     (2034, 'South', 'Elec'),
     (2034, ['North', 'Mid', 'South'], 'Elec'),
-    ]
+]
 
 # optional: define names for sites in report_tuples
 report_sites_name = {'North': 'Greenland'}
@@ -100,7 +100,7 @@ scenarios = [
     urbs.scenario_no_dsm,
     urbs.scenario_north_process_caps,
     urbs.scenario_all_together
-    ]
+]
 
 for scenario in scenarios:
     prob = urbs.run_scenario(input_file, year, Solver, timesteps, scenario,
@@ -110,4 +110,3 @@ for scenario in scenarios:
                              plot_periods=plot_periods,
                              report_tuples=report_tuples,
                              report_sites_name=report_sites_name)
-

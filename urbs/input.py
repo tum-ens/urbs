@@ -55,7 +55,7 @@ def read_input(input_files, year):
             global_prop = xls.parse('Global').set_index(['Property'])
             # create support timeframe index
             if ('Support timeframe' in
-                xls.parse('Global').set_index('Property').value):
+                    xls.parse('Global').set_index('Property').value):
                 support_timeframe = (
                     global_prop.loc['Support timeframe']['value'])
                 global_prop = (
@@ -178,7 +178,7 @@ def read_input(input_files, year):
         'dsm': dsm,
         'buy_sell_price': buy_sell_price.dropna(axis=1, how='all'),
         'eff_factor': eff_factor.dropna(axis=1, how='all')
-        }
+    }
 
     # sort nested indexes to make direct assignments work
     for key in data:
@@ -315,7 +315,7 @@ def pyomo_model_prep(data, timesteps):
         for index in tuple(pro_const_cap.index):
             stf_process = process.xs((index[1], index[2]), level=(1, 2))
             if (not stf_process['cap-up'].max(axis=0) ==
-                pro_const_cap.loc[index]['inst-cap']):
+                    pro_const_cap.loc[index]['inst-cap']):
                 pro_const_cap = pro_const_cap.drop(index)
 
         # derive invest factor from WACC, depreciation and discount untility
@@ -329,22 +329,22 @@ def pyomo_model_prep(data, timesteps):
                                'Weight')]['value'] - 1)
         process['invcost-factor'] = (process.apply(
                                      lambda x: invcost_factor(
-                                      x['depreciation'],
-                                      x['wacc'],
-                                      x['discount'],
-                                      x['support_timeframe'],
-                                      x['stf_min']),
+                                         x['depreciation'],
+                                         x['wacc'],
+                                         x['discount'],
+                                         x['support_timeframe'],
+                                         x['stf_min']),
                                      axis=1))
 
         # derive overpay-factor from WACC, depreciation and discount untility
         process['overpay-factor'] = (process.apply(
                                      lambda x: overpay_factor(
-                                                x['depreciation'],
-                                                x['wacc'],
-                                                x['discount'],
-                                                x['support_timeframe'],
-                                                x['stf_min'],
-                                                x['stf_end']),
+                                         x['depreciation'],
+                                         x['wacc'],
+                                         x['discount'],
+                                         x['support_timeframe'],
+                                         x['stf_min'],
+                                         x['stf_end']),
                                      axis=1))
         process.loc[(process['overpay-factor'] < 0) |
                     (process['overpay-factor']
@@ -376,7 +376,7 @@ def pyomo_model_prep(data, timesteps):
                 stf_transmission = transmission.xs((index[1, 2, 3, 4]),
                                                    level=(1, 2, 3, 4))
                 if (not stf_transmission['cap-up'].max(axis=0) ==
-                    tra_const_cap.loc[index]['inst-cap']):
+                        tra_const_cap.loc[index]['inst-cap']):
                     tra_const_cap = tra_const_cap.drop(index)
             # derive invest factor from WACC, depreciation and
             # discount untility
@@ -391,23 +391,23 @@ def pyomo_model_prep(data, timesteps):
                                         'Weight')]['value'] - 1)
             transmission['invcost-factor'] = (
                 transmission.apply(lambda x: invcost_factor(
-                                              x['depreciation'],
-                                              x['wacc'],
-                                              x['discount'],
-                                              x['support_timeframe'],
-                                              x['stf_min']),
-                                   axis=1))
+                    x['depreciation'],
+                    x['wacc'],
+                    x['discount'],
+                    x['support_timeframe'],
+                    x['stf_min']),
+                    axis=1))
             # derive overpay-factor from WACC, depreciation and
             # discount untility
             transmission['overpay-factor'] = (
                 transmission.apply(lambda x: overpay_factor(
-                                              x['depreciation'],
-                                              x['wacc'],
-                                              x['discount'],
-                                              x['support_timeframe'],
-                                              x['stf_min'],
-                                              x['stf_end']),
-                                   axis=1))
+                    x['depreciation'],
+                    x['wacc'],
+                    x['discount'],
+                    x['support_timeframe'],
+                    x['stf_min'],
+                    x['stf_end']),
+                    axis=1))
             # Derive multiplier for all energy based costs
             transmission.loc[(transmission['overpay-factor'] < 0) |
                              (transmission['overpay-factor'].isnull()),
@@ -426,13 +426,13 @@ def pyomo_model_prep(data, timesteps):
             for index in tuple(sto_const_cap_c.index):
                 stf_storage = storage.xs((index[1, 2, 3]), level=(1, 2, 3))
                 if (not stf_storage['cap-up-c'].max(axis=0) ==
-                    sto_const_cap_c.loc[index]['inst-cap-c']):
+                        sto_const_cap_c.loc[index]['inst-cap-c']):
                     sto_const_cap_c = sto_const_cap_c.drop(index)
 
             for index in tuple(sto_const_cap_p.index):
                 stf_storage = storage.xs((index[1, 2, 3]), level=(1, 2, 3))
                 if (not stf_storage['cap-up-p'].max(axis=0) ==
-                    sto_const_cap_p.loc[index]['inst-cap-p']):
+                        sto_const_cap_p.loc[index]['inst-cap-p']):
                     sto_const_cap_p = sto_const_cap_p.drop(index)
 
             # derive invest factor from WACC, depreciation and
@@ -445,22 +445,24 @@ def pyomo_model_prep(data, timesteps):
                                   (max(commodity.index.get_level_values
                                        ('support_timeframe').unique()),
                                    'Weight')]['value'] - 1)
-            storage['invcost-factor'] = (storage.apply(lambda x:
-                                         invcost_factor(x['depreciation'],
-                                                        x['wacc'],
-                                                        x['discount'],
-                                                        x['support_timeframe'],
-                                                        x['stf_min']),
-                                         axis=1))
+            storage['invcost-factor'] = (
+                storage.apply(
+                    lambda x: invcost_factor(
+                        x['depreciation'],
+                        x['wacc'],
+                        x['discount'],
+                        x['support_timeframe'],
+                        x['stf_min']),
+                    axis=1))
             storage['overpay-factor'] = (
                 storage.apply(lambda x: overpay_factor(
-                                         x['depreciation'],
-                                         x['wacc'],
-                                         x['discount'],
-                                         x['support_timeframe'],
-                                         x['stf_min'],
-                                         x['stf_end']),
-                              axis=1))
+                    x['depreciation'],
+                    x['wacc'],
+                    x['discount'],
+                    x['support_timeframe'],
+                    x['stf_min'],
+                    x['stf_end']),
+                    axis=1))
 
             storage.loc[(storage['overpay-factor'] < 0) |
                         (storage['overpay-factor'].isnull()),
@@ -476,10 +478,12 @@ def pyomo_model_prep(data, timesteps):
                                       storage['eff-distance'])
     else:
         # for one year problems
-        process['invcost-factor'] = (process.apply(lambda x:
-                                     invcost_factor(x['depreciation'],
-                                                    x['wacc']),
-                                     axis=1))
+        process['invcost-factor'] = (
+            process.apply(
+                lambda x: invcost_factor(
+                    x['depreciation'],
+                    x['wacc']),
+                axis=1))
 
         # cost factor will be set to 1 for non intertemporal problems
         commodity['cost_factor'] = 1
@@ -519,8 +523,8 @@ def pyomo_model_prep(data, timesteps):
 
     if m.mode['tra']:
         m.mode['exp']['tra'] = identify_expansion(
-                                    tra_const_cap['inst-cap'],
-                                    transmission['inst-cap'].dropna())
+            tra_const_cap['inst-cap'],
+            transmission['inst-cap'].dropna())
         m.tra_const_cap_dict = tra_const_cap['inst-cap'].to_dict()
 
     if m.mode['sto']:

@@ -1,6 +1,7 @@
 import math
 import pyomo.core as pyomo
 
+
 def add_dsm(m):
 
     # modelled Demand Side Management time steps (downshift):
@@ -62,7 +63,7 @@ def add_dsm(m):
         m.tm, m.dsm_site_tuples,
         rule=res_dsm_recovery_rule,
         doc='DSMup(t, t + recovery time R) <= Cup * delay time L')
-    
+
     return m
 
 
@@ -123,17 +124,18 @@ def res_dsm_recovery_rule(m, tm, stf, sit, com):
     return dsm_up_sum <= (m.dsm_dict['cap-max-up'][(stf, sit, com)] *
                           m.dsm_dict['delay'][(stf, sit, com)])
 
+
 # DSM surplus
 def dsm_surplus(m, tm, stf, sit, com):
     """ called in vertex rule
         calculate dsm surplus"""
     if (stf, sit, com) in m.dsm_site_tuples:
-        return ( - m.dsm_up[tm, stf, sit, com]
-                 + sum(m.dsm_down[t, tm, stf, sit, com]
-                       for t in dsm_time_tuples(
-                       tm, m.timesteps[1:],
-                       max(int(1 / m.dt *
-                       m.dsm_dict['delay'][(stf, sit, com)]), 1))))
+        return (- m.dsm_up[tm, stf, sit, com] +
+                sum(m.dsm_down[t, tm, stf, sit, com]
+                    for t in dsm_time_tuples(
+                    tm, m.timesteps[1:],
+                    max(int(1 / m.dt *
+                        m.dsm_dict['delay'][(stf, sit, com)]), 1))))
     else:
         return 0
 

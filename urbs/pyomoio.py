@@ -66,11 +66,13 @@ def get_entity(instance, name):
 
     elif isinstance(entity, pyomo.Constraint):
         if entity.dim() > 1:
-            # check whether all entries of the constraint have an existing dual variable
+            # check whether all entries of the constraint have
+            # an existing dual variable
             # in that case add to results
             results = pd.DataFrame(
                 [key + (instance.dual[entity.__getitem__(key)],)
-                 for (id, key) in entity.id_index_map().items() if id in instance.dual._dict.keys()])
+                 for (id, key) in entity.id_index_map().items()
+                 if id in instance.dual._dict.keys()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
                 [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
@@ -260,7 +262,7 @@ def _get_onset_names(entity):
             pass
 
     elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Expression,
-                     pyomo.Constraint, pyomo.Objective)):
+                    pyomo.Constraint, pyomo.Objective)):
         if entity.dim() > 0 and entity._index:
             labels = _get_onset_names(entity._index)
         else:

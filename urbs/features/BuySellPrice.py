@@ -2,8 +2,9 @@ import math
 import pyomo.core as pyomo
 from .modelhelper import commodity_subset
 
-def add_buy_sell_price(m):   
-    
+
+def add_buy_sell_price(m):
+
     # Sets
     m.com_sell = pyomo.Set(
         within=m.com,
@@ -13,7 +14,7 @@ def add_buy_sell_price(m):
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Buy'),
         doc='Commodities that can be purchased')
-        
+
     # Variables
     m.e_co_sell = pyomo.Var(
         m.tm, m.com_tuples,
@@ -48,6 +49,7 @@ def add_buy_sell_price(m):
         doc='power connection capacity must be symmetric in both directions')
 
     return m
+
 
 # constraints
 
@@ -117,6 +119,7 @@ def res_sell_buy_symmetry_rule(m, stf, sit_in, pro_in, coin):
     else:
         return pyomo.Constraint.Skip
 
+
 def search_sell_buy_tuple(m, stf, sit_in, pro_in, coin):
     """ Return the equivalent sell-process for a given buy-process.
     Args:
@@ -148,6 +151,7 @@ def search_sell_buy_tuple(m, stf, sit_in, pro_in, coin):
             return sell_pro
     return None
 
+
 def bsp_surplus(m, tm, stf, sit, com, com_type):
 
     power_surplus = 0
@@ -161,8 +165,9 @@ def bsp_surplus(m, tm, stf, sit, com, com_type):
     # can supply a possibly negative power_surplus
     if com in m.com_buy:
         power_surplus += m.e_co_buy[tm, stf, sit, com, com_type]
-    
+
     return power_surplus
+
 
 def revenue_costs(m):
     sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
@@ -182,6 +187,7 @@ def revenue_costs(m):
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm
             for c in sell_tuples)
+
 
 def purchase_costs(m):
     buy_tuples = commodity_subset(m.com_tuples, m.com_buy)

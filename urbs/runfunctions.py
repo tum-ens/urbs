@@ -45,8 +45,8 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_files, year, Solver, timesteps, scenario, result_dir, 
-                 dt, objective, plot_tuples=None,  plot_sites_name=None,
+def run_scenario(input_files, year, Solver, timesteps, scenario, result_dir,
+                 dt, objective, plot_tuples=None, plot_sites_name=None,
                  plot_periods=None, report_tuples=None,
                  report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -69,7 +69,7 @@ def run_scenario(input_files, year, Solver, timesteps, scenario, result_dir,
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = read_input(input_files,year)
+    data = read_input(input_files, year)
     data = scenario(data)
     validate_input(data)
 

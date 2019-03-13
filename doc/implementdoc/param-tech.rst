@@ -140,7 +140,7 @@ represents the duration between two sequential timesteps :math:`t_x` and
 bigger of the two sequential timesteps :math:`\Delta t = t_{x+1} - t_x`. This
 parameter is the unit of time for the optimization model, is expressed in the
 unit h and by default the value is set to ``1``. In script ``model.py`` this
-parameter is defined by the model paramter ``dt`` and initialized by the
+parameter is defined by the model parameter ``dt`` and initialized by the
 following code fragment:
 ::
 
@@ -155,9 +155,9 @@ The user can set the paramteter in script ``runme.py`` in the line:
 
 **Weight of last modeled support timeframe**, :math:`W`,
 ``m.global_prop.loc[(min(m.stf), 'Cost budget'), 'value']``: This parameter
-specifies how long the time intervall represented by the last support timeframe
-is. The unit of this paramter is years. By extension it also specifies the end
-of the modeling horizon. The paramter is set in the spreadsheet corresponding
+specifies how long the time interval represented by the last support timeframe
+is. The unit of this parameter is years. By extension it also specifies the end
+of the modeling horizon. The parameter is set in the spreadsheet corresponding
 to the last support timeframe in worksheet "Global" in the line denoted
 "Weight" in the column titled "value".  
 
@@ -194,7 +194,7 @@ related section for this parameter in the spreadsheet can be found under the
 column represent a commodity tuple :math:`c_{vq}`. Rows are named after the
 timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the
 combination of site name :math:`v` and commodity name :math:`c`, in this
-respective order and seperated by a period(.). For example (Mid.Elec)
+respective order and separated by a period(.). For example (Mid.Elec)
 represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted
 in column declarations, because every commodity of this parameter has to be
 from commodity type `SupIm` in any case.
@@ -240,7 +240,7 @@ corresponding to the support timeframe. The related section for this parameter
 in the spreadsheet can be found under the ``Commodity`` sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column with the
 header label "maxperhour" represents the parameter :math:`\overline{m}_{yvc}`.
-If there is no desired restriction of an enviromental commodity tuple usage per
+If there is no desired restriction of an environmental commodity tuple usage per
 timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
 **Maximum Annual Environmental Output**, :math:`\overline{M}_{yvc}`,
@@ -290,7 +290,7 @@ the corresponding cell can be set to "inf" to ignore this parameter.
 ``m.commodity_dict['maxperhour'][(stf, sit, com, com_type)]``: The parameter
 :math:`\overline{b}_{yvc}` represents the maximum energy amount of a buy
 commodity tuple :math:`c_{yvq}`
-(:math:`\foral y\in Y, \forall v \in V , q = "Buy"`) that energy model is
+(:math:`\forall y\in Y, \forall v \in V , q = "Buy"`) that energy model is
 allowed to buy per hour. The unit of this parameter is MW. This parameter
 applies to every timestep and does not vary for each timestep :math:`t`. This
 parameter is to be provided by the user and to be entered in spreadsheet
@@ -419,7 +419,7 @@ the header label "min-fraction" represents the parameters
 :math:`\underline{P}_{yvp}` of the corresponding process :math:`p` and site
 :math:`v` combinations. The minimum part load fraction parameter constraints is
 only relevant when the part load behavior for the process is active, i.e., when
-in the process commoditiy sheet a value for "ratio-min" is set for at least one
+in the process commodity sheet a value for "ratio-min" is set for at least one
 input commodity.  
 
 **Process Output Ratio multiplyer**, :math:`f_{yvpt}^\text{out}`,
@@ -436,7 +436,7 @@ represents another timestep :math:`t` and each column represent a process tuple
 commodity name and process name :math:`p` respecting the order and seperated by
 a period(.). For example (Mid, Lignite plant) represents the process Lignite
 plant in site Mid. Note that the output of environmental commodity outputs are
-not manipulated by this factor as it is typially linked to an input commodity
+not manipulated by this factor as it is typically linked to an input commodity
 as , e.g., CO2 output is linked to a fossil input.
 
 **Process Input Ratio**, :math:`r_{ypc}^\text{in}`,
@@ -445,7 +445,7 @@ represents the ratio of the input amount of a commodity :math:`c` in a process
 :math:`p` and support timeframe :math:`y`, relative to the process throughput
 at a given timestep. The related section for this parameter in the spreadsheet
 corresponding to the support timeframe can be found under the
-"Process-Comodity" sheet. Here each row represents another commodity :math:`c`
+"Process-Commodity" sheet. Here each row represents another commodity :math:`c`
 that either goes in to or comes out of a process :math:`p`. The column with the
 header label "ratio" represents the parameters :math:`r_{ypc}^\text{in}` of
 the corresponding process :math:`p` and commodity :math:`c` if the latter is an
@@ -459,7 +459,7 @@ consumes if it is at its minimum allowable partial operation. More precisely,
 when its throughput :math:`\tau_{yvpt}` has the minimum value
 :math:`\kappa_{yvp} \underline{P}_{yvp}`. The related section for this
 parameter in the spreadsheet corresponding to the support timeframe can be
-found under the "Process-Comodity" sheet. Here each row represents another
+found under the "Process-Commodity" sheet. Here each row represents another
 commodity :math:`c` that either goes in to or comes out of a process :math:`p`.
 The column with the header label "ratio-min" represents the parameters
 :math:`\underline{r}_{ypc}^\text{in,out}` of the corresponding process
@@ -484,7 +484,7 @@ emits if it is at its minimum allowable partial operation. More precisely, when
 its throughput :math:`\tau_{yvpt}` has the minimum value
 :math:`\kappa_{yvp} \underline{P}_{yvp}`. The related section for this
 parameter in the spreadsheet corresponding to the support timeframe can be
-found under the "Process-Comodity" sheet. Here each row represents another
+found under the "Process-Commodity" sheet. Here each row represents another
 commodity :math:`c` that either goes in to or comes out of a process :math:`p`.
 The column with the header label "ratio-min" represents the parameters
 :math:`\underline{r}_{ypc}^\text{in,out}` of the corresponding process
@@ -512,7 +512,7 @@ identical in each modeled support timeframe to avoid windfall profits through
 emptying of a storage. The value of this parameter is expressed as a normalized
 percentage, where "1" represents a fully loaded storage and "0" represents an
 empty storage. The related section for this parameter in the spreadsheet
-corrsponding to the support timeframe can be found under the "Storage" sheet.
+corresponding to the support timeframe can be found under the "Storage" sheet.
 Here each row represents a storage technology :math:`s` in a site :math:`v`
 that stores a commodity :math:`c`. The column with the header label "init"
 represents the parameters for corresponding storage :math:`s`, site :math:`v`,
@@ -524,7 +524,7 @@ can be left empty.
 :math:`e_{yvs}^\text{in}` represents the charging efficiency of a storage
 :math:`s` in a site :math:`v` and support timeframe :math:`y` that stores a
 commodity :math:`c`. The charging efficiency shows, how much of a desired
-energy and accordingly power can be succesfully stored into a storage. The
+energy and accordingly power can be successfully stored into a storage. The
 value of this parameter is expressed as a normalized percentage, where "1"
 represents a charging without energy losses. The related section for this
 parameter in the spreadsheet corresponding to the support timeframe can be
@@ -538,7 +538,7 @@ with the header label "eff-in" represents the parameters
 :math:`e_{yvs}^\text{out}` represents the discharging efficiency of a storage
 :math:`s` in a site :math:`v` and support timeframe :math:`y` that stores a
 commodity :math:`c`. The discharging efficiency shows, how much of a desired
-energy and accordingly power can be succesfully released from a storage. The
+energy and accordingly power can be successfully released from a storage. The
 value of this parameter is expressed as a normalized percentage, where "1"
 represents a discharging without energy losses. The related section for this
 parameter in the spreadsheet corresponding to the support timeframe can be
@@ -595,7 +595,7 @@ represents a storage technology :math:`s` in a site :math:`v` that stores a
 commodity :math:`c`. The column with the header label "cap-up-c" represents the
 parameters :math:`\overline{K}_{yvs}^\text{c}` for corresponding storage
 tuples. If there is no desired maximum limit for the storage energy content
-capacitites, this parameter can be simply set to ""inf"".
+capacities, this parameter can be simply set to ""inf"".
 
 **Storage Power Lower Bound**, :math:`\underline{K}_{yvs}^\text{p}`,
 ``m.storage_dict['cap-lo-p'][(stf, sit, sto, com)]``: The parameter
@@ -633,7 +633,7 @@ Here each row represents a storage technology :math:`s` in a site :math:`v`
 that stores a commodity :math:`c`. The column with the header label "cap-up-p"
 represents the parameters :math:`\overline{K}_{yvs}^\text{p}` for corresponding
 storage tuples. If there is no desired maximum limit for the storage energy
-content capacitites, this parameter can be simply set to ""inf"".
+content capacities, this parameter can be simply set to ""inf"".
 
 **Remaining lifetime of installed storages**, :math:`T_{vs}`,
 ``m.storage.loc[(min(m.stf), sit, pro), 'lifetime']``: The parameter
@@ -721,7 +721,7 @@ Demand Side Management Technical Parameters
 -------------------------------------------
 **DSM Efficiency**, :math:`e_{yvc}`, ``m.dsm_dict['eff'][(stf, sit, com)]``:
 The parameter :math:`e_{yvc}` represents the efficiency of the DSM process,
-i.e., the fraction of DSM upshift that is benefitting the system via the
+i.e., the fraction of DSM upshift that is benefiting the system via the
 corresponding DSM downshifts of demand commodity :math:`c` in site :math:`v`
 and support timeframe :math:`y`. The parameter is given as a fraction with "1"
 meaning a perfect recovery of the DSM upshift. The related section for this
@@ -743,10 +743,10 @@ parameters :math:`y_{yvc}` of the corresponding DSM tuples.
 
 **DSM Recovery Time**, :math:`o_{yvc}`,
 ``m.dsm_dict['recov'][(stf, sit, com)]``: The recovery time :math:`o_{yvc}`
-prevents the DSM system to continously shift demand. During the recovery time,
+prevents the DSM system to continuously shift demand. During the recovery time,
 all upshifts of demand commodity :math:`c` in site :math:`v` and support
 timeframe :math:`y` may not exceed the product of the delay time and the
-maximal upshift capacity. The paramter is given in h. The related section for
+maximal upshift capacity. The parameter is given in h. The related section for
 this parameter in the spreadsheet corresponding to the support timeframe can be
 found under the "DSM" sheet. Here each row represents another DSM potential for
 demand commodity :math:`c` in site :math:`v`. The column with the header label

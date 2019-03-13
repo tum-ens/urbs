@@ -68,5 +68,5 @@ For the desired result the commodity 'Operational state' has to be of type
 demand. in this way the optimizer can still size the two technology options
 'Process 1' and 'Process 2' optimally while being forced to operate them
 proportionally to each other and to the demand. Other input or output
-(not shown) commodities can then be associatd with the process operation as
+(not shown) commodities can then be associated with the process operation as
 usual and will be dragged along by the forced operation.

@@ -114,7 +114,7 @@ process :math:`p`.
 
 Annual variable costs
 ~~~~~~~~~~~~~~~~~~~~~
-Variable costs represent both, additional maintenace requirements due to usage
+Variable costs represent both, additional maintenance requirements due to usage
 of processes and taxes or tariffs. They scale with the utilization of
 processes (in Wh) and can be calculated in the following way:
 
@@ -124,12 +124,12 @@ processes (in Wh) and can be calculated in the following way:
 
 where :math:`k^{\text{var}}_{pt}` are the specific variable costs per time
 integrated process usage, and :math:`w` and :math:`\Delta t` are a weight
-factor that extrpolates the actual modeled time horizon to one year and the
+factor that extrapolates the actual modeled time horizon to one year and the
 timestep length in hours, respectively.
 
 Annual fuel costs
 ~~~~~~~~~~~~~~~~~
-The usage of fuel adds an assitional cost factor to the total costs. As with
+The usage of fuel adds an additional cost factor to the total costs. As with
 variable costs these costs occur when processes are used and are dependent on
 the total usage of the fuel (stock) commodities:
 
@@ -154,7 +154,7 @@ environmental commodity is then given by:
 
 where :math:`k^{\text{env}}_{c}` are the specific costs per unit of
 environmental commodity and :math:`CB` is the momentary commodity balnce of
-commodity :math:`c` at tima :math:`t`. The minus sign is due to the sign
+commodity :math:`c` at time :math:`t`. The minus sign is due to the sign
 convention used for the commodity balance which is positive when the system
 takes in a unit of a commodity.
 
@@ -177,7 +177,7 @@ where :math:`K_p` is the already installed capacity of process :math:`p`.
 Process capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The capacity pf each process :math:`p` is limited by a maximal and minimal
-capacity, :math:`\overline{K}_p` and :math:`\underline{K}_p`, respecitvely,
+capacity, :math:`\overline{K}_p` and :math:`\underline{K}_p`, respectively,
 which are both given to the model as parameters:
 
 .. math::
@@ -223,8 +223,8 @@ where :math:`C_{\text{st}}` is the set of stock commodities and:
    -d_{ct} \geq \text{CB}(c,t),
 
 where :math:`C_{\text{dem}}` is the set of demand commodities and
-:math:`d_{ct}` the corresponding demnd for commodity :math:`c` at time
-:math:`t`. These two rules thus state that all staock commodities that are
+:math:`d_{ct}` the corresponding demand for commodity :math:`c` at time
+:math:`t`. These two rules thus state that all stock commodities that are
 consumed at any time in any process must be taken from the stock and that all
 demands have to be fulfilled at each time step.
 
@@ -247,7 +247,7 @@ respectively.
 
 Environmental commodity limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Similar to stock commodities, environmental commmodities can also be limited
+Similar to stock commodities, environmental commodities can also be limited
 per hour or per year. Both properties are assured by the following two
 rules:
 
@@ -288,7 +288,7 @@ process :math:`p` for the conversion of commodity :math:`c_1` into commodity
 
 Basic process throughput rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The troughput :math:`\tau_{pt}` of a process is limited by its installed
+The throughput :math:`\tau_{pt}` of a process is limited by its installed
 capacity and the specified minimal operational state. Furthermore, the
 switching speed of a process can be limited:
 
@@ -347,11 +347,11 @@ equations:
    \underline{P}_p\underline{r}^{\text{in,out}}_{pc}}
    {1-\underline{P}_p}\cdot \tau_{pt}\right).
 
-A few retrictions have to be kept in mind when using this feature:
+A few restrictions have to be kept in mind when using this feature:
 
 * :math:`\underline{P}_p` has to be set larger than 0 otherwise the feature
   will work but not have any effect.
-* Environmental output commodities have to mimick the behavior of the inputs by
+* Environmental output commodities have to mimic the behavior of the inputs by
   which they are generated. Otherwise the emissions per unit of input would
   change together with the efficiency, which is typically not the desired
   behavior.

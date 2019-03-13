@@ -258,11 +258,11 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         within=pyomo.NonNegativeReals,
         doc='Power flow (MW) through process')
     m.e_pro_in = pyomo.Var(
-        m.tm, m.pro_tuples, m.com,
+        m.tm, m.pro_input_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow of commodity into process (MW) per timestep')
     m.e_pro_out = pyomo.Var(
-        m.tm, m.pro_tuples, m.com,
+        m.tm, m.pro_output_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of process (MW) per timestep')
 

@@ -42,7 +42,7 @@ now extends over processes and transmission lines.
 
 Transmission capacity constraints
 ---------------------------------
-Transimission lines are modeled as unidirectional arcs in urbs. This means that
+Transmission lines are modeled as unidirectional arcs in urbs. This means that
 they have a input site and an output site. Furthermore, an arc already
 specifies a commodity that can travel across it. However, from the modelers
 point of view the transmissions rather behave like non-directional edges,

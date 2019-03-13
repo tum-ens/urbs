@@ -12,14 +12,14 @@ task is the following:
 
 The technical staff of a business park management company wants you to find the
 cost optimal energy system for their business park. You are to provide this
-with incresingly stricter CO2 emission limits over time. As the company expects
+with increasingly stricter CO2 emission limits over time. As the company expects
 to operate this business park for a long time still, they want you to help
 developing a long term strategy how to transform the energy supply
 infrastructure of the business park in cost optimal way over the time frame of
 3 decades. The company also expects that the business park will be increasingly
 closely interacting with the neighboring small city and its energy system. All
 current and expected demand curves are given to you. You also have full access
-to regional climate models and all relevant paramters for the energy conversion
+to regional climate models and all relevant parameters for the energy conversion
 units relevant for your problem. 
 
 Input files
@@ -51,7 +51,7 @@ input files:
   is desired enter 'inf' here.
   In the example increasingly strict values for the CO2 limit are used for the
   different modeled years, from *60 kt/a* in 2020 over *45 kt/a* in 2030 to
-  *30 kt/a* in 2040. This respresents the will of the company to achieve
+  *30 kt/a* in 2040. This represents the will of the company to achieve
   milestones in the emission reductions while gradually changing their energy
   infrastructure.    
   
@@ -126,7 +126,7 @@ In the site 'Business park' there are 9 commodities defined:
 * *Grid electricity* is of type **Buy** and represents the electricity price as
   bought from the regional grid operator. The business park pays constant price
   over the year. In the site 'City' this price is different and hence a
-  mutiplier is used to increase the wholesale price for households.
+  multiplier is used to increase the wholesale price for households.
 * *Gas* is of type **Stock** and represents the price for the purchase of
   natural gas from the local provider.
 * *Electricity*, *Heat* and *Cooling* are of type **Demand** and represent the
@@ -150,7 +150,7 @@ way in the individual houses. The idea behind this is laid out in section
 Sheet Process
 ~~~~~~~~~~~~~
 In this sheet the energy conversion technologies are described. Here only the
-economical and some general technical paramteres are set. The interactions with
+economical and some general technical parameters are set. The interactions with
 the commodities are introduced in the next sheet. The following parameters are
 set here for the processes:
 
@@ -200,8 +200,8 @@ While the details of the processes will be discussed in more detail in the next
 section one mention on the processes 'Load dump' and 'Slack' is made here.
 These processes are not introduced to represent real units but help making
 operation more realistic and error fixing more easy. A load dump process just
-destroys energy which is sometimes necessary in order to prvent the system from
-doing unrealistic gamnastics to keep the vertex rule. A 'Slack' process can
+destroys energy which is sometimes necessary in order to prevent the system from
+doing unrealistic gymnastics to keep the vertex rule. A 'Slack' process can
 create a demand commodity out of thin air for an extremely high price. It thus
 indicates when the problem is not feasible, making error fixing much easier.
 Both should typically be included in models.
@@ -234,13 +234,13 @@ There are a few special settings made in the example. First, the CHP plant is
 divided into three parts. The idea behind this is described in :ref:`nuggets`.
 The two processes 'CHP (Electricity driven)' and 'CHP (Heat driven)' specify
 the commodity flows in the two extreme operational states. The system can then
-chose all linear interpolations between both states by guiding the commdity
+chose all linear interpolations between both states by guiding the commodity
 flow of 'Intermediate' through the two processes in the desired ratio. Second,
 the cooling technologies are implemented in a two stage way. The reason for
 this is that the process 'Ambient air cooling' is extremely efficient and
 extremely cheap. While it can only be used in certain time intervals (see
-explanantion of 'TimeVarEff' further below), its output could nevertheless be
-stored oterhwise which is not realistic. The introduction of commodity
+explanation of 'TimeVarEff' further below), its output could nevertheless be
+stored otherwise which is not realistic. The introduction of commodity
 'Intermediate low temperature' prevents this. It is the output of all the
 cooling technologies except for 'Ambient air cooling' and is also the one that
 can be stored (see below).
@@ -296,7 +296,7 @@ parameters specifying the storage properties are the following:
 * **Installed capacity (MWh) (Only first file)** gives the storage capacity of
   storages already installed at the start of the modeling horizon.
 * **Installed storage power (MW) (Only first file)** gives the
-  charging/dischargin power of storages already installed at the start of the
+  charging/discharging power of storages already installed at the start of the
   modeling horizon.
 * **Lifetime of installed capacity (years) (Only first file)** gives the rest
   lifetime of the installed storages in years. A storage can be used in a
@@ -348,7 +348,7 @@ parameters specifying the storage properties are the following:
   an optimization variable. In any case the storage content in the end is the
   same as in the beginning to avoid windfall profits from simply discharging a
   storage.
-* **Discharge** gives the hourly dischage of a storage. Over time, when no
+* **Discharge** gives the hourly discharge of a storage. Over time, when no
   charging or discharging occurs, the storage content will decrease
   exponentially.
 
@@ -369,10 +369,10 @@ Sheet TimeVarEff
 ~~~~~~~~~~~~~~~~
 In this sheet a time series for the output of processes can be given. This is
 always useful, when processes are somehow dependent on external parameters. The
-syntax to be used to specify which process is to be adressed by this is
+syntax to be used to specify which process is to be addressed by this is
 'site.process'. In the present example, this is used for the process
 'Ambient air cooling' which has a boolean 'TimeVarEff' curve giving the value
-'1' for tmeperatures below a threshold and '0' elsewise.
+'1' for temperatures below a threshold and '0' else.
 
 This concludes the input generation. Of course all parameters have to be set
 in all the input sheets.
@@ -466,7 +466,7 @@ and the plot tuples by:
     plot_sites_name = {('Business park', 'City'): 'Together'}
 
 In this way you get a meaningful output for the optimization runs. Second, the
-scenarios are made for the other example and are as such no longer useable
+scenarios are made for the other example and are as such no longer usable
 here. Thus only the base scenario is to be run. Change the list scenario to the
 following:
 ::

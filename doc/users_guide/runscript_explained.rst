@@ -30,7 +30,7 @@ The included packages have the following functions:
   
 More functions can be found in the document :ref:`API`.
  
-In the following sections the user definded input, output and scenario settings
+In the following sections the user defined input, output and scenario settings
 are described.
 
 Input Settings
@@ -171,7 +171,7 @@ set by the user. via the following input lines:
 The logic is similar to the reporting case discussed above. With the setting of
 plotting timesteps the exact range of the plotted result can be set. In the
 default case shown this range is all modeled timesteps. For larger optimization
-timestep ranges this can be impractival and instead the following syntax can be
+timestep ranges this can be impractical and instead the following syntax can be
 used to hard code which steps are to be plotted exactly.
 
 ::
@@ -186,8 +186,8 @@ In this example two 1 week long ranges are plotted between the specified time
 steps. Using this make sure, that the chosen ranges are subsets of the modeled
 time steps themselves.
 
-The plot colors can becustomized using the module constant :data:`COLORS`. All
-plot colors are user-defineable by adding color :func:`tuple` ``(r, g, b)`` or
+The plot colors can be customized using the module constant :data:`COLORS`. All
+plot colors are user-definable by adding color :func:`tuple` ``(r, g, b)`` or
 modifying existing tuples for commodities and plot decoration elements. Here,
 new colors for displaying import/export are added. Without these, pseudo-random
 colors are generated in :func:`to_color`.
@@ -352,8 +352,8 @@ Solving
     result = optim.solve(prob, tee=True)
 
 This section is the "work horse", where most computation and time is spent. The
-optimization problem is first defined (:func:`create_model`) andn populated
-with paramter valus with values. The ``SolverFactory`` object is an abstract
+optimization problem is first defined (:func:`create_model`) and populated
+with parameter values with values. The ``SolverFactory`` object is an abstract
 representation of the solver used. The returned object ``optim`` has a method
 :meth:`set_options` to set solver options (not used in this tutorial).
 

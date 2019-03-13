@@ -9,7 +9,7 @@ constraints, contribute to the cost function but do not increase the index
 depth of all variables and parameters. For this and all the further features
 all variables will be written in the full index depth, i.e. for intertemporal
 models with multiple vertices. For storages the capacity and the
-charging/discharging power are expanded inependently. For each storage one
+charging/discharging power are expanded independently. For each storage one
 commodity is specified which is stored. It is thus not necessary to specify the
 commodity as an extra index in the variables and parameters. With added
 storages the variable vector then reads:
@@ -45,7 +45,7 @@ the case of transmissions there are no qualitative changes to the costs.
 Storage expansion constraints
 -----------------------------
 Storages are expanded in their capacity and charging and discharging power
-separately. The respective constaints read:
+separately. The respective constraints read:
 
 .. math::
    \kappa^{\text{c,p}}_{yvs}&=\sum_{y^{\prime}\in Y\\(s,v,y^{\prime},y)\in O}
@@ -69,7 +69,7 @@ given an upper and a lower bond via:
 
 Commodity dispatch constraints
 ------------------------------
-The commodity unit untilization constraints are expanded by the use of
+The commodity unit utilization constraints are expanded by the use of
 storages.
 
 Amendments to the Vertex rule
@@ -106,7 +106,7 @@ outputs from the storage content at the previous time step
    \frac{\epsilon^{\text{out}}_{yvst}}{e^{\text{out}}_{yvs}}.
 
 Here, :math:`e^{\text{in,out}}_{yvs}` are the efficiencies for charging and
-discharging, respectively, and :math:`d_{yvs}` is the hourly self dischrage
+discharging, respectively, and :math:`d_{yvs}` is the hourly self discharge
 rate.
 
 Basic storage dispatch rules

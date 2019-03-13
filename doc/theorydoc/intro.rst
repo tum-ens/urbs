@@ -27,7 +27,7 @@ presented in extra parts.
 Energy system entities
 ----------------------
 For all models that can be generated with urbs, the energy system is built up
-out of the follwing entities:
+out of the following entities:
 
 * Commodities, which represent the various forms of material and energy flows
   in the system.

@@ -196,7 +196,7 @@ capacity constraint
    &\underline{K}_{yp}\leq\kappa_{yp}\leq\overline{K}_{yp}
 
 is valid, the set constraints can have effects across years and especially the
-modeller has to be careful not to set infeasible contraints.
+modeller has to be careful not to set infeasible constraints.
 
 Commodity dispatch constraints
 ------------------------------

@@ -192,7 +192,7 @@ and calculated by the following code fragment:
 **Process time variable output rule**: This constraint multiplies the process
 efficiency with the parameter time series :math:`f_{yvpt}^\text{out}`. The
 process output for all commodities is thus manipulated depending on time. This
-contraint is not valid for environmental commodities since these are typically
+constraint is not valid for environmental commodities since these are typically
 linked to an input commodity flow rather than an output commodity flow. The
 mathematical explanation of this rule is given in :ref:`theory-TVE`.
 
@@ -249,7 +249,7 @@ following code fragment:
 linear behavior to a more complex one. Instead of constant in- and output
 ratios these are now interpolated linearly between the value for full operation
 :math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios
-:math:`\underline{r}^{\text{in/out}}_{yvp}` at the mimimum operation point. The
+:math:`\underline{r}^{\text{in/out}}_{yvp}` at the minimum operation point. The
 mathematical explanation of this rule is given in :ref:`theory-min`.   
 
 In script `model.py` this expression is written in the following way for the

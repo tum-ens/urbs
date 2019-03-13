@@ -55,7 +55,7 @@ Commodity dispatch constraints
 ------------------------------
 Buy and sell commodities change the vertex rule (Kirchhoff's current law), by
 adding a new way for in- an output flows of commodities. The rule is thus
-amended by the follwoing two equations:
+amended by the following two equations:
 
 .. math::
    &\forall y\in Y,~v\in V,~c \in C_{\text{sell}},~t \in T_m:\\
@@ -71,7 +71,7 @@ processes, storages or transmission lines in the system has to be replenished.
 Buy/sell commodity limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The trade with the market in each modeled year and each vertex can be limited
-per time step and for an entire year. This introduces the follwing constraints:
+per time step and for an entire year. This introduces the following constraints:
 
 .. math::
    &\forall y\in Y,~v\in V,~c \in C_{\text{sell}}:\\
@@ -92,4 +92,4 @@ limit the hourly and yearly maximums of buy from and :math:`\overline{g}_{yvc}`
 and :math:`\overline{G}_{yvc}` the hourly and yearly maximum of selling to the
 external market.
 
-This concludes the discussuion of the modeled trading with an external market. 
+This concludes the discussion of the modeled trading with an external market.

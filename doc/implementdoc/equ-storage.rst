@@ -161,7 +161,7 @@ calculated by the following code fragment:
 
 **Storage Capacity Limit Rule**: The constraint storage capacity limit rule
 limits the variable total storage size :math:`\kappa_{yvs}^\text{c}`. This
-contraint restricts a storage :math:`s` in a site :math:`v` and support
+constraint restricts a storage :math:`s` in a site :math:`v` and support
 timeframe :math:`y` from having more total storage content capacity than an
 upper bound and having less than a lower bound. The constraint states that the
 variable total storage size :math:`\kappa_{yvs}^\text{c}` must be greater than
@@ -247,7 +247,7 @@ then defined and calculated by the following code fragment:
    :pyobject: res_initial_and_final_storage_state_var_rule
    
 **Storage Energy to Power Ratio Rule**:
-For certain type of storage techologies, the power and energy capacities cannot
+For certain type of storage technologies, the power and energy capacities cannot
 be independently sized but are dependent to each other. Hence, the constraint
 storage energy to power ratio rule sets a linear dependence between the
 capacities through a user-defined "energy to power ratio"

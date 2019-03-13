@@ -4,7 +4,6 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 [![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](http://urbs.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.594200.svg)](https://doi.org/10.5281/zenodo.594200)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/tum-ens/urbs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Features
 
@@ -29,12 +28,11 @@ There are 2 ways to get all required packages under Windows. I recommend using t
 
 #### Anaconda (recommended)
 
-  1. **[Anaconda (Python 3.5)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.  
-     During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected! If only higher Python versions are available, you can switch to Python 3.5 by typing `conda install python=3.5`
+  1. **[Anaconda (Python 3)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.  
+     During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected! If only higher Python versions are available, you can switch to a specific Python Version by typing `conda install python=<version>`
   2. **Solver**: [GLPK](http://winglpk.sourceforge.net/).
-      1. Simply unzip the downloaded version to any folder, e.g. `C:\GLPK`. 
-      2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `glpsol` command is available on the command prompt.
-      3. Alternative: Install it via conda by `conda install -c conda-forge glpk`. It will add it to the path variable, too.
+     1. Launch a new command prompt (Win+R, type "cmd", Enter)
+     2. Install it via conda by `conda install -c conda-forge glpk`. It will add it to the path variable, too.
   3. **Pyomo**
      1. Launch a new command prompt (Win+R, type "cmd", Enter)
      2. Type `conda install -c conda-forge pyomo`, hit Enter.
@@ -45,18 +43,18 @@ Continue at [Get Started](#get-started).
 
 For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work, though 64 bit is recommended.
 
-  1. **[Python 3.5](https://python.org/download)**. Python 2.7 is also supported.
+  1. **[Python 3](https://python.org/download)**. Python 2.7 is also supported.
   2. **[pip3](https://pip.pypa.io/en/latest/installing.html)**.The Python package manager. It allows to install many Python packages with a simple command. 
-      1. After installation, add `C:\Python35\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
+      1. After installation, add `C:\Python3x\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
   3. **IPython**: execute `pip install ipython3` in a command prompt.
-  4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/). *How to select the correct file:* Download the newest stable version of each package, whose filename suffix matches both "bitness" (32 bit or 64 bit) and Python version (i.e. 3.5).  
+  4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/). *How to select the correct file:* Download the newest stable version of each package, whose filename suffix matches both "bitness" (32 bit or 64 bit) and Python version (i.e. 3.x).  
       1. [NumPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
       2. [SciPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
       3. [matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). 
       4. As a test, you can try start `ipython` and have a MATLAB-style command line with plotting capabilities. If you receive message about "ipython could not be found", check if the `C:\Python35\Scripts` is added to the "Path" system variable as described in step 2.i. above.
   5. **[pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output. Its capabilities are exploited to write short analysis scripts in `runme.py` and `comp.py`, as well as in the functions `urbs.plot` and `urbs.report`.
   6. **Pyomo**: execute `pip install pyomo` in a command prompt.
-  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/).  (thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), only version 4.57 or older is supported at the moment [May 2016])
+  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/).
       1. Simply unzip the latest version somewhere, e.g. `C:\GLPK`. 
       2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2.i.), so that the `glpsol` command is available on the command prompt.
   8. **Excel** reading/writing: `pip install xlrd xlwt openpyxl`
@@ -65,12 +63,12 @@ Continue at [Get Started](#get-started).
   
 ### Linux
 
+One way to install it under Linux can be done by simply using Anaconda/Miniconda and install it like on [Windows](#windows).
+
 Use your Linux distribution's package manager to get all the packages listed in the Windows installation section. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names or differing procedures to get the individual packages to run:
 
   1. **Python and base packages**: `sudo apt-get install python3 python3-pip python3-numpy python3-scipy python3-matplotlib python3-ipython python3-notebook python3-sympy glpk-utils`
   2. **Up-to-date Python packages**: `sudo pip3 install pandas pyomo xlwt xlrd openpyxl`
-
-(Thanks to a [bug in pyomo](https://software.sandia.gov/trac/pyomo/ticket/4641), solver GLPK only version 4.57 or older is supported at the moment [May 2016]. Please check the version that your distribution installs with `glpk-utils` and downgrade or use another supported solver.)
 
 Continue at [Get Started](#get-started).
 
@@ -79,7 +77,7 @@ Continue at [Get Started](#get-started).
 
 Once installation is complete, finally [install git (for version control)](http://git-scm.com/). **Remark:** at step "Adjusting your PATH environment", select "Run Git from the Windows Command Prompt".
 
-Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux). (Under Linux, you most likely need to call `python3` instead of `python`.): 
+Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux). (Depending on what your standard python version is, you might need to call `python3` instead of `python`.): 
 
     git clone https://github.com/tum-ens/urbs.git
     cd urbs
@@ -91,12 +89,12 @@ Some minutes later, the subfolder `result` should contain plots and summary spre
 
 and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-example-.../comp.png` for a quick comparison. This script parses the summary spreadsheets for all scenarios.
 
-## Next steps
+## Next steps and tipps
 
   1. Head over to the tutorial at http://urbs.readthedocs.io, which goes through runme.py step by step. 
   2. Read the source code of `runme.py` and `comp.py`. 
-  3. Quickly scan through `urbs.py`, read docstrings.
-  4. Try adding/modifying scenarios in `runme.py` and see their effect on results.
+  3. Try adding/modifying scenarios in `scenarios.py` and see their effect on results.
+  4. If you need a nice python editor, think about using [PyCharm](https://www.jetbrains.com/pycharm/download). It has many features including easy Git integration, package management, etc.
   5. Fire up IPython (`ipython3`) and run the scripts from there using the run command: `run runme` and `run comp`. Then use `whos` and inspect the workspace afterwards (`whos`). See what you can do (analyses, plotting) with the DataFrames. Take the `urbs.get_constants`, `urbs.get_timeseries` and `urbs.plot` functions as inspriation and the [Pandas docs](http://pandas.pydata.org/pandas-docs/stable/) as reference.
   
 ## Further reading
@@ -119,7 +117,7 @@ and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-e
 
 ## Copyright
 
-Copyright (C) 2014-2016  TUM ENS
+Copyright (C) 2014-2019  TUM ENS
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

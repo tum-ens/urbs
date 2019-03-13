@@ -10,9 +10,9 @@ Inputs
 There are two different types of inputs the user has to make in order to set up
 and solve an optimization problem with urbs.
 
-First, there are the model paramters themselves, i.e. the parameters specifying
+First, there are the model parameters themselves, i.e. the parameters specifying
 the behavior of the different model entities such as commodities or processes.
-These paramters are entered into spreadsheets with a standardized structure.
+These parameters are entered into spreadsheets with a standardized structure.
 These then have to be placed in the subfolder ``Input``. There can be no
 further information given on those parameters here since they make up the
 particular energy system models. There are, however, two examples provided with
@@ -29,4 +29,4 @@ modeling run you then simply execute the according run script by typing::
 in the command prompt.
 
 You can immediately test this after the installation by running one of the two
-standard examples using the corresponding example run sctipts.
+standard examples using the corresponding example run scripts.

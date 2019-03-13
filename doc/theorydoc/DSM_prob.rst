@@ -25,7 +25,7 @@ momentary demand at time :math:`t` and :math:`\delta^{\text{down}}_{yvct(tt)}`
 the corresponding downshifts. The downshifts need two time indices as they are
 referencing to the corresponding upshift with the first index :math:`t` and the
 timesteps they actually occur via the second time index :math:`tt`. The latter
-is then restricted to an intervall arouns the reference upshift since loads
+is then restricted to an interval around the reference upshift since loads
 cannot in general be shifted indefinitely. As it is modeled in urbs, DSM does
 not introduce any costs. to clarify the terms used for the DSM feature the
 following illustrative example is helpful.
@@ -101,7 +101,7 @@ commodities with DSM to:
    \delta^{\text{down}}_{yvc(tt)t} \geq \text{CB}(y,v,c,t).
 
 The downshift equation requires a little elaboration. Here, the total downshift
-occuring at a timestep :math:`t` can be caused by downshifts linked to
+occurring at a timestep :math:`t` can be caused by downshifts linked to
 different upshifts, which in the notation above occur at times :math:`tt`. All
 downshift contributions within the delay time :math:`y_{yvc}` of their
 respective upshifts are then summed up.   
@@ -125,7 +125,7 @@ noted like this:
    \delta^{\text{down}}_{yvct(tt)},
 
 where :math:`e_{yvc}` is the DSM efficiency. Note here, that the summation is
-over the timesteps where the downshifts are occuring as opposed to the vertex
+over the timesteps where the downshifts are occurring as opposed to the vertex
 rule above, where the summation is over the timesteps of the corresponding
 upshifts.
 
@@ -157,7 +157,7 @@ DSM recovery
 ------------
 Assuming that DSm is linked to some real physical devices, it is necessary to
 allow these devices to have some minimal time between DSM events, where, e.g.,
-the ability to perform DSM is recovered. This is modeled in the follwoing way:
+the ability to perform DSM is recovered. This is modeled in the following way:
 
 .. math::
    &\forall y\in Y,~v\in V,~c\in C^{\text{DSM}}_{\text{dem}}, t\in T_m:\\\\
@@ -171,4 +171,3 @@ shifting time for one shifting event. This means that only one full shifting
 event can occur within the recovery period.
 
 This concludes the demand side management constraints.
-   

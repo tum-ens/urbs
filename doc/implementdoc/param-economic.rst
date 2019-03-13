@@ -170,7 +170,7 @@ label "price" represents the corresponding parameter
 **Environmental Commodity Costs**, :math:`k_{yvc}^\text{env}`,
 ``m.commodity_dict['price'][c]``: The parameter :math:`k_{yvc}^\text{env}`
 represents the book cost for producing/emitting one unit (1 t, 1 kg, ...) of an
-environmentcal commodity :math:`c` (:math:`\forall c \in C_\text{env}`) in
+environmental commodity :math:`c` (:math:`\forall c \in C_\text{env}`) in
 support timeframe :math:`y` in a site :math:`v` (:math:`\forall v \in V`). The
 unit of this parameter is €/t (i.e. per unit of output). The related section
 for this parameter in the spreadsheet corresponding to support timeframe
@@ -379,7 +379,7 @@ parameter :math:`i_{yvf}` represents the weighted average cost of capital for a
 transmission :math:`f` transferring commodities through an arc :math:`a` built
 in support timeframe :math:`y`. The weighted average cost of capital gives the
 interest rate(%) of costs for capital after taxes. The related section for this
-parameter in the spreadsheet coresponding to support timeframe :math:`y` can be
+parameter in the spreadsheet corresponding to support timeframe :math:`y` can be
 found under the "Transmission" sheet. Here each row represents another
 transmission :math:`f` transferring commodities through an arc :math:`a` and
 the column with the header label "wacc" represents the parameters
@@ -413,7 +413,7 @@ support timeframe :math:`y` can be found under the "Transmission" sheet. Here
 each row represents another transmission :math:`f` transferring commodities
 through an arc :math:`a` and the column with the header label "inv-cost"
 represents the transmission capacity investment cost of the corresponding
-transmission :math:`f` and arc :math:`a` combinations. 
+transmission :math:`f` and arc :math:`a` combinations.
 
 **Annual Transmission Capacity Fixed Costs**, :math:`k_{yaf}^\text{fix}`,
 ``m.transmission_dict['fix-cost'][t]``: The parameter
@@ -430,7 +430,7 @@ the header label "fix-cost" represents the parameters
 **Transmission Usage Variable Costs**, :math:`k_{yaf}^\text{var}`,
 ``m.transmission_dict['var-cost'][t]``: The parameter
 :math:`k_{yaf}^\text{var}` represents the variable cost per unit energy, that
-is transferred with a transmissiom :math:`f` through an arc :math:`a`. The unit
+is transferred with a transmission :math:`f` through an arc :math:`a`. The unit
 of this parameter is €/ MWh. The related section for this parameter in the
 spreadsheet corresponding to support timeframe :math:`y` can be found under the
 "Transmission" sheet. Here each row represents another transmission :math:`f`

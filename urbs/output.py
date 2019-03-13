@@ -129,13 +129,13 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         created = pd.DataFrame(index=timesteps)
 
     consumed = get_entity(instance, 'e_pro_in')
-    consumed = consumed.xs([stf, com], level=['stf', 'com']).loc[timesteps]
     try:
+        consumed = consumed.xs([stf, com], level=['stf', 'com']).loc[timesteps]
         consumed = consumed.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         consumed = consumed.unstack(level='pro')
         consumed = drop_all_zero_columns(consumed)
     except KeyError:
-        consumed = pd.DataFrame(index=timesteps)
+        consumed = pd.DataFrame(index=timesteps[1:])
 
     # TRANSMISSION
     other_sites = (get_input(instance, 'site')

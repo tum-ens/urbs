@@ -8,15 +8,14 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
     """Write result summary to a spreadsheet file
 
     Args:
-        instance: a urbs model instance
-        filename: Excel spreadsheet filename, will be overwritten if exists
-        report_tuples: (optional) list of (sit, com) tuples for which to
-                       create detailed timeseries sheets
-        report_sites_name: (optional) dict of names for created timeseries
-                       sheets
-    Returns:
-        Nothing
+        - instance: a urbs model instance;
+        - filename: Excel spreadsheet filename, will be overwritten if exists;
+        - report_tuples: (optional) list of (sit, com) tuples for which to
+          create detailed timeseries sheets;
+        - report_sites_name: (optional) dict of names for created timeseries
+          sheets
     """
+
     # default to all demand (sit, com) tuples if none are specified
     if report_tuples is None:
         report_tuples = get_input(instance, 'demand').columns

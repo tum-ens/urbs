@@ -66,19 +66,19 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
     with stored energy in a second subplot.
 
     Args:
-        prob: urbs model instance
-        com: commodity name to plot
-        sit: site name to plot
-        dt: length of each time step (unit: hours)
-        timesteps: modelled timesteps
-        timesteps_plot: timesteps to be plotted
-
-        power_name: optional string for 'power' label; default: 'Power'
-        power_unit: optional string for unit; default: 'MW'
-        energy_name: optional string for 'energy' label; default: 'Energy'
-        energy_unit: optional string for storage plot; default: 'MWh'
-        time_unit: optional string for time unit label; default: 'h'
-        figure_size: optional (width, height) tuple in inch; default: (16, 12)
+        - prob: urbs model instance
+        - stf: support timeframe
+        - com: commodity name to plot
+        - sit: site name to plot
+        - dt: length of each time step (unit: hours)
+        - timesteps: modelled timesteps
+        - timesteps_plot: timesteps to be plotted
+        - power_name: optional string for 'power' label; default: 'Power'
+        - power_unit: optional string for unit; default: 'MW'
+        - energy_name: optional string for 'energy' label; default: 'Energy'
+        - energy_unit: optional string for storage plot; default: 'MWh'
+        - time_unit: optional string for time unit label; default: 'h'
+        - figure_size: optional (width, height) tuple in inch; default: (16, 12)
 
     Returns:
         fig: figure handle
@@ -322,19 +322,21 @@ def result_figures(prob, figure_basename, timesteps, plot_title_prefix=None,
     """Create plots for multiple periods and sites and save them to files.
 
     Args:
-        prob: urbs model instance
-        figure_basename: relative filename prefix that is shared
-        plot_title_prefix: (optional) plot title identifier
-        plot_tuples: (optional) list of (sit, com) tuples to plot
-                     sit may be individual site names or lists of sites
-                     default: all demand (sit, com) tuples are plotted
-        plot_sites_name: (optional) dict of names for created plots
-        periods: (optional) dict of 'period name': timesteps_list items
-                 default: one period 'all' with all timesteps is assumed
-        extensions: (optional) list of file extensions for plot images
-                    default: png, pdf
-        **kwds: (optional) keyword arguments are forwarded to urbs.plot()
+        - prob: urbs model instance
+        - figure_basename: relative filename prefix that is shared;
+        - timesteps: global varaible of modeled timesteps;
+        - plot_title_prefix: (optional) plot title identifier;
+        - plot_tuples: (optional) list of (sit, com) tuples to plot sit may be
+          individual site names or lists of sites, default: all demand
+          (sit, com) tuples are plotted;
+        - plot_sites_name: (optional) dict of names for created plots;
+        - periods: (optional) dict of 'period name': timesteps_list items,
+          default: one period 'all' with all timesteps is assumed;
+        - extensions: (optional) list of file extensions for plot images,
+          default: png, pdf;
+        - ``**kwds: (optional) keyword arguments are forwarded to urbs.plot()``
     """
+
     # retrieve parameter 'dt' from the model
     dt = get_entity(prob, 'dt')
 

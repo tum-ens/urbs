@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import sys, os
+
+sys.path.append(os.path.abspath('..'))
+
 
 import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
@@ -7,6 +11,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
+    'sphinx.ext.autodoc',
 ]
 
 #templates_path = ['_templates']

@@ -6,15 +6,17 @@ from .input import *
 
 
 def create_model(data, dt=1, timesteps=None, objective='cost',
-                 dual=False):
+                 dual=True):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
-        data: a dict of 6 DataFrames with the keys 'commodity', 'process',
-            'transmission', 'storage', 'demand' and 'supim'.
-        dt: timestep duration in hours (default: 1)
-        timesteps: optional list of timesteps, default: demand timeseries
-        dual: set True to add dual variables to model (slower); default: False
+        - data: a dict of up to 12
+        - dt: timestep duration in hours (default: 1)
+        - timesteps: optional list of timesteps, default: demand timeseries
+        - objective: Either "cost" or "CO2" for choice of objective function,
+          default: "cost"
+        - dual: set True to add dual variables to model output
+          (marginally slower), default: True
 
     Returns:
         a pyomo ConcreteModel object
@@ -706,20 +708,20 @@ def res_global_cost_limit_rule(m):
 
 # Costs and emissions
 def def_costs_rule(m, cost_type):
-    """Calculate total costs by cost type.
-    Sums up process activity and capacity expansions
-    and sums them in the cost types that are specified in the set
-    m.cost_type. To change or add cost types, add/change entries
-    there and modify the if/elif cases in this function accordingly.
-    Cost types are
-      - Investment costs for process power, storage power and
-        storage capacity. They are multiplied by the investment
-        factors. Rest values of units are subtracted.
-      - Fixed costs for process power, storage power and storage
-        capacity.
-      - Variables costs for usage of processes, storage and transmission.
-      - Fuel costs for stock commodity purchase.
-    """
+    #Calculate total costs by cost type.
+    #Sums up process activity and capacity expansions
+    #and sums them in the cost types that are specified in the set
+    #m.cost_type. To change or add cost types, add/change entries
+    #there and modify the if/elif cases in this function accordingly.
+    #Cost types are
+    #  - Investment costs for process power, storage power and
+    #    storage capacity. They are multiplied by the investment
+    #    factors. Rest values of units are subtracted.
+    #  - Fixed costs for process power, storage power and storage
+    #    capacity.
+    #  - Variables costs for usage of processes, storage and transmission.
+    #  - Fuel costs for stock commodity purchase.
+
     if cost_type == 'Invest':
         cost = \
             sum(m.cap_pro_new[p] *

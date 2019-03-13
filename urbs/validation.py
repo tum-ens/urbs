@@ -27,7 +27,7 @@ def validate_input(data):
                     (stf, sit, com) not in simplified_com_index):
                 raise ValueError('Commodities used in a process at a site must'
                                  ' be specified in the commodity input sheet'
-                                 '! The tuple (' + stf + ',' + sit + ',' +
+                                 '! The tuple (' + str(stf) + ',' + sit + ',' +
                                  com + ') is not in commodity input sheet.'
                                  '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')

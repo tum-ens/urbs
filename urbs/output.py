@@ -11,7 +11,7 @@ def get_constants(instance):
         costs, cpro, ctra, csto = get_constants(instance)
 
     Args:
-        instance: a urbs model instance
+        instance: an urbs model instance
 
     Returns:
         (costs, cpro, ctra, csto) tuple
@@ -59,14 +59,15 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     """Return DataFrames of all timeseries referring to given commodity
 
     Usage:
-        (created, consumed, stored, imported, exported,
-         dsm) = get_timeseries(instance, commodity, sites, timesteps)
+        created, consumed, stored, imported, exported,
+        dsm = get_timeseries(instance, commodity, sites, timesteps)
 
     Args:
-        instance: a urbs model instance
-        com: a commodity name
-        sites: a site name or list of site names
-        timesteps: optional list of timesteps, default: all modelled timesteps
+        - instance: a urbs model instance
+        - com: a commodity name
+        - sites: a site name or list of site names
+        - timesteps: optional list of timesteps, default: all modelled
+          timesteps
 
     Returns:
         a tuple of (created, consumed, storage, imported, exported, dsm) with

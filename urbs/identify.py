@@ -4,22 +4,16 @@ import pandas as pd
 def identify_mode(data):
     """ Identify the urbs mode that is needed for running the current Input
 
-        The different modes/features are:
-            Intertemporal
-            Transmission
-            Storage
-            DSM
-            Buy Sell (Price)
-            Time Variable efficiency
-            Expansion ( 4 values for process, transmission,storage capacity and
-                        storage power expansion )
-
     Args:
-        the input excel file, in case of intertemporal planning the first excel
-        file in the Input folder
+        data: input data dictionary
+
+    Features:
+        Intertemporal, Transmission, Storage, DSM, Buy Sell (Price), Time
+        Variable efficiency, Expansion (4 values for process, transmission,
+        storage capacity and storage power expansion)
 
     Returns:
-        mode dictionary: contains bool values that define the urbs mode
+        mode dictionary; contains bool values that define the urbs mode
         m.mode['exp'] will be initialized with 'True' if the corresponing mode
         (e.g. transmission) is also enabled and later updated through
         identify_expansion(m)
@@ -63,7 +57,7 @@ def identify_mode(data):
 
 def identify_expansion(const_unit_df, inst_cap_df):
     """ Identify if the model will be with expansion. The criterion for which
-        no expansion is possible is "cap-lo == inst-cap == cap-up" for all
+        no expansion is possible is "inst-cap == cap-up" for all
         support timeframes
 
         Here the the number of items in dataframe with constant units will be

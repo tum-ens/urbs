@@ -31,7 +31,7 @@ all input data. Each commodity must be exactly one of the following six types:
     on the model.
   * Buy/Sell: Commodities of these two types can be traded with an external
     market. Similar to Stock commodities they can be limited per hour or per
-    year. As opposed to Stock commidities the price at which they can be traded
+    year. As opposed to Stock commodities the price at which they can be traded
     is not fixed but follows a user defined time series.    
 
 Stock and environmental commodities have three numeric attributes that
@@ -120,6 +120,6 @@ commodities in the given modeled year.
 
 Time variable efficiency
 """"""""""""""""""""""""
-Each combination ``(year, site, process)`` can optinionally be supplied with
+Each combination ``(year, site, process)`` can optionally be supplied with
 one time series which multiplies the outputs of the process with an acoording
 factor.

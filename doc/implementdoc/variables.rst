@@ -6,7 +6,7 @@ All the variables that the optimization model requires to calculate an optimal
 solution will be listed and defined in this section. A variable is a numerical
 value that is determined during optimization. Variables can denote a single,
 independent value, or an array of values. Variables define the search space for
-optimization. Variables of this optimization model can be seperated into
+optimization. Variables of this optimization model can be separated into
 sections by their area of use. These Sections are Cost, Commodity, Process,
 Transmission, Storage and demand side management.
 
@@ -414,7 +414,7 @@ fragment shows the definition of the variable:
         
 **DSM Downshift**, :math:`\delta_{t,tt,yvc}^\text{down}`, ``dsm_down``, MWh:
 The variable :math:`\delta_{t,tt,yvc}^\text{down}` represents the DSM downshift
-in timestepp :math:`tt` caused by the upshift in time :math:`t` in support
+in timestep :math:`tt` caused by the upshift in time :math:`t` in support
 timeframe :math:`y` in site :math:`v` for commodity :math:`c`. The special
 combinations of timesteps :math:`t` and :math:`tt` for each (support timeframe,
 site, commodity) combination is created by the ``dsm_down_tuples``. The

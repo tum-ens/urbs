@@ -8,9 +8,9 @@
 urbs: A linear optimisation model for distributed energy systems
 ================================================================
 
-:Maintainer: Johannes Dorfner, <johannes.dorfner@tum.de>
+:Author: Johannes Dorfner, <johannes.dorfner@tum.de>
 :Organization: `Chair of Renewable and Sustainable Energy Systems`_,
-               Technical University of Munich
+               Technical University of Munich, <urbs@ens.ei.tum.de>
 :Version: |version|
 :Date: |today|
 :Copyright:
@@ -75,6 +75,19 @@ Features
 
 Changes
 -------
+
+2019-03-13 Version 1.0
+^^^^^^^^^^^^^^^^^^^^^^
+
+* Maintenance: Modularity (only features which are used are build)
+* Maintenance: New structure of documentation
+* Feature: Time variable efficiency
+* Feature: Objective function can be changed to CO2
+* Feature: Intertemporal feature (expansion between years)
+* Feature: Input validation (having easier to understand error messages due to Excel file)
+* Feature: Reconstruction of partial feature
+* Feature: Global constraints instead of Hacks
+* Bugfixes: Many
 
 2017-01-13 Version 0.7
 ^^^^^^^^^^^^^^^^^^^^^^

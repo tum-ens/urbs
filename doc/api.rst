@@ -27,7 +27,7 @@ which identifies the mode to be run and
 
 .. function:: identify_expansion(const_unit_df, inst_cap_df)
 
-which identifies wether there are any expansions possible for the different
+which identifies whether there are any expansions possible for the different
 types of model entities. Both functions create boolean, global variables that
 are then used by the 'urbs' to choose the right model constraints for the
 mathematical model. It thus decides which scripts and functions from subfolder
@@ -46,14 +46,14 @@ library of input data used throughout the model generation. The function
 .. function:: pyomo_model_prep(data, timesteps)
 
 is then used to manipulate the input data into forms directly usable for the
-model. For this task it makes heavy uses of other helper fucntions described
+model. For this task it makes heavy uses of other helper functions described
 below.
 
 model.py
 ~~~~~~~~
 This file just includes the central function used for model generation
 
-.. function:: reate_model(data, dt=1, timesteps=None, objective='cost', dual=True)
+.. function:: create_model(data, dt=1, timesteps=None, objective='cost', dual=True)
 
 It takes the inputs and generates a Pyomo ConcreteModel instance. This is the
 goal of the entire module and it thus makes use of all the other functions in

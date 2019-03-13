@@ -95,7 +95,7 @@ Support timeframes
 ^^^^^^^^^^^^^^^^^^
 
 **Support timeframes** are represented by the set :math:`Y`. They represent the
-explicitely modeled support timeframes, e.g., years, for intertemporal models.
+explicitly modeled support timeframes, e.g., years, for intertemporal models.
 In script ``model.py`` the set is defined as:
 
 ::
@@ -187,7 +187,7 @@ amount of energy to meet the demand, or the available amount of energy may be
 much more than required.Storage technologies play a major role in such
 circumstances. The Set :math:`S` represents all storage technologies (e.g
 `Pump storage`). In script ``model.py`` this set is defined as ``sto`` and
-initalized by the code fragment:
+initialized by the code fragment:
 
 ::
 
@@ -417,7 +417,7 @@ Where: ``r_in`` represents the process input ratio as set in the input.
 For processes in the tuple set ``pro_partial_tuples``, the following tuple set
 ``pro_partial_input_tuples`` enumerates their input commodities. It is used to
 index the constraints that modifies a process' input commodity flow with
-respect to the satndard case without partial operation. It is defined by the
+respect to the standard case without partial operation. It is defined by the
 following code fragment:
 
 ::
@@ -461,7 +461,7 @@ features are set in the input.
 First, for processes in the tuple set ``pro_partial_tuples``, the tuple set
 ``pro_partial_output_tuples`` enumerates their output commodities. It is used
 to index the constraints that modifies a process' output commodity flow with
-respect to the satndard case without partial operation. It is defined by the
+respect to the standard case without partial operation. It is defined by the
 following code fragment:
 
 ::

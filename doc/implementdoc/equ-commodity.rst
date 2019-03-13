@@ -13,7 +13,7 @@ getting by the interaction with the technologies given above. Correspondingly,
 the value of the function being less than zero means that the presence of the
 commodity in the site at the timestep is getting more than before by the
 technologies given above. The mathematical explanation of this rule for general
-poblems is explained in :ref:`theory-storage`.
+problems is explained in :ref:`theory-storage`.
 
 In script ``modelhelper.py`` the value of the commodity balance function
 :math:`\mathrm{CB}(y,v,c,t)` is calculated by the following code fragment: 
@@ -30,12 +30,12 @@ storages, respectively, are given by:
    :pyobject: storage_balance
 
 **Vertex Rule**: The vertex rule is the main constraint that has to be
-satisfied for every commodity. It respresent a version of
+satisfied for every commodity. It represents a version of
 "Kirchhoff's current law" or local energy conservation. This constraint is
 defined differently for each commodity type. The inequality requires, that any
 imbalance (CB>0, CB<0) of a commodity :math:`c` in a site :math:`v` and support
 timeframe :math:`y` at a timestep :math:`t` to be balanced by a corresponding
-source term or demand. The rule is not defined for enviromental or SupIm
+source term or demand. The rule is not defined for environmental or SupIm
 commodities. The mathematical explanation of this rule is given in
 :ref:`theory-min`.
 
@@ -94,7 +94,7 @@ annually by the energy system in the site :math:`v` and support timeframe
 limit per vertex :math:`\overline{L}_{yvc}`. The annual usage of stock
 commodity is calculated by the sum of the products of the parameter weight
 :math:`w` and the parameter stock commodity source term :math:`\rho_{yvct}`,
-summed over all timestepsa:math:`t \in T_m`. The mathematical explanation of
+summed over all timesteps :math:`t \in T_m`. The mathematical explanation of
 this rule is given in :ref:`theory-min`.
 
 In script ``model.py`` the constraint total stock rule is defined and
@@ -301,7 +301,7 @@ following code fragment:
 **DSM Upward Rule**: The DSM upshift :math:`\delta_{yvct}^\text{up}` in site
 :math:`v` and support timeframe :math:`y` of demand commodity :math:`c` in time
 step :math:`t` is limited by the DSM maximal upshift per hour
-:math:`\overline{K}_{yvc}^\text{up}`, multiplied by the langth of the time
+:math:`\overline{K}_{yvc}^\text{up}`, multiplied by the length of the time
 steps :math:`\Delta t`. The mathematical explanation of this rule is given in
 :ref:`theory-dsm`.
     
@@ -390,7 +390,7 @@ across all sites :math:`v\in V` and timesteps :math:`t \in t_m` must be less
 than or equal to the parameter maximum global annual CO2 emission limit
 :math:`\overline{L}_{CO_{2},y}`, where the amount of released CO2 in a single
 site :math:`v` at a single timestep :math:`t` is calculated by the product of
-commodity balance of enviromental commodities :math:`\mathrm{CB}(y,v,CO_{2},t)`
+commodity balance of environmental commodities :math:`\mathrm{CB}(y,v,CO_{2},t)`
 and the parameter weight :math:`w`. This constraint is skipped if the value of
 the parameter :math:`\overline{L}_{CO_{2}}` is set to ``inf``. The mathematical
 explanation of this rule is given in :ref:`theory-min`.
@@ -409,9 +409,9 @@ the sum of released CO2 across all support timeframe :math:`y\in Y`, sites
 :math:`v\in V` and timesteps :math:`t \in t_m` must be less than or equal to
 the parameter maximum global CO2 emission budget
 :math:`\overline{\overline{L}}_{CO_{2},y}`, where the amount of released CO2 in
-a single support imeframe :math:`y` in a single site :math:`v` and at a single
-timestep :math:`t` is calculated by the product of tehe commodity balance of
-enviromental commodities :math:`\mathrm{CB}(y,v,CO_{2},t)` and the parameter
+a single support timeframe :math:`y` in a single site :math:`v` and at a single
+timestep :math:`t` is calculated by the product of the commodity balance of
+environmental commodities :math:`\mathrm{CB}(y,v,CO_{2},t)` and the parameter
 weight :math:`w`. This constraint is skipped if the value of the parameter
 :math:`\overline{\overline{L}}_{CO_{2}}` is set to ``inf``. The mathematical
 explanation of this rule is given in :ref:`theory-intertemp`.

@@ -10,26 +10,18 @@ from .identify import *
 def read_input(input_files, year):
     """Read Excel input file and prepare URBS input dict.
 
-    Reads an Excel spreadsheet that adheres to the structure shown in
-    mimo-example.xlsx. Two preprocessing steps happen here:
-    1. Column titles in 'Demand' and 'SupIm' are split, so that
+    Reads the Excel spreadsheets that adheres to the structure shown in
+    mimo-example.xlsx. Column titles in 'Demand' and 'SupIm' are split, so that
     'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
-    2. The attribute 'annuity-factor' is derived here from the columns 'wacc'
-    and 'depreciation' for 'Process', 'Transmission' and 'Storage'.
 
     Args:
-        filename: filename to an Excel spreadsheet with the required sheets
-            'Commodity', 'Process', 'Transmission', 'Storage', 'Demand' and
-            'SupIm'.
+        - filename: filename to Excel spreadsheets
+        - year: current year for non-intertemporal problems
 
     Returns:
-        a dict of 6 DataFrames
-
-    Example:
-        >>> data = read_excel('mimo-example.xlsx')
-        >>> data['m.global_prop'].loc['CO2 limit', 'value']
-        150000000
+        a dict of up to 12 DataFrames
     """
+
     if input_files == 'Input':
         glob_input = os.path.join(input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
@@ -189,6 +181,17 @@ def read_input(input_files, year):
 
 # preparing the pyomo model
 def pyomo_model_prep(data, timesteps):
+    '''Performs calculations on the data frames in dictionary "data" for
+    further usage by the model.
+
+    Args:
+        - data: input data dictionary
+        - timesteps: range of modeled timesteps
+
+    Returns:
+        a rudimentary pyomo.CancreteModel instance
+    '''
+
     m = pyomo.ConcreteModel()
 
     # Preparations
@@ -545,8 +548,8 @@ def split_columns(columns, sep='.'):
     derive a MulitIndex that is split at the separator string.
 
     Args:
-        columns: list of column labels, containing the separator string
-        sep: the separator string (default: '.')
+        - columns: list of column labels, containing the separator string
+        - sep: the separator string (default: '.')
 
     Returns:
         a MultiIndex corresponding to input, with levels split at separator
@@ -571,8 +574,8 @@ def get_input(prob, name):
     separation, e.g. 'process_commodity'.
 
     Args:
-        prob: a urbs model instance
-        name: an input DataFrame name ('commodity', 'process', ...)
+        - prob: a urbs model instance
+        - name: an input DataFrame name ('commodity', 'process', ...)
 
     Returns:
         the corresponding input DataFrame

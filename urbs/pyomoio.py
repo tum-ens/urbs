@@ -18,8 +18,11 @@ def get_entity(instance, name):
         return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names
-    entity = instance.__getattribute__(name)
-    labels = _get_onset_names(entity)
+    try:
+        entity = instance.__getattribute__(name)
+        labels = _get_onset_names(entity)
+    except AttributeError:
+        return pd.Series(name=name)
 
     # extract values
     if isinstance(entity, pyomo.Set):
@@ -35,12 +38,12 @@ def get_entity(instance, name):
         # unconstrained supersets
         if not labels:
             labels = [name]
-            name = name+'_'
+            name = name + '_'
 
     elif isinstance(entity, pyomo.Param):
         if entity.dim() > 1:
             results = pd.DataFrame(
-                [v[0]+(v[1],) for v in entity.iteritems()])
+                [v[0] + (v[1],) for v in entity.iteritems()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
                 [(v[0], v[1]) for v in entity.iteritems()])
@@ -49,10 +52,27 @@ def get_entity(instance, name):
                 [(v[0], v[1].value) for v in entity.iteritems()])
             labels = ['None']
 
-    elif isinstance(entity, pyomo.Constraint):
+    elif isinstance(entity, pyomo.Expression):
         if entity.dim() > 1:
             results = pd.DataFrame(
-                [v[0] + (instance.dual[v[1]],) for v in entity.iteritems()])
+                [v[0]+(v[1](),) for v in entity.iteritems()])
+        elif entity.dim() == 1:
+            results = pd.DataFrame(
+                [(v[0], v[1]()) for v in entity.iteritems()])
+        else:
+            results = pd.DataFrame(
+                [(v[0], v[1]()) for v in entity.iteritems()])
+            labels = ['None']
+
+    elif isinstance(entity, pyomo.Constraint):
+        if entity.dim() > 1:
+            # check whether all entries of the constraint have
+            # an existing dual variable
+            # in that case add to results
+            results = pd.DataFrame(
+                [key + (instance.dual[entity.__getitem__(key)],)
+                 for (id, key) in entity.id_index_map().items()
+                 if id in instance.dual._dict.keys()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
                 [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
@@ -67,7 +87,7 @@ def get_entity(instance, name):
             # concatenate index tuples with value if entity has
             # multidimensional indices v[0]
             results = pd.DataFrame(
-                [v[0]+(v[1].value,) for v in entity.iteritems()])
+                [v[0] + (v[1].value,) for v in entity.iteritems()])
         elif entity.dim() == 1:
             # otherwise, create tuple from scalar index v[0]
             results = pd.DataFrame(
@@ -219,7 +239,13 @@ def _get_onset_names(entity):
                     # if that fails, too, a constructed (union, difference,
                     # intersection, ...) set exists. In that case, the
                     # attribute _setA holds the domain for the base set
-                    domains = entity._setA.domain.set_tuple
+                    try:
+                        domains = entity._setA.domain.set_tuple
+                    except AttributeError:
+                        # if that fails, too, a constructed (union, difference,
+                        # intersection, ...) set exists. In that case, the
+                        # attribute _setB holds the domain for the base set
+                        domains = entity._setB.domain.set_tuple
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))
@@ -235,8 +261,8 @@ def _get_onset_names(entity):
             # no domain, so no labels needed
             pass
 
-    elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Constraint,
-                    pyomo.Objective)):
+    elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Expression,
+                    pyomo.Constraint, pyomo.Objective)):
         if entity.dim() > 0 and entity._index:
             labels = _get_onset_names(entity._index)
         else:

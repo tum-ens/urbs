@@ -21,22 +21,25 @@ def scenario_stock_prices(data):
 def scenario_co2_limit(data):
     # change global CO2 limit
     global_prop = data['global_prop']
-    global_prop.loc['CO2 limit', 'value'] *= 0.05
+    for stf in global_prop.index.levels[0].tolist():
+        global_prop.loc[(stf, 'CO2 limit'), 'value'] *= 0.05
     return data
 
 
 def scenario_co2_tax_mid(data):
     # change CO2 price in Mid
     co = data['commodity']
-    co.loc[('Mid', 'CO2', 'Env'), 'price'] = 50
+    for stf in data['global_prop'].index.levels[0].tolist():
+        co.loc[(stf, 'Mid', 'CO2', 'Env'), 'price'] = 50
     return data
 
 
 def scenario_north_process_caps(data):
     # change maximum installable capacity
     pro = data['process']
-    pro.loc[('North', 'Hydro plant'), 'cap-up'] *= 0.5
-    pro.loc[('North', 'Biomass plant'), 'cap-up'] *= 0.25
+    for stf in data['global_prop'].index.levels[0].tolist():
+        pro.loc[(stf, 'North', 'Hydro plant'), 'cap-up'] *= 0.5
+        pro.loc[(stf, 'North', 'Biomass plant'), 'cap-up'] *= 0.25
     return data
 
 

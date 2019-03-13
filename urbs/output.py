@@ -105,7 +105,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 level=1)[sites].sum(
                     axis=1))
     except KeyError:
-        demand = pd.Series(0, index=timesteps[1:])
+        demand = pd.Series(0, index=timesteps)
     demand.name = 'Demand'
 
     # STOCK
@@ -114,7 +114,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         eco = eco.xs([stf, com, 'Stock'], level=['stf', 'com', 'com_type'])
         stock = eco.unstack()[sites].sum(axis=1)
     except KeyError:
-        stock = pd.Series(0, index=timesteps[1:])
+        stock = pd.Series(0, index=timesteps)
     stock.name = 'Stock'
 
     # PROCESS
@@ -128,8 +128,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         created = pd.DataFrame(index=timesteps)
 
     consumed = get_entity(instance, 'e_pro_in')
-    consumed = consumed.xs([stf, com], level=['stf', 'com']).loc[timesteps]
     try:
+        consumed = consumed.xs([stf, com], level=['stf', 'com']).loc[timesteps]
         consumed = consumed.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         consumed = consumed.unstack(level='pro')
         consumed = drop_all_zero_columns(consumed)
@@ -171,17 +171,17 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             exported = exported[other_sites]  # ...to other_sites
             exported = drop_all_zero_columns(exported)
         else:
-            imported = pd.DataFrame(index=timesteps[1:])
-            exported = pd.DataFrame(index=timesteps[1:])
-            internal_export = pd.Series(0, index=timesteps[1:])
-            internal_import = pd.Series(0, index=timesteps[1:])
+            imported = pd.DataFrame(index=timesteps)
+            exported = pd.DataFrame(index=timesteps)
+            internal_export = pd.Series(0, index=timesteps)
+            internal_import = pd.Series(0, index=timesteps)
 
         # to be discussed: increase demand by internal transmission losses
         internal_transmission_losses = internal_export - internal_import
         demand = demand + internal_transmission_losses
     except KeyError:
         # imported and exported are empty
-        imported = exported = pd.DataFrame(index=timesteps[1:])
+        imported = exported = pd.DataFrame(index=timesteps)
 
     # STORAGE
     # group storage energies by commodity
@@ -225,7 +225,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             # derive secondary timeseries
             delta = dsmup - dsmdo
         except KeyError:
-            delta = pd.Series(0, index=timesteps[1:])
+            delta = pd.Series(0, index=timesteps)
 
     shifted = demand + delta
 

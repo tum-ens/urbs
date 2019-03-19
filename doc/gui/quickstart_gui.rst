@@ -8,7 +8,8 @@ understand how an urbs model looks like open the example
 **File -> Load configuration** in the menu. There will be a warning that
 loading an external configuration will erase all your data. Since you have no
 data yet you can just ignore it by clicking ok. The example configuration is
-already executable. You can run it clicking the play button.
+already executable. You can run it clicking the play button. The results of
+your optimization will then be stored under 'Documents/urbs/result'
 
 To understand what to look for and how to prepare your own model input with the
 GUI, proceed with the Tutorial for graphical user interface in the online

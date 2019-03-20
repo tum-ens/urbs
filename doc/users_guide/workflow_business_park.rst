@@ -380,7 +380,7 @@ in all the input sheets.
 Run script
 ^^^^^^^^^^
 To run the example you can make a copy of the file ``runme.py`` calling it,
-e.g., ``run_BP.py`` in the same folder. You now just have to make 3
+e.g., ``run_BP_example.py`` in the same folder. You now just have to make 3
 modifications. First, replace the report tuples by:
 ::
 

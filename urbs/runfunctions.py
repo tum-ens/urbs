@@ -10,21 +10,22 @@ from .validation import *
 from .saveload import *
 
 
-def prepare_result_directory(result_name):
+def prepare_result_directory(result_name, base_path='result'):
     """ create a time stamped directory within the result folder.
 
     Args:
         result_name: user specified result name
+        base_path: the path to save the result
 
     Returns:
-        a subfolder in the result folder 
-    
+        a subfolder in the result folder
+
     """
     # timestamp for result directory
     now = datetime.now().strftime('%Y%m%dT%H%M')
 
     # create result directory if not existent
-    result_dir = os.path.join('result', '{}-{}'.format(result_name, now))
+    result_dir = os.path.join(base_path, '{}-{}'.format(result_name, now))
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
 
@@ -67,7 +68,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         - result_dir: directory name for result spreadsheet and plots
         - dt: length of each time step (unit: hours)
         - objective: objective function chosen (either "cost" or "CO2")
-        - plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
+        - plot_tuples: (optional) list of plot tuples(c.f. urbs.result_figures)
         - plot_sites_name: (optional) dict of names for sites in plot_tuples
         - plot_periods: (optional) dict of plot periods
           (c.f. urbs.result_figures)
@@ -81,12 +82,46 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     """
 
     # sets a modeled year for non-intertemporal problems
-    #(necessary for consitency)
+    # (necessary for consitency)
     year = date.today().year
+    data = read_input(input_files, year)
 
-    # scenario name, read and modify data for scenario
+    model = run_scenario_df(data, Solver, timesteps, scenario, result_dir, dt,
+                            objective, plot_tuples,  plot_sites_name,
+                            plot_periods, report_tuples,
+                            report_sites_name)
+    return model
+
+
+def run_scenario_df(data, Solver, timesteps, scenario, result_dir, dt,
+                    objective, plot_tuples=None,  plot_sites_name=None,
+                    plot_periods=None, report_tuples=None,
+                    report_sites_name=None):
+    """ run an urbs model for given input, time steps and scenario
+
+    Args:
+        - data: the data frames for the model
+        - Solver: the user specified solver
+        - timesteps: a list of timesteps, e.g. range(0,8761)
+        - scenario: a scenario function that modifies the input data dict
+        - result_dir: directory name for result spreadsheet and plots
+        - dt: length of each time step (unit: hours)
+        - objective: objective function chosen (either "cost" or "CO2")
+        - plot_tuples: (optional) list of plot tuples(c.f. urbs.result_figures)
+        - plot_sites_name: (optional) dict of names for sites in plot_tuples
+        - plot_periods: (optional) dict of plot periods
+          (c.f. urbs.result_figures)
+        - report_tuples: (optional) list of (sit, com) tuples
+          (c.f. urbs.report)
+        - report_sites_name: (optional) dict of names for sites in
+          report_tuples
+
+    Returns:
+        the urbs model instance
+    """
+
+    # scenario name, modify data for scenario
     sce = scenario.__name__
-    data = read_input(input_files,year)
     data = scenario(data)
     validate_input(data)
 

@@ -1,6 +1,11 @@
 # urbs
 
-urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
+urbs is a [linear programming]
+https://en.wikipedia.org/wiki/Linear_programming) optimisation model for
+capacity expansion planning and unit commitment for distributed energy systems.
+Its name, latin for city, stems from its origin as a model for optimisation for
+urban energy systems. Since then, it has been adapted to multiple scales from
+neighbourhoods to continents.
 
 [![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](http://urbs.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.594200.svg)](https://doi.org/10.5281/zenodo.594200)
@@ -16,26 +21,47 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ## Screenshots
 
-<a href="doc/img/plot.png"><img src="doc/img/plot.png" alt="Timeseries plot of 8 days of electricity generation in vertex 'North' in scenario_all_together in hourly resolution: Hydro and biomass provide flat base load of about 50% to cover the daily fluctuating load, while large share of wind and small part photovoltaic generation cover the rest, supported by a day-night storage." style="width:400px"></a>
+<a href="doc/img/plot.png"><img src="doc/img/plot.png" alt="Timeseries plot of
+8 days of electricity generation in vertex 'North' in scenario_all_together in
+hourly resolution: Hydro and biomass provide flat base load of about 50% to
+cover the daily fluctuating load, while large share of wind and small part
+photovoltaic generation cover the rest, supported by a day-night storage."
+style="width:400px"></a>
 
-<a href="doc/img/comparison.png"><img src="doc/img/comparison.png" alt="Bar chart of cumulated annual electricity generation costs for all 5 scenarios defined in runme.py." style="width:400px"></a>
+<a href="doc/img/comparison.png"><img src="doc/img/comparison.png" alt="Bar
+chart of cumulated annual electricity generation costs for all 5 scenarios
+defined in runme.py." style="width:400px"></a>
 
 ## Installation
 
 ### Windows
 
-There are 2 ways to get all required packages under Windows. I recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python (version 3.5 **recommended**, 2.7 is supported as well) installation, you can also download the required packages by yourself..
+There are 3 ways to get all required packages under Windows. You can download
+the installer from this repository under Installer/Output. Apart from that we
+recommend using the Python distribution Anaconda. If you don't want to use it
+or already have an existing Python (version 3.5 **recommended**, 2.7 is
+supported as well) installation, you can also download the required packages by
+yourself..
 
 #### Anaconda (recommended)
 
-  1. **[Anaconda (Python 3)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.  
-     During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected! If only higher Python versions are available, you can switch to a specific Python Version by typing `conda install python=<version>`
+  1. **[Anaconda (Python 3)](http://continuum.io/downloads)**. Choose the
+     64-bit installer if possible.  
+     During the installation procedure, keep both checkboxes "modify PATH" and
+     "register Python" selected! If only higher Python versions are available,
+     you can switch to a specific Python Version by typing `conda install
+     python=<version>`
   2. **Solver**: [GLPK](http://winglpk.sourceforge.net/).
      1. Launch a new command prompt (Win+R, type "cmd", Enter)
-     2. Install it via conda by `conda install -c conda-forge glpk`. It will add it to the path variable, too.
+     2. Install it via conda by `conda install -c conda-forge glpk`. It will
+     add it to the path variable, too.
   3. **Pyomo**
      1. Launch a new command prompt (Win+R, type "cmd", Enter)
      2. Type `conda install -c conda-forge pyomo`, hit Enter.
+  4. **Graphical inputs**:
+     1. Launch a new command prompt (Win+R, type "cmd", Enter)
+     2. Type `conda install -c conda-forge wx=4.0.3`, hit Enter
+     3. Type `conda install -c conda-forge pubsub=4.0.0`, hit Enter
 
 Continue at [Get Started](#get-started).
 

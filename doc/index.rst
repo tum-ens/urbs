@@ -58,6 +58,18 @@ implementation.
    implementation
    api
 
+Graphical user interface
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is possible to make the inputs in urbs with a stand alone graphical user
+interface. The interface itself as well as the module description are provided
+here.
+
+.. toctree::
+   :maxdepth: 1
+   
+   gui
+
 
 Features
 --------

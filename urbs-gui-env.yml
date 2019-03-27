@@ -1,0 +1,17 @@
+name: urbs-gui-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - matplotlib
+  - pandas
+  - pandas-datareader
+  - pytables
+  - openpyxl
+  - xlrd
+  - pyomo
+  - glpk
+  - wxPython = 4.0.3
+  - PyPubsub = 4.0.0

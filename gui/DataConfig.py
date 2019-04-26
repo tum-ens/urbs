@@ -46,7 +46,7 @@ class DataConfig():
     TS_LEN = 8761
 
     INF = 'inf'
-    NAN = 'nan'
+    NaN = math.nan
 # ----------------------------------------------------------------------------#
     GLOBAL_PARAMS = [{PARAM_KEY: 'Discount rate',
                       GRID_ROW_LABEL: 'Discount rate',
@@ -134,19 +134,19 @@ class DataConfig():
         {PARAM_KEY: 'delay',
          GRID_COL_LABEL: 'Delay time (h)',
             GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING,
-            PARAM_DEFVALUE: NAN},
+            PARAM_DEFVALUE: NaN},
         {PARAM_KEY: 'eff',
          GRID_COL_LABEL: 'Efficiency',
-         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NAN},
+         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NaN},
         {PARAM_KEY: 'recov',
          GRID_COL_LABEL: 'Recovery time (h)',
-         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NAN},
+         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NaN},
         {PARAM_KEY: 'cap-max-do',
          GRID_COL_LABEL: 'Downshift capacity (MWh)',
-         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NAN},
+         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NaN},
         {PARAM_KEY: 'cap-max-up',
          GRID_COL_LABEL: 'Upshift capacity (MWh)',
-         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NAN}
+         GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING, PARAM_DEFVALUE: NaN}
     ]
 
     COMMODITY_PARAMS = [
@@ -236,7 +236,7 @@ class DataConfig():
                       {PARAM_KEY: 'area-per-cap',
                        GRID_COL_LABEL: 'Area use per capacity (m^2/MW)',
                        GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING,
-                       PARAM_DEFVALUE: NAN}]
+                       PARAM_DEFVALUE: NaN}]
 
     PROCESS_COLS = [{PARAM_KEY: 'timeEff',
                      GRID_COL_LABEL: 'Hidden',
@@ -256,7 +256,7 @@ class DataConfig():
                          {PARAM_KEY: 'ratio-min',
                           GRID_COL_LABEL: 'Ratio-Min',
                           GRID_COL_DATATYPE: wx.grid.GRID_VALUE_STRING,
-                          PARAM_DEFVALUE: math.nan}]
+                          PARAM_DEFVALUE: NaN}]
 # ----------------------------------------------------------------------------#
     STORAGE_PARAMS = [{PARAM_KEY: 'inst-cap-c',
                        GRID_COL_LABEL: 'Installed capacity (MWh)',

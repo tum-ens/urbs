@@ -15,6 +15,7 @@ import SitesForm as sf
 import DataConfig as config
 import Errors as ERR
 import copy as cpy
+import win32api
 import json
 import time
 import urbs
@@ -486,7 +487,7 @@ class Controller():
                 Solver,
                 timesteps,
                 scenario,
-                result_dir,
+                win32api.GetShortPathName(result_dir),
                 dt,
                 objective,
                 plot_tuples=plot_tuples,

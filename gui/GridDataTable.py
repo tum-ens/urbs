@@ -8,7 +8,6 @@ Created on Sat Nov  3 15:07:35 2018
 import wx.grid
 import copy as cpy
 import DataConfig as config
-import math
 
 
 class GridDataTable(wx.grid.GridTableBase):
@@ -162,8 +161,8 @@ class GridDataTable(wx.grid.GridTableBase):
         except ValueError:
             if value.lower() == config.DataConfig.INF.lower():
                 return config.DataConfig.INF
-            elif value.lower() == config.DataConfig.NAN:
-                return math.nan
+            elif value.lower() == config.DataConfig.NaN:
+                return config.DataConfig.NaN
             else:
                 return None
 

@@ -11,7 +11,6 @@ from Events import EVENTS
 import DataConfig as config
 import SiteModel as sm
 import pandas as pd
-import math
 
 
 class RESModel():
@@ -328,7 +327,7 @@ class RESModel():
                         s = data[col]
                         if comm['Type'] in (config.DataConfig.COMM_SUPIM,
                                             config.DataConfig.COMM_DEMAND):
-                            s = math.nan
+                            s = config.DataConfig.NaN
                         v.append(s)
                     values.append(v)
 
@@ -360,7 +359,7 @@ class RESModel():
                             year != years[0] and
                             col in (columns[0], columns[1])
                         ):
-                            s = math.nan
+                            s = config.DataConfig.NaN
                         v.append(s)
                     values.append(v)
 
@@ -392,7 +391,7 @@ class RESModel():
                         if year != years[0] and col in ('inst-cap-c',
                                                         'inst-cap-p',
                                                         'lifetime'):
-                            s = math.nan
+                            s = config.DataConfig.NaN
                         v.append(s)
                     values.append(v)
 
@@ -533,7 +532,7 @@ class RESModel():
                 for col in columns:
                     s = data[col]
                     if year != years[0] and col in ('lifetime'):
-                        s = math.nan
+                        s = config.DataConfig.NaN
                     v.append(s)
                 values.append(v)  # SiteIn->SiteOut
                 values.append(v)  # SiteOut->SiteIn

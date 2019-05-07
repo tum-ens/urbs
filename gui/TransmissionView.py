@@ -101,7 +101,7 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawCommodities(self):
-        x = 50
+        x = 100
         prevSite = None
         commDict = self._controller.GetTrnsmCommodities()
         for k in sorted(commDict):

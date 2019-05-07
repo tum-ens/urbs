@@ -341,13 +341,35 @@ class Controller():
                 m.SaveCommodity(item)
 
     def DeleteItem(self, item):
+        deleted = False
         if item['Type'] in ('Process', 'Storage'):
             self._model.RemoveProcess(item['Id'])
+            deleted = True
         else:
-            self._model.RemoveCommodity(item['Id'])
+            # check if the commodity is used by any transmission
+            for trns in self._resModel._transmissions.values():
+                if trns['CommName'] == item['Name']:
+                    # can not be deleted, just return
+                    wx.MessageBox(
+                          'This commodity can NOT be deleted as it is used by '
+                          'the transmission "%s".' % trns['Name'],
+                          'Error', wx.OK | wx.ICON_ERROR)
+                    return
 
-        pub.sendMessage(EVENTS.ITEM_DELETED +
-                        self._model.GetSiteName(), objId=None)
+            s = wx.MessageBox(
+                  'If a process is connected only to this commodity '
+                  '(i.e. not connected to any other commodities), '
+                  'then this process will be also deleted. '
+                  'Do you want to proceed?', 'Warning',
+                  wx.OK | wx.CANCEL | wx.ICON_WARNING)
+
+            if s == wx.OK:
+                self._model.RemoveCommodity(item['Id'])
+                deleted = True
+
+        if deleted:
+            pub.sendMessage(EVENTS.ITEM_DELETED +
+                            self._model.GetSiteName(), objId=None)
 
     def CloneItem(self, item):
         if item['Type'] in ('Process', 'Storage'):

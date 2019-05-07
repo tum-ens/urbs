@@ -142,6 +142,7 @@ class SiteModel():
             return self._commodities[commId]
 
     def RemoveCommodity(self, commId):
+        # remove connections linked to this commodity
         idsToDel = []
         for k, v in self._connections.items():
             if v['Comm'] == commId:
@@ -150,11 +151,22 @@ class SiteModel():
         for k in idsToDel:
             self._connections.pop(k)
 
-        for v in self._processes.values():
+        idsToDel.clear()
+
+        # remove this commodity from process IN and/or OUT commodities
+        for k, v in self._processes.items():
             if commId in v['IN']:
                 v['IN'].remove(commId)
             if commId in v['OUT']:
                 v['OUT'].remove(commId)
+            # if the process is not linked to any other commodities
+            # then the process should be deleted as well
+            if len(v['IN']) == 0 and len(v['OUT']) == 0:
+                idsToDel.append(k)
+
+        # remove processes
+        for k in idsToDel:
+            self._processes.pop(k)
 
         if commId in self._commodities:
             self._commodities.pop(commId)

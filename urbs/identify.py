@@ -28,6 +28,7 @@ def identify_mode(data):
         'dsm': False,                   # demand site management
         'bsp': False,                   # buy sell price
         'tve': False,                   # time variable efficiency
+        'dpf': False,                   # dc power flow
         'exp': {                        # expansion
                 'pro': True,
                 'tra': False,
@@ -51,6 +52,9 @@ def identify_mode(data):
         mode['bsp'] = True
     if not data['eff_factor'].empty:
         mode['tve'] = True
+    if 'admittance' in data['transmission'].keys():
+        if any(data['transmission']['admittance'] > 0):
+            mode['dpf'] = True
 
     return mode
 

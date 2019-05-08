@@ -271,7 +271,10 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # Add additional features
     # called features are declared in distinct files in features folder
     if m.mode['tra']:
-        m = add_transmission(m)
+        if m.mode['dpf']:
+            m = transmission.add_transmission_dc(m)
+        else:
+            m = add_transmission(m)
     if m.mode['sto']:
         m = add_storage(m)
     if m.mode['dsm']:

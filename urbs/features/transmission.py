@@ -1,3 +1,4 @@
+import math
 import pyomo.core as pyomo
 
 
@@ -276,9 +277,9 @@ def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
             m.e_tra_in[tm, stf, sin, sout, tra, com] *
             m.transmission_dict['eff'][(stf, sin, sout, tra, com)])
 
+
 def def_transmission_dc_output_rule(m, tm, stf, sin, sout, tra, com):
     return m.e_tra_dc_out[tm, stf, sin, sout, tra, com] == m.e_tra_dc_in[tm, stf, sin, sout, tra, com]
-
 
 
 # transmission input <= transmission capacity
@@ -291,9 +292,11 @@ def res_transmission_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
 def res_transmission_dc_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_dc_in[tm, stf, sin, sout, tra, com] <=
             (m.dt * m.cap_tra[stf, sin, sout, tra, com]))
+
+
 def res_transmission_dc_input_by_neg_capacity_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_dc_in[tm, stf, sin, sout, tra, com] >=
-            ( - m.dt * m.cap_tra[stf, sin, sout, tra, com]))
+            (- m.dt * m.cap_tra[stf, sin, sout, tra, com]))
 
 
 # lower bound <= transmission capacity <= upper bound
@@ -306,16 +309,18 @@ def res_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 # transmission capacity from A to B == transmission capacity from B to A
 def res_transmission_symmetry_rule(m, stf, sin, sout, tra, com):
     return m.cap_tra[stf, sin, sout, tra, com] == (m.cap_tra
-                                                   [stf, sout, sin, tra, com])
 
+                                                   [stf, sout, sin, tra, com])
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_dc_out[tm, stf, sin, sout, tra, com] ==
             (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) *
             m.transmission_dict['admittance'][(stf, sin, sout, tra, com)])
 
+
 def abs1_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_dc_in[tm, stf, sin, sout, tra, com] <=
             m.abs_e_tra_dc_in[tm, stf, sin, sout, tra, com])
+
 
 def abs2_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):
     return (-m.e_tra_dc_in[tm, stf, sin, sout, tra, com] <=

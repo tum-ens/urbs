@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 
-input_files = 'Input'
+input_files = 'mimo-example.xlsx'
 result_name = 'Mimo-ex'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
@@ -22,7 +22,7 @@ objective = 'cost' # set either 'cost' or 'CO2' as objective
 solver = 'glpk'
 
 # simulation timesteps
-(offset, length) = (3500, 168)  # time step selection
+(offset, length) = (3500, 2)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
@@ -31,19 +31,7 @@ report_tuples = [
     (2019, 'North', 'Elec'),
     (2019, 'Mid', 'Elec'),
     (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec'),
-    (2024, 'North', 'Elec'),
-    (2024, 'Mid', 'Elec'),
-    (2024, 'South', 'Elec'),
-    (2024, ['North', 'Mid', 'South'], 'Elec'),
-    (2029, 'North', 'Elec'),
-    (2029, 'Mid', 'Elec'),
-    (2029, 'South', 'Elec'),
-    (2029, ['North', 'Mid', 'South'], 'Elec'),
-    (2034, 'North', 'Elec'),
-    (2034, 'Mid', 'Elec'),
-    (2034, 'South', 'Elec'),
-    (2034, ['North', 'Mid', 'South'], 'Elec'),    
+    (2019, ['North', 'Mid', 'South'], 'Elec')
     ]
 
 # optional: define names for sites in report_tuples
@@ -54,19 +42,7 @@ plot_tuples = [
     (2019, 'North', 'Elec'),
     (2019, 'Mid', 'Elec'),
     (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec'),
-    (2024, 'North', 'Elec'),
-    (2024, 'Mid', 'Elec'),
-    (2024, 'South', 'Elec'),
-    (2024, ['North', 'Mid', 'South'], 'Elec'),
-    (2029, 'North', 'Elec'),
-    (2029, 'Mid', 'Elec'),
-    (2029, 'South', 'Elec'),
-    (2029, ['North', 'Mid', 'South'], 'Elec'),
-    (2034, 'North', 'Elec'),
-    (2034, 'Mid', 'Elec'),
-    (2034, 'South', 'Elec'),
-    (2034, ['North', 'Mid', 'South'], 'Elec'),    
+    (2019, ['North', 'Mid', 'South'], 'Elec')
     ]
 
 # optional: define names for sites in plot_tuples
@@ -87,13 +63,7 @@ for country, color in my_colors.items():
 
 # select scenarios to be run
 scenarios = [
-             urbs.scenario_base,
-             urbs.scenario_stock_prices,
-             urbs.scenario_co2_limit,
-             urbs.scenario_co2_tax_mid,
-             urbs.scenario_no_dsm,
-             urbs.scenario_north_process_caps,
-             urbs.scenario_all_together
+             urbs.scenario_base
             ]
 
 for scenario in scenarios:

@@ -105,7 +105,7 @@ def add_transmission_dc(m):
     tra_tuples_dc = set()
     for key in m.transmission_dict['admittance']:
         tra_tuples.add(tuple(key))
-        if m.transmission_dict['admittance'][key] > 0:
+        if m.transmission_dict['admittance'][key] < 0:
             tra_tuples_dc.add(tuple(key))
     tra_tuples_tp = tra_tuples - tra_tuples_dc
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
@@ -279,7 +279,7 @@ def def_transmission_dc_output_rule(m, tm, stf, sin, sout, tra, com):
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_out[tm, stf, sin, sout, tra, com] ==
             (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) *
-            m.transmission_dict['admittance'][(stf, sin, sout, tra, com)])
+            - m.transmission_dict['admittance'][(stf, sin, sout, tra, com)])
 
 
 def abs1_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):

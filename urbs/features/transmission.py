@@ -170,7 +170,7 @@ def add_transmission_dc(m):
 
     m.abs_e_tra_dc_in = pyomo.Var(
         m.tm, m.tra_tuples_dc,
-        within=pyomo.Reals,
+        within=pyomo.NonNegativeReals,
         doc='Power flow into transmission line (MW) per timestep')
     m.e_tra_in = pyomo.Var(
         m.tm, m.tra_tuples,

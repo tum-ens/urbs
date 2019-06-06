@@ -70,3 +70,47 @@ demand. in this way the optimizer can still size the two technology options
 proportionally to each other and to the demand. Other input or output
 (not shown) commodities can then be associated with the process operation as
 usual and will be dragged along by the forced operation.
+
+Scenario generation
+^^^^^^^^^^^^^^^^^^^
+For a sensitivity analysis, it might be helpful to not manually create all scenario definitions automatically. For example, if one is interested in how installed capacities of PV and storage change the output, one might define ranges for each capacity. If there are four thresholds for the PV capacity and five for storage capacity, creating all 20 scenarios by hand is quite tiresome.
+
+In this example, one wants to run an optimization with capacities 20 GW, 30 GW, 40 GW and 50 GW for PV and 50 GW, 60 GW, 70 GW, 80 GW and 90 GW for storage capacities.
+
+
+Therefore, a function factory is created, which takes the values for PV and storage capacity and creates a scenario function out of it. This is done in the file `scenarios.py`::
+
+
+    def create_scenario_pv_sto(pv_val, sto_val):
+        def scenario_pv_sto(data):
+            # set PV capacity for all sites
+            pro = data['process']
+            solar = pro.index.get_level_values('Process') == 'Photovoltaics'
+            pro.loc[solar, 'inst-cap'] = pv_val
+            pro.loc[solar, 'cap-up'] = sto_val
+
+            # set storage content capacity
+            sto = data['storage']
+            for site_sto_tuple in sto.index:
+                sto.loc[site_sto_tuple, 'inst-cap-c'] = sto_val
+                sto.loc[site_sto_tuple, 'cap-up-c'] = sto_val
+
+            return data
+        # define name for scenario dependent on pv and storage values
+        scenario_pv_sto.__name__ = f"scenario_pv{int(pv_val/1000)}_sto{int(sto_val/1000)}"
+        return scenario_pv_sto
+
+
+In `runme.py` the following has to be added::
+
+
+    # define range for sensitvity
+    pv_vals = range(20000, 50001, 10000)
+    sto_vals = range(50000, 90001, 10000)
+
+    # create scenario functions
+    scenarios = []
+    for pv_val in pv_vals:
+        for sto_val in sto_vals:
+            scenarios.append(urbs.create_scenario_pv_sto(pv_val, sto_val))
+

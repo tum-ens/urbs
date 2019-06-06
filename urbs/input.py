@@ -516,6 +516,11 @@ def pyomo_model_prep(data, timesteps):
     # dictionaries for additional features
     if m.mode['tra']:
         m.transmission_dict = transmission.to_dict()
+        if m.mode['dpf']:
+            transmission_dc = transmission[transmission['susceptance'] < 0]
+            m.transmission_dc_dict = transmission_dc.to_dict()
+
+
     if m.mode['sto']:
         m.storage_dict = storage.to_dict()
 

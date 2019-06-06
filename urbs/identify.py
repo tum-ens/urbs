@@ -52,8 +52,8 @@ def identify_mode(data):
         mode['bsp'] = True
     if not data['eff_factor'].empty:
         mode['tve'] = True
-    if 'admittance' in data['transmission'].keys():
-        if any(data['transmission']['admittance'] < 0):
+    if 'susceptance' in data['transmission'].keys():
+        if any(data['transmission']['susceptance'] < 0):
             mode['dpf'] = True
 
     return mode

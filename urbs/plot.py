@@ -3,7 +3,7 @@ import numpy as np
 import os
 import pandas as pd
 from random import random
-from .data import COLORS
+from .colorcodes import COLORS
 from .input import get_input
 from .output import get_constants, get_timeseries
 from .pyomoio import get_entity

@@ -7,7 +7,7 @@ input_files = 'single-year.xlsx'  # for single year file name, for intertemporal
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'single-year'
+result_name = 'Run'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory

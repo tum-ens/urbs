@@ -10,7 +10,7 @@ commodities.
 
 """
 
-from .data import COLORS
+from .colorcodes import COLORS
 from .model import create_model
 from .input import *
 from .validation import validate_input

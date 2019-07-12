@@ -106,8 +106,6 @@ def add_transmission_dc(m):
     tra_tuples_dc = set()
     for key in m.transmission_dict['susceptance']:
         tra_tuples.add(tuple(key))
-    #    if m.transmission_dict['susceptance'][key] < 0:
-    #        tra_tuples_dc.add(tuple(key))
     for key in m.transmission_dc_dict['susceptance']:
         tra_tuples_dc.add(tuple(key))
     tra_tuples_tp = tra_tuples - tra_tuples_dc
@@ -191,13 +189,9 @@ def add_transmission_dc(m):
 
     # transmission
     m.def_transmission_output = pyomo.Constraint(
-        m.tm, m.tra_tuples_tp,
+        m.tm, m.tra_tuples,
         rule=def_transmission_output_rule,
         doc='transmission output = transmission input * efficiency')
-    m.def_transmission_dc_output = pyomo.Constraint(
-        m.tm, m.tra_tuples_dc,
-        rule=def_transmission_dc_output_rule,
-        doc='transmission output = transmission input')
     m.def_dc_power_flow = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=def_dc_power_flow_rule,
@@ -212,7 +206,7 @@ def add_transmission_dc(m):
         doc='- transmission dc input <= absolute transmission dc input')
 
     m.res_transmission_input_by_capacity = pyomo.Constraint(
-        m.tm, m.tra_tuples_tp,
+        m.tm, m.tra_tuples,
         rule=res_transmission_input_by_capacity_rule,
         doc='transmission input <= total transmission capacity')
     m.res_transmission_dc_input_by_capacity = pyomo.Constraint(
@@ -275,12 +269,8 @@ def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
             m.transmission_dict['eff'][(stf, sin, sout, tra, com)])
 
 
-def def_transmission_dc_output_rule(m, tm, stf, sin, sout, tra, com):
-    return m.e_tra_out[tm, stf, sin, sout, tra, com] == m.e_tra_in[tm, stf, sin, sout, tra, com]
-
-
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
-    return (m.e_tra_out[tm, stf, sin, sout, tra, com] ==
+    return (m.e_tra_in[tm, stf, sin, sout, tra, com] ==
             (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) *
             - m.transmission_dict['susceptance'][(stf, sin, sout, tra, com)])
 
@@ -303,8 +293,8 @@ def res_transmission_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
 
 # transmission input <= transmission capacity
 def res_transmission_dc_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
-    return (m.abs_e_tra_dc[tm, stf, sin, sout, tra, com] <=
-            (m.dt * m.cap_tra[stf, sin, sout, tra, com]))
+    return (- m.e_tra_in[tm, stf, sin, sout, tra, com] <=
+            m.dt * m.cap_tra[stf, sin, sout, tra, com])
 
 
 # lower bound <= transmission capacity <= upper bound

@@ -61,6 +61,11 @@ def validate_input(data):
                     data['transmission'].loc[index]['cap-up']):
                 raise ValueError('Ensure cap_lo <= cap_up and'
                                  'inst_cap <= cap_up for all transmissions.')
+        if 'susceptance' in data['transmission'].keys():
+            for index in data['transmission'].index:
+                if (data['transmission'].loc[index]['susceptance'] < 0 and
+                data['transmission'].loc[index]['eff'] != 1):
+                    raise ValueError('Ensure efficiency of DC Transmission Lines are 1')
 
     if not data['storage'].empty:
         for index in data['storage'].index:

@@ -345,28 +345,17 @@ def transmission_cost(m, cost_type):
             cost = sum(m.cap_tra_new[t] *
                        m.transmission_dict['inv-cost'][t] *
                        m.transmission_dict['invcost-factor'][t]
-                       for t in m.tra_tuples_tp) + \
-                   sum(m.cap_tra_new[t] * 2 *
-                       m.transmission_dict['inv-cost'][t] *
-                       m.transmission_dict['invcost-factor'][t]
-                       for t in m.tra_tuples_dc)
+                       for t in m.tra_tuples)
             if m.mode['int']:
                 cost -= sum(m.cap_tra_new[t] *
                             m.transmission_dict['inv-cost'][t] *
                             m.transmission_dict['overpay-factor'][t]
-                            for t in m.tra_tuples_tp) + \
-                        sum(m.cap_tra_new[t] * 2 *
-                            m.transmission_dict['inv-cost'][t] *
-                            m.transmission_dict['overpay-factor'][t]
-                            for t in m.tra_tuples_dc)
+                            for t in m.tra_tuples)
             return cost
         elif cost_type == 'Fixed':
             return sum(m.cap_tra[t] * m.transmission_dict['fix-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
-                       for t in m.tra_tuples_tp) + \
-                   sum(m.cap_tra[t] * 2 * m.transmission_dict['fix-cost'][t] *
-                       m.transmission_dict['cost_factor'][t]
-                       for t in m.tra_tuples_dc)
+                       for t in m.tra_tuples)
         elif cost_type == 'Variable':
             return sum(m.e_tra_in[(tm,) + t] * m.weight *
                        m.transmission_dict['var-cost'][t] *

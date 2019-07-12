@@ -519,6 +519,11 @@ def pyomo_model_prep(data, timesteps):
         if m.mode['dpf']:
             transmission_dc = transmission[transmission['susceptance'] < 0]
             m.transmission_dc_dict = transmission_dc.to_dict()
+            for t in m.transmission_dc_dict['susceptance']:
+                m.transmission_dict['inv-cost'][t] = 2 * m.transmission_dict['inv-cost'][t]
+                m.transmission_dict['fix-cost'][t] = 2 * m.transmission_dict['fix-cost'][t]
+
+
 
 
     if m.mode['sto']:

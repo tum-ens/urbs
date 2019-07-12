@@ -196,6 +196,10 @@ def add_transmission_dc(m):
         m.tm, m.tra_tuples_dc,
         rule=def_dc_power_flow_rule,
         doc='transmission output = (angle(in)-angle(out)) * susceptance')
+    m.def_angle_limit = pyomo.Constraint(
+        m.tm, m.tra_tuples_dc,
+        rule=def_angle_limit_rule,
+        doc='angle(in) - angle(out) < angle limit')
     m.abs1_e_tra_dc_in = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=abs1_e_tra_dc_in_rule,
@@ -274,6 +278,10 @@ def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
             (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) *
             - m.transmission_dict['susceptance'][(stf, sin, sout, tra, com)])
 
+def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
+    return (- m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)],
+            (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]),
+            m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)])
 
 def abs1_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] <=

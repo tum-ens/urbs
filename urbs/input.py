@@ -22,7 +22,7 @@ def read_input(input_files, year):
         a dict of up to 12 DataFrames
     """
 
-    if input_files == 'Input':
+    if os.path.isdir(input_files):
         glob_input = os.path.join(input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
     else:

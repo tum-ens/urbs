@@ -28,8 +28,11 @@ def save(prob, filename):
         Nothing
     """
     import warnings
+    import tables
     warnings.filterwarnings('ignore',
                             category=pd.io.pytables.PerformanceWarning)
+    warnings.filterwarnings('ignore',
+                            category=tables.NaturalNameWarning)
 
     if not hasattr(prob, '_result'):
         prob._result = create_result_cache(prob)

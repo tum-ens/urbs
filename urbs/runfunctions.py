@@ -81,12 +81,12 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     """
 
     # sets a modeled year for non-intertemporal problems
-    #(necessary for consitency)
+    # (necessary for consitency)
     year = date.today().year
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = read_input(input_files,year)
+    data = read_input(input_files, year)
     data = scenario(data)
     validate_input(data)
     validate_dc_objective(data, objective)

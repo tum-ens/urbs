@@ -22,7 +22,7 @@ objective = 'cost' # set either 'cost' or 'CO2' as objective
 solver = 'glpk'
 
 # simulation timesteps
-(offset, length) = (3500, 2)  # time step selection
+(offset, length) = (3500, 168)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
@@ -63,7 +63,13 @@ for country, color in my_colors.items():
 
 # select scenarios to be run
 scenarios = [
-             urbs.scenario_base
+             urbs.scenario_base,
+             urbs.scenario_stock_prices,
+             urbs.scenario_co2_limit,
+             urbs.scenario_co2_tax_mid,
+             urbs.scenario_no_dsm,
+             urbs.scenario_north_process_caps,
+             urbs.scenario_all_together
             ]
 
 for scenario in scenarios:

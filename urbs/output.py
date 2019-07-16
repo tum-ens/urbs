@@ -240,7 +240,17 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     created = created.join(stock)  # show stock as created
     consumed = consumed.join(shifted.rename('Demand'))
 
-    return created, consumed, stored, imported, exported, dsm
+    # PHASE ANGLE
+
+    try:
+        phase_angle = get_entity(instance, 'phase_angle')
+        phase_angle = phase_angle.xs([stf], level=['stf']).loc[timesteps]
+        phase_angle = phase_angle.unstack(level='sit')[sites]
+    except KeyError:
+        phase_angle = pd.Series('na', index=timesteps)
+    phase_angle.name = 'Phase Angle'
+
+    return created, consumed, stored, imported, exported, dsm, phase_angle
 
 
 def drop_all_zero_columns(df):

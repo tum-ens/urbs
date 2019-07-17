@@ -246,8 +246,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         phase_angle = get_entity(instance, 'phase_angle')
         phase_angle = phase_angle.xs([stf], level=['stf']).loc[timesteps]
         phase_angle = phase_angle.unstack(level='sit')[sites]
-    except KeyError:
-        phase_angle = pd.Series('na', index=timesteps)
+    except (KeyError, AttributeError):
+        phase_angle = pd.DataFrame(index=timesteps)
     phase_angle.name = 'Phase Angle'
 
     return created, consumed, stored, imported, exported, dsm, phase_angle

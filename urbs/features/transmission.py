@@ -276,7 +276,9 @@ def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] ==
             (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) * -1 *
-            (-1 / m.transmission_dict['reactance'][(stf, sin, sout, tra, com)]))
+            (-1 / m.transmission_dict['reactance'][(stf, sin, sout, tra, com)])
+            * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)]
+            * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)])
 
 def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)],

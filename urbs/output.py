@@ -149,6 +149,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = imported.loc[timesteps].xs(
                 [stf, com], level=['stf', 'com'])
             imported = imported.unstack(level='tra').sum(axis=1)
+            #exported_help = imported.loc[imported < 0]
+            #imported.loc[imported >= 0]
             imported = imported.unstack(
                 level='sit_')[sites].fillna(0).sum(
                 axis=1)

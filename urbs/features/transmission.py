@@ -104,9 +104,9 @@ def add_transmission_dc(m):
 
     tra_tuples = set()
     tra_tuples_dc = set()
-    for key in m.transmission_dict['susceptance']:
+    for key in m.transmission_dict['reactance']:
         tra_tuples.add(tuple(key))
-    for key in m.transmission_dc_dict['susceptance']:
+    for key in m.transmission_dc_dict['reactance']:
         tra_tuples_dc.add(tuple(key))
     tra_tuples_tp = tra_tuples - tra_tuples_dc
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
@@ -195,7 +195,7 @@ def add_transmission_dc(m):
     m.def_dc_power_flow = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=def_dc_power_flow_rule,
-        doc='transmission output = (angle(in)-angle(out)) * susceptance')
+        doc='transmission output = (angle(in)-angle(out)) * reactance')
     m.def_angle_limit = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=def_angle_limit_rule,
@@ -275,8 +275,8 @@ def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
 
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] ==
-            (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) *
-            - m.transmission_dict['susceptance'][(stf, sin, sout, tra, com)])
+            (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) * -1 *
+            (-1 / m.transmission_dict['reactance'][(stf, sin, sout, tra, com)]))
 
 def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)],

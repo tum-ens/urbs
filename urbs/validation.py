@@ -61,11 +61,11 @@ def validate_input(data):
                     data['transmission'].loc[index]['cap-up']):
                 raise ValueError('Ensure cap_lo <= cap_up and'
                                  'inst_cap <= cap_up for all transmissions.')
-        if 'susceptance' in data['transmission'].keys():
+        if 'reactance' in data['transmission'].keys():
             for index in data['transmission'].index:
-                if (data['transmission'].loc[index]['susceptance'] > 0):
-                    raise ValueError('Ensure for DC transmission lines: susceptance < 0 ')
-                if (data['transmission'].loc[index]['susceptance'] < 0 and
+                if (data['transmission'].loc[index]['reactance'] < 0):
+                    raise ValueError('Ensure for DC transmission lines: reactance > 0 ')
+                if (data['transmission'].loc[index]['reactance'] > 0 and
                 data['transmission'].loc[index]['eff'] != 1):
                     raise ValueError('Ensure efficiency of DC Transmission Lines are 1')
 
@@ -134,5 +134,5 @@ def validate_input(data):
                                "names specified in the worksheet 'Site'.")
 
 def validate_dc_objective(data, objective):
-    if any(data['transmission']['susceptance'] < 0) and (objective == 'CO2'):
+    if any(data['transmission']['reactance'] > 0) and (objective == 'CO2') and any(data['transmission']['var-cost'] > 0):
         print("!!!!\nif the C02 is selected as objective function while modelling DC transmission lines, variable costs may be different \n!!!!")

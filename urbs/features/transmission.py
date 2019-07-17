@@ -369,7 +369,7 @@ def transmission_cost(m, cost_type):
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
-                       for t in m.tra_tuples) + \
+                       for t in m.tra_tuples_tp) + \
                    sum(m.abs_e_tra_dc[(tm,) + t] * m.weight *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]

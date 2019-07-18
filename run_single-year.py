@@ -3,11 +3,11 @@ import shutil
 import urbs
 
 
-input_files = 'single-year.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'urbs_Germany_NUTS2_2050_dc_done.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'single-year'
+result_name = 'urbs_Germany_NUTS2_2050'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -31,25 +31,25 @@ dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+    (2050, 'DE11', 'Elec'),
+    (2050, 'DE12', 'Elec'),
+    (2050, 'DE14', 'Elec'),
+    (2050, ['DE11', 'DE12', 'DE14'], 'Elec')
     ]
 
 # optional: define names for sites in report_tuples
-report_sites_name = {('North', 'Mid', 'South'): 'All'}
+report_sites_name = {('DE11', 'DE12', 'DE14'): 'All'}
 
 # plotting commodities/sites
 plot_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+    (2050, 'DE11', 'Elec'),
+    (2050, 'DE12', 'Elec'),
+    (2050, 'DE14', 'Elec'),
+    (2050, ['DE11', 'DE12', 'DE14'], 'Elec')
     ]
 
 # optional: define names for sites in plot_tuples
-plot_sites_name = {('North', 'Mid', 'South'): 'All'}
+plot_sites_name = {('DE11', 'DE12', 'DE14'): 'All'}
 
 # plotting timesteps
 plot_periods = {
@@ -58,21 +58,15 @@ plot_periods = {
 
 # add or change plot colors
 my_colors = {
-    'South': (230, 200, 200),
-    'Mid': (200, 230, 200),
-    'North': (200, 200, 230)}
+    'DE11': (230, 200, 200),
+    'DE12': (200, 230, 200),
+    'DE14': (200, 200, 230)}
 for country, color in my_colors.items():
     urbs.COLORS[country] = color
 
 # select scenarios to be run
 scenarios = [
-             urbs.scenario_base,
-             urbs.scenario_stock_prices,
-             urbs.scenario_co2_limit,
-             urbs.scenario_co2_tax_mid,
-             urbs.scenario_no_dsm,
-             urbs.scenario_north_process_caps,
-             urbs.scenario_all_together
+             urbs.scenario_base
             ]
 
 for scenario in scenarios:

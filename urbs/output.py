@@ -146,13 +146,13 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         df_transmission = get_input(instance, 'transmission')
         if com in set(df_transmission.index.get_level_values('Commodity')):
             imported = get_entity(instance, 'e_tra_out')
-            minus_imported = imported[imported < 0]
-            minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
-            imported = imported[imported >= 0]
-            imported = pd.concat([imported, minus_imported])
+            if instance.mode['dpf']:
+                minus_imported = imported[imported < 0]
+                minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
+                imported = imported[imported >= 0]
+                imported = pd.concat([imported, minus_imported])
             imported = imported.loc[timesteps].xs(
                 [stf, com], level=['stf', 'com'])
-            min
             imported = imported.unstack(level='tra').sum(axis=1)
             imported = imported.unstack(
                 level='sit_')[sites].fillna(0).sum(
@@ -164,10 +164,11 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = drop_all_zero_columns(imported)
 
             exported = get_entity(instance, 'e_tra_in')
-            minus_exported = exported[exported < 0]
-            minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
-            exported = exported[exported >= 0]
-            exported = pd.concat([exported, minus_exported])
+            if instance.mode['dpf']:
+                minus_exported = exported[exported < 0]
+                minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
+                exported = exported[exported >= 0]
+                exported = pd.concat([exported, minus_exported])
             exported = exported.loc[timesteps].xs(
                 [stf, com], level=['stf', 'com'])
             exported = exported.unstack(level='tra').sum(axis=1)

@@ -161,7 +161,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             internal_import = imported[sites].sum(axis=1)  # ...from sites
             imported = imported[other_sites]  # ...from other_sites
-            imported = drop_all_zero_columns(imported)
+            imported = drop_all_zero_columns(imported.fillna(0))
 
             exported = get_entity(instance, 'e_tra_in')
             if instance.mode['dpf']:
@@ -180,7 +180,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             internal_export = exported[sites].sum(
                 axis=1)  # ...to sites (internal)
             exported = exported[other_sites]  # ...to other_sites
-            exported = drop_all_zero_columns(exported)
+            exported = drop_all_zero_columns(exported.fillna(0))
         else:
             imported = pd.DataFrame(index=timesteps)
             exported = pd.DataFrame(index=timesteps)

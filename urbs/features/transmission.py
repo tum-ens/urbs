@@ -2,6 +2,7 @@ import math
 import pyomo.core as pyomo
 
 def transmission_domain_rule(m, tm, stf, sin, sout, tra, com):
+    # assigning e_tra_in and e_tra_out variable domains for transport and DCPF
     if (stf, sin, sout, tra, com) in m.tra_tuples_dc:
         return pyomo.Reals
     elif (stf, sin, sout, tra, com) in m.tra_tuples_tp:
@@ -9,6 +10,7 @@ def transmission_domain_rule(m, tm, stf, sin, sout, tra, com):
 
 
 def remove_duplicate_transmission(transmission_keys):
+    # removing duplicate transmissions for DCPF
     tra_tuple_list = list(transmission_keys)
     i = 0
     while i < len(tra_tuple_list):
@@ -99,9 +101,9 @@ def add_transmission(m):
 
     return m
 
-
+# adds the transmission features to model with DCPF model features
 def add_transmission_dc(m):
-
+    # defining transmission tuple sets for transport and DCPF model separately
     tra_tuples = set()
     tra_tuples_dc = set()
     for key in m.transmission_dict['reactance']:
@@ -120,7 +122,7 @@ def add_transmission_dc(m):
         initialize=indexlist,
         doc='Set of transmission technologies')
 
-    # transmission tuples
+    # Transport and DCPF transmission tuples
     m.tra_tuples = pyomo.Set(
         within=m.stf * m.sit * m.sit * m.tra * m.com,
         initialize=tuple(tra_tuples),
@@ -128,12 +130,14 @@ def add_transmission_dc(m):
             'without duplicate dc transmissions'
             ' e.g. (2020,South,Mid,hvac,Elec)')
 
+    # DCPF transmission tuples
     m.tra_tuples_dc = pyomo.Set(
         within=m.stf * m.sit * m.sit * m.tra * m.com,
         initialize=tuple(tra_tuples_dc),
         doc='Combinations of possible bidirectional dc'
             'transmissions, e.g. (2020,South,Mid,hvac,Elec)')
 
+    # Transport transmission tuples
     m.tra_tuples_tp = pyomo.Set(
         within=m.stf * m.sit * m.sit * m.tra * m.com,
         initialize=tuple(tra_tuples_tp),
@@ -172,7 +176,7 @@ def add_transmission_dc(m):
     m.abs_e_tra_dc = pyomo.Var(
         m.tm, m.tra_tuples_dc,
         within=pyomo.NonNegativeReals,
-        doc='Power flow into transmission line (MW) per timestep')
+        doc='Absolute power flow on transmission line (MW) per timestep')
     m.e_tra_in = pyomo.Var(
         m.tm, m.tra_tuples,
         within=transmission_domain_rule,
@@ -195,11 +199,12 @@ def add_transmission_dc(m):
     m.def_dc_power_flow = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=def_dc_power_flow_rule,
-        doc='transmission output = (angle(in)-angle(out)) * reactance')
+        doc='transmission output = (angle(in)-angle(out))/ 57.2958 '
+            '* -1 *(-1/reactance) * (base voltage)^2')
     m.def_angle_limit = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=def_angle_limit_rule,
-        doc='angle(in) - angle(out) < angle limit')
+        doc='-angle limit < angle(in) - angle(out) < angle limit')
     m.abs1_e_tra_dc_in = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=abs1_e_tra_dc_in_rule,
@@ -207,7 +212,7 @@ def add_transmission_dc(m):
     m.abs2_e_tra_dc_in = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=abs2_e_tra_dc_in_rule,
-        doc='- transmission dc input <= absolute transmission dc input')
+        doc='-transmission dc input <= absolute transmission dc input')
 
     m.res_transmission_input_by_capacity = pyomo.Constraint(
         m.tm, m.tra_tuples,
@@ -216,7 +221,7 @@ def add_transmission_dc(m):
     m.res_transmission_dc_input_by_capacity = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=res_transmission_dc_input_by_capacity_rule,
-        doc='abs transmission input <= total transmission capacity')
+        doc='-dcpf transmission input <= total transmission capacity')
     m.res_transmission_capacity = pyomo.Constraint(
         m.tra_tuples,
         rule=res_transmission_capacity_rule,
@@ -272,7 +277,7 @@ def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
             m.e_tra_in[tm, stf, sin, sout, tra, com] *
             m.transmission_dict['eff'][(stf, sin, sout, tra, com)])
 
-
+# power flow rule for DCPF transmissions
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] ==
             (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) / 57.2958 * -1 *
@@ -280,16 +285,18 @@ def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
             * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)]
             * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)])
 
+# phase angle difference rule for DCPF transmissions
 def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)],
             (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]),
             m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)])
 
+# first rule for creating absolute transmission input
 def abs1_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] <=
             m.abs_e_tra_dc[tm, stf, sin, sout, tra, com])
 
-
+# second rule for creating absolute transmission input
 def abs2_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):
     return (-m.e_tra_in[tm, stf, sin, sout, tra, com] <=
             m.abs_e_tra_dc[tm, stf, sin, sout, tra, com])
@@ -301,7 +308,7 @@ def res_transmission_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
             m.dt * m.cap_tra[stf, sin, sout, tra, com])
 
 
-# transmission input <= transmission capacity
+# - dc transmission input <= transmission capacity
 def res_transmission_dc_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.e_tra_in[tm, stf, sin, sout, tra, com] <=
             m.dt * m.cap_tra[stf, sin, sout, tra, com])
@@ -316,13 +323,8 @@ def res_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 
 # transmission capacity from A to B == transmission capacity from B to A
 def res_transmission_symmetry_rule(m, stf, sin, sout, tra, com):
-    return m.cap_tra[stf, sin, sout, tra, com] ==\
-           (m.cap_tra[stf, sout, sin, tra, com])
-
-
-
-
-
+    return m.cap_tra[stf, sin, sout, tra, com] == (m.cap_tra
+                                                   [stf, sout, sin, tra, com])
 
 
 # transmission balance
@@ -336,15 +338,15 @@ def transmission_balance(m, tm, stf, sit, com):
                 # exports increase balance
                 for stframe, site_in, site_out, transmission, commodity
                 in m.tra_tuples
-                if (site_in == sit and stframe == stf and commodity ==
-                    com)) -
+                if (site_in == sit and stframe == stf and
+                    commodity == com)) -
             sum(m.e_tra_out[(tm, stframe, site_in, site_out,
                              transmission, com)]
                 # imports decrease balance
                 for stframe, site_in, site_out, transmission, commodity
                 in m.tra_tuples
                 if (site_out == sit and stframe == stf and
-                commodity == com)))
+                    commodity == com)))
 
 
 # transmission cost function

@@ -146,6 +146,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         df_transmission = get_input(instance, 'transmission')
         if com in set(df_transmission.index.get_level_values('Commodity')):
             imported = get_entity(instance, 'e_tra_out')
+            # avoid negative value import for DCPF transmissions
             if instance.mode['dpf']:
                 minus_imported = imported[imported < 0]
                 minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
@@ -164,6 +165,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = drop_all_zero_columns(imported.fillna(0))
 
             exported = get_entity(instance, 'e_tra_in')
+            # avoid negative value export for DCPF transmissions
             if instance.mode['dpf']:
                 minus_exported = exported[exported < 0]
                 minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
@@ -250,7 +252,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     created = created.join(stock)  # show stock as created
     consumed = consumed.join(shifted.rename('Demand'))
 
-    # PHASE ANGLE
+    # PHASE ANGLE of sites
 
     try:
         phase_angle = get_entity(instance, 'phase_angle')

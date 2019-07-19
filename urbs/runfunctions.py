@@ -93,7 +93,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     # create model
     prob = create_model(data, dt, timesteps, objective)
-    prob.write('model.lp', io_options={'symbolic_solver_labels':True})
+    # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)

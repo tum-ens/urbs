@@ -61,6 +61,7 @@ def validate_input(data):
                     data['transmission'].loc[index]['cap-up']):
                 raise ValueError('Ensure cap_lo <= cap_up and'
                                  'inst_cap <= cap_up for all transmissions.')
+        # Validate input for DCPF
         if 'reactance' in data['transmission'].keys():
             for index in data['transmission'].index:
                 if (data['transmission'].loc[index]['reactance'] < 0):
@@ -133,6 +134,7 @@ def validate_input(data):
                                "worksheet 'DSM' must be from the list of site "
                                "names specified in the worksheet 'Site'.")
 
+# report that variable costs may have error if used with CO2 minimization and DCPF
 def validate_dc_objective(data, objective):
     if not data['transmission'].empty:
         if 'reactance' in data['transmission'].keys():

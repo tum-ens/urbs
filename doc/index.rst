@@ -57,6 +57,7 @@ implementation.
    
    implementation
    api
+   gui_module/Architecture
 
 Graphical user interface
 ^^^^^^^^^^^^^^^^^^^^^^^^

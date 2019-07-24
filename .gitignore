@@ -4,3 +4,5 @@
 result/*
 results/*
 doc/_build/*
+Installer/build/
+Installer/dist/

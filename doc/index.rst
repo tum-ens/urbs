@@ -57,6 +57,7 @@ implementation.
    
    implementation
    api
+   gui_module/Architecture
 
 Graphical user interface
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -70,6 +71,16 @@ here.
    
    gui
 
+Windows Installer
+^^^^^^^^^^^^^^^^^
+
+It is possible to create a user friendly installer that's common for most of the users
+to use
+
+.. toctree::
+   :maxdepth: 1
+
+   installer/installer
 
 Features
 --------

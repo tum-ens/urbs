@@ -13,7 +13,7 @@ clean environment from scratch using conda.
 
 ::
 
-    conda create -n yourenvname python=x.x anaconda
+    conda create -n yourenvname python=x.x
 
 where:
 

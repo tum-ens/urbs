@@ -20,6 +20,10 @@ LicenseFile=..\LICENSE
 OutputBaseFilename=urbs_gui_setup
 Compression=lzma
 SolidCompression=yes
+; control the wizard steps
+DisableWelcomePage=no
+DisableDirPage=no
+DisableProgramGroupPage=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

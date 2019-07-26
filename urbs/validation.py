@@ -139,4 +139,4 @@ def validate_dc_objective(data, objective):
     if not data['transmission'].empty:
         if 'reactance' in data['transmission'].keys():
             if any(data['transmission']['reactance'] > 0) and (objective == 'CO2') and any(data['transmission']['var-cost'] > 0):
-                print("!!!!\nif the C02 is selected as objective function while modelling DC transmission lines, variable costs may be different \n!!!!")
+                print("\nif the C02 is selected as objective function while modelling DC transmission lines, variable costs may be incorrect \n")

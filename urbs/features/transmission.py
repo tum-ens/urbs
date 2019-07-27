@@ -17,6 +17,7 @@ def remove_duplicate_transmission(transmission_keys):
         for k in range(len(tra_tuple_list)):
             if (tra_tuple_list[i][1] == tra_tuple_list[k][2] and
                     tra_tuple_list[i][2] == tra_tuple_list[k][1] and
+                    tra_tuple_list[i][0] == tra_tuple_list[k][0] and
                     tra_tuple_list[i][3] == tra_tuple_list[k][3]):
                 del tra_tuple_list[i]
                 i -= 1

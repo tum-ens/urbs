@@ -187,10 +187,10 @@ def add_transmission_dc(m):
         within=transmission_domain_rule,
         doc='Power flow out of transmission line (MW) per timestep')
 
-    m.phase_angle = pyomo.Var(
+    m.voltage_angle = pyomo.Var(
         m.tm, m.stf, m.sit,
         within=pyomo.Reals,
-        doc='Phase angle of a site')
+        doc='Voltage angle of a site')
 
     # transmission
     m.def_transmission_output = pyomo.Constraint(
@@ -281,15 +281,15 @@ def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
 # power flow rule for DCPF transmissions
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] ==
-            (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]) / 57.2958 * -1 *
+            (m.voltage_angle[tm, stf, sin] - m.voltage_angle[tm, stf, sout]) / 57.2958 * -1 *
             (-1 / m.transmission_dict['reactance'][(stf, sin, sout, tra, com)])
             * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)]
             * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)])
 
-# phase angle difference rule for DCPF transmissions
+# voltage angle difference rule for DCPF transmissions
 def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)],
-            (m.phase_angle[tm, stf, sin] - m.phase_angle[tm, stf, sout]),
+            (m.voltage_angle[tm, stf, sin] - m.voltage_angle[tm, stf, sout]),
             m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)])
 
 # first rule for creating absolute transmission input

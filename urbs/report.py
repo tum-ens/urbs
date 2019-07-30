@@ -54,7 +54,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
 
             for lv in help_sit:
                 (created, consumed, stored, imported, exported,
-                 dsm, phase_angle) = get_timeseries(instance, stf, com, lv)
+                 dsm, voltage_angle) = get_timeseries(instance, stf, com, lv)
 
                 overprod = pd.DataFrame(
                     columns=['Overproduction'],
@@ -64,10 +64,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
 
                 tableau = pd.concat(
                     [created, consumed, stored, imported, exported, overprod,
-                     dsm, phase_angle],
+                     dsm, voltage_angle],
                     axis=1,
                     keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'DSM', 'Phase Angle'])
+                          'Export to', 'Balance', 'DSM', 'Voltage Angle'])
                 help_ts[(stf, lv, com)] = tableau.copy()
 
                 # timeseries sums

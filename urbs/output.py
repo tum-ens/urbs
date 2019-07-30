@@ -252,17 +252,17 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     created = created.join(stock)  # show stock as created
     consumed = consumed.join(shifted.rename('Demand'))
 
-    # PHASE ANGLE of sites
+    # VOLTAGE ANGLE of sites
 
     try:
-        phase_angle = get_entity(instance, 'phase_angle')
-        phase_angle = phase_angle.xs([stf], level=['stf']).loc[timesteps]
-        phase_angle = phase_angle.unstack(level='sit')[sites]
+        voltage_angle = get_entity(instance, 'voltage_angle')
+        voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
+        voltage_angle = voltage_angle.unstack(level='sit')[sites]
     except (KeyError, AttributeError):
-        phase_angle = pd.DataFrame(index=timesteps)
-    phase_angle.name = 'Phase Angle'
+        voltage_angle = pd.DataFrame(index=timesteps)
+    voltage_angle.name = 'Voltage Angle'
 
-    return created, consumed, stored, imported, exported, dsm, phase_angle
+    return created, consumed, stored, imported, exported, dsm, voltage_angle
 
 
 def drop_all_zero_columns(df):

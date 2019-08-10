@@ -148,7 +148,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = get_entity(instance, 'e_tra_out')
             # avoid negative value import for DCPF transmissions
             if instance.mode['dpf']:
-                minus_imported = imported[imported < 0]
+                # -0.01 to avoid numerical errors such as -0
+                minus_imported = imported[(imported < -0.01)]
                 minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
                 imported = imported[imported >= 0]
                 imported = pd.concat([imported, minus_imported])
@@ -161,13 +162,17 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = imported.unstack(level='sit')
 
             internal_import = imported[sites].sum(axis=1)  # ...from sites
-            imported = imported[other_sites]  # ...from other_sites
+            if instance.mode['dpf']:
+                imported = imported[[x for x in other_sites if x in imported.keys()]]  # ...to existing other_sites
+            else:
+                imported = imported[other_sites]  # ...from other_sites
             imported = drop_all_zero_columns(imported.fillna(0))
 
             exported = get_entity(instance, 'e_tra_in')
             # avoid negative value export for DCPF transmissions
             if instance.mode['dpf']:
-                minus_exported = exported[exported < 0]
+                # -0.01 to avoid numerical errors such as -0
+                minus_exported = exported[(exported < -0.01)]
                 minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
                 exported = exported[exported >= 0]
                 exported = pd.concat([exported, minus_exported])
@@ -181,7 +186,10 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             internal_export = exported[sites].sum(
                 axis=1)  # ...to sites (internal)
-            exported = exported[other_sites]  # ...to other_sites
+            if instance.mode['dpf']:
+                exported = exported[[x for x in other_sites if x in exported.keys()]]  # ...to existing other_sites
+            else:
+                exported = exported[other_sites]  # ...to other_sites
             exported = drop_all_zero_columns(exported.fillna(0))
         else:
             imported = pd.DataFrame(index=timesteps)

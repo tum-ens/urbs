@@ -64,11 +64,16 @@ def validate_input(data):
         # Validate input for DCPF
         if 'reactance' in data['transmission'].keys():
             for index in data['transmission'].index:
-                if (data['transmission'].loc[index]['reactance'] < 0):
-                    raise ValueError('Ensure for DC transmission lines: reactance > 0 ')
-                if (data['transmission'].loc[index]['reactance'] > 0 and
-                data['transmission'].loc[index]['eff'] != 1):
-                    raise ValueError('Ensure efficiency of DC Transmission Lines are 1')
+                if data['transmission'].loc[index]['reactance'] < 0:
+                    raise ValueError('Ensure for DCPF transmission lines: reactance > 0 ')
+                if data['transmission'].loc[index]['reactance'] > 0:
+                    if data['transmission'].loc[index]['eff'] != 1:
+                        raise ValueError('Ensure efficiency of DCPF Transmission Lines are 1')
+                    if not data['transmission'].loc[index]['base_voltage'] > 0:
+                        raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
+                    if not (0 < data['transmission'].loc[index]['difflimit'] <= 90):
+                        raise ValueError('Ensure angle difference of DCPF transmission lines are between 90 and 0 '
+                                         'degrees')
 
     if not data['storage'].empty:
         for index in data['storage'].index:

@@ -1,7 +1,7 @@
 import math
 import pyomo.core as pyomo
 
-def transmission_domain_rule(m, tm, stf, sin, sout, tra, com):
+def e_tra_domain_rule(m, tm, stf, sin, sout, tra, com):
     # assigning e_tra_in and e_tra_out variable domains for transport and DCPF
     if (stf, sin, sout, tra, com) in m.tra_tuples_dc:
         return pyomo.Reals
@@ -174,17 +174,17 @@ def add_transmission_dc(m):
         rule=def_transmission_capacity_rule,
         doc='total transmission capacity')
 
-    m.abs_e_tra_dc = pyomo.Var(
+    m.e_tra_abs = pyomo.Var(
         m.tm, m.tra_tuples_dc,
         within=pyomo.NonNegativeReals,
         doc='Absolute power flow on transmission line (MW) per timestep')
     m.e_tra_in = pyomo.Var(
         m.tm, m.tra_tuples,
-        within=transmission_domain_rule,
+        within=e_tra_domain_rule,
         doc='Power flow into transmission line (MW) per timestep')
     m.e_tra_out = pyomo.Var(
         m.tm, m.tra_tuples,
-        within=transmission_domain_rule,
+        within=e_tra_domain_rule,
         doc='Power flow out of transmission line (MW) per timestep')
 
     m.voltage_angle = pyomo.Var(
@@ -206,13 +206,13 @@ def add_transmission_dc(m):
         m.tm, m.tra_tuples_dc,
         rule=def_angle_limit_rule,
         doc='-angle limit < angle(in) - angle(out) < angle limit')
-    m.abs1_e_tra_dc_in = pyomo.Constraint(
+    m.e_tra_abs1 = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
-        rule=abs1_e_tra_dc_in_rule,
+        rule=e_tra_abs_rule1,
         doc='transmission dc input <= absolute transmission dc input')
-    m.abs2_e_tra_dc_in = pyomo.Constraint(
+    m.e_tra_abs2 = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
-        rule=abs2_e_tra_dc_in_rule,
+        rule=e_tra_abs_rule2,
         doc='-transmission dc input <= absolute transmission dc input')
 
     m.res_transmission_input_by_capacity = pyomo.Constraint(
@@ -293,14 +293,14 @@ def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
             m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)])
 
 # first rule for creating absolute transmission input
-def abs1_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):
+def e_tra_abs_rule1(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] <=
-            m.abs_e_tra_dc[tm, stf, sin, sout, tra, com])
+            m.e_tra_abs[tm, stf, sin, sout, tra, com])
 
 # second rule for creating absolute transmission input
-def abs2_e_tra_dc_in_rule(m, tm, stf, sin, sout, tra, com):
+def e_tra_abs_rule2(m, tm, stf, sin, sout, tra, com):
     return (-m.e_tra_in[tm, stf, sin, sout, tra, com] <=
-            m.abs_e_tra_dc[tm, stf, sin, sout, tra, com])
+            m.e_tra_abs[tm, stf, sin, sout, tra, com])
 
 
 # transmission input <= transmission capacity
@@ -375,7 +375,7 @@ def transmission_cost(m, cost_type):
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_tp) + \
-                   sum(m.abs_e_tra_dc[(tm,) + t] * m.weight *
+                   sum(m.e_tra_abs[(tm,) + t] * m.weight *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm

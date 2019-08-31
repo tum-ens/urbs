@@ -12,78 +12,83 @@ Transmission, Storage and demand side management.
 
 .. table:: *Table: Model Variables*
     
-    +--------------------------------------+------+------------------------------------+
-    | Variable                             | Unit | Description                        |
-    +======================================+======+====================================+
-    | **Cost  Variables**                                                              |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\zeta`                        | €    | Total System Cost                  |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\zeta_\text{inv}`             | €    | Investment Costs                   |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\zeta_\text{fix}`             | €    | Fix Costs                          |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\zeta_\text{var}`             | €    | Variable Costs                     |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\zeta_\text{fuel}`            | €    | Fuel Costs                         |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\zeta_\text{rev}`             | €    | Revenue Costs                      |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\zeta_\text{pur}`             | €    | Purchase Costs                     |
-    +--------------------------------------+------+------------------------------------+
-    | **Commodity Variables**                                                          |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\rho_{yvct}`                  | MWh  | Stock Commodity Source Term        |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\varrho_{yvct}`               | MWh  | Sell Commodity Source Term         |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\psi_{yvct}`                  | MWh  | Buy Commodity Source Term          |
-    +--------------------------------------+------+------------------------------------+
-    | **Process Variables**                                                            |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\kappa_{yvp}`                 | MW   | Total Process Capacity             |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\hat{\kappa}_{yvp}`           | MW   | New Process Capacity               |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\tau_{yvpt}`                  | MWh  | Process Throughput                 |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\epsilon_{yvcpt}^\text{in}`   | MWh  | Process Input Commodity Flow       |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\epsilon_{yvcpt}^\text{out}`  | MWh  | Process Output Commodity Flow      |
-    +--------------------------------------+------+------------------------------------+
-    | **Transmission Variables**                                                       |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\kappa_{yaf}`                 | MW   | Total transmission Capacity        |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\hat{\kappa}_{yaf}`           | MW   | New Transmission Capacity          |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\pi_{yaft}^\text{in}`         | MWh  | Transmission Input Commodity Flow  | 
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\pi_{yaft}^\text{out}`        | MWh  | Transmission Output Commodity Flow |
-    +--------------------------------------+------+------------------------------------+
-    | **Storage Variables**                                                            |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\kappa_{yvs}^\text{c}`        | MWh  | Total Storage Size                 |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\hat{\kappa}_{yvs}^\text{c}`  | MWh  | New Storage Size                   |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\kappa_{yvs}^\text{p}`        | MW   | Total Storage Power                |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\hat{\kappa}_{yvs}^\text{p}`  | MW   | New Storage Power                  |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\epsilon_{yvst}^\text{in}`    | MWh  | Storage Input Commodity Flow       |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\epsilon_{yvst}^\text{out}`   | MWh  | Storage Output Commodity Flow      |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\epsilon_{yvst}^\text{con}`   | MWh  | Storage Energy Content             |
-    +--------------------------------------+------+------------------------------------+
-    | **Demand Side Management Variables**                                             |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\delta_{yvct}^\text{up}`      | MWh  | DSM Upshift                        |
-    +--------------------------------------+------+------------------------------------+
-    | :math:`\delta_{t,tt,yvc}^\text{down}`| MWh  | DSM Downshift                      |
-    +--------------------------------------+------+------------------------------------+
-    
+    +----------------------------------------+------+-----------------------------------+
+    | Variable                               | Unit | Description                       |
+    +========================================+======+===================================+
+    | **Cost  Variables**                                                               |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta`                          | €    | Total System Cost                 |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{inv}`               | €    | Investment Costs                  |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{fix}`               | €    | Fix Costs                         |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{var}`               | €    | Variable Costs                    |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{fuel}`              | €    | Fuel Costs                        |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{rev}`               | €    | Revenue Costs                     |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{pur}`               | €    | Purchase Costs                    |
+    +----------------------------------------+------+-----------------------------------+
+    | **Commodity Variables**                                                           |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\rho_{yvct}`                    | MWh  | Stock Commodity Source Term       |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\varrho_{yvct}`                 | MWh  | Sell Commodity Source Term        |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\psi_{yvct}`                    | MWh  | Buy Commodity Source Term         |
+    +----------------------------------------+------+-----------------------------------+
+    | **Process Variables**                                                             |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\kappa_{yvp}`                   | MW   | Total Process Capacity            |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\hat{\kappa}_{yvp}`             | MW   | New Process Capacity              |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\tau_{yvpt}`                    | MWh  | Process Throughput                |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\epsilon_{yvcpt}^\text{in}`     | MWh  | Process Input Commodity Flow      |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\epsilon_{yvcpt}^\text{out}`    | MWh  | Process Output Commodity Flow     |
+    +----------------------------------------+------+-----------------------------------+
+    | **Transmission Variables**                                                        |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\kappa_{yaf}`                   | MW   | Total transmission Capacity       |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\hat{\kappa}_{yaf}`             | MW   | New Transmission Capacity         |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\pi_{yaft}^\text{in}`           | MWh  | Transmission Input Commodity Flow |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\pi_{yaft}^\text{out}`          | MWh  | Transmission Output Commodity Flow|
+    +----------------------------------------+------+-----------------------------------+
+    | **DCPF Transmission Variables**                                                   |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\theta_{yvt}`                   | deg. | Voltage Angle                     |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`{\pi_{yaft}^{\text{in}}}^\prime`| MW   | Absolute Transmission Flow        |
+    +----------------------------------------+------+-----------------------------------+
+    | **Storage Variables**                                                             |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\kappa_{yvs}^\text{c}`          | MWh  | Total Storage Size                |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\hat{\kappa}_{yvs}^\text{c}`    | MWh  | New Storage Size                  |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\kappa_{yvs}^\text{p}`          | MW   | Total Storage Power               |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\hat{\kappa}_{yvs}^\text{p}`    | MW   | New Storage Power                 |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\epsilon_{yvst}^\text{in}`      | MWh  | Storage Input Commodity Flow      |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\epsilon_{yvst}^\text{out}`     | MWh  | Storage Output Commodity Flow     |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\epsilon_{yvst}^\text{con}`     | MWh  | Storage Energy Content            |
+    +----------------------------------------+------+-----------------------------------+
+    | **Demand Side Management Variables**                                              |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\delta_{yvct}^\text{up}`        | MWh  | DSM Upshift                       |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\delta_{t,tt,yvc}^\text{down}`  | MWh  | DSM Downshift                     |
+    +----------------------------------------+------+-----------------------------------+
 
 	
 Cost Variables
@@ -299,6 +304,65 @@ fragment: ::
         m.tm, m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='Power flow out of transmission line (MWh) at a given timestep')
+
+DCPF Transmission Variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the DC Power Flow transmission modelling is activated, two new variables are introduced to the model.
+
+**Voltage Angle**, :math:`\theta_{yvt}`, ``voltage_angle``: The variable :math:`\theta_{yvt}` represents the voltage
+angle of a site :math:`v`, which has a DCPF transmission line connection, at a timestep :math:`t`. This variable is
+expressed in the unit degrees. In script ``urbs.py`` this variable is defined by the model variable ``voltage_angle``
+and initialized by the following code
+fragment: ::
+
+    m.voltage_angle = pyomo.Var(
+            m.tm, m.stf, m.sit,
+            within=pyomo.Reals,
+            doc='Voltage angle of a site')
+
+**Absolute Value of Transmission Commodity Flow**, :math:`{\pi_{yaft}^{\text{in}}}^\prime`, ``e_tra_abs``:
+The variable :math:`{\pi_{yaft}^{\text{in}}}^\prime` represents the absolute value of the transmission commodity flow
+on a DCPF transmission tuple :math:`f_{yca}` at a timestep
+:math:`t`, where :math:`a` represents the arc from an origin site
+:math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
+is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
+the model variable ``e_tra_abs`` and initialized by the following code
+fragment: ::
+
+    m.e_tra_abs = pyomo.Var(
+        m.tm, m.tra_tuples_dc,
+        within=pyomo.NonNegativeReals,
+        doc='Absolute power flow on transmission line (MW) per timestep')
+
+**Transmission Commodity Flow Domain Changes**
+:DC Power Flow transmission lines are represented by bidirectional single arcs instead of unidirectional symmetrical
+arcs as in the default transmission model. Consequently the power flow is allowed to be both positive or negative for
+DCPF transmission lines contrary to the transport transmission lines. For this reason, the domains of the variables
+transmission input commodity flow :math:`\pi_{yaft}^\text{in}` and  transmission output commodity flow
+:math:`\pi_{yaft}^\text{out}` are defined with the :py:func:`e_tra_domain_rule` function depending on the corresponding
+transmission tuple set. These variables are defined by the model variables ``e_tra_in`` and ``e_tra_out`` and
+intialized by the code
+fragment: ::
+
+    m.e_tra_in = pyomo.Var(
+        m.tm, m.tra_tuples,
+        within=e_tra_domain_rule,
+        doc='Power flow into transmission line (MW) per timestep')
+    m.e_tra_out = pyomo.Var(
+        m.tm, m.tra_tuples,
+        within=e_tra_domain_rule,
+        doc='Power flow out of transmission line (MW) per timestep')
+
+The function :py:func:`e_tra_domain_rule` is given by the code
+fragment: ::
+
+    def e_tra_domain_rule(m, tm, stf, sin, sout, tra, com):
+        # assigning e_tra_in and e_tra_out variable domains for transport and DCPF
+        if (stf, sin, sout, tra, com) in m.tra_tuples_dc:
+            return pyomo.Reals
+        elif (stf, sin, sout, tra, com) in m.tra_tuples_tp:
+            return pyomo.NonNegativeReals
 
 Storage Variables
 ^^^^^^^^^^^^^^^^^

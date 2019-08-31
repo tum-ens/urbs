@@ -131,4 +131,98 @@ then linked to the input with the transmission efficiency :math:`e_{af}`
    &\forall a\in V\times V\times C,~f\in F,~t\in T_m:\\
    & \pi^{\text{out}}_{aft}= e_{af}\cdot \pi^{\text{in}}_{aft}.
 
-These constraints finalize the multinode feature.
+DC Power Flow feature
+--------------------------------
+
+Transmission lines can be modelled with DC Power Flow as an optional feature to represent the AC network grid.
+With the DC Power Flow feature, the variable voltage angle is introduced for the vertices connected with DC Power Flow
+transmission lines
+The DC Power Flow is defined by the relation between the voltage angle :math:`\theta_{vt}` of connecting vertices.
+
+It is possible to combine the default transmission model with the DC Power Flow transmission model.
+The DCPF feature can be activated on the selected transmission lines. This way two different sets of transmission
+tuples, subject to different constraints, will be modelled. These transmission tuple sets are defined as the set of
+transport model (default) transmission lines :math:`F_{c{v_\text{out}}{v_\text{in}}}^{TP}` and the set of DCPF transmission
+lines :math:`F_{c{v_\text{out}}{v_\text{in}}}^{DCPF}`
+
+Usage
+~~~~~
+
+This feature can be activated for selected transmission lines by including the following parameters:
+
+- The reactance :math:`X_{af}` of a transmission line is required to be included in the model input to model the given
+  transmission line with DCPF. This parameter should be greater than 0 and given in per-unit system. If this parameter
+  is excluded from the model input, DCPF will not be activated for the transmission line.
+
+- The voltage angle difference of two connecting sites should be limited with angle difference limit
+  :math:`\overline{dl}_{af}` to create a stable model. This parameter is required to limit the voltage angle difference
+  between two connecting sites. A degree value between 0 and 91 is allowed.
+
+- The base voltage :math:`V_{af\text{base}}` of transmission lines are required to convert the power flow from per-unit
+  system to MW. The base voltage parameter is required in kV for every transmission line, which should be modelled with
+  DCPF. The value of this parameter should be greater than 0.
+
+- Since the DC Power Flow model ignores the loss of a transmission line, the efficiency :math:`e_{af}` of the
+  transmission lines modelled with the DCPF should be set to 100% represented with the value "1".
+
+Contrary to the default transmission line representation, DC Power Flow transmission lines are represented with a single
+bidirectional arc between two vertices. The complementary arc of a DC Power Flow transmission line will be excluded from
+the model even if it is defined by the user. Depending on the voltage angle difference of two connecting sites, the
+power flow :math:`\pi_{aft}` on a DC Power Flow transmission line can be both negative or positive indicating the
+direction of the flow.
+
+DC Power Flow Equation
+~~~~~~~~~~~~~~~~~~~~~~
+Power flow on a transmission line modelled with DCPF:
+
+.. math::
+        \pi_{aft}^\text{in} = \frac{(\theta_{v_{\text{in}}t}- \theta_{v_{\text{out}}t})}{57.2958}(-\frac{-1}{X_{af}}){V_{af\text{base}}^2}
+
+Here :math:`\theta_{v_{\text{in}}t}` and :math:`\theta_{v_{\text{out}}t}` are the voltage angles of the source site
+:math:`{v_{\text{in}}}` and destinaton site :math:`v_{\text{out}}`. These are converted to radian from degrees by
+dividing by 57,2958. :math:`{X_{af}}` is the reactance of the transmission line in per unit system and
+:math:`(-\frac{-1}{X_{af}})` is the admittance of the transmission line.
+
+Constraints
+~~~~~~~~~~~
+
+Constraints applied to the DCPF transmission lines vary from those applied to the transport transmission lines.
+
+Symmetry rule is ignored for the DCPF transmission lines, since these lines only consist of single bidirectional arcs.
+Since the DCPF transmission lines do not have complementary arcs the fixed and investment costs would be halved.
+To prevent this error caused by the excluded symmetry constraint for DCPF transmission lines, fixed and investment
+prices for DCPF lines are doubled automatically before calculating the costs.
+
+The constraint which restricts the commodity flow :math:`\pi_{aft}^\text{in}` on a transmission line with the installed
+capacity :math:`\kappa_{af}` is expanded for DCPF transmission lines. The additional constraint restricts the lower
+limit of the power flow, since the power flow with DCPF can also be negative.
+
+.. math::
+         -\pi_{aft}^\text{in} \leq \kappa_{af}
+
+Voltage angle difference of two connecting vertices :math:`v_{\text{in}}` and :math:`v_{\text{out}}` is restricted with the angle difference limit parameter :math:`\overline{dl}_{af}` given
+for a DCPF transmission :math:`f` on an arc :math:`a`
+
+.. math::
+        -\overline{dl}_{af} \leq (\theta_{v_{\text{in}}t}- \theta_{v_{\text{out}}t}) \leq \overline{dl}_{af}
+
+Two additional constraints are used in DCPF feature to retrieve the absolute value :math:`{\pi_{aft}^{\text{in}}}^\prime`
+of the power flow on a DCPF transmission line, which is included in the variable cost calculation. With the help of
+these constraints and minimization of objective function , which includes the substitute variable
+:math:`{\pi_{aft}^{\text{in}}}^\prime`, the substitute variable will be equal to the absolute value of the power flow
+variable :math:`|\pi_{aft}^{\text{in}}|`
+
+.. math::
+        {\pi_{aft}^{\text{in}}}^\prime \geq \pi_{aft}^{\text{in}}
+
+.. math::
+
+        {\pi_{aft}^{\text{in}}}^\prime \geq -\pi_{aft}^{\text{in}}
+
+
+
+
+
+
+
+

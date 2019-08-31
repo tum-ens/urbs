@@ -96,13 +96,21 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`e_{yaf}`                              | _  |Transmission Efficiency                     |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{K}_{yaf}`                  |MW  |Tranmission Capacity Lower Bound            |
+    |:math:`\underline{K}_{yaf}`                  |MW  |Transmission Capacity Lower Bound           |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`K_{yaf}`                              |MW  |Tranmission Capacity Installed              |
+    |:math:`K_{yaf}`                              |MW  |Transmission Capacity Installed             |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{yaf}`                   |MW  |Tranmission Capacity Upper Bound            |
+    |:math:`\overline{K}_{yaf}`                   |MW  |Transmission Capacity Upper Bound           |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`T_{af}`                               |MW  |Remaining lifetime of installed transmission|
+    +---------------------------------------------+----+--------------------------------------------+
+    |**DCPF Transmission Technical Parameters**                                                     |
+    +---------------------------------------------+----+--------------------------------------------+
+    |:math:`X_{yaf}`                              |p.u |Transmission Reactance                      |
+    +---------------------------------------------+----+--------------------------------------------+
+    |:math:`\overline{dl}_{yaf}`                  |deg.|Voltage Angle Difference Limit              |
+    +---------------------------------------------+----+--------------------------------------------+
+    |:math:`V_{yaf\text{base}}`                   |kV  |Transmission Base Voltage                   |
     +---------------------------------------------+----+--------------------------------------------+
     |**Demand Side Management Parameters**                                                          |
     +---------------------------------------------+----+--------------------------------------------+
@@ -716,6 +724,63 @@ tuples.
 parameter :math:`T_{af}` represents the remaining lifetime of already installed
 units. It is used to determine the set `m.inst_tra_tuples`, i.e. to identify
 for which support timeframes the installed units can still be used.
+
+DCPF Transmission Technical Parameters
+--------------------------------------
+Selected transmission lines can be modelled with DC Power Flow and combined with
+the transport model in an energy system model. The following parameters are only
+required and included in the model when a transmission line should be modelled
+with DCPF.
+
+**Transmission Reactance**, :math:`X_{yaf}`,
+``m.transmission_dict['reactance'][(stf, sin, sout, tra, com)]``: The parameter
+:math:`X_{yaf}` represents the reactance of a transmission :math:`f`
+that transfers a commodity :math:`c` through an arc :math:`a` in support
+timeframe :math:`y`. Here an arc :math:`a` defines the connection line from an
+origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`.
+Transmission reactance is used to calculate the power flow of DCPF transmission lines.
+This parameter is required to define a transmission line with the DCPF model and should
+be given in per unit system.
+The related section for this parameter in the spreadsheet corresponding
+to the support timeframe can be found under the "Transmission" sheet.
+Here each row represents another combination of transmission :math:`f` and arc
+:math:`a`. The column with the header label "reactance" represents the parameters
+:math:`X_{yaf}` of the corresponding transmission tuples. If the parameter is left
+empty in the spreadsheet, the transmission line will be modelled with transport
+model as default.
+
+**Voltage Angle Difference Limit**, :math:`\overline{dl}_{yaf}`,
+``m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)]``: The parameter
+:math:`\overline{dl}_{yaf}` represents the voltage angle difference limit of a transmission :math:`f`
+that transfers a commodity :math:`c` through an arc :math:`a` in support
+timeframe :math:`y`. Here an arc :math:`a` defines the connection line from an
+origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`.
+The allowed maximum difference of voltage angles of sites :math:`v_\text{out}`
+and :math:`{v_\text{in}}` is limited with this parameter.
+This parameter is expected in degrees and a value between 0 and 91 is allowed.
+This parameter is required to define a transmission line with the DCPF model.
+The related section for this parameter in
+the spreadsheet corresponding to the support timeframe can be found under the
+"Transmission" sheet. Here each row represents another combination of
+transmission :math:`f` and arc :math:`a`. The column with the header label
+"difflimit" represents the parameters :math:`\overline{dl}_{yaf}` of the corresponding
+transmission tuples.
+
+**Transmission Base Voltage**, :math:`V_{yaf\text{base}}`,
+``m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)]``: The parameter
+:math:`V_{yaf\text{base}}` represents the base voltage of a transmission :math:`f`
+that transfers a commodity :math:`c` through an arc :math:`a` in support
+timeframe :math:`y`. Here an arc :math:`a` defines the connection line from an
+origin site :math:`v_\text{out}` to a destination site :math:`{v_\text{in}}`.
+This parameter is used to calculate the power flow of DCPF transmission lines.
+This parameter is expected in kV and a value greater than 0 is allowed.
+This parameter is required to define a transmission line with the DCPF model.
+The related section for this parameter in
+the spreadsheet corresponding to the support timeframe can be found under the
+"Transmission" sheet. Here each row represents another combination of
+transmission :math:`f` and arc :math:`a`. The column with the header label
+"base_voltage" represents the parameters :math:`V_{yaf\text{base}}` of the corresponding
+transmission tuples.
 
 Demand Side Management Technical Parameters
 -------------------------------------------

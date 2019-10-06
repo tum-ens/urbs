@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct 29 19:03:07 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -12,6 +10,22 @@ import GlobalsView as gv
 
 
 class GeneralView(wx.Panel):
+    """This module simply create the content of the Overview tab. It consists
+    of 3 other modules:
+
+    - SitesView, which allow the user to add/remove sites to the system
+    - YearsView, which allow the user to add/remove years to model in the syste,
+    - GlobalsView, which create the rest of the components in the overview tab.
+
+        - Manage periods section (PeriodsView)
+        - Manage global parameters.
+        - Select Senarios to execute.
+        - Finally, the run/abort buttons and the log area.
+    You will notice that SitesView, YearsView and PeriodsView are exactly the
+    same, just labels are changed and the grid columns. Each grid, has its
+    columns definition and this definition is stored in the DataConfig Module
+    as we will see later.
+    """
 
     def __init__(self, parent, controller):
         wx.Panel.__init__(self, parent)

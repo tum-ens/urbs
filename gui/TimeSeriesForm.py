@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Nov  3 20:50:45 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -10,6 +8,10 @@ import wx.richtext as rt
 
 
 class TimeSeriesForm(wx.Dialog):
+    """
+    This module represent the time series form. It allow the user to enter the
+    time index data for a certain year for certain commodity.
+    """
 
     def __init__(self, parent):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY,
@@ -43,9 +45,23 @@ class TimeSeriesForm(wx.Dialog):
         self.Centre(wx.BOTH)
 
     def OnCancel(self, event):
+        """This method is called when the user click on the Cancel button. It
+        simply ignores any data changes that the user did and close the form.
+
+        Args:
+            event: The event object from WX
+        """
         self.Close()
 
     def OnOk(self, event):
+        """This method is called when the user click on the Ok button. It saves
+        the time series data that the user entered. It replace the new line
+        character by a pipe so we can store the data in the config file as one
+        line.
+
+        Args:
+            event: The event object from WX
+        """
         s = self._txtTS.GetValue()
         s = str.replace(s, '\r', '')
         s = str.replace(s, '\n', '|')
@@ -55,6 +71,16 @@ class TimeSeriesForm(wx.Dialog):
         self.Close()
 
     def PopulateData(self, commName, gt, row, col):
+        """This method is triggered when the user want to edit the time series
+        data he/she already entered before for specific year of specific
+        commodity.
+
+        Args:
+            - commName: The commodity name
+            - gt: The grid table
+            - row: which row of the grid is clicked (year)
+            - col: The col that contains the time series data
+        """
         self._lblCommName.SetLabelText(
             self._lblCommName.GetLabelText() + commName)
         self._lblYear.SetLabelText(

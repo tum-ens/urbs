@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Dec  8 23:59:15 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -18,11 +16,20 @@ from pubsub import pub
 
 
 class RedirectText(object):
+    """This class redirect the standard system output to the text area that
+    we have in the GUI, so the user can see the logged messages and errors.
+    """
 
     def __init__(self, aWxTextCtrl):
         self.out = aWxTextCtrl
 
     def write(self, string):
+        """This method is triggered to write a log and/or error message to the
+        log text area.
+
+        Args:
+            string: message to write
+        """
         wx.CallAfter(self.out.WriteText, string)
         # self.out.WriteText(string)
 
@@ -31,7 +38,11 @@ class RedirectText(object):
         pass
 
 
-class GlobalsView():
+class GlobalsView:
+    """This module represent global parameters section in the Overview tab
+    (GeneralView), which allow the user to define the global parameters in the
+    system.
+    """
 
     _gridCols = config.DataConfig.GLOBAL_COLS
     _gridRows = config.DataConfig.GLOBAL_PARAMS
@@ -69,9 +80,14 @@ class GlobalsView():
         sys.stderr = redirStd
 
     def GetLayout(self):
+        """This method just return the main layout of the view.
+        """
         return self._mainLayout
 
     def CreateGlobalParamsLayout(self):
+        """This method is called to build the global parameters layout as grid
+        of two columns and multiple rows. A row for each parameter.
+        """
         # Grid and its data table
         self._gridTable = gdt.GridDataTable(
             self._gridCols, self._gridRows, autoCommit=True)
@@ -97,6 +113,10 @@ class GlobalsView():
         return layout
 
     def CreateScenariosLayout(self):
+        """This method is called to build the scenarios layout as list of check
+        boxes. A checkbox for each scenario. It calls the controller to
+        retrieve the list of scenarios.
+        """
         self._lb = wx.CheckListBox(
             self._parent, -1, choices=self._controller.GetScenarios())
         self._lb.Bind(wx.EVT_CHECKLISTBOX, self.OnScenarioChange)
@@ -107,6 +127,9 @@ class GlobalsView():
         return layout
 
     def CreateLogLayout(self):
+        """This method is called to build the logging layout as text area so the
+        user can see interactive logging in the GUI.
+        """
         self._logCtrl = rt.RichTextCtrl(self._parent, wx.ID_ANY, size=(
             300, 100), style=rt.RE_MULTILINE | rt.RE_READONLY | wx.VSCROLL)
         sb = wx.StaticBox(self._parent, wx.ID_ANY, u"Log:")
@@ -116,6 +139,9 @@ class GlobalsView():
         return logLayout
 
     def CreateImgsLayout(self):
+        """This method is called to build the buttons to run (play button) the
+        solver to find a solution for the selected scenarios.
+        """
         imgLayout = wx.BoxSizer(wx.VERTICAL)
         bitmap = wx.Bitmap(config.DataConfig.resource_path(
             "imgs/Play.png"), wx.BITMAP_TYPE_ANY)
@@ -145,6 +171,14 @@ class GlobalsView():
         return imgLayout
 
     def OnRunClick(self, event):
+        """This method is triggered when the user click Run to execute the
+        solver. The method first validate the data by calling the controller.
+        If the data is valid, it clears the logs area, shows a progress dialog
+        and finally asks the controller to run.
+
+        Args:
+            event: The event object from WX
+        """
         if not self._controller.ValidateData():
             return
 
@@ -173,6 +207,13 @@ class GlobalsView():
         dlg.Destroy()
 
     def OnScenarioChange(self, event):
+        """This method is triggered when the user check/uncheck a scenario in
+        the view. It fires an event to notify the model (through the controller)
+        about the user action.
+
+        Args:
+              event: The event object from WX
+        """
         index = event.GetSelection()
         lb = event.GetEventObject()
         label = lb.GetString(index)
@@ -182,6 +223,12 @@ class GlobalsView():
             pub.sendMessage(EVENTS.SCENARIO_REMOVED, scName=label)
 
     def PopulateGrid(self, gl):
+        """This method simply populate the data inside the global parameters
+        grid.
+
+        Args:
+              gl: dictionary with the global parameters data
+        """
         self._gridTable.SetTableData(gl)
         msg = wx.grid.GridTableMessage(
             self._gridTable,
@@ -189,4 +236,9 @@ class GlobalsView():
         self._gridTable.GetView().ProcessTableMessage(msg)
 
     def PopulateScenarios(self, scenarios):
+        """This method simply populate the data inside the scenarios check list.
+
+        Args:
+              scenarios: List of the available scenarios
+        """
         self._lb.SetCheckedStrings(scenarios)

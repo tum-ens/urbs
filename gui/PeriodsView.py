@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Feb 17 17:10:44 2019
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -14,7 +12,11 @@ from Events import EVENTS
 from pubsub import pub
 
 
-class PeriodsView():
+class PeriodsView:
+    """This module represent plot periods section in the Overview tab
+    (GeneralView), which allow the user to add/remove plot periods to the
+    system.
+    """
 
     _gridCols = config.DataConfig.PERIOD_PARAMS
 
@@ -72,9 +74,18 @@ class PeriodsView():
         pub.subscribe(self.PeriodsAreRemoved, EVENTS.PERIOD_REMOVED)
 
     def GetLayout(self):
+        """This method just return the main layout of the view.
+        """
         return self._mainLayout
 
     def TxtPeriodOnTextChange(self, event):
+        """This method is triggered when the value in the plot period textbox
+        changes. It enables the “Add Period” button if the text length is
+        greater than zero, otherwise it keep the button disabled.
+
+        Args:
+             event: The event object from WX
+        """
         txt = event.GetEventObject().GetValue()
         if len(txt) > 0:
             self._btnAdd.Enable()
@@ -82,10 +93,35 @@ class PeriodsView():
             self._btnAdd.Disable()
 
     def BtnAddOnClick(self, event):
+        """This method is called when the user click on the “Add Period” button.
+
+            - It gets the value of the period name from the textbox
+            - Trigger a notification that the user is trying to add the
+              following period. This notification will be captured by the
+              controller.
+
+        Args:
+             event: The event object from WX
+        """
         newPeriod = self._txtPeriod.GetValue()
         pub.sendMessage(EVENTS.PERIOD_ADDING, period=newPeriod)
 
     def BtnRemoveOnClick(self, event):
+        """
+        This method is called when the user click on “Remove selected periods”
+        button.
+            - If the size of the grid is zero, then nothing to do
+            - Loop on the grid rows and see if the row is selected (check box
+              in the cell 0 of the current row)
+            - If the row is selected, then add the period to “periods to remove”
+              list.
+            - Trigger a notification that the user is trying to remove the
+              following periods. This notification will be captured by the
+              controller.
+
+        Args:
+             event: The event object from WX
+        """
         rows = self._periodsGrid.GetNumberRows()
         if rows == 0:
             return
@@ -99,6 +135,15 @@ class PeriodsView():
         pub.sendMessage(EVENTS.PERIOD_REMOVING, periods=periodsToRmv)
 
     def PeriodIsAdded(self, periods):
+        """This method is called when the notification “PeriodIsAdded” is
+        triggered. In this case the view wants to notify the grid that some new
+        rows are added. It simply send a message to the grid that X rows are
+        appended. Where X is the total number of periods minus the current rows
+        number in the grid.
+
+        Args:
+             periods: List of the added periods
+        """
         # tell the grid we've changed the data
         cur = self._periodsGrid.GetNumberRows()
         self._gridTable.SetTableData(periods)
@@ -111,6 +156,17 @@ class PeriodsView():
         self._gridTable.GetView().ProcessTableMessage(msg)
 
     def PeriodsAreRemoved(self, periods, removeCount):
+        """This method is called when the notification “PeriodsAreRemoved” is
+        triggered. In this case the view wants to notify the grid that some
+        existing rows are removed. It simply send a message to the grid with
+        following information.
+            - The total number of periods now (the new number of rows)
+            - How many rows are removed
+
+        Args:
+             - periods: List of the current periods
+             - removeCount: How many periods are removed
+        """
         # tell the grid we've changed the data
         self._gridTable.SetTableData(periods)
         msg = wx.grid.GridTableMessage(

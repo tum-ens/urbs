@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Nov  3 20:50:45 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -12,6 +10,12 @@ from Events import EVENTS
 
 
 class BasicForm(wx.Dialog):
+    """This module represent the basic form layout in the GUI. It assumes the
+    form consists of a grid that contains the data per each year, and a set of
+    buttons that user can use like (OK, cancel, copy, clone, delete and Fill
+    all as the first year). This layout is common in our forms and will be
+    inherited by many other modules as we will see later.
+    """
 
     _gridTables = []
 
@@ -56,14 +60,34 @@ class BasicForm(wx.Dialog):
         self.Centre(wx.BOTH)
 
     def OnCancel(self, event):
+        """This method is called when the user click on the Cancel button. It
+        simply ignores any data changes that the user did and close the form.
+
+        Args:
+            event: The event object from WX
+        """
         super().Close()
 
     def OnOk(self, event):
+        """This method is called when the user click on the Ok button. It
+        loops on all grids in the form and commit the user changes. Finally it
+        closes the form as well.
+
+        Args:
+            event: The event object from WX
+        """
         for gt in self._gridTables:
             gt.Commit()
         super().Close()
 
     def OnFillAll(self, event):
+        """This method is called when the user click on the Fill All button. It
+        asks the grid to fill all years exactly with the data of the first
+        year. Then it refresh the grid to view the new values.
+
+        Args:
+            event: The event object from WX
+        """
         for gt in self._gridTables:
             gt.FillAll()
             msg = wx.grid.GridTableMessage(
@@ -71,12 +95,34 @@ class BasicForm(wx.Dialog):
             gt.GetView().ProcessTableMessage(msg)
 
     def OnCopy(self, event):
+        """This method is called when the user click on the Copy button. The
+        copy button allow the user to copy items from site to another. The
+        method fires an event to notify the controller about the user action.
+
+        Args:
+            event: The event object from WX
+        """
         pub.sendMessage(EVENTS.ITEM_COPY, item=self._dataItem)
 
     def OnClone(self, event):
+        """This method is called when the user click on the Clone button. The
+        clone button allow the user to clone items within the same site. The
+        method fires an event to notify the controller about the user action.
+
+        Args:
+            event: The event object from WX
+        """
         pub.sendMessage(EVENTS.ITEM_CLONE, item=self._dataItem)
 
     def OnDelete(self, event):
+        """This method is called when the user click on the Delete button. The
+        method asks for the user confirmation first, then it fires an event to
+        notify the controller about the user action and finally it closes the
+        form.
+
+        Args:
+            event: The event object from WX
+        """
         s = wx.MessageBox('[Delete] Are you sure?', 'Warning',
                           wx.OK | wx.CANCEL | wx.ICON_WARNING)
         if s == wx.OK:
@@ -84,12 +130,32 @@ class BasicForm(wx.Dialog):
             self.Close()
 
     def SetContent(self, content, align):
+        """This method is called by the classes that inheret the basic form to
+        populate the main layout of the form with the proper content.
+
+        Args:
+            - content: The layout to add to the form
+            - align: The alignment direction (left, right or center)
+        """
         self._contentLayout.Add(content, 1, wx.ALL | wx.EXPAND | align, 5)
 
     def SetDataItem(self, data):
+        """This method is simply called to preserve the data of the item associated
+        with the form.
+
+        Args:
+            data: The data of the selected item
+        """
         self._dataItem = data
 
     def PopulateGrid(self, gridTable, dataPerYear):
+        """This method is called to populate the a grid in the form with the
+        proper data. The data is grouped per each defined year in our model.
+
+        Args:
+            - gridTable: The grid to populate
+            - dataPerYear: The data of each defined year
+        """
         self._gridTables.clear()
         self._gridTables.append(gridTable)
         self._grid = gridTable.GetView()

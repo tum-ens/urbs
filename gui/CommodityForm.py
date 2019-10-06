@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 02:56:46 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -18,6 +16,10 @@ from Events import EVENTS
 
 
 class CommodityDialog (bf.BasicForm):
+    """
+    This form is used to add a new Commodity or edit an existing one. The form
+    inherits from the BasicForm class.
+    """
 
     _gridCols = config.DataConfig.COMMODITY_PARAMS
 
@@ -35,6 +37,13 @@ class CommodityDialog (bf.BasicForm):
         super().SetContent(contentLayout, wx.ALIGN_CENTER_HORIZONTAL)
 
     def CreateParamsLayout(self):
+        """This method is called to create the form layout itself, which is a
+        grid table consist of a row for each defined year in our Reference
+        Energy System.
+
+        Return:
+            The created layout
+        """
         h1 = wx.StaticBox(self, wx.ID_ANY, u"Parameters:")
         h1.SetForegroundColour('white')
         layout1 = wx.StaticBoxSizer(h1, wx.VERTICAL)
@@ -55,6 +64,13 @@ class CommodityDialog (bf.BasicForm):
         return layout1
 
     def OnTimeSerClick(self, event):
+        """This method is called when the user want to define the time series
+        information for the commodity (for certain year). It shows the
+        'TimeSeries' form so the user can enter the data.
+
+        Args:
+            event: The event object from WX
+        """
         if event.GetCol() != config.DataConfig.TS_BTN_COL:
             return
 
@@ -64,6 +80,16 @@ class CommodityDialog (bf.BasicForm):
         tsf.ShowModal()
 
     def CreateGeneralLayout(self):
+        """This method is called to create the general info layout about the
+        commodity, the following info is created:
+            - Commodity type
+            - Commodity name
+            - Color for the plots
+            - DSM enable or not
+
+        Return:
+            The created layout
+        """
         layout0 = wx.BoxSizer(wx.HORIZONTAL)
         # Type
         label = wx.StaticText(self, -1, "Commodity Type:")
@@ -102,6 +128,12 @@ class CommodityDialog (bf.BasicForm):
         return layout2
 
     def OnDSMChange(self, event):
+        """This method is called when the user check/uncheck the DSM box. It
+        simply show/hid the cols associated with the DSM parameters.
+
+        Args:
+            event: The event object from WX
+        """
         startCol = config.DataConfig.TS_BTN_COL + 1
         endCol = startCol + len(config.DataConfig.DSM_PARAMS)
 
@@ -113,6 +145,13 @@ class CommodityDialog (bf.BasicForm):
                 self._yearsGrid.HideCol(i)
 
     def PopulateCommodity(self, comm):
+        """This method is called when the user try to Edit a commodity. The
+        form is populated with the data of the selected commodity. It shows or
+        hides some cols based on the commodity type.
+
+        Args:
+            comm: The commodity data
+        """
         self._orgComm = cpy.deepcopy(comm)
         self._commodity = comm
         self._lblCommType.SetLabel(comm['Type'])
@@ -137,6 +176,14 @@ class CommodityDialog (bf.BasicForm):
         self.OnDSMChange(None)
 
     def OnOk(self, event):
+        """This method is called when the user click Ok to save the commodity
+        data. It gets the commodity info from the view and store it in a the
+        commodity data dictionary. Finally, it notifies the controller that the
+        user want to save the commodity.
+
+        Args:
+            event: The event object from WX
+        """
         self._commodity['Type'] = self._lblCommType.GetLabelText()
         self._commodity['Name'] = self._txtCommName.GetValue()
         self._commodity['Color'] = self._color.GetColour()
@@ -145,5 +192,12 @@ class CommodityDialog (bf.BasicForm):
         pub.sendMessage(EVENTS.COMMODITY_SAVE, data=self._commodity)
 
     def OnCancel(self, event):
+        """This method is called when the user click cancel to ignore the
+        changes he/she did. The method store the commodity info and call the
+        parent class OnCancel method.
+
+        Args:
+            event: The event object from WX
+        """
         self._commodity.update(self._orgComm)
         super().OnCancel(event)

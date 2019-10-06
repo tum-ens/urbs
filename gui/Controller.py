@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 11:35:21 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
+
 import Model as model
 import MainView as view
 import CommodityForm as commf
@@ -25,9 +24,18 @@ from pubsub import pub
 from Events import EVENTS
 
 
-class Controller():
+class Controller:
+    """From its name, this the controller part in the MVC architecture. The
+    Controller mainly facilitate the communication between the Model and other
+    views. There is no core logic inside the controller itself.
+        """
 
     def __init__(self):
+        """Instantiate the controller object.
+
+            It creates the main view and the model instances.
+            subscribe on the user events and handle them accordingly.
+        """
 
         # Model part
         self._resModel = model.RESModel()
@@ -84,6 +92,16 @@ class Controller():
         pub.subscribe(self.CloneItem, EVENTS.ITEM_CLONE)
 
     def AddSite(self, site):
+        """The method is triggered when the user wants to add a new site.
+
+        Args:
+            site: the site name
+
+        Returns:
+            An Error could be returned if a site with the same name already
+            exist.
+        """
+
         status = self._resModel.AddSite(site)
         if status == 1:
             wx.MessageBox('A Site with the same name already exist!', 'Error',
@@ -93,6 +111,12 @@ class Controller():
             self._view.Refresh(False)
 
     def RemoveSites(self, sites):
+        """The method is triggered when the user wants to remove one or more
+        site.
+
+        Args:
+            sites: list of site names
+        """
         s = wx.MessageBox('Are you sure? All site(s) data will be lost!',
                           'Warning', wx.OK | wx.CANCEL | wx.ICON_WARNING)
         if s == wx.OK:
@@ -100,36 +124,80 @@ class Controller():
             self._view.RemoveRESTab(sites)
 
     def AddPeriod(self, period):
+        """The method is triggered when the user wants to add a new period.
+
+        Args:
+            period: the period name
+
+        Returns:
+            An Error could be returned if a period with the same name already
+            exist.
+        """
         status = self._resModel.AddPeriod(period)
         if status == 1:
             wx.MessageBox('A Period with the same name already exist!',
                           'Error', wx.OK | wx.ICON_ERROR)
 
     def RemovePeriods(self, periods):
+        """The method is triggered when the user wants to remove one or more
+        period.
+
+        Args:
+            periods: list of period names
+        """
         s = wx.MessageBox('Are you sure? ', 'Warning',
                           wx.OK | wx.CANCEL | wx.ICON_WARNING)
         if s == wx.OK:
             self._resModel.RemovePeriods(periods)
 
     def RESSelected(self, siteName):
+        """When the user select one of the site(s) tab, the current active
+        model will be the one belongs to this site.
+
+        Args:
+            siteName: the name of the selected site
+        """
         self._model = self._resModel.GetSiteModel(siteName)
 
     def AddYear(self, year):
+        """The method is triggered when the user wants to add a new year.
+
+        Args:
+            year: four digits number represent the year
+        """
         self._resModel.AddYear(year)
 
     def RemoveYears(self, years):
+        """The method is triggered when the user wants to remove one or more
+        years.
+
+        Args:
+            years: list of years to remove
+        """
         s = wx.MessageBox('Are you sure? All year(s) data will be lost!',
                           'Warning', wx.OK | wx.CANCEL | wx.ICON_WARNING)
         if s == wx.OK:
             self._resModel.RemoveYears(years)
 
     def AddCommodity(self, commType):
+        """The method is triggered when the user try to add a new commodity to
+        the model.
+
+        Args:
+            commType: The type of the commodity (ex: Buy, Sell etc...)
+        """
         comm = self._model.CreateNewCommodity(commType)
         self._comForm = commf.CommodityDialog(self._view)
         self._comForm.PopulateCommodity(comm)
         self._comForm.ShowModal()
 
     def EditCommodity(self, commId):
+        """The method is triggered when the user try to edit an existing
+        commodity. Each commodity has a unique Id.
+
+        Args:
+            commId: The Id of the commodity.
+        """
         comm = self._model.GetCommodity(commId)
         if comm:
             self._comForm = commf.CommodityDialog(self._view)
@@ -137,6 +205,17 @@ class Controller():
             self._comForm.ShowModal()
 
     def SaveCommodity(self, data):
+        """The method is triggered when the user press OK to save the changes
+        he/she made while adding/updating a commodity. All the changes are
+        NOT reflected immediately until the user press OK in the view.
+
+        Args:
+            data: a dictionary with the commodity information.
+
+        Returns:
+            An Error could be returned if a commodity with the same name already
+            exist.
+        """
         status = self._model.SaveCommodity(data)
         if status:
             self._comForm.Close()
@@ -145,6 +224,9 @@ class Controller():
                           'Error', wx.OK | wx.ICON_ERROR)
 
     def AddProcess(self):
+        """The method is triggered when the user try to add a new process to
+        the model.
+        """
         newProcess = self._model.CreateNewProcess()
         self._processForm = procf.ProcessDialog(self._view)
         self._processForm.PopulateProcess(
@@ -152,6 +234,19 @@ class Controller():
         self._processForm.ShowModal()
 
     def SaveProcess(self, data):
+        """The method is triggered when the user press OK to save the changes
+        he/she made while adding/updating a process. All the changes are
+        NOT reflected immediately until the user press OK in the view.
+
+        Args:
+            data: a dictionary with the process information.
+
+        Returns:
+            An Error could be returned if:
+
+            - A process with the same name already exist.
+            - The process is not connected to in/out commodities.
+        """
         status = self._model.SaveProcess(data)
         if status == 1:
             wx.MessageBox('A process with the same name already exist!',
@@ -165,6 +260,12 @@ class Controller():
             self._processForm.Close()
 
     def EditProcess(self, processId):
+        """The method is triggered when the user try to edit an existing
+        process. Each process has a unique Id.
+
+        Args:
+            processId: The Id of the process.
+        """
         process = self._model.GetProcess(processId)
         self._processForm = procf.ProcessDialog(self._view)
         self._processForm.PopulateProcess(
@@ -172,6 +273,9 @@ class Controller():
         self._processForm.ShowModal()
 
     def AddStorage(self):
+        """The method is triggered when the user try to add a new storage to
+        the model.
+        """
         newStorage = self._model.CreateNewStorage()
         self._storageForm = strgf.StorageDialog(self._view)
         self._storageForm.PopulateStorage(
@@ -179,6 +283,19 @@ class Controller():
         self._storageForm.ShowModal()
 
     def SaveStorage(self, data):
+        """The method is triggered when the user press OK to save the changes
+        he/she made while adding/updating a storage. All the changes are
+        NOT reflected immediately until the user press OK in the view.
+
+        Args:
+            data: a dictionary with the storage information.
+
+        Returns:
+            An Error could be returned if:
+
+            - A storage with the same name already exist.
+            - The storage is not connected to a commodity
+        """
         status = self._model.SaveProcess(data)  # storage is a process
         if status == 1:
             wx.MessageBox('A storage with the same name already exist!',
@@ -190,6 +307,12 @@ class Controller():
             self._storageForm.Close()
 
     def EditStorage(self, storageId):
+        """The method is triggered when the user try to edit an existing
+        storage. Each storage has a unique Id.
+
+        Args:
+            storageId: The Id of the process.
+        """
         storage = self._model.GetStorage(storageId)
         self._storageForm = strgf.StorageDialog(self._view)
         self._storageForm.PopulateStorage(
@@ -197,19 +320,54 @@ class Controller():
         self._storageForm.ShowModal()
 
     def EditConnection(self, procId, commId, In_Out):
+        """The method is triggered when the user try to edit an existing
+        connection. A connection is an edge between process/storage and a
+        commodity. The connection is identified by the process, the commodity,
+        the direction of the connection (IN or OUT).
+
+        Args:
+            - procId: The Id of the process.
+            - commId: The Id of the commodity.
+            - In_Out: The direction of the connection.
+        """
         connection = self._model.GetConnection(procId, commId, In_Out)
         connForm = connf.ConnectionDialog(self._view)
         connForm.PopulateConnectionGrid(connection)
         connForm.ShowModal()
 
     def GetCommodities(self, siteName):
+        """The method is used to retrieve all commodities associated with a
+        specific site.
+
+        Args:
+            siteName: The name of the current active site (tab).
+
+        Returns:
+            A list of commodities
+        """
         m = self._resModel.GetSiteModel(siteName)
         return m._commodities
 
     def GetProcesses(self):
+        """The method is used to retrieve all processes associated with the
+        current active site (tab).
+
+        Returns:
+            list of process
+        """
         return self._model._processes
 
     def GetLinkedProcesses(self, siteName, commName):
+        """The method is used to retrieve all processes linked to a specific
+        commodity for a certain site.
+
+        Args:
+            - siteName: The name of the current active site (tab).
+            - commName: The commodity name.
+
+        Returns:
+            A list of commodities
+        """
         d = {}
         m = self._resModel.GetSiteModel(siteName)
         for k, p in m._processes.items():
@@ -224,12 +382,26 @@ class Controller():
         return d
 
     def AddTransmission(self):
+        """The method is triggered when the user try to add a new Transmission
+        line.
+        """
         newTrns = self._resModel.CreateNewTrnsm()
         self._trnsForm = tf.TransmissionDialog(self._view, self)
         self._trnsForm.PopulateTrans(newTrns, self._resModel.GetSites())
         self._trnsForm.ShowModal()
 
     def SaveTransmission(self, data):
+        """The method is triggered when the user press OK to save the changes
+        he/she made while adding/updating a transmission. All the changes are
+        NOT reflected immediately until the user press OK in the view.
+
+        Args:
+            data: a dictionary with the transmission information.
+
+        Returns:
+            An Error could be returned if a transmission with the same name
+            already exist.
+        """
         status = self._resModel.SaveTransmission(data)
         if status:
             self._trnsForm.Close()
@@ -240,18 +412,44 @@ class Controller():
                 wx.OK | wx.ICON_ERROR)
 
     def EditTransmission(self, trnsmId):
+        """The method is triggered when the user try to edit an existing
+        transmission. Each transmission has a unique Id.
+
+        Args:
+            trnsmId: The Id of the process.
+        """
         trnsm = self._resModel.GetTransmission(trnsmId)
         self._trnsForm = tf.TransmissionDialog(self._view, self)
         self._trnsForm.PopulateTrans(trnsm, self._resModel.GetSites())
         self._trnsForm.ShowModal()
 
     def GetTransmissions(self):
+        """The method is used to retrieve all transmissions.
+
+        Returns:
+            list of transmissions
+        """
         return self._resModel._transmissions
 
     def GetTrnsmCommodities(self):
+        """The method is used to retrieve the commodities used any transmission
+        line.
+
+        Returns:
+            list of commodities
+        """
         return self._resModel._trnsmCommodities
 
     def GetCommonCommodities(self, site1, site2):
+        """The method is used to get the common commodities between two sites.
+
+        Args:
+            - site1: the name of the site.
+            - site2: the name of the other site.
+
+        Returns:
+            A list of commodities that are in common.
+        """
         m1 = self._resModel.GetSiteModel(site1)
         m2 = self._resModel.GetSiteModel(site2)
 
@@ -262,6 +460,15 @@ class Controller():
         return list(mergedSet)
 
     def OnItemDoubleClick(self, itemId, itemType):
+        """The method is triggered when the user double click on an object/item
+        in the view. The controller calls the proper method based on the item
+        type.
+
+        Args:
+            - itemId: The Id of the clicked item.
+            - itemType: The type of the clicked item (Process, Storage,
+              Commodity or Transmission).
+        """
         if itemType == 'Commodity':
             self.EditCommodity(itemId)
         elif itemType == 'Process':
@@ -272,6 +479,12 @@ class Controller():
             self.EditTransmission(itemId)
 
     def OnItemMove(self, item):
+        """The method is triggered when the user try to move an object/item in
+        the view.
+
+        Args:
+            item: a dictionary with the item data.
+        """
         if item.GetType() == 'Trnsm':
             pub.sendMessage(EVENTS.TRNSM_ITEM_MOVED, item=item)
         else:
@@ -279,6 +492,12 @@ class Controller():
                             self._model.GetSiteName(), item=item)
 
     def SerializeObj(self, obj):
+        """The method is used to get any object as dictionary (key/value pairs).
+        This is used in saving the configuration file.
+
+        Returns:
+            dictionary contains the object attributes.
+        """
         # print(obj)
         if isinstance(obj, wx.Colour):
             return obj.GetAsString()
@@ -286,10 +505,23 @@ class Controller():
         return obj.__dict__
 
     def OnSaveConfig(self, filename):
+        """The method is triggered when the user save his/her work as
+        configuration file.
+
+        Args:
+            filename: the name of the file
+        """
         with open(filename, 'w') as fp:
             json.dump(self._resModel, fp, default=self.SerializeObj, indent=2)
 
     def OnLoadConfig(self, filename):
+        """The method is triggered when the user try to load a configuration
+        file. It reconstruct the model and the necessary views based on the
+        saved configurations.
+
+        Args:
+            filename: the name of the file
+        """
         self._view.RemoveRESTab(self._resModel._sites)
         with open(filename, 'r') as fp:
             data = json.load(fp)
@@ -306,18 +538,49 @@ class Controller():
         self._view.Refresh(False)
 
     def GetGlobalParams(self):
+        """The method is used to get the data for the global parameters view.
+
+        Returns:
+            dictionary with the global parameters (key/value pairs)
+        """
         return self._resModel.GetGlobalParams()
 
     def GetScenarios(self):
+        """The method is used to get the list of scenarios that the user can
+        select among them.
+
+        Returns:
+            A list of scenarios names
+        """
         return sorted(config.DataConfig.SCENARIOS.keys())
 
     def AddScenario(self, scName):
+        """The method is triggered when the user select (check) a scenario in
+        the main view.
+
+        Args:
+            scName: the name of the scenario
+        """
         self._resModel.AddScenario(scName)
 
     def RemoveScenario(self, scName):
+        """The method is triggered when the user deselect (uncheck) a scenario
+        in the main view.
+
+        Args:
+            scName: the name of the scenario
+        """
         self._resModel.RemoveScenario(scName)
 
     def OnCopyClick(self, item):
+        """The method is triggered when the user try to copy an item from site
+        to another. If there is more than one site, the user will get a form
+        with other sites to select among them. Otherwise, he/she will get an
+        error message indicate that there is only one site defined.
+
+        Args:
+            item: the item (Commodity, Process or Storage) to copy
+        """
         sites = [x for x in self._resModel.GetSites() if x !=
                  self._model.GetSiteName()]
         if len(sites) > 0:
@@ -328,6 +591,13 @@ class Controller():
                           'Error', wx.OK | wx.ICON_ERROR)
 
     def CopyItem(self, item, sites):
+        """The method is used to copy an item to other sites. It check if the
+        item (Process or Storage) is already copied before.
+
+        Args:
+            - item: the item (Commodity, Process or Storage) to copy
+            - sites: list of sites to copy to
+        """
         # print(item)
         for site in sites:
             m = self._resModel.GetSiteModel(site)
@@ -341,6 +611,13 @@ class Controller():
                 m.SaveCommodity(item)
 
     def DeleteItem(self, item):
+        """The method is triggered when the user try to delete an item. If the
+        item is Commodity, then we check if the item is used by a Transmission
+        line. If os, we prevent the deletion of the item.
+
+        Args:
+            item: the item (Commodity, Process or Storage) to delete
+        """
         deleted = False
         if item['Type'] in ('Process', 'Storage'):
             self._model.RemoveProcess(item['Id'])
@@ -372,12 +649,28 @@ class Controller():
                             self._model.GetSiteName(), objId=None)
 
     def CloneItem(self, item):
+        """The method is similar to copy item but within the same site.
+
+        Args:
+            item: the item (Commodity, Process or Storage) to clone
+        """
         if item['Type'] in ('Process', 'Storage'):
             self._model.CloneProcess(cpy.deepcopy(item))
         else:
             self._model.CloneCommodity(cpy.deepcopy(item))
 
     def ValidateData(self):
+        """The method is used to do some set of validation before running the
+        solver to detect the errors in early stage. It's mainly do the following
+        validations:
+            - At least one year is defined.
+            - At least one site is defined.
+            - At least one scenario is selected.
+            - At least once Commodity is defined.
+            - If the commodity is of type "SupIm", then the time series should
+              be defined.
+            - At least one process is defined.
+        """
         success = True
         if len(self._resModel._years) == 0:
             success = False
@@ -429,7 +722,10 @@ class Controller():
         return success
 
     def Run(self):
-
+        """The method is used to do run 'urbs' to solve the problem. It simply
+        get the necessary info from the model and execute for evey selected
+        scenario.
+        """
         result_name = self._resModel.GetResultName()
         result_dir = urbs.prepare_result_directory(
             result_name,

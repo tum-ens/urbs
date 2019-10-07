@@ -349,6 +349,40 @@ site `Mid` carrying commodity `Elec` in year `2020`. This set is defined as
         doc='Combinations of possible transmissions, e.g. '
             '(2020,South,Mid,hvac,Elec)')
 
+DCPF Transmission Tuples
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the DC Power Flow Model feature is activated in the model, three different transmission tuple sets are defined in the
+model.
+
+The set :math:`F_{yc{v_\text{out}}{v_\text{in}}^{TP}}` includes every transport model transmission lines and
+is defined as ``tra_tuples_tp`` and given by the code fragment:
+
+::
+
+    m.tra_tuples_tp = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(tra_tuples_tp),
+        doc='Combinations of possible transport transmissions,'
+            'e.g. (2020,South,Mid,hvac,Elec)')
+
+The set :math:`F_{yc{v_\text{out}}{v_\text{in}}^{DCPF}}` includes every transmission
+line, which should be modelled with DCPF. If the complementary arcs are included in
+the input for DCPF transmission lines, these will be excluded from this set with
+:py:func:`remove_duplicate_transmission`. This set is defined as ``tra_tuples_dc`` and given by the code fragment:
+
+::
+
+    m.tra_tuples_dc = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(tra_tuples_dc),
+        doc='Combinations of possible bidirectional dc'
+            'transmissions, e.g. (2020,South,Mid,hvac,Elec)')
+
+If the DCPF is activated, the set :math:`F_{yc{v_\text{out}}{v_\text{in}}}` is defined by the unification of the sets
+:math:`F_{yc{v_\text{out}}{v_\text{in}}^{DCPF}}` and :math:`F_{yc{v_\text{out}}{v_\text{in}}^{TP}}`. This set is defined
+as ``tra_tuples`` in the same fashion as the default transmission model.
+
 
 Storage Tuples
 ^^^^^^^^^^^^^^

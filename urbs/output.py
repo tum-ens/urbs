@@ -146,6 +146,13 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         df_transmission = get_input(instance, 'transmission')
         if com in set(df_transmission.index.get_level_values('Commodity')):
             imported = get_entity(instance, 'e_tra_out')
+            # avoid negative value import for DCPF transmissions
+            if instance.mode['dpf']:
+                # -0.01 to avoid numerical errors such as -0
+                minus_imported = imported[(imported < -0.01)]
+                minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
+                imported = imported[imported >= 0]
+                imported = pd.concat([imported, minus_imported])
             imported = imported.loc[timesteps].xs(
                 [stf, com], level=['stf', 'com'])
             imported = imported.unstack(level='tra').sum(axis=1)
@@ -155,10 +162,20 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = imported.unstack(level='sit')
 
             internal_import = imported[sites].sum(axis=1)  # ...from sites
-            imported = imported[other_sites]  # ...from other_sites
-            imported = drop_all_zero_columns(imported)
+            if instance.mode['dpf']:
+                imported = imported[[x for x in other_sites if x in imported.keys()]]  # ...to existing other_sites
+            else:
+                imported = imported[other_sites]  # ...from other_sites
+            imported = drop_all_zero_columns(imported.fillna(0))
 
             exported = get_entity(instance, 'e_tra_in')
+            # avoid negative value export for DCPF transmissions
+            if instance.mode['dpf']:
+                # -0.01 to avoid numerical errors such as -0
+                minus_exported = exported[(exported < -0.01)]
+                minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
+                exported = exported[exported >= 0]
+                exported = pd.concat([exported, minus_exported])
             exported = exported.loc[timesteps].xs(
                 [stf, com], level=['stf', 'com'])
             exported = exported.unstack(level='tra').sum(axis=1)
@@ -169,8 +186,11 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             internal_export = exported[sites].sum(
                 axis=1)  # ...to sites (internal)
-            exported = exported[other_sites]  # ...to other_sites
-            exported = drop_all_zero_columns(exported)
+            if instance.mode['dpf']:
+                exported = exported[[x for x in other_sites if x in exported.keys()]]  # ...to existing other_sites
+            else:
+                exported = exported[other_sites]  # ...to other_sites
+            exported = drop_all_zero_columns(exported.fillna(0))
         else:
             imported = pd.DataFrame(index=timesteps)
             exported = pd.DataFrame(index=timesteps)
@@ -240,7 +260,17 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     created = created.join(stock)  # show stock as created
     consumed = consumed.join(shifted.rename('Demand'))
 
-    return created, consumed, stored, imported, exported, dsm
+    # VOLTAGE ANGLE of sites
+
+    try:
+        voltage_angle = get_entity(instance, 'voltage_angle')
+        voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
+        voltage_angle = voltage_angle.unstack(level='sit')[sites]
+    except (KeyError, AttributeError):
+        voltage_angle = pd.DataFrame(index=timesteps)
+    voltage_angle.name = 'Voltage Angle'
+
+    return created, consumed, stored, imported, exported, dsm, voltage_angle
 
 
 def drop_all_zero_columns(df):

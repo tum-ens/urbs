@@ -105,3 +105,123 @@ defined and calculated by the following code fragment:
 
 .. literalinclude:: /../urbs/features/transmission.py
    :pyobject: res_transmission_symmetry_rule
+
+DCPF Transmission Constraints
+=============================
+
+The following constraints are included in the model if the optional DC
+Power Flow feature is activated.
+
+**DC Power Flow Rule**: The constraint DC Power Flow rule defines the power flow
+of transmission lines, which are modelled with DCPF. This constraint states that
+the power flow on a transmission line is equal to the product of voltage angle
+differences of two connecting sites :math:`v_\text{out}` and :math:`{v_\text{in}}`
+and the admittance of the transmission line. This constraint is only applied
+to the transmission lines modelled with DCPF. The mathematical explanation of
+this rule is given in :ref:`theory-multinode`. In script ``transmission.py``
+the constraint DC Power Flow Rule is defined and calculated by the following
+code fragment:
+::
+
+    m.def_dc_power_flow = pyomo.Constraint(
+        m.tm, m.tra_tuples_dc,
+        rule=def_dc_power_flow_rule,
+        doc='transmission output = (angle(in)-angle(out))/ 57.2958 '
+            '* -1 *(-1/reactance) * (base voltage)^2')
+
+.. literalinclude:: /../urbs/features/transmission.py
+    :pyobject: def_dc_power_flow_rule
+
+
+**DCPF Transmission Input By Capacity Rule**: The constraint DCPF transmission
+input by capacity rule expands the constraint transmission input by capacity
+rule for transmission lines modelled with DCPF. This constraint limits the
+variable transmission input commodity flow :math:`\pi_{yaft}^\text{in}` of
+DCPF transmission lines also with a lower bound. This constraint prevents the
+absolute value of the transmission power from exceeding the possible power input
+capacity of the line especially when the transmission power can be negative.
+The constraint states that the additive inverse of variable transmission input
+commodity flow :math:`-\pi_{yaft}^\text{in}` must be less than or equal to the
+variable total transmission capacity :math:`\kappa_{yaf}`, scaled by the size of
+the time steps :math: `\Delta t`. This constraint is only applied to the
+tranmission lines modelled with DCPF. The mathematical explanation of this rule
+is given in
+:ref:`theory-multinode`.
+
+In script ``transmission.py`` the constraint transmission input by capacity
+rule is defined and calculated by the following code fragment:
+::
+
+    m.res_transmission_dc_input_by_capacity = pyomo.Constraint(
+        m.tm, m.tra_tuples_dc,
+        rule=res_transmission_dc_input_by_capacity_rule,
+        doc='-dcpf transmission input <= total transmission capacity')
+
+.. literalinclude:: /../urbs/features/transmission.py
+   :pyobject: res_transmission_dc_input_by_capacity_rule
+
+**Voltage Angle Limit Rule**: The constraint voltage angle limit rule limits the
+maximum and minimum difference of voltage angles :math:`\theta_{yvt}` of two sites
+:math:`v_\text{out}` and :math:`{v_\text{in}}` connected with a DCPF
+transmission line with the parameter voltage angle difference limit
+:math:`\overline{dl}_{yaf}`. This constraint is only applied
+to the transmission lines modelled with DCPF. The mathematical explanation of
+this rule is given in :ref:`theory-multinode`. In script ``transmission.py``
+the constraint voltage angle limit rule is defined and given by the following
+code fragment:
+::
+
+    m.def_angle_limit = pyomo.Constraint(
+            m.tm, m.tra_tuples_dc,
+            rule=def_angle_limit_rule,
+            doc='-angle limit < angle(in) - angle(out) < angle limit')
+
+.. literalinclude:: /../urbs/features/transmission.py
+   :pyobject: def_angle_limit_rule
+
+**Absolute Transmission Flow Constraints**: The two absolute transmission flow
+constraints are included in the model to create the variable
+absolute value of transmission commodity flow
+:math:`{\pi_{yaft}^{\text{in}}}^\prime`. By limiting the negative
+:math:`-{\pi_{yaft}^{\text{in}}}^\prime`
+and positive :math:`{\pi_{yaft}^{\text{in}}}^\prime` of substitute variable
+''e_tra_abs'' with the variable :math:`\pi_{yaft}^\text{in}` and minimizing the
+substitute value :math:`{\pi_{yaft}^{\text{in}}}^\prime` the absolute value of
+transmission commodity flow is retrieved. These constraints are only applied to
+the transmission lines modelled with DCPF. The mathematical explanation of
+these rules are given in :ref:`theory-multinode`. In script ``transmission.py``
+the constraint Absolute Transmission Flow Constraints are defined and
+given by the following
+code fragment:
+::
+
+    m.e_tra_abs1 = pyomo.Constraint(
+        m.tm, m.tra_tuples_dc,
+        rule=e_tra_abs_rule1,
+        doc='transmission dc input <= absolute transmission dc input')
+    m.e_tra_abs2 = pyomo.Constraint(
+        m.tm, m.tra_tuples_dc,
+        rule=e_tra_abs_rule2,
+        doc='-transmission dc input <= absolute transmission dc input')
+
+.. literalinclude:: /../urbs/features/transmission.py
+   :pyobject: e_tra_abs_rule1
+
+.. literalinclude:: /../urbs/features/transmission.py
+   :pyobject: e_tra_abs_rule2
+
+**Transmission Symmetry Rule**: The above mentioned constraint transmission symmetry rule
+is only applied to the transmission lines modelled with transport model if the
+DCPF is activated. Since the DCPF transmission lines do not include the complementary
+arcs, this constraint is ignored for these transmission lines. For this reason,
+the constraint is indexed with the transmission tuple set ``m.tra_tuples_tp`` if
+the DCPF is activated.
+
+In script ``transmission.py`` the constraint transmission symmetry rule is
+defined as following if the DCPF is activated:
+::
+
+    m.res_transmission_symmetry = pyomo.Constraint(
+        m.tra_tuples_tp,
+        rule=res_transmission_symmetry_rule,
+        doc='total transmission capacity must be symmetric in both directions')

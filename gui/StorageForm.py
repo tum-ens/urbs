@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 02:56:46 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -17,6 +15,10 @@ from Events import EVENTS
 
 
 class StorageDialog (bf.BasicForm):
+    """
+    This form is used to add a new Storage or edit an existing one. The form
+    inherits from the BasicForm class.
+    """
 
     _gridCols = config.DataConfig.STORAGE_PARAMS
 
@@ -41,6 +43,13 @@ class StorageDialog (bf.BasicForm):
         super().SetContent(contentLayout, wx.ALIGN_CENTER_HORIZONTAL)
 
     def CreateGeneralLayout(self):
+        """This method is called to create the form layout itself, which is a
+        grid table consist of a row for each defined year in our Reference
+        Energy System.
+
+        Return:
+            The created layout
+        """
 
         layout = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -64,6 +73,14 @@ class StorageDialog (bf.BasicForm):
         return layout
 
     def PopulateStorage(self, storage, commList):
+        """This method is called when the user try to Edit a storage. The
+        form is populated with the data of the selected storage. It shows the
+        storage data and to which commodities the storage is connected.
+
+        Args:
+            - storage: The storage data
+            - commList: List of the commodities associated with the storage
+        """
         self._orgStrg = cpy.deepcopy(storage)
         self._storage = storage
         self._txtStorageName.SetValue(storage['Name'])
@@ -76,12 +93,27 @@ class StorageDialog (bf.BasicForm):
         super().SetDataItem(self._storage)
 
     def OnOk(self, event):
+        """This method is called when the user click Ok to save the storage
+        data. It gets the storage info from the view and store it in the
+        storage data dictionary. Finally, it notifies the controller that the
+        user want to save the storage.
+
+        Args:
+            event: The event object from WX
+        """
         self._storage['Name'] = self._txtStorageName.GetValue()
         self._storage['IN'] = self.GetSelectedCommodity()
         self._gridTable1.Commit()
         pub.sendMessage(EVENTS.STORAGE_SAVE, data=self._storage)
 
     def GetSelectedCommodity(self):
+        """
+        This method is called to get the commodity that the user selected to
+        associate with the storage.
+
+        Return:
+            The list of selected commodities (of size 1)
+        """
         x = []
         s = self._ddlComm.GetSelection()
         if s >= 0:
@@ -89,5 +121,12 @@ class StorageDialog (bf.BasicForm):
         return x
 
     def OnCancel(self, event):
+        """This method is called when the user click cancel to ignore the
+        changes he/she did. The method store the storage info and call the
+        parent class OnCancel method.
+
+        Args:
+            event: The event object from WX
+        """
         self._storage.update(self._orgStrg)
         super().OnCancel(event)

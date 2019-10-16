@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 02:56:46 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -18,6 +16,10 @@ from Events import EVENTS
 
 
 class ProcessDialog (bf.BasicForm):
+    """
+    This form is used to add a new Process or edit an existing one. The form
+    inherits from the BasicForm class.
+    """
 
     _gridCols = config.DataConfig.PROCESS_COLS
 
@@ -49,6 +51,13 @@ class ProcessDialog (bf.BasicForm):
         super().SetContent(contentLayout, wx.ALIGN_CENTER_HORIZONTAL)
 
     def CreateGeneralLayout(self):
+        """This method is called to create the form layout itself, which is a
+        grid table consist of a row for each defined year in our Reference
+        Energy System.
+
+        Return:
+            The created layout
+        """
 
         layout = wx.BoxSizer(wx.VERTICAL)
 
@@ -82,6 +91,14 @@ class ProcessDialog (bf.BasicForm):
         return layout
 
     def CreateInCommLayout(self):
+        """This method is called to create the layout for selecting the IN
+        commodities. It's a grid table consist of a row for each defined
+        commodity. The user can select one or more commodity as input to the
+        process.
+
+        Return:
+            The created layout
+        """
         # Input Commodities
         sb = wx.StaticBox(self, wx.ID_ANY, u"Input Commodities:")
         sb.SetForegroundColour('white')
@@ -108,6 +125,14 @@ class ProcessDialog (bf.BasicForm):
         return layout1_1
 
     def CreateOutCommLayout(self):
+        """This method is called to create the layout for selecting the OUT
+        commodities. It's a grid table consist of a row for each defined
+        commodity. The user can select one or more commodity as output of the
+        process.
+
+        Return:
+            The created layout
+        """
         # Output Commodities
         sb = wx.StaticBox(self, wx.ID_ANY, u"Output Commodities:")
         sb.SetForegroundColour('white')
@@ -134,6 +159,14 @@ class ProcessDialog (bf.BasicForm):
         return layout1_2
 
     def PopulateProcess(self, process, commList):
+        """This method is called when the user try to Edit a process. The
+        form is populated with the data of the selected process. It shows the
+        process data and to which IN/OUT commodities the process is connected.
+
+        Args:
+            - process: The process data
+            - commList: List of the commodities associated with the process
+        """
         self._orgProc = cpy.deepcopy(process)
         self._process = process
         self._txtProcessName.SetValue(process['Name'])
@@ -155,6 +188,13 @@ class ProcessDialog (bf.BasicForm):
         super().SetDataItem(self._process)
 
     def OnTimeSerClick(self, event):
+        """This method is called when the user want to define the time series
+        information for the process (for certain year). It shows the
+        'TimeSeries' form so the user can enter the data.
+
+        Args:
+            event: The event object from WX
+        """
         if event.GetCol() != len(self._gridCols) - 1:
             return
 
@@ -164,6 +204,14 @@ class ProcessDialog (bf.BasicForm):
         tsf.ShowModal()
 
     def OnOk(self, event):
+        """This method is called when the user click Ok to save the process
+        data. It gets the process info from the view and store it in the
+        process data dictionary. Finally, it notifies the controller that the
+        user want to save the process.
+
+        Args:
+            event: The event object from WX
+        """
         self._process['Name'] = self._txtProcessName.GetValue()
         self._process['PlotColor'] = self._plotColor.GetColour().GetAsString()
         self._inCommTbl.Commit()
@@ -174,6 +222,16 @@ class ProcessDialog (bf.BasicForm):
         pub.sendMessage(EVENTS.PROCESS_SAVE, data=self._process)
 
     def GetSelectedCommodities(self, gridTbl):
+        """
+        This method is called to get the list of commodities that the user
+        selected as input (or output) for the process.
+
+        Args:
+            gridTbl: The grid that contains all commodities
+
+        Return:
+            The list of selected commodities
+        """
         x = []
         data = gridTbl.GetData()
         for k in sorted(data):
@@ -183,16 +241,47 @@ class ProcessDialog (bf.BasicForm):
         return x
 
     def OnCancel(self, event):
+        """This method is called when the user click cancel to ignore the
+        changes he/she did. The method store the process info and call the
+        parent class OnCancel method.
+
+        Args:
+            event: The event object from WX
+        """
         self._process.update(self._orgProc)
         super().OnCancel(event)
 
     def OnInConnEdit(self, event):
+        """This method triggered when the user wants to Edit the Connection
+        properties. Connection here is the link from input commodity to the
+        process. It just call OnCellDblClk method with 'IN' as the connection
+        direction.
+
+        Args:
+            event: The event object from WX
+        """
         self.OnCellDblClk(event, 'IN')
 
     def OnOutConnEdit(self, event):
+        """This method triggered when the user wants to Edit the Connection
+        properties. Connection here is the link from the process to the output
+        commodity. It just call OnCellDblClk method with 'OUT' as the connection
+        direction.
+
+        Args:
+            event: The event object from WX
+        """
         self.OnCellDblClk(event, 'OUT')
 
     def OnCellDblClk(self, event, In_Out):
+        """This method is called to show the connection form to edit the
+        connection properties per year. If the row of the grid (the commodity)
+        is not selected, the user get an error message.
+
+        Args:
+            - event: The event object from WX
+            - In_Out: The direction of the connection
+        """
         col = event.GetCol()
         if col != 2:
             return

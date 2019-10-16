@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct 29 19:03:07 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -14,6 +12,11 @@ from Events import EVENTS
 
 
 class TransmissionView(wx.Panel):
+    """This module represent the Transmission view (tab) in our solution. It
+    allows the user to define the transmission lines that connect different
+    sites. The connected sites should share at least one common commodity so
+    they can be connected.
+    """
 
     def __init__(self, parent, controller):
         wx.Panel.__init__(self, parent)
@@ -39,6 +42,13 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def BuildToolBar(self):
+        """
+        This method is called to build the tool bar in the transmision view,
+        which is just a button to add a new transmission line.
+
+        Returns:
+            The tool bar layout
+        """
         barLayout = wx.BoxSizer(wx.HORIZONTAL)
 
         actionsLayout = wx.StaticBoxSizer(wx.StaticBox(
@@ -53,11 +63,22 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def OnAddTrnsClick(self, event):
+        """
+        This method is triggered when the user want to add a new transmission
+        line. It just fire an event for the controller to open the Transmission
+        form for the user.
+
+        Args:
+             event: The event object from WX
+        """
         # print('OnAddTrnsClick')
         pub.sendMessage(EVENTS.TRNSM_ADDING)
 # ----------------------------------------------------------------------------#
 
     def BuildCanvas(self):
+        """
+        This method is called to initialize the canvas for drawing the shapes.
+        """
         ogl.OGLInitialize()
         self._canvas = ogl.ShapeCanvas(self)
         maxWidth = 4000
@@ -71,12 +92,22 @@ class TransmissionView(wx.Panel):
 
 # ----------------------------------------------------------------------------#
     def RefreshCanvas(self):
+        """
+        This method is called to refresh the view and redraw the whole canvas.
+        """
         dc = wx.ClientDC(self._canvas)
         self._canvas.PrepareDC(dc)
         self._canvas.Redraw(dc)
 
 # ----------------------------------------------------------------------------#
     def RebuildTrnsm(self, objId):
+        """
+        This method is called to rebuild (redraw) the transmission on the
+        canvas.
+
+        Args:
+            objId: The last added transmission
+        """
         # print('Inside Rebuild')
         self.RemoveAllShapes()
 
@@ -88,6 +119,9 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def RemoveAllShapes(self):
+        """
+        This method is called to remove all shapes from the view.
+        """
         dc = wx.ClientDC(self._canvas)
         self._canvas.PrepareDC(dc)
         for shape in self._diagram.GetShapeList():
@@ -101,6 +135,12 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawCommodities(self):
+        """
+        This method is called to draw the commodities shapes on the view. It
+        loops on all commodities and add a shape for each one. When the function
+        encounter a new site, it start drawing a new area labeled with the site
+        name.
+        """
         x = 100
         prevSite = None
         commDict = self._controller.GetTrnsmCommodities()
@@ -122,6 +162,14 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawTransmissions(self, lastChangedTrnsm):
+        """
+        This method is called to draw the transmission shapes on the view. It
+        loops on all transmission lines and create a shape for each one
+        (rectangle on the canvas)
+
+        Args:
+            lastChangedTrnsm: The last added transmission
+        """
         y = 50
         transmissions = self._controller.GetTransmissions()
         for k in sorted(transmissions):
@@ -140,6 +188,17 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def BuildTrnsmConnections(self, p, trnsmShape):
+        """
+        This method just calling BuildConnections method twice. One for the IN
+        Commodities and the 2nd call for the OUT ones.
+
+        Args:
+            - p: The transmission object data
+            - trnsmShape: The transmission shape (in the drawing)
+
+        Returns:
+            List of connections (connection shapes)
+        """
         lines = []
         inLines = self.BuildConnections(trnsmShape, p['IN'])
         outLines = self.BuildConnections(trnsmShape, p['OUT'])
@@ -149,6 +208,17 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def BuildConnections(self, trnsmShape, commodities):
+        """
+        This method is called to get the connections (lines) that connect the
+        commodities from different sites through the the transmission lines.
+
+        Args:
+            - trnsmShape: The transmission line (shape)
+            - commodities: List of commodities
+
+        Returns:
+            List of connections (connection shapes)
+        """
         lines = []
         lineY = trnsmShape.GetAttachY()
         for comm in commodities:
@@ -168,6 +238,15 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawTrnsmConnections(self, trnsmShape, lines):
+        """
+        This method is called to draw the connections (lines) connected to a
+        certain transmission line. The lines could be to the left and/or the
+        right of the transmission shape.
+
+        Args:
+            - trnsmShape: The transmission line
+            - lines: list of connections to draw
+        """
         # loop on lines and adjust Y
         leftLines = [l for l in lines if l.GetX() < trnsmShape.GetX()]
         rightLines = [l for l in lines if l.GetX() > trnsmShape.GetX()]
@@ -184,6 +263,13 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawGroupArea(self, x):
+        """
+        The transmission view split to areas. This method is called to draw a
+        new group area (vertical line) starting from point x.
+
+        Args:
+            x: The x coordinate
+        """
         # print('DrawGroupArea')
         line = ogl.LineShape()
         line.MakeLineControlPoints(2)
@@ -197,6 +283,14 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def OnItemMove(self, item):
+        """
+        This method is triggered when the user try to drag and move a
+        transmission line. It keep redrawing the canvas to show the item in the
+        new location.
+
+        Args:
+            item: The transmission to move
+        """
         dc = wx.ClientDC(self._canvas)
         self._canvas.PrepareDC(dc)
         if item:
@@ -208,6 +302,13 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def CheckCollision(self, trnsmShape):
+        """
+        This method is called to check if the new added (or moved) transmission
+        is actually collide or overlap with other existing transmission shapes.
+
+        Args:
+            trnsmShape: The added/moved transmission shape
+        """
         shapes = []
         for k, v in self._shapes.items():
             if v.GetType() in ('Trnsm') and k != trnsmShape.GetId():
@@ -230,5 +331,9 @@ class TransmissionView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def Refresh(self):
+        """
+        This method is called to refresh the transmission view. It is simply
+        redraw the canvas that contains all drawing.
+        """
         # self.OnItemMove(None)
         self._canvas.Draw()

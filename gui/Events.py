@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 13:50:31 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 
-class EVENTS():
+class EVENTS:
+    """
+    This module contains all events that are used in our solution. These
+    events are either fired and/or subscribed by the other modules. It is just
+    set of constants of type string (No methods defined).
+    """
 
     YEAR_ADDING = "YEAR_ADDING_"
     YEAR_ADDED = "YEAR_ADDED_"

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Dec 13 18:27:54 2018
+@author: amrelshahawy
 
-@author: aelshaha
+This module contains the error messages that we use in our solution. It is just
+set of constants of type string (No methods defined). It makes the maintenance
+of the messages text much easier and it could be used later for supporting
+several languages.
 """
 
 

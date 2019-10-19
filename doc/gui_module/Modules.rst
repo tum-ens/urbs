@@ -25,74 +25,20 @@ Controller.py
 .. automodule:: gui.Controller
     :members:
 
-MainView.py
+Model.py
 ^^^^^^^^^^^^^
 
-.. automodule:: gui.MainView
+.. automodule:: gui.Model
     :members:
 
-GeneralView.py
+SiteModel.py
 ^^^^^^^^^^^^^
 
-.. automodule:: gui.GeneralView
+.. automodule:: gui.SiteModel
     :members:
 
-YearsView.py
-^^^^^^^^^^^^^
+.. include:: Views.rst
 
-.. automodule:: gui.YearsView
-    :members:
+.. include:: Forms.rst
 
-SitesView.py
-^^^^^^^^^^^^^
-
-.. automodule:: gui.SitesView
-    :members:
-
-PeriodsView.py
-^^^^^^^^^^^^^
-
-.. automodule:: gui.PeriodsView
-    :members:
-
-GlobalsView.py
-^^^^^^^^^^^^^
-
-.. automodule:: gui.GlobalsView
-    :members:
-
-BasicForm.py
-^^^^^^^^^^^^^
-
-.. automodule:: gui.BasicForm
-    :members:
-
-CommodityForm.py
-^^^^^^^^^^^^^^^^
-
-.. automodule:: gui.CommodityForm
-    :members:
-
-TimeSeriesForm.py
-^^^^^^^^^^^^^^^^^
-
-.. automodule:: gui.TimeSeriesForm
-    :members:
-
-SitesForm.py
-^^^^^^^^^^^^^^^^^
-
-.. automodule:: gui.SitesForm
-    :members:
-
-ProcessForm.py
-^^^^^^^^^^^^^^^^^
-
-.. automodule:: gui.ProcessForm
-    :members:
-
-StorageForm.py
-^^^^^^^^^^^^^^^^^
-
-.. automodule:: gui.StorageForm
-    :members:
+.. include:: Util.rst

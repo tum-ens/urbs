@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 11:28:37 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 from pubsub import pub
@@ -13,7 +11,12 @@ import SiteModel as sm
 import pandas as pd
 
 
-class RESModel():
+class RESModel:
+    """
+    This class represent the model for our solution. It maintains the years,
+    sites, periods, scenarios, global parameters, transmissions and a SiteModel
+    for each site.
+    """
 
     def __init__(self, data=None):
         self._years = {}
@@ -56,6 +59,14 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def InitializeGlobalParams(self):
+        """
+        This method is called to initialize the global parameters data. It
+        loops one each parameter in GLOBAL_PARAMS dictionary and initialize it
+        with its default value.
+
+        Returns:
+            dictionary contains the global parameter
+        """
         data = {}
         for p in config.DataConfig.GLOBAL_PARAMS:
             key = p[config.DataConfig.PARAM_KEY]
@@ -70,10 +81,28 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def InitializeSite(self, name):
+        """
+        This method is called to initialize the site data. It simply calls a
+        static method in the SiteModel with the SITE_PARAMS.
+
+        Returns:
+            dictionary contains the site data
+        """
         return sm.SiteModel.InitializeData(config.DataConfig.SITE_PARAMS)
 # ----------------------------------------------------------------------------#
 
     def AddSite(self, siteName):
+        """
+        This method is called to add a new site to our model. If the site is not
+        exist before, it adds the site, create a new SiteModel instance for that
+        site and finally fire an event that the site is added successfully.
+
+        Args:
+            siteName: The name of the new added site
+
+        Returns:
+            0 if OK, 1 otherwise
+        """
         status = 0
         if not (siteName in self._sites):
             self._sites[siteName] = self.InitializeSite(siteName)
@@ -88,6 +117,14 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def RemoveSites(self, sites):
+        """
+        This method is called to remove one or more site from our model. It
+        deletes the SiteModel associated with that site and fires an event that
+        the sites are removed and specify the number of removed sites.
+
+        Args:
+            sites: List of sites (names)
+        """
         notify = 0
         for site in sites:
             self._sites.pop(site)
@@ -101,14 +138,37 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetSites(self):
+        """
+        This method is called to return list of sites (names) in our system,
+        sorted based on the name.
+
+        Returns:
+            sorted list with sites names
+        """
         return sorted(self._sites.keys())
 # ----------------------------------------------------------------------------#
 
     def InitializeYear(self):
+        """
+        This method is called to initialize the year data. It simply calls a
+        static method in the SiteModel with the YEAR_PARAMS.
+
+        Returns:
+            dictionary contains the year data
+        """
         return sm.SiteModel.InitializeData(config.DataConfig.YEAR_PARAMS)
 # ----------------------------------------------------------------------------#
 
     def AddYear(self, year):
+        """
+        This method is called to add a new year to our system. If the year is
+        not exist before, it adds the year, notify each SiteModel to add the
+        year, update the transmission data to include the year and finally fire
+        an event that the year is added successfully.
+
+        Args:
+            year: The new added year
+        """
         if not (year in self._years):
             self._years[year] = self.InitializeYear()
             for m in self._models.values():
@@ -122,6 +182,15 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def RemoveYears(self, years):
+        """
+        This method is called to remove a year or more from our system. it
+        removes the year from the years list, notify each SiteModel to remove
+        the year and finally fire an event that the years are removed
+        successfully.
+
+        Args:
+            years: The list of years to remove
+        """
         for year in years:
             self._years.pop(year)
             for m in self._models.values():
@@ -133,6 +202,17 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def AddPeriod(self, pName):
+        """
+        This method is called to add a new plot period to our model. If the
+        period is not exist before, it adds the plot period and fire an event
+        that the period is added successfully.
+
+        Args:
+            pName: The name of the plot period
+
+        Returns:
+            0 if OK, 1 otherwise
+        """
         status = 0
         if not (pName in self._periods):
             newP = sm.SiteModel.InitializeData(config.DataConfig.PERIOD_PARAMS)
@@ -146,6 +226,14 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def RemovePeriods(self, periods):
+        """
+        This method is called to remove one or more plot periods from our model.
+        It fires an event that periods are removed and specify the number of
+        removed plot periods.
+
+        Args:
+            periods: List of plot periods (names)
+        """
         notify = 0
         for p in periods:
             self._periods.pop(p)
@@ -158,22 +246,59 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetSiteModel(self, siteName):
+        """
+        This method is called to retrieve the SiteModel associate with certain
+        site.
+
+        Args:
+            siteName: The name of the site
+
+        Returns:
+            The model associated with that site
+        """
         return self._models[siteName]
 # ----------------------------------------------------------------------------#
 
     def GetGlobalParams(self):
+        """
+        This method is called to retrieve the global parameters.
+
+        Returns:
+            The global parameters data
+        """
         return self._gl
 # ----------------------------------------------------------------------------#
 
     def AddScenario(self, scName):
+        """
+        This method is called to append a scenario to the selected scenarios
+        list.
+
+        Args:
+            scName: The name of selected scenario
+        """
         self._scenarios.append(scName)
 # ----------------------------------------------------------------------------#
 
     def RemoveScenario(self, scName):
+        """
+        This method is called to remove a scenario from the selected scenarios
+        list.
+
+        Args:
+            scName: The name of selected scenario
+        """
         self._scenarios.remove(scName)
 # ----------------------------------------------------------------------------#
 
     def CreateNewTrnsm(self):
+        """
+        This method is called to create a new transmission line and initialize
+        its data.
+
+        Returns:
+            the transmission data dictionary
+        """
         trnsId = 'NewTrnsm#' + str(len(self._transmissions) + 1)
         data = {}
         data['SiteIn'] = ''
@@ -191,6 +316,18 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def SaveTransmission(self, data):
+        """
+        This method is called to save the transmission data to our model. It
+        checks if a transmission with the same name already exist or not. If
+        it's ok, it saves the data and fire an event that a transmission is
+        added (if new) or edited successfully.
+
+        Args:
+            data: The transmission data dictionary
+
+        Returns:
+            success or not
+        """
         trnsmId = data['Id']
         trnsmName = data['Name']
         success = True
@@ -210,6 +347,13 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def SaveTrnsmCommodities(self, data):
+        """
+        This method is called to save the commodities information used as In or
+        Out for the transmission line.
+
+        Args:
+            data: The transmission data dictionary
+        """
         # In part
         commInId = data['SiteIn'] + '.' + data['CommName']
         m = self._models[data['SiteIn']]
@@ -226,10 +370,32 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetTransmission(self, trnsmId):
+        """
+        This method is called to get the transmission data by its Id.
+
+        Args:
+            trnsmId: The id of the transmission
+
+        Returns:
+            the transmission data
+        """
         return self._transmissions[trnsmId]
 # ----------------------------------------------------------------------------#
 
     def CreateDF(self, tuples, names, columns, values):
+        """
+        This method is called to create a data frame based on the passed 
+        parameters.
+         
+        Args:
+            - tuples: Values for the Multi Index
+            - names: Names for the Multi Index
+            - columns: The names of the data frame columns
+            - values: The actual data values
+
+        Returns:
+            The created data frame
+        """
         index = None
         if len(tuples) > 0:
             index = pd.MultiIndex.from_tuples(tuples, names=names)
@@ -254,6 +420,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetGlobalDF(self):
+        """
+        This method is called to create the global parameters data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         key = config.DataConfig.PARAM_KEY
@@ -293,6 +465,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetSitesDF(self):
+        """
+        This method is called to create the sites data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         columns = ['area']
@@ -310,6 +488,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetCommoditiesDF(self):
+        """
+        This method is called to create the Commodities data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         columns = ['price', 'max', 'maxperhour']
@@ -336,6 +520,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetProcessesDF(self):
+        """
+        This method is called to create the Processes data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         columns = []
@@ -368,6 +558,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetStoragesDF(self):
+        """
+        This method is called to create the Storage data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         columns = []
@@ -402,6 +598,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetConnectionsDF(self):
+        """
+        This method is called to create the Connections data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         columns = []
@@ -433,6 +635,17 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetCommTimeSerDF(self, commTypes, includSite=True):
+        """
+        This method is called to create the Time Series data frame for
+        commodities of certain types.
+
+        Args:
+            - commTypes: The types of commodities
+            - includSite: Include the site name as part of column name or not
+
+        Returns:
+            The created data frame
+        """
         # columns
         data = {}
         for site, m in self._models.items():
@@ -467,19 +680,49 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetDemandTimeSerDF(self):
+        """
+        This method is called to create the Time Series data frame for the
+        Demand commodities, it simply call the method GetCommTimeSerDF with
+        COMM_DEMAND as the type.
+
+        Returns:
+            The created data frame
+        """
         return self.GetCommTimeSerDF([config.DataConfig.COMM_DEMAND])
 # ----------------------------------------------------------------------------#
 
     def GetSupImTimeSerDF(self):
+        """
+        This method is called to create the Time Series data frame for the
+        SupIm commodities, it simply call the method GetCommTimeSerDF with
+        COMM_SUPIM as the type.
+
+        Returns:
+            The created data frame
+        """
         return self.GetCommTimeSerDF([config.DataConfig.COMM_SUPIM])
 # ----------------------------------------------------------------------------#
 
     def GetBuySellTimeSerDF(self):
+        """
+        This method is called to create the Time Series data frame for the
+        Buy and Sell commodities, it simply call the method GetCommTimeSerDF
+        with COMM_BUY and COMM_SELL as the types.
+
+        Returns:
+            The created data frame
+        """
         commTypes = [config.DataConfig.COMM_BUY, config.DataConfig.COMM_SELL]
         return self.GetCommTimeSerDF(commTypes, False)
 # ----------------------------------------------------------------------------#
 
     def GetDsmDF(self):
+        """
+        This method is called to create the DSM data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         columns = []
@@ -511,6 +754,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetTrnsmDF(self):
+        """
+        This method is called to create the Transmissions data frame.
+
+        Returns:
+            The created data frame
+        """
         tuples = []
         values = []
         columns = []
@@ -543,6 +792,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetTimeEffDF(self):
+        """
+        This method is called to create the Time Efficiency data frame.
+
+        Returns:
+            The created data frame
+        """
         data = {}
         tuples = []
         t = range(0, config.DataConfig.TS_LEN)
@@ -584,6 +839,12 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetDataFrames(self):
+        """
+        This method is called to return all created data frames.
+
+        Returns:
+            Dictionary with all data frames
+        """
         data = {
             'global_prop': self.GetGlobalDF(),
             'site': self.GetSitesDF(),
@@ -609,26 +870,57 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetSolver(self):
+        """
+        This method is called to retrieve the selected solver.
+
+        Returns:
+            The solver
+        """
         vCol = config.DataConfig.GLOBAL_COLS[0][config.DataConfig.PARAM_KEY]
         return self._gl['Solver'][vCol]
 # ----------------------------------------------------------------------------#
 
     def GetObjective(self):
+        """
+        This method is called to retrieve the selected objective.
+
+        Returns:
+            The objective
+        """
         vCol = config.DataConfig.GLOBAL_COLS[0][config.DataConfig.PARAM_KEY]
         return self._gl['Objective'][vCol]
 # ----------------------------------------------------------------------------#
 
     def GetTimeStepTuple(self):
+        """
+        This method is called to retrieve the Time Step offset and length.
+
+        Returns:
+            The tuple of time step (offset, length)
+        """
         vCol = config.DataConfig.GLOBAL_COLS[0][config.DataConfig.PARAM_KEY]
         return (self._gl['TSOffset'][vCol], self._gl['TSLen'][vCol])
 # ----------------------------------------------------------------------------#
 
     def GetDT(self):
+        """
+        This method is called to retrieve the Time Step in hours.
+
+        Returns:
+            The time step
+        """
         vCol = config.DataConfig.GLOBAL_COLS[0][config.DataConfig.PARAM_KEY]
         return self._gl['DT'][vCol]
 # ----------------------------------------------------------------------------#
 
     def GetPlotTuples(self):
+        """
+        This method is called to get the tuples to plot. each tuple represent
+        the year, the site and the commodity.
+
+        Returns:
+             The list of created tuples
+        """
         tuples = []
         years = sorted(self._years.keys())
         for year in years:
@@ -647,6 +939,13 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetReportTuples(self):
+        """
+        This method is called to get the tuples to report. each tuple represent
+        the year, the site and the commodity.
+
+        Returns:
+             The list of created tuples
+        """
         tuples = []
         years = sorted(self._years.keys())
         for year in years:
@@ -665,6 +964,13 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetPlotPeriods(self):
+        """
+        This method is called to retrieve the plot periods. A range for each
+        plot period.
+
+        Returns:
+             Dictionary of ranges
+        """
         pp = {}
         for k, v in self._periods.items():
             pp[k] = range(v['offset'], v['offset'] + v['length'])
@@ -673,4 +979,10 @@ class RESModel():
 # ----------------------------------------------------------------------------#
 
     def GetResultName(self):
+        """
+        This method is called to retrieve the result directory name.
+
+        Returns:
+            The name of the result directory
+        """
         return self._gl['RsltName']['value']

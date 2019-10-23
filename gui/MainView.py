@@ -19,7 +19,7 @@ class MainView (wx.Frame):
         fileMenu = wx.Menu()
         omi = fileMenu.Append(wx.ID_OPEN, '&Load Config')
         #####################################################
-        imi = fileMenu.Append(wx.ID_IMPORT, '&Import Excel')
+        imi = fileMenu.Append(wx.ID_ANY, '&Import Excel')
         #####################################################
         smi = fileMenu.Append(wx.ID_SAVE, '&Save Config')
         fileMenu.AppendSeparator()
@@ -112,7 +112,7 @@ class MainView (wx.Frame):
             s = wx.MessageBox('Are you sure? All non saved data will be lost!',
                               'Warning', wx.OK | wx.CANCEL | wx.ICON_WARNING)
             if s == wx.OK:
-                pub.sendMessage(EVENTS.LOAD_CONFIG, filename=fn)
+                pub.sendMessage(EVENTS.IMPORT_CONFIG, filename=fn)
 
 #####################################################
     def OnSave(self, event):

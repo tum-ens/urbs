@@ -21,6 +21,10 @@ import time
 import urbs
 import wx
 
+#####################################################
+#import converter
+#####################################################
+
 from pubsub import pub
 from Events import EVENTS
 
@@ -294,7 +298,9 @@ class Controller():
 
     #####################################################
     def OnImportConfig(self, filename):
-        pass
+        # should not call open as it is an excel file, but should call the converter
+        with open(filename, 'w') as fp:
+            json.dump(self._resModel, fp, default=self.SerializeObj, indent=2)
     #####################################################
 
     def OnLoadConfig(self, filename):

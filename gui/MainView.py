@@ -18,6 +18,9 @@ class MainView (wx.Frame):
         menubar = wx.MenuBar()
         fileMenu = wx.Menu()
         omi = fileMenu.Append(wx.ID_OPEN, '&Load Config')
+        #####################################################
+        imi = fileMenu.Append(wx.ID_IMPORT, '&Import Excel')
+        #####################################################
         smi = fileMenu.Append(wx.ID_SAVE, '&Save Config')
         fileMenu.AppendSeparator()
         qmi = fileMenu.Append(wx.ID_EXIT, 'Exit', 'Quit application')
@@ -28,6 +31,9 @@ class MainView (wx.Frame):
         self.SetMenuBar(menubar)
         self.CreateStatusBar()
         self.Bind(wx.EVT_MENU, self.OnOpen, omi)
+        #####################################################
+        self.Bind(wx.EVT_MENU, self.OnImport, imi)
+        #####################################################
         self.Bind(wx.EVT_MENU, self.OnSave, smi)
         self.Bind(wx.EVT_MENU, self.OnQuit, qmi)
         self.Bind(wx.EVT_MENU, self.OnHelp, hmi)
@@ -94,6 +100,21 @@ class MainView (wx.Frame):
             if s == wx.OK:
                 pub.sendMessage(EVENTS.LOAD_CONFIG, filename=fn)
 
+#####################################################
+    def OnImport(self, event):
+        # Create import file dialog
+        openFileDialog = wx.FileDialog(self, "Import", "./samples", "",
+                                       "urbs files (*.xlsx)|*.xlsx",
+                                       wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+        openFileDialog.ShowModal()
+        fn = openFileDialog.GetPath()
+        if fn:
+            s = wx.MessageBox('Are you sure? All non saved data will be lost!',
+                              'Warning', wx.OK | wx.CANCEL | wx.ICON_WARNING)
+            if s == wx.OK:
+                pub.sendMessage(EVENTS.LOAD_CONFIG, filename=fn)
+
+#####################################################
     def OnSave(self, event):
         openFileDialog = wx.FileDialog(self, "Save", "./samples", "",
                                        "urbs files (*.json)|*.json",

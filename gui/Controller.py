@@ -74,6 +74,9 @@ class Controller():
         pub.subscribe(self.OnItemMove, EVENTS.ITEM_MOVED)
         pub.subscribe(self.OnSaveConfig, EVENTS.SAVE_CONFIG)
         pub.subscribe(self.OnLoadConfig, EVENTS.LOAD_CONFIG)
+        #####################################################
+        pub.subscribe(self.OnImportConfig, EVENTS.IMPORT_CONFIG)
+        #####################################################
 
         pub.subscribe(self.AddScenario, EVENTS.SCENARIO_ADDED)
         pub.subscribe(self.RemoveScenario, EVENTS.SCENARIO_REMOVED)
@@ -288,6 +291,11 @@ class Controller():
     def OnSaveConfig(self, filename):
         with open(filename, 'w') as fp:
             json.dump(self._resModel, fp, default=self.SerializeObj, indent=2)
+
+    #####################################################
+    def OnImportConfig(self, filename):
+        pass
+    #####################################################
 
     def OnLoadConfig(self, filename):
         self._view.RemoveRESTab(self._resModel._sites)

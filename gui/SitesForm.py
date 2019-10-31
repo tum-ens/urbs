@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 02:56:46 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -14,6 +12,12 @@ from Events import EVENTS
 
 
 class SitesDialog (wx.Dialog):
+    """
+    This form is shown to the user when he/she try to copy an item from site to
+    another one. It shows a list of sites so the user can select to which
+    sites(s) he/she wants to copy the item. The item can be a Commodity,
+    Process or Storage.
+    """
 
     def __init__(self, parent, sites, item):
         wx.Dialog.__init__(self, parent, id=wx.ID_ANY,
@@ -45,12 +49,33 @@ class SitesDialog (wx.Dialog):
         self.Centre(wx.BOTH)
 
     def OnCancel(self, event):
+        """This method is called when the user click on the Cancel button. It
+        simply ignores any data changes that the user did and close the form.
+
+        Args:
+            event: The event object from WX
+        """
         self.Close()
 
     def OnSelectAll(self, event):
+        """This method simply select all sites on the form. It means the user
+        wants to copy the item to all other sites.
+
+        Args:
+            event: The event object from WX
+        """
         self._lb.SetCheckedStrings(self._sites)
 
     def OnOk(self, event):
+        """This method is called when the user click Ok in the form. If there's
+        at least one site is selected, it fire an even that an item is copied
+        (this event will be captured by the controller), then it closes the
+        form. Otherwise, it shows an error that at least one site should be
+        selected.
+
+        Args:
+            event: The event object from WX
+        """
         sites = self._lb.GetCheckedStrings()
         if len(sites) > 0:
             pub.sendMessage(EVENTS.ITEM_COPIED,

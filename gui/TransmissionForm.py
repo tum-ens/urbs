@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 02:56:46 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -17,6 +15,10 @@ from Events import EVENTS
 
 
 class TransmissionDialog (bf.BasicForm):
+    """
+    This form is used to add a new Transmission or edit an existing one. The
+    form inherits from the BasicForm class.
+    """
 
     _gridCols = config.DataConfig.TRANS_PARAMS
 
@@ -43,6 +45,13 @@ class TransmissionDialog (bf.BasicForm):
         self._controller = controller
 
     def CreateGeneralLayout(self):
+        """This method is called to create the form layout itself, which is a
+        grid table consist of a row for each defined year in our Reference
+        Energy System.
+
+        Return:
+            The created layout
+        """
 
         layout = wx.BoxSizer(wx.VERTICAL)
 
@@ -92,6 +101,14 @@ class TransmissionDialog (bf.BasicForm):
         return layout
 
     def OnSiteChange(self, event):
+        """
+        This method is triggered when the selected site is changed. The main
+        purpose is to populate the commodities drop down list with the common
+        commodities only between the selected sites.
+
+        Args:
+            event: The event object from WX
+        """
         self._ddlComm.Clear()
         if not self._ddlSiteIn.GetValue() or not self._ddlSiteOut.GetValue():
             return
@@ -112,6 +129,15 @@ class TransmissionDialog (bf.BasicForm):
                       'Error', wx.OK | wx.ICON_ERROR)
 
     def PopulateTrans(self, trnsm, sitesList):
+        """This method is called when the user try to Edit a transmission. The
+       form is populated with the data of the selected transmission. It shows
+       the transmission data and to which sites and commodity the transmission i
+       s connected.
+
+       Args:
+           - trnsm: The transmission data
+           - sitesList: List of all sites
+       """
         self._orgTrnsm = cpy.deepcopy(trnsm)
         self._trnsm = trnsm
         self._txtTrnsmName.SetValue(trnsm['Name'])
@@ -129,6 +155,16 @@ class TransmissionDialog (bf.BasicForm):
         super().PopulateGrid(self._gridTable1, trnsm['Years'])
 
     def OnOk(self, event):
+        """This method is called when the user click Ok to save the transmission
+        data. It makes sure that a Input site is selected, the output site is
+        selected and the in and out sites are different sites. It gets the
+        transmission info from the view and store it in the transmission data
+        dictionary.  Finally, it notifies the controller that the user wants
+        to save the transmission.
+
+        Args:
+            event: The event object from WX
+        """
         if not self._ddlSiteIn.GetValue():
             wx.MessageBox('Please select a site in.',
                           'Error', wx.OK | wx.ICON_ERROR)
@@ -150,5 +186,12 @@ class TransmissionDialog (bf.BasicForm):
             pub.sendMessage(EVENTS.TRNSM_SAVE, data=self._trnsm)
 
     def OnCancel(self, event):
+        """This method is called when the user click cancel to ignore the
+        changes he/she did. The method store the transmission info and call the
+        parent class OnCancel method.
+
+        Args:
+            event: The event object from WX
+        """
         self._trnsm.update(self._orgTrnsm)
         super().OnCancel(event)

@@ -63,16 +63,4 @@ MVC is preserved, and everyone is happy. Your application framework may well pro
 
 Our approach is to use **wx.lib.pubsub** as the method of communication.
 
-Modules Descriptions
----------------------
-
-The below diagram represent all modules in our solution. We will talk about each module in the next chapter.
-
-.. image:: img/modules.png
-    :width: 100%
-    :align: center
-
-.. toctree::
-   :maxdepth: 1
-
-   Modules
+.. include:: Modules.rst

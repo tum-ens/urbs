@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 14:06:42 2018
+@author: amrelshahawy
 
-@author: aelshaha
+This is the entry point for our application, where we instantiate our wxApp.
+    - Create a wx application object.
+    - Instantiate the controller. The controller internally will instantiate the
+      necessary model(s) and the main view.
+    - Start the event loop (user inputs).
 """
 
 import wx

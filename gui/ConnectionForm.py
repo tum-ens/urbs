@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 31 02:56:46 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -13,6 +11,11 @@ import BasicForm as bf
 
 
 class ConnectionDialog (bf.BasicForm):
+    """
+    This form is used to add a new Connection or edit an existing one. The form
+    inherits from the BasicForm class. Connection is the link between a
+    a process and a commodity, so it could be IN or OUT connection.
+    """
 
     _gridCols = config.DataConfig.CONNECTION_PARAMS
 
@@ -28,5 +31,12 @@ class ConnectionDialog (bf.BasicForm):
         super().SetContent(self._yearsGrid, wx.ALIGN_CENTER_HORIZONTAL)
 
     def PopulateConnectionGrid(self, connection):
+        """This method is called when the user try to Edit a connection. The
+        form is populated with the data of the selected connection. It shows
+        a grid with a row for each year.
+
+        Args:
+            connection: The connection data
+        """
         self._conn = connection
         super().PopulateGrid(self._gridTable, connection['Years'])

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 30 11:07:15 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx
@@ -15,6 +13,11 @@ from Events import EVENTS
 
 
 class RESView(wx.Panel):
+    """This module represent the Reference Energy System (RES) view in our
+    solution. It is created for each site, each site will have its own view and
+    model as well. It allows the user to define the commodities, processes,
+    storage for this site and show how they are connected graphically.
+    """
 
     _actions = {1: {'Name': 'SupIm', 'ImgPath': 'Solar_WE_10.png'},
                 2: {'Name': 'Buy', 'ImgPath': 'Buy.png'},
@@ -59,10 +62,25 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def GetSiteName(self):
+        """
+        Each RES view is for a specific site. This method is called to get the
+        name of the site associated with this RES view.
+
+        Returns:
+            The site name
+        """
         return self._siteName
 # ----------------------------------------------------------------------------#
 
     def BuildToolBar(self):
+        """
+        This method is called to build the tool bar in the RES view. It allows
+        the user to add new commodities (with different types), processes and
+        storage.
+
+        Returns:
+            The tool bar layout
+        """
         barLayout = wx.BoxSizer(wx.HORIZONTAL)
 
         actionsLayout = wx.StaticBoxSizer(wx.StaticBox(
@@ -98,6 +116,14 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def OnToolClick(self, event):
+        """
+        This method is triggered when the user want to add a new shape
+        (commodity, process or storage) to the view. It just fire an event for
+        the controller to open the proper form for the user.
+
+        Args:
+             event: The event object from WX
+        """
         # print("tool %s clicked\n" % event.GetId())
         if event.GetId() == 10:
             pub.sendMessage(EVENTS.PROCESS_ADDING)
@@ -109,6 +135,9 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def BuildCanvas(self):
+        """
+        This method is called to initialize the canvas for drawing the shapes.
+        """
         ogl.OGLInitialize()
         self._canvas = ogl.ShapeCanvas(self)
         maxWidth = 4000
@@ -122,12 +151,22 @@ class RESView(wx.Panel):
 
 # ----------------------------------------------------------------------------#
     def RefreshCanvas(self):
+        """
+        This method is called to refresh the view and redraw the whole canvas.
+        """
         dc = wx.ClientDC(self._canvas)
         self._canvas.PrepareDC(dc)
         self._canvas.Redraw(dc)
 
 # ----------------------------------------------------------------------------#
     def RebuildRES(self, objId):
+        """
+        This method is called to rebuild (redraw) the whole view. It clears all
+        shapes, draw the commodities and finally the processes.
+
+        Args:
+            objId: The last added process/storage
+        """
         # print('Inside Rebuild')
         self.RemoveAllShapes()
         self.DrawCommodities()
@@ -137,6 +176,9 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def RemoveAllShapes(self):
+        """
+        This method is called to remove all shapes from the view (clear diagram)
+        """
         dc = wx.ClientDC(self._canvas)
         self._canvas.PrepareDC(dc)
         for shape in self._diagram.GetShapeList():
@@ -150,6 +192,12 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawCommodities(self):
+        """
+        This method is called to draw the commodities shapes on the view. It
+        loops on all commodities and add a shape for each one. When the function
+        encounter a new group, it start drawing a new area (vertical line) to
+        split the view.
+        """
         x = 60
         prevGrp = '0'
         prevCommHasProc = False
@@ -176,6 +224,14 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawProcesses(self, lastChangedProcess):
+        """
+        This method is called to draw the process shapes on the view. It
+        loops on all commodities and for each commodity, it gets the linked
+        processes to be drawn.
+
+        Args:
+            lastChangedProcess: The last added process/storage
+        """
         commDict = self._controller.GetCommodities(self._siteName)
         for commId in sorted(commDict):
             x = self._shapes[commId].GetX() + 100
@@ -197,6 +253,20 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def BuildProcConnections(self, p, procShape):
+        """
+        This method is called to get the connections (lines) that should be
+        drawn from/to the process shape. It get the Input commodities for the
+        process and start add the necessary lines (connections). Similarly, it
+        gets the output commodities and loop on them to add the necessary
+        connections (to the right).
+
+        Args:
+            - p: The process object data
+            - procShape: The process shape in the view
+
+        Returns:
+            List of connections (connection shapes)
+        """
         lines = []
         lineY = procShape.GetAttachY()
         # Draw in (always from left to right)
@@ -226,6 +296,15 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawProcConnections(self, procShape, lines):
+        """
+        This method is called to draw the connections (lines) connected to a
+        certain process/storage. The lines could be to the left and/or the
+        right of the process shape.
+
+        Args:
+            - procShape: The process/storage shape
+            - lines: list of connections to draw
+        """
         # loop on lines and adjust Y
         leftLines = [l for l in lines if l.GetX() < procShape.GetX()]
         rightLines = [l for l in lines if l.GetX() > procShape.GetX()]
@@ -242,6 +321,13 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def DrawGroupArea(self, x):
+        """
+        The RES view split into three areas. This method is called to draw a
+        new group area (vertical line) starting from point x.
+
+        Args:
+            x: The x coordinate
+        """
         line = ogl.LineShape()
         line.MakeLineControlPoints(2)
         line.SetEnds(x, 0, x, 2000)
@@ -254,6 +340,14 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def OnItemMove(self, item):
+        """
+        This method is triggered when the user try to drag and move a process or
+        storage shape. It keep redrawing the canvas to show the item in the
+        new location.
+
+        Args:
+            item: The process/storage shape
+        """
         dc = wx.ClientDC(self._canvas)
         self._canvas.PrepareDC(dc)
         if item:
@@ -265,6 +359,14 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def CheckCollision(self, procShape):
+        """
+        This method is called to check if the new added (or moved) process
+        (or storage) is actually collide or overlap with other existing
+        process/storage shapes.
+
+        Args:
+            procShape: The added/moved process/storage shape
+        """
         shapes = []
         for k, v in self._shapes.items():
             if (
@@ -291,5 +393,9 @@ class RESView(wx.Panel):
 # ----------------------------------------------------------------------------#
 
     def Refresh(self):
+        """
+        This method is called to refresh the view. It is simply redraw the
+        canvas that contains all drawing.
+        """
         # self.OnItemMove(None)
         self._canvas.Draw()

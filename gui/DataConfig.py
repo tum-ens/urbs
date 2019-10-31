@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Nov  3 15:02:37 2018
-
-@author: aelshaha
+@author: amrelshahawy
 """
 
 import wx.grid
@@ -17,9 +15,29 @@ sys.path.insert(0, '..')
 import urbs  # noqa: E402
 
 
-class DataConfig():
+class DataConfig:
+    """
+    This module contains the data configuration used in our solution. It defines
+    the grid parameters (cols) for each grid in our application. Thus, in case
+    we need to add more columns to one of the grids, we just need to add a new
+    entry in this file. For instance, adding a new global parameter to our
+    application, requires only a change in the GLOBAL_PARAMS constant. In
+    addition, the list of scenarios is maintained in this module as well.
+    """
 
     def resource_path(relative_path):
+        """
+        This method is called to retrieve the path of a certain resource,
+        mainly the images in our solution. Thus, it doesn't matter if we running
+        the application from the dev environment or through standalone
+        executable.
+
+        Args:
+            relative_path: The relative path of our resource
+
+        Returns:
+            The absolute path of the resource
+        """
         try:
             base_path = sys._MEIPASS
         except Exception:

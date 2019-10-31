@@ -1,0 +1,41 @@
+{
+  "_years": {},
+  "_sites": {},
+  "_periods": {},
+  "_models": {},
+  "_transmissions": {},
+  "_trnsmCommodities": {},
+  "_gl": {
+    "Discount rate": {
+      "value": 0.03
+    },
+    "CO2 budget": {
+      "value": 1000000
+    },
+    "Cost budget": {
+      "value": 300000000
+    },
+    "Weight": {
+      "value": 10
+    },
+    "Solver": {
+      "value": "glpk"
+    },
+    "Objective": {
+      "value": "cost"
+    },
+    "TSOffset": {
+      "value": 1000
+    },
+    "TSLen": {
+      "value": 168
+    },
+    "DT": {
+      "value": 1
+    },
+    "RsltName": {
+      "value": "Campus"
+    }
+  },
+  "_scenarios": []
+}

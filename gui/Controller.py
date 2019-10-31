@@ -305,6 +305,7 @@ class Controller():
         savetojson.convert_to_json(filename, json_filename = pre)
         with open(pre + '.json', 'w') as fp:
             json.dump(self._resModel, fp, default=self.SerializeObj, indent=2)
+
     #####################################################
 
     def OnLoadConfig(self, filename):

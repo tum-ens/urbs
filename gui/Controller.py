@@ -23,7 +23,6 @@ import wx
 
 #####################################################
 #import converter
-import os
 import savetojson
 #####################################################
 
@@ -300,12 +299,9 @@ class Controller():
 
     #####################################################
     def OnImportConfig(self, filename):
-        # should not call open as it is an excel file, but should call the converter
-        pre, ext = os.path.splitext(filename)
-        savetojson.convert_to_json(filename, json_filename = pre)
-        with open(pre + '.json', 'w') as fp:
-            json.dump(self._resModel, fp, default=self.SerializeObj, indent=2)
-
+        #filename.replace('\\','/')
+        savetojson.convert_to_json(filename, json_filename = filename)
+        pub.sendMessage(EVENTS.LOAD_CONFIG, filename=filename + '.json')
     #####################################################
 
     def OnLoadConfig(self, filename):

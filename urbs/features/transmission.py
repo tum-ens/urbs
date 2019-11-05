@@ -244,7 +244,7 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
         if (sin, sout, tra, com, stf) in m.inst_tra_tuples:
             if (min(m.stf), sin, sout, tra, com) in m.tra_const_cap_dict:
                 cap_tra = m.transmission_dict['inst-cap'][
-                    (stf, sin, sout, tra, com)]
+                    (min(m.stf), sin, sout, tra, com)]
             else:
                 cap_tra = (
                     sum(m.cap_tra_new[stf_built, sin, sout, tra, com]

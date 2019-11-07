@@ -22,8 +22,8 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     if input_files == 'Input':
         glob_input = os.path.join("..", input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
-    else:
-        input_files = [input_files]
+    #else:
+     #   input_files = [input_files]
 
     # read all the excel sheets and store them in a list
     sheet_list = []

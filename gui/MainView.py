@@ -105,9 +105,9 @@ class MainView (wx.Frame):
         # Create import file dialog
         openFileDialog = wx.FileDialog(self, "Import", "./samples", "",
                                        "urbs files (*.xlsx)|*.xlsx",
-                                       wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+                                        wx.FD_MULTIPLE | wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
-        fn = openFileDialog.GetPath()
+        fn = openFileDialog.GetPaths()
         if fn:
             s = wx.MessageBox('Are you sure? All non saved data will be lost!',
                               'Warning', wx.OK | wx.CANCEL | wx.ICON_WARNING)

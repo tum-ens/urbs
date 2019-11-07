@@ -300,8 +300,10 @@ class Controller():
     #####################################################
     def OnImportConfig(self, filename):
         #filename.replace('\\','/')
-        savetojson.convert_to_json(filename, json_filename = filename)
-        pub.sendMessage(EVENTS.LOAD_CONFIG, filename=filename + '.json')
+            
+        savetojson.convert_to_json(filename, json_filename = filename[0])
+        pub.sendMessage(EVENTS.LOAD_CONFIG, filename=filename[0] + '.json')
+        
     #####################################################
 
     def OnLoadConfig(self, filename):

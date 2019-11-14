@@ -22,8 +22,9 @@ import urbs
 import wx
 
 #####################################################
-#import converter
+#import converter script from same folder urbs/gui for now
 import savetojson
+import os
 #####################################################
 
 from pubsub import pub
@@ -298,11 +299,19 @@ class Controller():
             json.dump(self._resModel, fp, default=self.SerializeObj, indent=2)
 
     #####################################################
+    # Import function calls converter script with a list of filepaths
+    # and the first path in the list as output filename
+    # onLoadConfig loads the converted file and updates the gui
     def OnImportConfig(self, filename):
-        #filename.replace('\\','/')
-            
-        savetojson.convert_to_json(filename, json_filename = filename[0])
-        pub.sendMessage(EVENTS.LOAD_CONFIG, filename=filename[0] + '.json')
+        
+        if len(filename) > 1:
+            stems = [os.path.basename(os.path.splitext(path)[0]) for path in filename[1:]]
+            stems.insert(0,os.path.splitext(filename[0])[0])
+            savename = '_'.join(stems)
+        else:
+            savename = os.path.splitext(filename[0])[0]
+        savetojson.convert_to_json(filename, json_filename = savename)
+        pub.sendMessage(EVENTS.LOAD_CONFIG, filename = savename + '.json')
         
     #####################################################
 

@@ -19,6 +19,8 @@ class MainView (wx.Frame):
         fileMenu = wx.Menu()
         omi = fileMenu.Append(wx.ID_OPEN, '&Load Config')
         #####################################################
+        # add import button to menu with name 'I'mport'M'enu'I'tem 
+        # ID_ANY is used as there is no dedicated id for imports
         imi = fileMenu.Append(wx.ID_ANY, '&Import Excel')
         #####################################################
         smi = fileMenu.Append(wx.ID_SAVE, '&Save Config')
@@ -101,8 +103,9 @@ class MainView (wx.Frame):
                 pub.sendMessage(EVENTS.LOAD_CONFIG, filename=fn)
 
 #####################################################
+# create import dialog where one can select multiple files
+# filepaths are returned as list
     def OnImport(self, event):
-        # Create import file dialog
         openFileDialog = wx.FileDialog(self, "Import", "./samples", "",
                                        "urbs files (*.xlsx)|*.xlsx",
                                         wx.FD_MULTIPLE | wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -113,8 +116,8 @@ class MainView (wx.Frame):
                               'Warning', wx.OK | wx.CANCEL | wx.ICON_WARNING)
             if s == wx.OK:
                 pub.sendMessage(EVENTS.IMPORT_CONFIG, filename=fn)
-
 #####################################################
+
     def OnSave(self, event):
         openFileDialog = wx.FileDialog(self, "Save", "./samples", "",
                                        "urbs files (*.json)|*.json",

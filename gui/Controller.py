@@ -303,15 +303,15 @@ class Controller():
     # and the first path in the list as output filename
     # onLoadConfig loads the converted file and updates the gui
     def OnImportConfig(self, filename):
-        
         if len(filename) > 1:
             stems = [os.path.basename(os.path.splitext(path)[0]) for path in filename[1:]]
             stems.insert(0,os.path.splitext(filename[0])[0])
+            stems.append('.json')
             savename = '_'.join(stems)
         else:
-            savename = os.path.splitext(filename[0])[0]
+            savename = os.path.splitext(filename[0])[0] + '.json'
         savetojson.convert_to_json(filename, json_filename = savename)
-        pub.sendMessage(EVENTS.LOAD_CONFIG, filename = savename + '.json')
+        pub.sendMessage(EVENTS.LOAD_CONFIG, filename = savename)
         
     #####################################################
 

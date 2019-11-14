@@ -22,8 +22,12 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     if input_files == 'Input':
         glob_input = os.path.join("..", input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
+#####################################################
+# removed packaging of filepath into list 
+# so that multiple filepaths can be selected in gui which are already stored in a list
     #else:
      #   input_files = [input_files]
+#####################################################
 
     # read all the excel sheets and store them in a list
     sheet_list = []
@@ -46,7 +50,11 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     data_dict['_trnsmCommodities'] = read_transmission_commodities(sheet_list, data_dict)
 
     # make sure that json_filename is valid
-    if json_filename[-5:] is not '.json':
+    #####################################################
+    if os.path.splitext(json_filename)[1] != '.json':
+        
+    #####################################################
+    #if json_filename[-5:] is not '.json':
         json_filename += '.json'
 
     # create json file

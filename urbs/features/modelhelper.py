@@ -182,9 +182,8 @@ def op_pro_tuples(pro_tuple, m):
                     1 <= stf + m.process_dict['depreciation'][
                                               (stf, sit, pro)]):
                     op_pro.append((sit, pro, stf, stf_later))
-            elif (sorted_stf[index_helper+1] <=
-                  stf + m.process_dict['depreciation'][(stf, sit, pro)] and
-                  stf <= stf_later):
+            elif stf <= stf_later <= stf + m.process_dict['depreciation'][(stf, sit, pro)]:
+                print('yes')
                 op_pro.append((sit, pro, stf, stf_later))
             else:
                 pass
@@ -210,8 +209,7 @@ def inst_pro_tuples(m):
                    1 < min(m.stf) + m.process_dict['lifetime'][
                                                    (stf, sit, pro)]):
                     inst_pro.append((sit, pro, stf_later))
-            elif (sorted_stf[index_helper+1] <=
-                  min(m.stf) + m.process_dict['lifetime'][(stf, sit, pro)]):
+            elif stf_later <= min(m.stf) + m.process_dict['lifetime'][(stf, sit, pro)]:
                 inst_pro.append((sit, pro, stf_later))
 
     return inst_pro

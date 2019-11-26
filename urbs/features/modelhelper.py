@@ -183,7 +183,6 @@ def op_pro_tuples(pro_tuple, m):
                                               (stf, sit, pro)]):
                     op_pro.append((sit, pro, stf, stf_later))
             elif stf <= stf_later <= stf + m.process_dict['depreciation'][(stf, sit, pro)]:
-                print('yes')
                 op_pro.append((sit, pro, stf, stf_later))
             else:
                 pass

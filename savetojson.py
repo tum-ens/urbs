@@ -25,8 +25,8 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
 #####################################################
 # removed packaging of filepath into list 
 # so that multiple filepaths can be selected in gui which are already stored in a list
-    #else:
-     #   input_files = [input_files]
+    elif type(input_files).__name__ == 'string':
+        input_files = [input_files]
 #####################################################
 
     # read all the excel sheets and store them in a list
@@ -51,8 +51,7 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
 
     # make sure that json_filename is valid
     #####################################################
-    if os.path.splitext(json_filename)[1] != '.json':
-        
+    if os.path.splitext(json_filename)[1] != '.json': 
     #####################################################
     #if json_filename[-5:] is not '.json':
         json_filename += '.json'

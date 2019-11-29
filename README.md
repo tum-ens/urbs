@@ -8,8 +8,8 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 ## Features
 
   * urbs is a linear programming model for multi-commodity energy systems with a focus on optimal storage sizing and use.
-  * It finds the minimum cost energy system to satisfy given demand timeseries for possibly multiple commodities (e.g. electricity).
-  * By default, operates on hourly-spaced timesteps (configurable).
+  * It finds the minimum cost energy system to satisfy given demand time  series for possibly multiple commodities (e.g. electricity).
+  * By default, operates on hourly-spaced time steps (configurable).
   * Thanks to [Pandas](https://pandas.pydata.org), complex data analysis is easy.
   * The model itself is quite small thanks to relying on package [Pyomo](http://www.pyomo.org/).
   * The small codebase includes reporting and plotting functionality.
@@ -22,74 +22,50 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ## Installation
 
-### Windows
+There are 2 ways to get all required packages under Windows. We recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python (version 3.6 **recommended**, 2.7 is supported as well) installation, you can also download the required packages by yourself..
 
-There are 2 ways to get all required packages under Windows. I recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python (version 3.5 **recommended**, 2.7 is supported as well) installation, you can also download the required packages by yourself..
+### Anaconda/Miniconda (recommended)
 
-#### Anaconda (recommended)
-
-  1. **[Anaconda (Python 3)](http://continuum.io/downloads)**. Choose the 64-bit installer if possible.  
+  1. **[Anaconda (Python 3)](http://continuum.io/downloads)/[Miniconda](https://docs.conda.io/en/latest/miniconda.html)**. Choose the 64-bit installer if possible.
      During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected! If only higher Python versions are available, you can switch to a specific Python Version by typing `conda install python=<version>`
-  2. **Solver**: [GLPK](http://winglpk.sourceforge.net/).
-     1. Launch a new command prompt (Win+R, type "cmd", Enter)
-     2. Install it via conda by `conda install -c conda-forge glpk`. It will add it to the path variable, too.
-  3. **Pyomo**
-     1. Launch a new command prompt (Win+R, type "cmd", Enter)
-     2. Type `conda install -c conda-forge pyomo`, hit Enter.
+  2. **Packages and Solver**: [GLPK](http://winglpk.sourceforge.net/).
+     1. Download the [environment file](https://github.com/tum-ens/urbs/blob/master/urbs-env.yml).
+     2. Launch a new command prompt (Windows: Win+R, type "cmd", Enter)
+     3. Install it via conda by `conda env create -f urbs-env.yml`.
+     4. Each time you open a new terminal for running urbs, you can activate the environment by `conda activate urbs`.
 
 Continue at [Get Started](#get-started).
 
-#### Manually (the hard way)
+### Manually (the hard way)
 
-For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work, though 64 bit is recommended.
-
-  1. **[Python 3](https://python.org/download)**. Python 2.7 is also supported.
-  2. **[pip3](https://pip.pypa.io/en/latest/installing.html)**.The Python package manager. It allows to install many Python packages with a simple command. 
-      1. After installation, add `C:\Python3x\Scripts` to environment variable "Path" ([how](http://geekswithblogs.net/renso/archive/2009/10/21/how-to-set-the-windows-path-in-windows-7.aspx)), so that the `pip` command becomes available on the command prompt.
-  3. **IPython**: execute `pip install ipython3` in a command prompt.
-  4. **SciPy stack:** These require binary installers, made available and maintained by [C. Gohlke](http://www.lfd.uci.edu/~gohlke/pythonlibs/). *How to select the correct file:* Download the newest stable version of each package, whose filename suffix matches both "bitness" (32 bit or 64 bit) and Python version (i.e. 3.x).  
-      1. [NumPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
-      2. [SciPy](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
-      3. [matplotlib](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib), requires [dateutil](http://www.lfd.uci.edu/~gohlke/pythonlibs/#python-dateutil), [pytz](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pytz), [pyparsing](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyparsing) and [six](http://www.lfd.uci.edu/~gohlke/pythonlibs/#six). 
-      4. As a test, you can try start `ipython` and have a MATLAB-style command line with plotting capabilities. If you receive message about "ipython could not be found", check if the `C:\Python35\Scripts` is added to the "Path" system variable as described in step 2.i. above.
-  5. **[pandas](https://pypi.python.org/pypi/pandas#downloads)**: its [Series](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#series) and [DataFrame](http://pandas.pydata.org/pandas-docs/stable/dsintro.html#dataframe) are used for representing all model input and output. Its capabilities are exploited to write short analysis scripts in `runme.py` and `comp.py`, as well as in the functions `urbs.plot` and `urbs.report`.
-  6. **Pyomo**: execute `pip install pyomo` in a command prompt.
-  7. **Solver**: [GLPK](http://winglpk.sourceforge.net/).
-      1. Simply unzip the latest version somewhere, e.g. `C:\GLPK`. 
-      2. Then add the subdirectory `w64`, which contains `glpsol.exe`, to the system path (like in step 2.i.), so that the `glpsol` command is available on the command prompt.
-  8. **Excel** reading/writing: `pip install xlrd xlwt openpyxl`
-
-Continue at [Get Started](#get-started).
-  
-### Linux
-
-One way to install it under Linux can be done by simply using Anaconda/Miniconda and install it like on [Windows](#windows).
-
-Use your Linux distribution's package manager to get all the packages listed in the Windows installation section. Below is the installation procedure for Ubuntu & Debian. Other distributions might have slightly different package names or differing procedures to get the individual packages to run:
-
-  1. **Python and base packages**: `sudo apt-get install python3 python3-pip python3-numpy python3-scipy python3-matplotlib python3-ipython python3-notebook python3-sympy glpk-utils`
-  2. **Up-to-date Python packages**: `sudo pip3 install pandas pyomo xlwt xlrd openpyxl`
-
-Continue at [Get Started](#get-started).
-
+For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work, though 64 bit is recommended. The list of packages can be found in the [environment file](https://github.com/tum-ens/urbs/blob/master/urbs-env.yml).
   
 ## Get started
 
+### Developers
 Once installation is complete, finally [install git (for version control)](http://git-scm.com/). **Remark:** at step "Adjusting your PATH environment", select "Run Git from the Windows Command Prompt".
 
-Then, in a directory of your choice, clone this repository and execute the runme script by executing the following on the command prompt (Windows) or Terminal (Linux). (Depending on what your standard python version is, you might need to call `python3` instead of `python`.): 
+Then, in a directory of your choice, clone this repository by:
 
     git clone https://github.com/tum-ens/urbs.git
-    cd urbs
+    
+Continue like the users after they downloaded the zip file. 
+
+### Users
+
+If you are not planning on developing urbs, pick the [latest release](https://github.com/tum-ens/urbs/releases) and download the zip file.
+
+In the downloaded directory, open a execute the runme script by using the following on the command prompt (Windows) or Terminal (Linux). (Depending on what your standard python version is, you might need to call `python3` instead of `python`.):
+ 
     python runme.py
 
-Some minutes later, the subfolder `result` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definitions are contained in the run script (watch out for `def scenario` lines). To get a graphical and tabular summary over all scenarios, execute
+Some minutes later, the subfolder `result` should contain plots and summary spreadsheets for multiple optimised energy supply scenarios, whose definitions are contained in the run script (watch out for `def scenario` lines). *Not working at the moment:* To get a graphical and tabular summary over all scenarios, execute
 
     python comp.py
 
-and look at the new files `result/mimo-example-.../comp.xlsx` and `result/mimo-example-.../comp.png` for a quick comparison. This script parses the summary spreadsheets for all scenarios.
+and look at the new files `result/mimo-example-.../comparison.xlsx` and `result/mimo-example-.../comparison.png` for a quick comparison. This script parses the summary spreadsheets for all scenarios.
 
-## Next steps and tipps
+## Next steps and tips
 
   1. Head over to the tutorial at http://urbs.readthedocs.io, which goes through runme.py step by step. 
   2. Read the source code of `runme.py` and `comp.py`. 

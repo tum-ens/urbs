@@ -306,8 +306,8 @@ class Controller():
         if len(filename) > 1:
             stems = [os.path.basename(os.path.splitext(path)[0]) for path in filename[1:]]
             stems.insert(0,os.path.splitext(filename[0])[0])
-            stems.append('.json')
-            savename = '_'.join(stems)
+            #stems.append('.json')
+            savename = '_'.join(stems) + '.json'
         else:
             savename = os.path.splitext(filename[0])[0] + '.json'
         savetojson.convert_to_json(filename, json_filename = savename)

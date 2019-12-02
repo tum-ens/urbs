@@ -106,7 +106,7 @@ def read_year_and_budget(input_list, year):
         else:
             years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index].item()}"""
         # the String format has resulted in an error in combination withe .item() function; now, it somehow works
-        years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index].item()}
+        years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index]}
         index = index + 1
 
     return years_dict
@@ -792,6 +792,7 @@ def read_transmission_commodities(input_list, data_dict):
     return trsm_comm_dict
 
 if __name__ == "__main__":
+    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria_modified.xlsx']
     start_time = time.time()
-    convert_to_json('Input', json_filename='test5')
+    convert_to_json(path, json_filename=path[0] + '.json')
     print("--- %s seconds ---" % (time.time() - start_time))

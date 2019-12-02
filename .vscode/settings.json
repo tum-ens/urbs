@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\maxho\\.conda\\envs\\urbs-gui-env\\python.exe",
+    "python.pythonPath": "C:\\Users\\maxho\\Anaconda3\\envs\\urbs-gui-env\\python.exe",
     "python.terminal.executeInFileDir": true,
     "restructuredtext.confPath": "${workspaceFolder}\\doc"
 }

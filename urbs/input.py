@@ -22,7 +22,7 @@ def read_input(input_files, year):
         a dict of up to 12 DataFrames
     """
 
-    if input_files == 'Input':
+    if os.path.isdir(input_files):
         glob_input = os.path.join(input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
     else:
@@ -376,7 +376,7 @@ def pyomo_model_prep(data, timesteps):
         if m.mode['tra']:
             # modify tra_const_cap for intertemporal mode
             for index in tuple(tra_const_cap.index):
-                stf_transmission = transmission.xs((index[1, 2, 3, 4]),
+                stf_transmission = transmission.xs((index[1], index[2], index[3], index[4]),
                                                    level=(1, 2, 3, 4))
                 if (not stf_transmission['cap-up'].max(axis=0) ==
                         tra_const_cap.loc[index]['inst-cap']):
@@ -427,13 +427,13 @@ def pyomo_model_prep(data, timesteps):
         if m.mode['sto']:
             # modify sto_const_cap_c and sto_const_cap_p for intertemporal mode
             for index in tuple(sto_const_cap_c.index):
-                stf_storage = storage.xs((index[1, 2, 3]), level=(1, 2, 3))
+                stf_storage = storage.xs((index[1], index[2], index[3]), level=(1, 2, 3))
                 if (not stf_storage['cap-up-c'].max(axis=0) ==
                         sto_const_cap_c.loc[index]['inst-cap-c']):
                     sto_const_cap_c = sto_const_cap_c.drop(index)
 
             for index in tuple(sto_const_cap_p.index):
-                stf_storage = storage.xs((index[1, 2, 3]), level=(1, 2, 3))
+                stf_storage = storage.xs((index[1], index[2], index[3]), level=(1, 2, 3))
                 if (not stf_storage['cap-up-p'].max(axis=0) ==
                         sto_const_cap_p.loc[index]['inst-cap-p']):
                     sto_const_cap_p = sto_const_cap_p.drop(index)
@@ -516,6 +516,15 @@ def pyomo_model_prep(data, timesteps):
     # dictionaries for additional features
     if m.mode['tra']:
         m.transmission_dict = transmission.to_dict()
+        # DCPF transmission lines are bidirectional and do not have symmetry
+        # fix-cost and inv-cost should be multiplied by 2
+        if m.mode['dpf']:
+            transmission_dc = transmission[transmission['reactance'] > 0]
+            m.transmission_dc_dict = transmission_dc.to_dict()
+            for t in m.transmission_dc_dict['reactance']:
+                m.transmission_dict['inv-cost'][t] = 2 * m.transmission_dict['inv-cost'][t]
+                m.transmission_dict['fix-cost'][t] = 2 * m.transmission_dict['fix-cost'][t]
+
     if m.mode['sto']:
         m.storage_dict = storage.to_dict()
 

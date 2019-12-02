@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 
 def validate_input(data):
     """ Input validation function
@@ -32,6 +32,24 @@ def validate_input(data):
                                  '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')
 
+
+    # Add global parameters if necessary
+    for stf in data['global_prop'].index.get_level_values(0):
+        if 'Cost limit' not in data['global_prop'].loc[stf].index:
+            data['global_prop'].loc[(stf, 'Cost limit'), :] = np.inf
+            print('Added a global Cost limit for ' + str(stf) + ' with the value: inf.')
+        if 'CO2 limit' not in data['global_prop'].loc[stf].index:
+            data['global_prop'].loc[(stf, 'CO2 limit'), :] = np.inf
+            print('Added a global CO2 limit for ' + str(stf) + ' with the value: inf.')
+        if stf == min(data['global_prop'].index.get_level_values(0)):
+            if 'Cost budget' not in data['global_prop'].loc[stf].index:
+                data['global_prop'].loc[(stf, 'Cost budget'), :] = np.inf
+                print('Added a global Cost budget for the entire period with the value: inf.')
+            if 'CO2 budget' not in data['global_prop'].loc[stf].index:
+                data['global_prop'].loc[(stf, 'CO2 budget'), :] = np.inf
+                print('Added a global CO2 budget for the entire period with the value: inf.')
+
+
     # Find ducplicate index
     for key in data:
         if not data[key].index[data[key].index.duplicated()].unique().empty:
@@ -61,6 +79,21 @@ def validate_input(data):
                     data['transmission'].loc[index]['cap-up']):
                 raise ValueError('Ensure cap_lo <= cap_up and'
                                  'inst_cap <= cap_up for all transmissions.')
+        # Validate input for DCPF
+        if 'reactance' in data['transmission'].keys():
+            for index in data['transmission'].index:
+                if data['transmission'].loc[index]['reactance'] < 0:
+                    raise ValueError('Ensure for DCPF transmission lines: reactance > 0 ')
+                if data['transmission'].loc[index]['reactance'] > 0:
+                    if data['transmission'].loc[index]['eff'] != 1:
+                        raise ValueError('Ensure efficiency of DCPF Transmission Lines are 1')
+                    if not data['transmission'].loc[index]['base_voltage'] > 0:
+                        raise ValueError('Ensure base voltage of DCPF transmission lines are '
+                                         'greater than 0')
+                    if not (0 < data['transmission'].loc[index]['difflimit'] <= 90):
+                        raise ValueError('Ensure angle difference of DCPF transmission lines '
+                                         'are between 90 and 0 '
+                                         'degrees')
 
     if not data['storage'].empty:
         for index in data['storage'].index:
@@ -125,3 +158,12 @@ def validate_input(data):
                 raise KeyError("All names in the column 'Site' in input "
                                "worksheet 'DSM' must be from the list of site "
                                "names specified in the worksheet 'Site'.")
+
+# report that variable costs may have error if used with CO2 minimization and DCPF
+def validate_dc_objective(data, objective):
+    if not data['transmission'].empty:
+        if 'reactance' in data['transmission'].keys():
+            if any(data['transmission']['reactance'] > 0) and (objective == 'CO2') \
+                    and any(data['transmission']['var-cost'] > 0):
+                print("\nif the C02 is selected as objective function while modelling "
+                      "DC transmission lines, variable costs may be incorrect \n")

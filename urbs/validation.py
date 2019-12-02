@@ -36,7 +36,7 @@ def validate_input(data):
     # Add global parameters if necessary
     for stf in data['global_prop'].index.get_level_values(0):
         if 'Cost limit' not in data['global_prop'].loc[stf].index:
-            data['global_prop'].loc[(stf, 'Cost limit')] = np.inf
+            data['global_prop'].loc[(stf, 'Cost limit'), :] = np.inf
             print('Added a global Cost limit for ' + str(stf) + ' with the value: inf.')
         if 'CO2 limit' not in data['global_prop'].loc[stf].index:
             data['global_prop'].loc[(stf, 'CO2 limit'), :] = np.inf

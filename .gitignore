@@ -8,3 +8,4 @@ Installer/build/
 Installer/dist/
 *.json
 Documentation of the save_to_json script for urbs.pdf
+.vscode/settings.json

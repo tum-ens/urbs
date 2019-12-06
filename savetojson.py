@@ -22,12 +22,12 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     if input_files == 'Input':
         glob_input = os.path.join("..", input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
-#####################################################
-# removed packaging of filepath into list 
-# so that multiple filepaths can be selected in gui which are already stored in a list
+    #####################################################
+    # removed packaging of filepath into list 
+    # so that multiple filepaths can be selected in gui which are already stored in a list
     elif type(input_files).__name__ == 'string':
         input_files = [input_files]
-#####################################################
+    #####################################################
 
     # read all the excel sheets and store them in a list
     sheet_list = []
@@ -106,7 +106,7 @@ def read_year_and_budget(input_list, year):
         else:
             years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index].item()}"""
         # the String format has resulted in an error in combination withe .item() function; now, it somehow works
-        years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index]}
+        years_dict[str(items)] = {"selected": "", "CO2 limit": int(co2[index])}
         index = index + 1
 
     return years_dict
@@ -268,9 +268,11 @@ def read_commodities(site, years_list, input_list):
                                 new_comm = comm_dict[str(comm_id)]["Years"]
                                 new_comm[current_year] = {
                                     "timeSer": "",
-                                    "price": comm_df.T.loc["price"][items].item(),
-                                    "max": comm_df.T.loc["max"][items].item(),
-                                    "maxperhour": comm_df.T.loc["maxperhour"][items].item(),
+                                    #####################################################
+                                    "price": float(comm_df.T.loc["price"][items]),
+                                    "max": float(comm_df.T.loc["max"][items]),
+                                    #####################################################
+                                    "maxperhour": float(comm_df.T.loc["maxperhour"][items]),
                                     "Action": "...",
                                     "delay": 0.0,
                                     "eff": 0.0,
@@ -632,71 +634,81 @@ def read_transmission(sheets_list, year):
 
             for row in trsm_sheet.itertuples(index=False, name="CurrentRow"):
                 # go through every row of the sheet (= every transmission)
-                # two rows necessary: the information 'lifetime' & 'inst-cap' are not included in every year
-                # --> these information are only stored in the original data frame; for the other information,
-                # the modified list is used
-                modified_row = list(row)
-                if "lifetime" in trsm_sheet:
-                    del modified_row[5]
-                if "inst-cap" in trsm_sheet:
-                    del modified_row[9]
-                # the current transmission is specified by: SiteIn, SiteOut, Type and the name of the commodity
-                current_trsm_id = [row[0], row[1], row[2], row[3]]
-                # if the transmission is new: create a new entry;
-                if current_trsm_id not in trsms_in_model:
-                    trsms_in_model.append(current_trsm_id)  # add transmission to the list
-                    new_transmission = True
-                    trsm_id = "NewTrsms#" + str(number_of_transmissions)  # create new transmission id
-                    lifetime_cap_dict[trsm_id] = {"lifetime": 0, "inst-cap": 0}
 
-                    """if modified_row[3] == "Elec":
-                        modified_row[3] = "Electricity"
-                        """
-                    trsm_dict[trsm_id] = {
-                        "SiteIn": modified_row[0],
-                        "SiteOut": modified_row[1],
-                        "CommName": modified_row[3],
-                        "Years": {},
-                        "Id": trsm_id,
-                        "Name": "Power Line" + str(number_of_transmissions),
-                        "Type": modified_row[2],
-                        "IN": [str(modified_row[0] + "." + modified_row[3])],
-                        "OUT": [str(modified_row[1] + "." + modified_row[3])]
+                #####################################################
+                # detect rows where commodity isn't set to exclude data source information at end of spreadsheet
+                if row[0] != 'Source' :
+                #####################################################
+
+                    # two rows necessary: the information 'lifetime' & 'inst-cap' are not included in every year
+                    # --> these information are only stored in the original data frame; for the other information,
+                    # the modified list is used
+                    modified_row = list(row)
+                    if "lifetime" in trsm_sheet:
+                        del modified_row[5]
+                    if "inst-cap" in trsm_sheet:
+                        del modified_row[9]
+                    # the current transmission is specified by: SiteIn, SiteOut, Type and the name of the commodity
+                    current_trsm_id = [row[0], row[1], row[2], row[3]]
+                    # if the transmission is new: create a new entry;
+                    if current_trsm_id not in trsms_in_model:
+                        trsms_in_model.append(current_trsm_id)  # add transmission to the list
+                        new_transmission = True
+                        trsm_id = "NewTrsms#" + str(number_of_transmissions)  # create new transmission id
+                        lifetime_cap_dict[trsm_id] = {"lifetime": 0, "inst-cap": 0}
+
+                        """if modified_row[3] == "Elec":
+                            modified_row[3] = "Electricity"
+                            """
+                        trsm_dict[trsm_id] = {
+                            "SiteIn": modified_row[0],
+                            "SiteOut": modified_row[1],
+                            "CommName": modified_row[3],
+                            "Years": {},
+                            "Id": trsm_id,
+                            "Name": "Power Line" + str(number_of_transmissions),
+                            "Type": modified_row[2],
+                            "IN": [str(modified_row[0] + "." + modified_row[3])],
+                            "OUT": [str(modified_row[1] + "." + modified_row[3])]
+                        }
+                        number_of_transmissions += 1
+                    # if the transmission is new: create the Id; otherwise: find the Id
+                    if new_transmission:
+                        new_transmission = False
+                        trsm_id = "NewTrsms#" + str(number_of_transmissions - 1)
+                    else:
+                        for transmissions in trsm_dict:
+                            current_trsm = trsm_dict[transmissions]
+                            if row[0] == current_trsm["SiteIn"] and row[1] == current_trsm["SiteOut"] and row[2] == \
+                                    current_trsm["Type"] and row[3] == current_trsm["CommName"]:
+                                trsm_id = current_trsm["Id"]
+
+                    # add the information for 'lifetime' & 'inst-cap' (check for every year)
+                    if "lifetime" in trsm_sheet:
+                        for registered_years in trsm_dict[trsm_id]["Years"]:
+                            trsm_dict[trsm_id]["Years"][registered_years]["lifetime"] = row[5]
+                        lifetime_cap_dict[trsm_id]["lifetime"] = row[5]
+                    if "inst-cap" in trsm_sheet:
+                        for registered_years in trsm_dict[trsm_id]["Years"]:
+                            trsm_dict[trsm_id]["Years"][registered_years]["inst-cap"] = row[9]
+                        lifetime_cap_dict[trsm_id]["inst-cap"] = row[9]
+                    # add the information for the current year
+                    trsm_dict[trsm_id]["Years"][current_year] = {
+                        "eff": modified_row[4],
+                        "inv-cost": modified_row[5],
+                        "fix-cost": modified_row[6],
+                        "var-cost": modified_row[7],
+                        "inst-cap": lifetime_cap_dict[trsm_id]["inst-cap"],
+                        "lifetime": lifetime_cap_dict[trsm_id]["lifetime"],
+                        "cap-lo": modified_row[8],
+                        "cap-up": modified_row[9],
+                        "wacc": modified_row[10],
+                        "depreciation": modified_row[11]
                     }
-                    number_of_transmissions += 1
-                # if the transmission is new: create the Id; otherwise: find the Id
-                if new_transmission:
-                    new_transmission = False
-                    trsm_id = "NewTrsms#" + str(number_of_transmissions - 1)
+                #####################################################
                 else:
-                    for transmissions in trsm_dict:
-                        current_trsm = trsm_dict[transmissions]
-                        if row[0] == current_trsm["SiteIn"] and row[1] == current_trsm["SiteOut"] and row[2] == \
-                                current_trsm["Type"] and row[3] == current_trsm["CommName"]:
-                            trsm_id = current_trsm["Id"]
-
-                # add the information for 'lifetime' & 'inst-cap' (check for every year)
-                if "lifetime" in trsm_sheet:
-                    for registered_years in trsm_dict[trsm_id]["Years"]:
-                        trsm_dict[trsm_id]["Years"][registered_years]["lifetime"] = row[5]
-                    lifetime_cap_dict[trsm_id]["lifetime"] = row[5]
-                if "inst-cap" in trsm_sheet:
-                    for registered_years in trsm_dict[trsm_id]["Years"]:
-                        trsm_dict[trsm_id]["Years"][registered_years]["inst-cap"] = row[9]
-                    lifetime_cap_dict[trsm_id]["inst-cap"] = row[9]
-                # add the information for the current year
-                trsm_dict[trsm_id]["Years"][current_year] = {
-                    "eff": modified_row[4],
-                    "inv-cost": modified_row[5],
-                    "fix-cost": modified_row[6],
-                    "var-cost": modified_row[7],
-                    "inst-cap": lifetime_cap_dict[trsm_id]["inst-cap"],
-                    "lifetime": lifetime_cap_dict[trsm_id]["lifetime"],
-                    "cap-lo": modified_row[8],
-                    "cap-up": modified_row[9],
-                    "wacc": modified_row[10],
-                    "depreciation": modified_row[11]
-                }
+                    print("One or more lines do not include commodities, possibly incomplete datasets or source information.")
+                #####################################################
         else:
             print("No information provided for the transmissions.")
 
@@ -793,8 +805,8 @@ def read_transmission_commodities(input_list, data_dict):
 
 if __name__ == "__main__":
     #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria_modified.xlsx']
-    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria.xlsx']
-    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
+    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria.xlsx']
+    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
 
 
     start_time = time.time()

@@ -266,13 +266,15 @@ def read_commodities(site, years_list, input_list):
                             # information, then break out of the for loop
                             if comm_dict[str(comm_id)]["Name"] == str(items):
                                 new_comm = comm_dict[str(comm_id)]["Years"]
-                                new_comm[current_year] = {
+                                #####################################################
+                                try:
+                                    new_comm[current_year] = {
                                     "timeSer": "",
                                     #####################################################
                                     "price": float(comm_df.T.loc["price"][items]),
                                     "max": float(comm_df.T.loc["max"][items]),
-                                    #####################################################
                                     "maxperhour": float(comm_df.T.loc["maxperhour"][items]),
+                                    #####################################################
                                     "Action": "...",
                                     "delay": 0.0,
                                     "eff": 0.0,
@@ -281,7 +283,10 @@ def read_commodities(site, years_list, input_list):
                                     "recov": 0.0,
                                     "cap-max-do": 0.0,
                                     "cap-max-up": 0.0
-                                }
+                                    }
+                                except KeyError:
+                                    print("In Commodity, entry is not 'maxperhour' (possibly is 'maxperstep'). please correct this manually")
+                                #####################################################
                                 df_time_ser = None
                                 time_ser = ""
                                 # for the time series, check the sheets that correspond to the commodity's type
@@ -363,24 +368,25 @@ def read_commodities(site, years_list, input_list):
                     "Action": "...",
                     "timeEff": "",
                     "lifetime": 0.0,
-                    "cap-lo": process_df.loc[processes]["cap-lo"].item(),
-                    "cap-up": process_df.loc[processes]["cap-up"].item(),
-                    "inv-cost": process_df.loc[processes]["inv-cost"].item(),
-                    "fix-cost": process_df.loc[processes]["fix-cost"].item(),
-                    "var-cost": process_df.loc[processes]["var-cost"].item(),
+                    #####################################################
+                    "cap-lo": process_df.loc[processes]["cap-lo"],
+                    "cap-up": process_df.loc[processes]["cap-up"],
+                    "inv-cost": process_df.loc[processes]["inv-cost"],
+                    "fix-cost": process_df.loc[processes]["fix-cost"],
+                    "var-cost": process_df.loc[processes]["var-cost"],
                     "startup-cost": 0.0,
-                    "wacc": process_df.loc[processes]["wacc"].item(),
-                    "max-grad": process_df.loc[processes]["max-grad"].item(),
-                    "min-fraction": process_df.loc[processes]["min-fraction"].item(),
-                    "depreciation": process_df.loc[processes]["depreciation"].item(),
+                    "wacc": process_df.loc[processes]["wacc"],
+                    "max-grad": process_df.loc[processes]["max-grad"],
+                    "min-fraction": process_df.loc[processes]["min-fraction"],
+                    "depreciation": process_df.loc[processes]["depreciation"],
+                    #####################################################
                     "area-per-cap": 0.0
                 }
                 # 'inst-cap' is only provided in the first year of the analysis,
                 # it stays the same for all the following years;
                 # if the information is found in one sheet, the value should be assigned to every other year as well
                 if "inst-cap" in process_df:  # TODO: what's the warning?
-                    process_dict[current_process]["Years"][current_year]["inst-cap"] = process_df.loc[processes][
-                        "inst-cap"].item()
+                    process_dict[current_process]["Years"][current_year]["inst-cap"] = process_df.loc[processes]["inst-cap"]
                 for registered_years in process_dict[current_process]["Years"]:
                     if process_dict[current_process]["Years"][registered_years]["inst-cap"] != 0:
                         process_dict[current_process]["Years"][current_year][
@@ -429,19 +435,27 @@ def read_commodities(site, years_list, input_list):
                         process_dict[current_process]["Years"][current_year]["timeEff"] = eff[1:]  # TODO what's the warning?
 
                 # IN and OUT commodities of one process
+                
                 if 'Process-Commodity' in xls.sheet_names:  # TODO error handling
                     process_comms_sheet = xls.parse("Process-Commodity")
                     process_comms_df = process_comms_sheet.loc[process_comms_sheet["Process"] == processes] \
                         .set_index("Commodity")
                     for entries in comm_dict:
                         for process_comm in process_comms_df.T:
-                            if comm_dict[str(entries)]["Name"] == str(process_comm):
-                                if process_comms_df.loc[str(process_comm)]["Direction"] == "In" and \
-                                        comm_dict[str(entries)]["Id"] not in process_dict[current_process]["IN"]:
-                                    process_dict[current_process]["IN"].append(comm_dict[str(entries)]["Id"])
-                                elif process_comms_df.loc[str(process_comm)]["Direction"] == "Out" and \
-                                        comm_dict[str(entries)]["Id"] not in process_dict[current_process]["OUT"]:
-                                    process_dict[current_process]["OUT"].append(comm_dict[str(entries)]["Id"])
+                            #####################################################
+                            try:
+                            #####################################################
+                                if comm_dict[str(entries)]["Name"] == str(process_comm):
+                                    if process_comms_df.loc[str(process_comm)]["Direction"] == "In" and \
+                                            comm_dict[str(entries)]["Id"] not in process_dict[current_process]["IN"]:
+                                        process_dict[current_process]["IN"].append(comm_dict[str(entries)]["Id"])
+                                    elif process_comms_df.loc[str(process_comm)]["Direction"] == "Out" and \
+                                            comm_dict[str(entries)]["Id"] not in process_dict[current_process]["OUT"]:
+                                        process_dict[current_process]["OUT"].append(comm_dict[str(entries)]["Id"])
+                            #####################################################
+                            except:
+                                print("In 'Process-Commodity', some row failed conversion (possibly source information). Please correct this manually")
+                            #####################################################
                 else:
                     print("No sheet for the process commodities found.")
         else:
@@ -479,31 +493,31 @@ def read_commodities(site, years_list, input_list):
                 # all the information provided by the input sheet for the current process and the current year
                 process_dict[current_storage]["Years"][current_year] = {
                     "inst-cap-c": 0.0,
-                    "cap-lo-c": storage_df.loc[storage_types]["cap-lo-c"].item(),
-                    "cap-up-c": storage_df.loc[storage_types]["cap-up-c"].item(),
+                    "cap-lo-c": storage_df.loc[storage_types]["cap-lo-c"],
+                    "cap-up-c": storage_df.loc[storage_types]["cap-up-c"],
                     "inst-cap-p": 0.0,
-                    "cap-lo-p": storage_df.loc[storage_types]["cap-lo-p"].item(),
-                    "cap-up-p": storage_df.loc[storage_types]["cap-up-p"].item(),
-                    "eff-in": storage_df.loc[storage_types]["eff-in"].item(),
-                    "eff-out": storage_df.loc[storage_types]["eff-out"].item(),
-                    "inv-cost-p": storage_df.loc[storage_types]["inv-cost-p"].item(),
-                    "inv-cost-c": storage_df.loc[storage_types]["inv-cost-c"].item(),
-                    "fix-cost-p": storage_df.loc[storage_types]["fix-cost-p"].item(),
-                    "fix-cost-c": storage_df.loc[storage_types]["fix-cost-c"].item(),
-                    "var-cost-p": storage_df.loc[storage_types]["var-cost-p"].item(),
-                    "var-cost-c": storage_df.loc[storage_types]["var-cost-c"].item(),
+                    "cap-lo-p": storage_df.loc[storage_types]["cap-lo-p"],
+                    "cap-up-p": storage_df.loc[storage_types]["cap-up-p"],
+                    "eff-in": storage_df.loc[storage_types]["eff-in"],
+                    "eff-out": storage_df.loc[storage_types]["eff-out"],
+                    "inv-cost-p": storage_df.loc[storage_types]["inv-cost-p"],
+                    "inv-cost-c": storage_df.loc[storage_types]["inv-cost-c"],
+                    "fix-cost-p": storage_df.loc[storage_types]["fix-cost-p"],
+                    "fix-cost-c": storage_df.loc[storage_types]["fix-cost-c"],
+                    "var-cost-p": storage_df.loc[storage_types]["var-cost-p"],
+                    "var-cost-c": storage_df.loc[storage_types]["var-cost-c"],
                     "lifetime": 0.0,
-                    "depreciation": storage_df.loc[storage_types]["depreciation"].item(),
-                    "wacc": storage_df.loc[storage_types]["wacc"].item(),
-                    "init": storage_df.loc[storage_types]["init"].item(),
-                    "discharge": storage_df.loc[storage_types]["discharge"].item()
+                    "depreciation": storage_df.loc[storage_types]["depreciation"],
+                    "wacc": storage_df.loc[storage_types]["wacc"],
+                    "init": storage_df.loc[storage_types]["init"],
+                    "discharge": storage_df.loc[storage_types]["discharge"]
                     # "ep-ratio": ""  # TODO: it's in the excel sheets, not in the json files..
                 }
                 # 'inst-cap-c', 'inst-cap-p' and 'lifetime' only occur in the first observed year / the storage's first
                 # appearance in the simulation; after that they remain unchanged for the rest of the years
                 if "inst-cap-c" in storage_df:  # TODO: what's the warning?
                     process_dict[current_storage]["Years"][current_year]["inst-cap-c"] = storage_df.loc[storage_types][
-                        "inst-cap-c"].item()
+                        "inst-cap-c"]
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["inst-cap-c"] != 0:
                         process_dict[current_storage]["Years"][current_year][
@@ -512,12 +526,12 @@ def read_commodities(site, years_list, input_list):
                         break
                 if "inst-cap-p" in storage_df:  # TODO: what's the warning?
                     process_dict[current_storage]["Years"][current_year]["inst-cap-p"] = storage_df.loc[storage_types][
-                        "inst-cap-p"].item()
+                        "inst-cap-p"]
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["inst-cap-p"] != 0:
                         process_dict[current_storage]["Years"][current_year][
                             "inst-cap-p"] = process_dict[current_storage]["Years"][registered_years][
-                            "inst-cap-p"].item()
+                            "inst-cap-p"]
                         break
                 if "lifetime" in storage_df:
                     process_dict[current_storage]["Years"][current_year]["lifetime"] = storage_df.loc[storage_types][
@@ -637,7 +651,7 @@ def read_transmission(sheets_list, year):
 
                 #####################################################
                 # detect rows where commodity isn't set to exclude data source information at end of spreadsheet
-                if row[0] != 'Source' :
+                try:
                 #####################################################
 
                     # two rows necessary: the information 'lifetime' & 'inst-cap' are not included in every year
@@ -706,8 +720,8 @@ def read_transmission(sheets_list, year):
                         "depreciation": modified_row[11]
                     }
                 #####################################################
-                else:
-                    print("One or more lines do not include commodities, possibly incomplete datasets or source information.")
+                except:
+                    print("In 'Transmission', some row fails conversion (possibly source information). Please correct this manually")
                 #####################################################
         else:
             print("No information provided for the transmissions.")

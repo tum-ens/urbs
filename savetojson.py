@@ -6,6 +6,8 @@ import glob
 from datetime import date
 import time
 
+# create global error list to print all errors related to excel in the end
+error_list = ["The following errors related to formatting of the Excel file occured:"]
 
 def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_simulation.json'):
     """
@@ -285,7 +287,7 @@ def read_commodities(site, years_list, input_list):
                                     "cap-max-up": 0.0
                                     }
                                 except KeyError:
-                                    print("In Commodity, entry is not 'maxperhour' (possibly is 'maxperstep'). please correct this manually")
+                                    error_list.append("In Commodity, entry is not 'maxperhour' (possibly is 'maxperstep'). please correct this manually")
                                 #####################################################
                                 df_time_ser = None
                                 time_ser = ""
@@ -425,7 +427,7 @@ def read_commodities(site, years_list, input_list):
                     time_var_eff_sheet = xls.parse("TimeVarEff").set_index("t")
                 else:
                     time_var_eff_sheet = None
-                    print("No 'TimeVarEff' sheet")
+                    error_list.append("No 'TimeVarEff' sheet")
 
                 if time_var_eff_sheet is not None:
                     if str(site) + "." + str(processes) in time_var_eff_sheet:
@@ -454,7 +456,7 @@ def read_commodities(site, years_list, input_list):
                                         process_dict[current_process]["OUT"].append(comm_dict[str(entries)]["Id"])
                             #####################################################
                             except:
-                                print("In 'Process-Commodity', some row failed conversion (possibly source information). Please correct this manually")
+                                error_list.append("In 'Process-Commodity', some row failed conversion (possibly source information). Please correct this manually")
                             #####################################################
                 else:
                     print("No sheet for the process commodities found.")
@@ -721,7 +723,7 @@ def read_transmission(sheets_list, year):
                     }
                 #####################################################
                 except:
-                    print("In 'Transmission', some row fails conversion (possibly source information). Please correct this manually")
+                    error_list.append("In 'Transmission', some row fails conversion (possibly source information). Please correct this manually")
                 #####################################################
         else:
             print("No information provided for the transmissions.")
@@ -763,55 +765,69 @@ def read_transmission_commodities(input_list, data_dict):
             demand_sheet = xls.parse("Demand").set_index("t")
 
             for key in demand_sheet:
-                # check every commodity in every site for which information is provided
-                [site, comm] = str(key).split(".")
-                # create a new entry if the commodity has not been accounted for
-                if str(key) not in trsm_comm_list:
-                    trsm_comm_list.append(str(key))
-                    trsm_comm_dict[str(key)] = {
-                        "Years": dict.fromkeys(years_list, {}),
-                        "Id": "",
-                        "Name": str(comm),
-                        "Type": "",
-                        "Group": "",
-                        "Color": "rgb(128, 128, 0)",  # TODO choose the right color
-                        "DSM": False
-                    }
+                #####################################################
+                try:
+                #####################################################
+                    # check every commodity in every site for which information is provided
+                    [site, comm] = str(key).split(".")
+                    # create a new entry if the commodity has not been accounted for
+                    if str(key) not in trsm_comm_list:
+                        trsm_comm_list.append(str(key))
+                        trsm_comm_dict[str(key)] = {
+                            "Years": dict.fromkeys(years_list, {}),
+                            "Id": "",
+                            "Name": str(comm),
+                            "Type": "",
+                            "Group": "",
+                            "Color": "rgb(128, 128, 0)",  # TODO choose the right color
+                            "DSM": False
+                        }
 
+                        for commodities in data_dict["_models"][str(site)]["_commodities"]:
+                            # go through every registered commodity and check if information for its demand is provided
+                            current_commodity = data_dict["_models"][str(site)]["_commodities"][str(commodities)]
+                            if current_commodity["Name"] == str(comm):
+                                trsm_comm_dict[str(key)]["Id"] = current_commodity["Id"]
+                                trsm_comm_dict[str(key)]["Type"] = current_commodity["Type"]
+                                trsm_comm_dict[str(key)]["Group"] = current_commodity["Group"]
+                                trsm_comm_dict[str(key)]["Color"] = current_commodity["Color"]
+                                trsm_comm_dict[str(key)]["DSM"] = current_commodity["DSM"]
+                                break
+                    # update the information that may change every year
                     for commodities in data_dict["_models"][str(site)]["_commodities"]:
-                        # go through every registered commodity and check if information for its demand is provided
                         current_commodity = data_dict["_models"][str(site)]["_commodities"][str(commodities)]
                         if current_commodity["Name"] == str(comm):
-                            trsm_comm_dict[str(key)]["Id"] = current_commodity["Id"]
-                            trsm_comm_dict[str(key)]["Type"] = current_commodity["Type"]
-                            trsm_comm_dict[str(key)]["Group"] = current_commodity["Group"]
-                            trsm_comm_dict[str(key)]["Color"] = current_commodity["Color"]
-                            trsm_comm_dict[str(key)]["DSM"] = current_commodity["DSM"]
-                            break
-                # update the information that may change every year
-                for commodities in data_dict["_models"][str(site)]["_commodities"]:
-                    current_commodity = data_dict["_models"][str(site)]["_commodities"][str(commodities)]
-                    if current_commodity["Name"] == str(comm):
-                        trsm_comm_dict[str(key)]["Years"][current_year] = {
-                            "timeSer": "",
-                            "price": current_commodity["Years"][current_year]["price"],
-                            "max": current_commodity["Years"][current_year]["max"],
-                            "maxperhour": current_commodity["Years"][current_year]["maxperhour"],
-                            "Action": "...",
-                            "delay": current_commodity["Years"][current_year]["delay"],
-                            "eff": current_commodity["Years"][current_year]["eff"],
-                            "plot": False,
-                            "report": False,
-                            "recov": current_commodity["Years"][current_year]["recov"],
-                            "cap-max-do": current_commodity["Years"][current_year]["cap-max-do"],
-                            "cap-max-up": current_commodity["Years"][current_year]["cap-max-up"]
-                        }
-                    # add the time series
-                    df = demand_sheet.T.loc[str(key)]
-                    time_ser = ""
-                    for row in df:
-                        time_ser = time_ser + "|" + str(row)
-                    trsm_comm_dict[str(key)]["Years"][current_year]["timeSer"] = time_ser[1:]
+                            #####################################################
+                            try:
+                            #####################################################
+                                trsm_comm_dict[str(key)]["Years"][current_year] = {
+                                    "timeSer": "",
+                                    "price": current_commodity["Years"][current_year]["price"],
+                                    "max": current_commodity["Years"][current_year]["max"],
+                                    "maxperhour": current_commodity["Years"][current_year]["maxperhour"],
+                                    "Action": "...",
+                                    "delay": current_commodity["Years"][current_year]["delay"],
+                                    "eff": current_commodity["Years"][current_year]["eff"],
+                                    "plot": False,
+                                    "report": False,
+                                    "recov": current_commodity["Years"][current_year]["recov"],
+                                    "cap-max-do": current_commodity["Years"][current_year]["cap-max-do"],
+                                    "cap-max-up": current_commodity["Years"][current_year]["cap-max-up"]
+                                }
+                            #####################################################
+                            except KeyError:
+                                error_list.append("In 'Demand', some row fails conversion (possibly source information). Please correct this manually")
+                            #####################################################
+                        # add the time series
+                        df = demand_sheet.T.loc[str(key)]
+                        time_ser = ""
+                        for row in df:
+                            time_ser = time_ser + "|" + str(row)
+                        trsm_comm_dict[str(key)]["Years"][current_year]["timeSer"] = time_ser[1:]
+                #####################################################
+                except ValueError:
+                    error_list.append("In 'Demand', some column fails conversion (possibly source information). Please correct this manually")
+                #####################################################
         else:
             print("No 'Demand' sheet provided.")
 
@@ -819,10 +835,14 @@ def read_transmission_commodities(input_list, data_dict):
 
 if __name__ == "__main__":
     #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria_modified.xlsx']
-    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria.xlsx']
-    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
+    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria.xlsx']
+    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
 
 
     start_time = time.time()
     convert_to_json(path, json_filename=path[0] + '.json')
     print("--- %s seconds ---" % (time.time() - start_time))
+    #####################################################
+    # print list of errors related to formatting of excel but only print every errror once
+    print("\n".join(list(dict.fromkeys(error_list))))
+    #####################################################

@@ -98,7 +98,7 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
         # wrap single site in 1-element list for consistent behaviour
         sit = [sit]
 
-    (created, consumed, stored, imported, exported,
+    (created, tau, consumed, stored, imported, exported,
      dsm, voltage_angle) = get_timeseries(prob, stf, com, sit, timesteps)
 
     # move retrieved/stored storage timeseries to created/consumed and

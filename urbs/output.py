@@ -128,6 +128,15 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     except KeyError:
         created = pd.DataFrame(index=timesteps[1:])
 
+    tau = get_entity(instance, 'tau_pro')
+    try:
+        tau = tau.xs([stf], level=['stf']).loc[timesteps]
+        tau = tau.unstack(level='sit')[sites].fillna(0).sum(axis=1)
+        tau = tau.unstack(level='pro')
+        tau = drop_all_zero_columns(tau)
+    except KeyError:
+        created = pd.DataFrame(index=timesteps[1:])
+
     consumed = get_entity(instance, 'e_pro_in')
     try:
         consumed = consumed.xs([stf, com], level=['stf', 'com']).loc[timesteps]
@@ -270,7 +279,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         voltage_angle = pd.DataFrame(index=timesteps)
     voltage_angle.name = 'Voltage Angle'
 
-    return created, consumed, stored, imported, exported, dsm, voltage_angle
+    return created, tau, consumed, stored, imported, exported, dsm, voltage_angle
 
 
 def drop_all_zero_columns(df):

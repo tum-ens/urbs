@@ -371,16 +371,16 @@ def read_commodities(site, years_list, input_list):
                     "timeEff": "",
                     "lifetime": 0.0,
                     #####################################################
-                    "cap-lo": process_df.loc[processes]["cap-lo"],
-                    "cap-up": process_df.loc[processes]["cap-up"],
-                    "inv-cost": process_df.loc[processes]["inv-cost"],
-                    "fix-cost": process_df.loc[processes]["fix-cost"],
-                    "var-cost": process_df.loc[processes]["var-cost"],
+                    "cap-lo": float(process_df.loc[processes]["cap-lo"]),
+                    "cap-up": float(process_df.loc[processes]["cap-up"]),
+                    "inv-cost": float(process_df.loc[processes]["inv-cost"]),
+                    "fix-cost": float(process_df.loc[processes]["fix-cost"]),
+                    "var-cost": float(process_df.loc[processes]["var-cost"]),
                     "startup-cost": 0.0,
-                    "wacc": process_df.loc[processes]["wacc"],
-                    "max-grad": process_df.loc[processes]["max-grad"],
-                    "min-fraction": process_df.loc[processes]["min-fraction"],
-                    "depreciation": process_df.loc[processes]["depreciation"],
+                    "wacc": float(process_df.loc[processes]["wacc"]),
+                    "max-grad": float(process_df.loc[processes]["max-grad"]),
+                    "min-fraction": float(process_df.loc[processes]["min-fraction"]),
+                    "depreciation": float(process_df.loc[processes]["depreciation"]),
                     #####################################################
                     "area-per-cap": 0.0
                 }
@@ -388,7 +388,7 @@ def read_commodities(site, years_list, input_list):
                 # it stays the same for all the following years;
                 # if the information is found in one sheet, the value should be assigned to every other year as well
                 if "inst-cap" in process_df:  # TODO: what's the warning?
-                    process_dict[current_process]["Years"][current_year]["inst-cap"] = process_df.loc[processes]["inst-cap"]
+                    process_dict[current_process]["Years"][current_year]["inst-cap"] = float(process_df.loc[processes]["inst-cap"])
                 for registered_years in process_dict[current_process]["Years"]:
                     if process_dict[current_process]["Years"][registered_years]["inst-cap"] != 0:
                         process_dict[current_process]["Years"][current_year][
@@ -436,8 +436,7 @@ def read_commodities(site, years_list, input_list):
                             eff = eff + "|" + str(rows)
                         process_dict[current_process]["Years"][current_year]["timeEff"] = eff[1:]  # TODO what's the warning?
 
-                # IN and OUT commodities of one process
-                
+                # IN and OUT commodities of one process            
                 if 'Process-Commodity' in xls.sheet_names:  # TODO error handling
                     process_comms_sheet = xls.parse("Process-Commodity")
                     process_comms_df = process_comms_sheet.loc[process_comms_sheet["Process"] == processes] \
@@ -495,31 +494,31 @@ def read_commodities(site, years_list, input_list):
                 # all the information provided by the input sheet for the current process and the current year
                 process_dict[current_storage]["Years"][current_year] = {
                     "inst-cap-c": 0.0,
-                    "cap-lo-c": storage_df.loc[storage_types]["cap-lo-c"],
-                    "cap-up-c": storage_df.loc[storage_types]["cap-up-c"],
+                    "cap-lo-c": float(storage_df.loc[storage_types]["cap-lo-c"]),
+                    "cap-up-c": float(storage_df.loc[storage_types]["cap-up-c"]),
                     "inst-cap-p": 0.0,
-                    "cap-lo-p": storage_df.loc[storage_types]["cap-lo-p"],
-                    "cap-up-p": storage_df.loc[storage_types]["cap-up-p"],
-                    "eff-in": storage_df.loc[storage_types]["eff-in"],
-                    "eff-out": storage_df.loc[storage_types]["eff-out"],
-                    "inv-cost-p": storage_df.loc[storage_types]["inv-cost-p"],
-                    "inv-cost-c": storage_df.loc[storage_types]["inv-cost-c"],
-                    "fix-cost-p": storage_df.loc[storage_types]["fix-cost-p"],
-                    "fix-cost-c": storage_df.loc[storage_types]["fix-cost-c"],
-                    "var-cost-p": storage_df.loc[storage_types]["var-cost-p"],
-                    "var-cost-c": storage_df.loc[storage_types]["var-cost-c"],
+                    "cap-lo-p": float(storage_df.loc[storage_types]["cap-lo-p"]),
+                    "cap-up-p": float(storage_df.loc[storage_types]["cap-up-p"]),
+                    "eff-in": float(storage_df.loc[storage_types]["eff-in"]),
+                    "eff-out": float(storage_df.loc[storage_types]["eff-out"]),
+                    "inv-cost-p": float(storage_df.loc[storage_types]["inv-cost-p"]),
+                    "inv-cost-c": float(storage_df.loc[storage_types]["inv-cost-c"]),
+                    "fix-cost-p": float(storage_df.loc[storage_types]["fix-cost-p"]),
+                    "fix-cost-c": float(storage_df.loc[storage_types]["fix-cost-c"]),
+                    "var-cost-p": float(storage_df.loc[storage_types]["var-cost-p"]),
+                    "var-cost-c": float(storage_df.loc[storage_types]["var-cost-c"]),
                     "lifetime": 0.0,
-                    "depreciation": storage_df.loc[storage_types]["depreciation"],
-                    "wacc": storage_df.loc[storage_types]["wacc"],
-                    "init": storage_df.loc[storage_types]["init"],
-                    "discharge": storage_df.loc[storage_types]["discharge"]
+                    "depreciation": float(storage_df.loc[storage_types]["depreciation"]),
+                    "wacc": float(storage_df.loc[storage_types]["wacc"]),
+                    "init": float(storage_df.loc[storage_types]["init"]),
+                    "discharge": float(storage_df.loc[storage_types]["discharge"])
                     # "ep-ratio": ""  # TODO: it's in the excel sheets, not in the json files..
                 }
                 # 'inst-cap-c', 'inst-cap-p' and 'lifetime' only occur in the first observed year / the storage's first
                 # appearance in the simulation; after that they remain unchanged for the rest of the years
                 if "inst-cap-c" in storage_df:  # TODO: what's the warning?
-                    process_dict[current_storage]["Years"][current_year]["inst-cap-c"] = storage_df.loc[storage_types][
-                        "inst-cap-c"]
+                    process_dict[current_storage]["Years"][current_year]["inst-cap-c"] = float(storage_df.loc[storage_types][
+                        "inst-cap-c"])
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["inst-cap-c"] != 0:
                         process_dict[current_storage]["Years"][current_year][
@@ -527,17 +526,17 @@ def read_commodities(site, years_list, input_list):
                             "inst-cap-c"]
                         break
                 if "inst-cap-p" in storage_df:  # TODO: what's the warning?
-                    process_dict[current_storage]["Years"][current_year]["inst-cap-p"] = storage_df.loc[storage_types][
-                        "inst-cap-p"]
+                    process_dict[current_storage]["Years"][current_year]["inst-cap-p"] = float(storage_df.loc[storage_types][
+                        "inst-cap-p"])
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["inst-cap-p"] != 0:
                         process_dict[current_storage]["Years"][current_year][
-                            "inst-cap-p"] = process_dict[current_storage]["Years"][registered_years][
-                            "inst-cap-p"]
+                            "inst-cap-p"] = float(process_dict[current_storage]["Years"][registered_years][
+                            "inst-cap-p"])
                         break
                 if "lifetime" in storage_df:
-                    process_dict[current_storage]["Years"][current_year]["lifetime"] = storage_df.loc[storage_types][
-                        "lifetime"].item()
+                    process_dict[current_storage]["Years"][current_year]["lifetime"] = float(storage_df.loc[storage_types][
+                        "lifetime"])
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["lifetime"] != 0:
                         process_dict[current_storage]["Years"][current_year][
@@ -655,7 +654,6 @@ def read_transmission(sheets_list, year):
                 # detect rows where commodity isn't set to exclude data source information at end of spreadsheet
                 try:
                 #####################################################
-
                     # two rows necessary: the information 'lifetime' & 'inst-cap' are not included in every year
                     # --> these information are only stored in the original data frame; for the other information,
                     # the modified list is used
@@ -835,8 +833,8 @@ def read_transmission_commodities(input_list, data_dict):
 
 if __name__ == "__main__":
     #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria_modified.xlsx']
-    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria.xlsx']
-    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
+    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria.xlsx']
+    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
 
 
     start_time = time.time()
@@ -844,5 +842,8 @@ if __name__ == "__main__":
     print("--- %s seconds ---" % (time.time() - start_time))
     #####################################################
     # print list of errors related to formatting of excel but only print every errror once
-    print("\n".join(list(dict.fromkeys(error_list))))
+    if len(error_list) > 1:
+        print("\n".join(list(dict.fromkeys(error_list))))
+    else:
+        print("No known errors related to formatting of the excel file occured")
     #####################################################

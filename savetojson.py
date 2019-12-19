@@ -108,7 +108,7 @@ def read_year_and_budget(input_list, year):
         else:
             years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index].item()}"""
         # the String format has resulted in an error in combination withe .item() function; now, it somehow works
-        years_dict[str(items)] = {"selected": "", "CO2 limit": int(co2[index])}
+        years_dict[str(items)] = {"selected": "", "CO2 limit": float(co2[index])}
         index = index + 1
 
     return years_dict

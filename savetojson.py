@@ -7,7 +7,7 @@ from datetime import date
 import time
 
 # create global error list to print all errors related to excel in the end
-error_list = ["The following errors related to formatting of the Excel file occured:"]
+error_list = ["The following warnings related to conversion of the Excel file occured:"]
 
 def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_simulation.json'):
     """
@@ -71,6 +71,15 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     f.write(json_file)
     f.close()
 
+    #####################################################
+    # print list of errors related to formatting of excel but only print every errror once
+    if len(error_list) > 1:
+        print("\n".join(list(dict.fromkeys(error_list))))
+        print("\n The excel file was probably converted correctly, but please compare for yourself \n \n")
+
+    else:
+        print("No known errors related to connversion of the excel file occured")
+    #####################################################
 
 def read_year_and_budget(input_list, year):
     """
@@ -106,7 +115,7 @@ def read_year_and_budget(input_list, year):
                 limit = 'inf'
             co2.append(limit)
         else:
-            print("No global sheet in the input sheet!")
+            error_list.append("No global sheet in the input sheet!")
     index = 0
     for items in years:
         # difference if CO2-budget is 'inf' or an integer
@@ -147,7 +156,7 @@ def read_site(input_list):
             for keys in areas:
                 site_dict[str(keys)] = {"selected": "", "area": (site_sheet_indexed.loc[str(keys)]['area']).item()}
         else:
-            print("No 'Site' sheet in the input sheet!")
+            error_list.append("No 'Site' sheet in the input sheet!")
 
     return site_dict
 
@@ -186,7 +195,7 @@ def read_settings(input_list, json_filename):
                 if str(keys) in global_sheet.value:
                     gl_dict[str(keys)] = {"value": global_sheet.loc[str(keys)]["value"].item()}
         else:
-            print("No global sheet in the input sheet!")
+            error_list.append("No global sheet in the input sheet!")
 
     return gl_dict
 
@@ -278,8 +287,6 @@ def read_commodities(site, years_list, input_list):
                             #####################################################
                                 if comm_dict[str(comm_id)]["Name"] == str(items):
                                     new_comm = comm_dict[str(comm_id)]["Years"]
-                                    #####################################################
-                                    #try:
                                     new_comm[current_year] = {
                                     "timeSer": "",
                                     #####################################################
@@ -296,9 +303,6 @@ def read_commodities(site, years_list, input_list):
                                     "cap-max-do": 0.0,
                                     "cap-max-up": 0.0
                                     }
-                                    #except KeyError:
-                                    #    error_list.append("In Commodity, entry is not 'maxperhour' (possibly is 'maxperstep'). please correct this manually")
-                                    #####################################################
                                     df_time_ser = None
                                     time_ser = ""
                                     # for the time series, check the sheets that correspond to the commodity's type
@@ -308,7 +312,7 @@ def read_commodities(site, years_list, input_list):
                                             if str(site) + "." + str(items) in sup_im_sheet:
                                                 df_time_ser = sup_im_sheet.T.loc[str(site) + "." + str(items)]
                                         else:
-                                            print("No SupIm sheet!")
+                                            error_list.append("No SupIm sheet!")
                                             return
 
                                     elif str(keys) == "Buy" or str(keys) == "Sell":
@@ -317,7 +321,7 @@ def read_commodities(site, years_list, input_list):
                                             if str(items) in buy_sell_sheet:
                                                 df_time_ser = buy_sell_sheet.T.loc[str(items)]
                                         else:
-                                            print("No 'Buy-Sell-Price' sheet!")
+                                            error_list.append("No 'Buy-Sell-Price' sheet!")
                                             return
 
                                     elif str(keys) == "Demand":
@@ -326,7 +330,7 @@ def read_commodities(site, years_list, input_list):
                                             if str(site) + "." + str(items) in demand_sheet:
                                                 df_time_ser = demand_sheet.T.loc[str(site) + "." + str(items)]
                                         else:
-                                            print("No Demand sheet!")
+                                            error_list.append("No Demand sheet!")
                                             return
 
                                     # create the time series
@@ -346,9 +350,9 @@ def read_commodities(site, years_list, input_list):
                             else:
                                 raise UserWarning("No 'maxperhour' in Commodity! (possibly old file with 'maxperstep')")
             else:
-                print("No 'DSM' sheet in the input sheet!")
+                error_list.append("No 'DSM' sheet in the input sheet!")
         else:
-            print("No 'Commodity' sheet in the input sheet!")
+            error_list.append("No 'Commodity' sheet in the input sheet!")
 
         # Secondly, check all the processes
 
@@ -358,9 +362,6 @@ def read_commodities(site, years_list, input_list):
             # check every process in the sheet; if it's not already accounted for: create a new entry,
             # otherwise: find the matching process
             for processes in process_df.T:
-                #####################################################
-                #try:
-                #####################################################
                 if str(processes) not in process_list:
                     process_list.append(str(processes))
                     current_process = "NewProcess#"+str(number_of_processes)
@@ -468,25 +469,14 @@ def read_commodities(site, years_list, input_list):
                                     elif process_comms_df.loc[str(process_comm)]["Direction"] == "Out" and \
                                             comm_dict[str(entries)]["Id"] not in process_dict[current_process]["OUT"]:
                                         process_dict[current_process]["OUT"].append(comm_dict[str(entries)]["Id"])
-                            #####################################################
-                            #except ValueError:
-                            #     error_list.append("In 'Process-Commodity', some row failed conversion (possibly source information). Please correct this manually")
-                            #####################################################
                 else:
-                    print("No sheet for the process commodities found.")
-                #####################################################
-                #except ValueError:
-                #    error_list.append("In 'Process', some row fails conversion (possibly source information). Please correct this manually")
-                #####################################################
+                    error_list.append("No sheet for the process commodities found.")
         else:
-            print("No process sheet in the input!")
+            error_list.append("No process sheet in the input!")
 
         # Thirdly, check all the storage facilities and and them to the process dict
 
         if 'Storage' in xls.sheet_names:  # TODO how to handle errors?
-            #####################################################
-            #try:
-            #####################################################    
             storage_sheet = xls.parse("Storage")
             storage_df = storage_sheet.loc[storage_sheet["Site"] == site].set_index("Storage")
             # create a new variable for the number of processes; new variable is necessary because the type storage
@@ -515,6 +505,7 @@ def read_commodities(site, years_list, input_list):
                     current_storage = "NewStorage#" + str(i)
                 # all the information provided by the input sheet for the current process and the current year
                 process_dict[current_storage]["Years"][current_year] = {
+                    #####################################################
                     "inst-cap-c": 0.0,
                     "cap-lo-c": float(storage_df.loc[storage_types]["cap-lo-c"]),
                     "cap-up-c": float(storage_df.loc[storage_types]["cap-up-c"]),
@@ -534,6 +525,7 @@ def read_commodities(site, years_list, input_list):
                     "wacc": float(storage_df.loc[storage_types]["wacc"]),
                     "init": float(storage_df.loc[storage_types]["init"]),
                     "discharge": float(storage_df.loc[storage_types]["discharge"])
+                    #####################################################
                     # "ep-ratio": ""  # TODO: it's in the excel sheets, not in the json files..
                 }
                 # 'inst-cap-c', 'inst-cap-p' and 'lifetime' only occur in the first observed year / the storage's first
@@ -570,12 +562,8 @@ def read_commodities(site, years_list, input_list):
                             comm_dict[entries]["Id"] not in process_dict[current_storage]["IN"]:
                         process_dict[current_storage]["IN"].append(comm_dict[entries]["Id"])
                         break
-            #####################################################
-            #except ValueError:
-            #    error_list.append("In 'Storage', some row fails conversion (possibly source information). Please correct this manually")
-            #####################################################
         else:
-            print("No 'Storage' sheet in the input!")
+            error_list.append("No 'Storage' sheet in the input!")
 
         # lastly, create a dict for the connections (of the processes; IN-OUT-relation)
 
@@ -585,7 +573,7 @@ def read_commodities(site, years_list, input_list):
                 connections_df = process_comms_sheet.loc[process_comms_sheet["Process"] == process_dict[
                     process]["Name"]].set_index("Commodity")
             else:
-                print("No process commodities specified!")
+                error_list.append("No process commodities specified!")
                 break
             # create a new entry if the connection has not been accounted for, otherwise just update the information for
             # the years
@@ -742,7 +730,7 @@ def read_transmission(sheets_list, year):
                     "depreciation": modified_row[11]
                 }
         else:
-            print("No information provided for the transmissions.")
+            error_list.append("No information provided for the transmissions.")
 
     return trsm_dict
 
@@ -810,9 +798,6 @@ def read_transmission_commodities(input_list, data_dict):
                 for commodities in data_dict["_models"][str(site)]["_commodities"]:
                     current_commodity = data_dict["_models"][str(site)]["_commodities"][str(commodities)]
                     if current_commodity["Name"] == str(comm):
-                        #####################################################
-                        #try:
-                        #####################################################
                         trsm_comm_dict[str(key)]["Years"][current_year] = {
                             "timeSer": "",
                             "price": current_commodity["Years"][current_year]["price"],
@@ -827,10 +812,6 @@ def read_transmission_commodities(input_list, data_dict):
                             "cap-max-do": current_commodity["Years"][current_year]["cap-max-do"],
                             "cap-max-up": current_commodity["Years"][current_year]["cap-max-up"]
                         }
-                        #####################################################
-                        #except KeyError:
-                        #    error_list.append("In 'Demand', some row fails conversion (possibly source information). Please correct this manually")
-                        #####################################################
                     # add the time series
                     df = demand_sheet.T.loc[str(key)]
                     time_ser = ""
@@ -838,7 +819,7 @@ def read_transmission_commodities(input_list, data_dict):
                         time_ser = time_ser + "|" + str(row)
                     trsm_comm_dict[str(key)]["Years"][current_year]["timeSer"] = time_ser[1:]
         else:
-            print("No 'Demand' sheet provided.")
+            error_list.append("No 'Demand' sheet provided.")
 
     return trsm_comm_dict
 
@@ -852,10 +833,4 @@ if __name__ == "__main__":
     start_time = time.time()
     convert_to_json(path, json_filename=path[0] + '.json')
     print("--- %s seconds ---" % (time.time() - start_time))
-    #####################################################
-    # print list of errors related to formatting of excel but only print every errror once
-    if len(error_list) > 1:
-        print("\n".join(list(dict.fromkeys(error_list))))
-    else:
-        print("No known errors related to formatting of the excel file occured")
-    #####################################################
+    

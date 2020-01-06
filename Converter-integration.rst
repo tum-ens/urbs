@@ -39,7 +39,8 @@ An entry similar to *load config* was created with differences being:
 * labeling was adapted to match task
 * called event was changed to use new function in Controller.py
 
-.. code-block:: python
+.. code:: python
+
     :emphasize-lines: 7,8,9,13
     def __init__(self, controller):
         wx.Frame.__init__(self, None, title="urbs gui 1.0")
@@ -56,7 +57,8 @@ An entry similar to *load config* was created with differences being:
         self.Bind(wx.EVT_MENU, self.OnImport, imi)
         self.Bind(wx.EVT_MENU, self.OnSave, smi)
 
-.. code-block:: python
+.. code:: python
+
     def OnImport(self, event):
     # create import dialog where one can select multiple files
     # filepaths are returned as list
@@ -75,7 +77,8 @@ Events.py
 ---------
 An event was created to use a new function in Controller.py
 
-.. code-block:: python
+.. code:: python
+
     :emphasize-lines: 13
     class EVENTS():
         ...
@@ -98,12 +101,14 @@ Two modules were additionally imported:
 * savetojson.py script to call conversion function
 * os to be able to modify filepath strings more conveniently
 
-.. code-block:: python
+.. code:: python
+
     #import converter script from same folder urbs/gui for now
     import savetojson
     import os
 
-.. code-block:: python
+.. code:: python
+
     :emphasize-lines: 4
     class Controller():
         def __init__(self):
@@ -120,7 +125,8 @@ For multiple files the filenames of every filepath except the first are extracte
 Then the path of the new savefile and the list of filepaths is given over to the converter script, calling *convert_to_json()*.
 Afterwards a message is sent to the bus to invoke OnLoadConfig with the path of the new savefile.
 
-.. code-block:: python
+.. code:: python
+
     def OnImportConfig(self, filename):
         # Import function calls converter script with a list of filepaths
         # and the first path in the list as output filename
@@ -145,7 +151,8 @@ This means packaging the filepath into a list is no longer necessary
 but the functionality is still kept for standalone use.
 This also allows the user to select multiple files directly so they do not depend on the Input-folder mechanism.
 
-.. code-block:: python
+.. code:: python
+
     :emphasize-lines: 4,5,6
     if input_files == 'Input':
         glob_input = os.path.join("..", input_files, '*.xlsx')
@@ -158,7 +165,8 @@ This also allows the user to select multiple files directly so they do not depen
 The detection of file extensions to add '.json' if necessary was improved to use os.path.splitext instead of comparing the last five letters of the string.
 As the os module is already in use in *savetojson.py* nothing extra needs to be imported.
 
-.. code-block:: python
+.. code:: python
+
     :emphasize-lines: 2
     # make sure that json_filename is valid
     if os.path.splitext(json_filename)[1] != '.json': 

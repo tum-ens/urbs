@@ -103,9 +103,9 @@ class MainView (wx.Frame):
                 pub.sendMessage(EVENTS.LOAD_CONFIG, filename=fn)
 
 #####################################################
-# create import dialog where one can select multiple files
-# filepaths are returned as list
     def OnImport(self, event):
+        # create import dialog where one can select multiple files
+        # filepaths are returned as list
         openFileDialog = wx.FileDialog(self, "Import", "./samples", "",
                                        "urbs files (*.xlsx)|*.xlsx",
                                         wx.FD_MULTIPLE | wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)

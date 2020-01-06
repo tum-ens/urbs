@@ -35,7 +35,8 @@ But especially when used on library modules errors can be hidden from the user w
 Additionally whenever a set of values was copied and one of the readings raised an error every spot after that would be empty.
 This made calculations and advanced arrangements impossible and moved errors from their origin further down.
 
-.. code-block:: python
+.. code:: python
+
     try:
         new_comm[current_year] = {
             "timeSer": "",
@@ -61,7 +62,8 @@ The overall performance of the converter decreased as well as if/else statements
 
 In the third and current iteration an *if* statement is still used but instead of testing in every single function a test is used on the input right after loading the file.
 
-.. code-block:: python
+.. code:: python
+
     for xls in sheet_list:
         if "Source" in xls.parse().values:
             raise UserWarning("Some cells in " + sheet + " contain 'Source'. All columns and rows containing source information and the source sheet should be removed manually.")
@@ -84,7 +86,8 @@ In the commodity sheet sometimes one of the columns isn't correctly labeled 'max
 This breaks the converter as it expects 'maxperhour' and writes it into a element maxperhour.
 It is not clear whether the GUI can handle a variable other than maxperhour so the decision of renaming it is transferred to the user with a UserWarning.
 
-.. code-block:: python
+.. code:: python
+
     for comm_id in comm_dict:
         # go through every existing commodity; if the current commodity is found: add the
         # information, then break out of the for loop
@@ -99,7 +102,8 @@ It is not clear whether the GUI can handle a variable other than maxperhour so t
 Many transformations in different functions were ending with *.item()* which created problems with some files but worked fine on others.
 As no documentation of the .item() function was found in python most were replaced by wrapping the statements in *float()* except where necessary for some reason.
 
-.. code-block:: python
+.. code:: python
+
     process_dict[current_storage]["Years"][current_year]["lifetime"] = storage_df.loc[storage_types]["lifetime"].item()
     process_dict[current_storage]["Years"][current_year]["lifetime"] = float(storage_df.loc[storage_types]["lifetime"])
 
@@ -108,7 +112,8 @@ Error print modification
 As the amount of error prints in the style of "No 'TimeVarEff' sheet" was enormous a new way of displaying non-breaking errors was created.
 It is a list object *error_list* created directly after the imports which is printed in an orderly manner after the conversion.
 
-.. code-block:: python
+.. code:: python
+
     import os
     import glob
     from datetime import date
@@ -120,7 +125,8 @@ It is a list object *error_list* created directly after the imports which is pri
 The list is preloaded with a sentence as only non-empty lists can be appended to.
 For now this list is for non breaking errors only so it is printed after the conversion is finished.
 
-.. code-block:: python
+.. code:: python
+
     # create json file
     json_file = json.dumps(data_dict, indent=2)
     f = open(json_filename, 'w')
@@ -138,7 +144,8 @@ For now this list is for non breaking errors only so it is printed after the con
 This code checks whether error messages where appended and then prints all unique entries in the list.
 Uniqueness is created by converting the list to a dict and back to a list as dicts can only hold unique elements.
 
-.. code-block:: python
+.. code:: python
+
     def read_year_and_budget(input_list, year):
         ...
         # read the 'Global' files in all the input sheets

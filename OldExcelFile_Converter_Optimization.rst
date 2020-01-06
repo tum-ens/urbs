@@ -104,7 +104,7 @@ As no documentation of the .item() function was found in python most were replac
 
 .. code:: python
 
-    process_dict[current_storage]["Years"][current_year]["lifetime"] = storage_df.loc[storage_types]["lifetime"].item()
+    #process_dict[current_storage]["Years"][current_year]["lifetime"] = storage_df.loc[storage_types]["lifetime"].item()
     process_dict[current_storage]["Years"][current_year]["lifetime"] = float(storage_df.loc[storage_types]["lifetime"])
 
 Error print modification
@@ -155,7 +155,7 @@ Uniqueness is created by converting the list to a dict and back to a list as dic
             else:
                 error_list.append("No global sheet in the input sheet!")
 
-Because the list is an object its' functions including *.append()* can be called anywhere in the module.
+Because the list is an object its functions including *.append()* can be called anywhere in the module.
 
 ToDo
 ----

@@ -56,7 +56,7 @@ Technical Parameters
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`\overline{PG}_{yvp}^\text{down}`      |1/h |Process Maximal Power Ramp Down Gradient (relative)|
     +---------------------------------------------+----+---------------------------------------------------+
-    |:math:`\overline{T}_{yvp}^\text{start}`      |h   |Process Starting Time                              |
+    |:math:`\overline{ST}_{yvp}^\text{start}`     |h   |Process Starting Time                              |
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`\underline{P}_{yvp}`                  | _  |Process Minimum Part Load Fraction                 |
     +---------------------------------------------+----+---------------------------------------------------+
@@ -69,6 +69,10 @@ Technical Parameters
     |:math:`\underline{r}_{ypc}^\text{out}`       | _  |Process Partial Output Ratio                       |
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`r_{ypc}^\text{out}`                   | _  |Process Output Ratio                               |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yvp}^\text{block}`               |MW  |Process New Capacity Block                         |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{P}_{yvp}^\text{start}`               | _  |Process Start Price                                |
     +---------------------------------------------+----+---------------------------------------------------+
     |**Storage Technical Parameters**                                                                      |
     +---------------------------------------------+----+---------------------------------------------------+
@@ -115,6 +119,8 @@ Technical Parameters
     |:math:`\overline{dl}_{yaf}`                  |deg.|Voltage Angle Difference Limit                     |
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`V_{yaf\text{base}}`                   |kV  |Transmission Base Voltage                          |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yaf}^\text{block}`               | _  |Transmission New Capacity Block                    |
     +---------------------------------------------+----+---------------------------------------------------+
     |**Demand Side Management Parameters**                                                                 |
     +---------------------------------------------+----+---------------------------------------------------+
@@ -535,6 +541,29 @@ output ratio of "1" to at least one commodity. The flow of this commodity then
 tracks the throughput and can be used as a reference. All other values of in-
 and output ratios can then be adjusted by scaling them by an appropriate factor
 to the reference commodity flow. 
+
+:math:`{P}_{yvp}^\text{start}`               | _  |Process Start Price 
+**Process New Capacity Block**, :math:`{K}_{yvp}^\text{block}`,
+``m.process_dict['start-time'][(stf, sit, pro)]``: The parameter 
+:math:`{K}_{yvp}^\text{block}` represents the capacity of all newly installed
+units of a process :math:`p` at a site :math:`v` in the support timeframe
+:math:`y`. The unit of this parameter is MW. The related section for
+this parameter in the spreadsheet can be found under the "Process" sheet. Here
+each row represents another process :math:`p` in a site :math:`v` and the
+column with the header label "cap-block" represents the parameters
+:math:`{K}_{yvp}^\text{block}` of the corresponding process :math:`p` and site
+:math:`v` combinations.
+
+**Process Start Price**, :math:`{P}_{yvp}^\text{start}`,
+``m.process_dict['start-price'][(stf, sit, pro)]``: The parameter 
+:math:`{P}_{yvp}^\text{start}` represents the cost inquired by the starting
+of a process :math:`p` at a site :math:`v` in the support timeframe :math:`y`.
+The unit of this parameter is the currency used in the support timeframe :math:`y`.
+The related section for this parameter in the spreadsheet can be found under the 
+"Process" sheet. Here each row represents another process :math:`p` in a site :math:`v`
+and the column with the header label "start-price" represents the parameters
+:math:`{P}_{yvp}^\text{start}` of the corresponding process :math:`p` and site
+:math:`v` combinations.
 
 Storage Technical Parameters
 ----------------------------

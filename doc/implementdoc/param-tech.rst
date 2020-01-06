@@ -56,7 +56,7 @@ Technical Parameters
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`\overline{PG}_{yvp}^\text{down}`      |1/h |Process Maximal Power Ramp Down Gradient (relative)|
     +---------------------------------------------+----+---------------------------------------------------+
-    |:math:`\overline{PG}_{yvp}^\text{start}`     |1/h |Process Starting Maximal Power Gradient (relative) |
+    |:math:`\overline{T}_{yvp}^\text{start}`      |h   |Process Starting Time                              |
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`\underline{P}_{yvp}`                  | _  |Process Minimum Part Load Fraction                 |
     +---------------------------------------------+----+---------------------------------------------------+
@@ -406,19 +406,43 @@ limit for the process capacities, both input parameters can be simply set to
 :math:`T_{vp}` represents the remaining lifetime of already installed units. It
 is used to determine the set `m.inst_pro_tuples`, i.e. to identify for which
 support timeframes the installed unit can still be used.
-
-**Process Maximal Gradient**, :math:`\overline{PG}_{yvp}`,
-``m.process_dict['max-grad'][(stf, sit, pro)]``: The parameter
-:math:`\overline{PG}_{yvp}` represents the maximal power gradient of a process
+    
+**Process Maximal Power Ramp Up Gradient**, :math:`\overline{PG}_{yvp}^\text{up}`,
+``m.process_dict['ramp-up-grad'][(stf, sit, pro)]``: The parameter
+:math:`\overline{PG}_{yvp}^\text{up}` represents the maximal power ramp up gradient of a process
 :math:`p` at a site :math:`v` in support timeframe :math:`y`, that energy model
 is allowed to have. The unit of this parameter is 1/h. The related section for
 this parameter in the spreadsheet can be found under the "Process" sheet. Here
 each row represents another process :math:`p` in a site :math:`v` and the
-column with the header label "max-grad" represents the parameters
-:math:`\overline{PG}_{yvp}` of the corresponding process :math:`p` and site
+column with the header label "ramp-up-grad" represents the parameters
+:math:`\overline{PG}_{yvp}^\text{up}` of the corresponding process :math:`p` and site
 :math:`v` combinations. If there is no desired maximum limit for the process
-power gradient, this parameter can be simply set to a value larger or equal to
+power ramp up gradient, this parameter can be simply set to a value larger or equal to
 1.
+
+**Process Maximal Power Ramp Down Gradient**, :math:`\overline{PG}_{yvp}^\text{down}`,
+``m.process_dict['ramp-down-grad'][(stf, sit, pro)]``: The parameter
+:math:`\overline{PG}_{yvp}^\text{down}` represents the maximal power ramp down gradient of a process
+:math:`p` at a site :math:`v` in support timeframe :math:`y`, that energy model
+is allowed to have. The unit of this parameter is 1/h. The related section for
+this parameter in the spreadsheet can be found under the "Process" sheet. Here
+each row represents another process :math:`p` in a site :math:`v` and the
+column with the header label "ramp-down-grad" represents the parameters
+:math:`\overline{PG}_{yvp}^\text{up}` of the corresponding process :math:`p` and site
+:math:`v` combinations. If there is no desired maximum limit for the process
+power ramp down gradient, this parameter can be simply set to a value larger or equal to
+1.
+
+**Process Starting Time**, :math:`\overline{T}_{yvp}^\text{start}`,
+``m.process_dict['start-time'][(stf, sit, pro)]``: The parameter
+:math:`\overline{T}_{yvp}^\text{start}` represents the time required by a process
+:math:`p` at a site :math:`v` in support timeframe :math:`y`to start.
+The unit of this parameter is h. The related section for
+this parameter in the spreadsheet can be found under the "Process" sheet. Here
+each row represents another process :math:`p` in a site :math:`v` and the
+column with the header label "start-time" represents the parameters
+:math:`\overline{T}_{yvp}^\text{start}` of the corresponding process :math:`p` and site
+:math:`v` combinations.
 
 **Process Minimum Part Load Fraction**, :math:`\underline{P}_{yvp}`,
 ``m.process_dict['min-fraction'][(stf, sit, pro)]``: The parameter

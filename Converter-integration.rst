@@ -40,8 +40,7 @@ An entry similar to *load config* was created with differences being:
 * called event was changed to use new function in Controller.py
 
 .. code:: python
-
-    :emphasize-lines: 7,8,9,13
+    
     def __init__(self, controller):
         wx.Frame.__init__(self, None, title="urbs gui 1.0")
 
@@ -56,9 +55,7 @@ An entry similar to *load config* was created with differences being:
         self.Bind(wx.EVT_MENU, self.OnOpen, omi)
         self.Bind(wx.EVT_MENU, self.OnImport, imi)
         self.Bind(wx.EVT_MENU, self.OnSave, smi)
-
-.. code:: python
-
+        ...
     def OnImport(self, event):
     # create import dialog where one can select multiple files
     # filepaths are returned as list
@@ -79,7 +76,6 @@ An event was created to use a new function in Controller.py
 
 .. code:: python
 
-    :emphasize-lines: 13
     class EVENTS():
         ...
         ITEM_DOUBLE_CLICK = "ITEM_DOUBLE_CLICK_"
@@ -109,7 +105,6 @@ Two modules were additionally imported:
 
 .. code:: python
 
-    :emphasize-lines: 4
     class Controller():
         def __init__(self):
             ...
@@ -153,7 +148,6 @@ This also allows the user to select multiple files directly so they do not depen
 
 .. code:: python
 
-    :emphasize-lines: 4,5,6
     if input_files == 'Input':
         glob_input = os.path.join("..", input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
@@ -167,7 +161,6 @@ As the os module is already in use in *savetojson.py* nothing extra needs to be 
 
 .. code:: python
 
-    :emphasize-lines: 2
     # make sure that json_filename is valid
     if os.path.splitext(json_filename)[1] != '.json': 
     #if json_filename[-5:] is not '.json':

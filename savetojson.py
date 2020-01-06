@@ -37,7 +37,7 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
         sheet_list.append(pd.ExcelFile(sheet))
 
     #####################################################
-    # test for source in excel files, these columns and rows have to be removed by hand
+    # test for source information in excel files which breaks most conversion functions. These columns and rows have to be removed by hand
     for xls in sheet_list:
         if "Source" in xls.parse().values:
             raise UserWarning("Some cells in " + sheet + " contain 'Source'. All columns and rows containing source information and the source sheet should be removed manually.")
@@ -459,16 +459,13 @@ def read_commodities(site, years_list, input_list):
                         .set_index("Commodity")
                     for entries in comm_dict:
                         for process_comm in process_comms_df.T:
-                            #####################################################
-                            if not process_comms_df["Process"].str.contains("Curtailment").any():
-                            #####################################################
-                                if comm_dict[str(entries)]["Name"] == str(process_comm):
-                                    if process_comms_df.loc[str(process_comm)]["Direction"] == "In" and \
-                                            comm_dict[str(entries)]["Id"] not in process_dict[current_process]["IN"]:
-                                        process_dict[current_process]["IN"].append(comm_dict[str(entries)]["Id"])
-                                    elif process_comms_df.loc[str(process_comm)]["Direction"] == "Out" and \
-                                            comm_dict[str(entries)]["Id"] not in process_dict[current_process]["OUT"]:
-                                        process_dict[current_process]["OUT"].append(comm_dict[str(entries)]["Id"])
+                            if comm_dict[str(entries)]["Name"] == str(process_comm):
+                                if process_comms_df.loc[str(process_comm)]["Direction"] == "In" and \
+                                        comm_dict[str(entries)]["Id"] not in process_dict[current_process]["IN"]:
+                                    process_dict[current_process]["IN"].append(comm_dict[str(entries)]["Id"])
+                                elif process_comms_df.loc[str(process_comm)]["Direction"] == "Out" and \
+                                        comm_dict[str(entries)]["Id"] not in process_dict[current_process]["OUT"]:
+                                    process_dict[current_process]["OUT"].append(comm_dict[str(entries)]["Id"])
                 else:
                     error_list.append("No sheet for the process commodities found.")
         else:

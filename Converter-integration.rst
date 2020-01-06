@@ -94,7 +94,9 @@ Controller.py
 -------------
 
 Two modules were additionally imported:
+
 * savetojson.py script to call conversion function
+
 * os to be able to modify filepath strings more conveniently
 
 .. code:: python

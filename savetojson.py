@@ -6,6 +6,8 @@ import glob
 from datetime import date
 import time
 
+# create global error list to print all errors related to excel in the end
+error_list = ["The following warnings related to conversion of the Excel file occured:"]
 
 def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_simulation.json'):
     """
@@ -22,17 +24,24 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     if input_files == 'Input':
         glob_input = os.path.join("..", input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
-#####################################################
-# removed packaging of filepath into list 
-# so that multiple filepaths can be selected in gui which are already stored in a list
-    elif type(input_files).__name__ == 'string':
+    #####################################################
+    # removed packaging of filepath into list 
+    # so that multiple filepaths can be selected in gui which are already stored in a list
+    elif isinstance(input_files, str):
         input_files = [input_files]
-#####################################################
+    #####################################################
 
     # read all the excel sheets and store them in a list
     sheet_list = []
     for sheet in input_files:
         sheet_list.append(pd.ExcelFile(sheet))
+
+    #####################################################
+    # test for source information in excel files which breaks most conversion functions. These columns and rows have to be removed by hand
+    for xls in sheet_list:
+        if "Source" in xls.parse().values:
+            raise UserWarning("Some cells in " + sheet + " contain 'Source'. All columns and rows containing source information and the source sheet should be removed manually.")
+    #####################################################
 
     # create the dict that stores all relevant information
     data_dict = {'_years': read_year_and_budget(sheet_list, year),
@@ -62,6 +71,15 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     f.write(json_file)
     f.close()
 
+    #####################################################
+    # print list of errors related to formatting of excel but only print every errror once
+    if len(error_list) > 1:
+        print("\n".join(list(dict.fromkeys(error_list))))
+        print("\n The excel file was probably converted correctly, but please compare for yourself \n \n")
+
+    else:
+        print("No known errors related to connversion of the excel file occured")
+    #####################################################
 
 def read_year_and_budget(input_list, year):
     """
@@ -97,7 +115,7 @@ def read_year_and_budget(input_list, year):
                 limit = 'inf'
             co2.append(limit)
         else:
-            print("No global sheet in the input sheet!")
+            error_list.append("No global sheet in the input sheet!")
     index = 0
     for items in years:
         # difference if CO2-budget is 'inf' or an integer
@@ -106,7 +124,7 @@ def read_year_and_budget(input_list, year):
         else:
             years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index].item()}"""
         # the String format has resulted in an error in combination withe .item() function; now, it somehow works
-        years_dict[str(items)] = {"selected": "", "CO2 limit": co2[index].item()}
+        years_dict[str(items)] = {"selected": "", "CO2 limit": float(co2[index])}
         index = index + 1
 
     return years_dict
@@ -138,7 +156,7 @@ def read_site(input_list):
             for keys in areas:
                 site_dict[str(keys)] = {"selected": "", "area": (site_sheet_indexed.loc[str(keys)]['area']).item()}
         else:
-            print("No 'Site' sheet in the input sheet!")
+            error_list.append("No 'Site' sheet in the input sheet!")
 
     return site_dict
 
@@ -177,7 +195,7 @@ def read_settings(input_list, json_filename):
                 if str(keys) in global_sheet.value:
                     gl_dict[str(keys)] = {"value": global_sheet.loc[str(keys)]["value"].item()}
         else:
-            print("No global sheet in the input sheet!")
+            error_list.append("No global sheet in the input sheet!")
 
     return gl_dict
 
@@ -264,13 +282,18 @@ def read_commodities(site, years_list, input_list):
                         for comm_id in comm_dict:
                             # go through every existing commodity; if the current commodity is found: add the
                             # information, then break out of the for loop
-                            if comm_dict[str(comm_id)]["Name"] == str(items):
-                                new_comm = comm_dict[str(comm_id)]["Years"]
-                                new_comm[current_year] = {
+                            #####################################################
+                            if "maxperhour" in comm_df.columns:
+                            #####################################################
+                                if comm_dict[str(comm_id)]["Name"] == str(items):
+                                    new_comm = comm_dict[str(comm_id)]["Years"]
+                                    new_comm[current_year] = {
                                     "timeSer": "",
-                                    "price": comm_df.T.loc["price"][items].item(),
-                                    "max": comm_df.T.loc["max"][items].item(),
-                                    "maxperhour": comm_df.T.loc["maxperhour"][items].item(),
+                                    #####################################################
+                                    "price": float(comm_df.T.loc["price"][items]),
+                                    "max": float(comm_df.T.loc["max"][items]),
+                                    "maxperhour": float(comm_df.T.loc["maxperhour"][items]),
+                                    #####################################################
                                     "Action": "...",
                                     "delay": 0.0,
                                     "eff": 0.0,
@@ -279,55 +302,57 @@ def read_commodities(site, years_list, input_list):
                                     "recov": 0.0,
                                     "cap-max-do": 0.0,
                                     "cap-max-up": 0.0
-                                }
-                                df_time_ser = None
-                                time_ser = ""
-                                # for the time series, check the sheets that correspond to the commodity's type
-                                if str(keys) == "SupIm":
-                                    if "SupIm" in xls.sheet_names:  # TODO error handling
-                                        sup_im_sheet = xls.parse("SupIm")
-                                        if str(site) + "." + str(items) in sup_im_sheet:
-                                            df_time_ser = sup_im_sheet.T.loc[str(site) + "." + str(items)]
-                                    else:
-                                        print("No SupIm sheet!")
-                                        return
+                                    }
+                                    df_time_ser = None
+                                    time_ser = ""
+                                    # for the time series, check the sheets that correspond to the commodity's type
+                                    if str(keys) == "SupIm":
+                                        if "SupIm" in xls.sheet_names:  # TODO error handling
+                                            sup_im_sheet = xls.parse("SupIm")
+                                            if str(site) + "." + str(items) in sup_im_sheet:
+                                                df_time_ser = sup_im_sheet.T.loc[str(site) + "." + str(items)]
+                                        else:
+                                            error_list.append("No SupIm sheet!")
+                                            return
 
-                                elif str(keys) == "Buy" or str(keys) == "Sell":
-                                    if "Buy-Sell-Price" in xls.sheet_names:  # TODO error handling
-                                        buy_sell_sheet = xls.parse("Buy-Sell-Price")
-                                        if str(items) in buy_sell_sheet:
-                                            df_time_ser = buy_sell_sheet.T.loc[str(items)]
-                                    else:
-                                        print("No 'Buy-Sell-Price' sheet!")
-                                        return
+                                    elif str(keys) == "Buy" or str(keys) == "Sell":
+                                        if "Buy-Sell-Price" in xls.sheet_names:  # TODO error handling
+                                            buy_sell_sheet = xls.parse("Buy-Sell-Price")
+                                            if str(items) in buy_sell_sheet:
+                                                df_time_ser = buy_sell_sheet.T.loc[str(items)]
+                                        else:
+                                            error_list.append("No 'Buy-Sell-Price' sheet!")
+                                            return
 
-                                elif str(keys) == "Demand":
-                                    if "Demand" in xls.sheet_names:  # TODO error handling
-                                        demand_sheet = xls.parse("Demand")
-                                        if str(site) + "." + str(items) in demand_sheet:
-                                            df_time_ser = demand_sheet.T.loc[str(site) + "." + str(items)]
-                                    else:
-                                        print("No Demand sheet!")
-                                        return
+                                    elif str(keys) == "Demand":
+                                        if "Demand" in xls.sheet_names:  # TODO error handling
+                                            demand_sheet = xls.parse("Demand")
+                                            if str(site) + "." + str(items) in demand_sheet:
+                                                df_time_ser = demand_sheet.T.loc[str(site) + "." + str(items)]
+                                        else:
+                                            error_list.append("No Demand sheet!")
+                                            return
 
-                                # create the time series
-                                if df_time_ser is not None:
-                                    for row in df_time_ser:
-                                        time_ser = time_ser + "|" + str(row)
-                                new_comm[current_year]["timeSer"] = time_ser[1:]
-                                for values in dsm_df.T:
-                                    if str(values) == str(items):
-                                        new_comm[current_year]["delay"] = dsm_df.loc[str(values)]["delay"]
-                                        new_comm[current_year]["eff"] = dsm_df.loc[str(values)]["eff"]
-                                        new_comm[current_year]["recov"] = dsm_df.loc[str(values)]["recov"]
-                                        new_comm[current_year]["cap-max-do"] = dsm_df.loc[str(values)]["cap-max-do"]
-                                        new_comm[current_year]["cap-max-up"] = dsm_df.loc[str(values)]["cap-max-up"]
-                                        comm_dict[str(comm_id)]["DSM"] = True
-                                break
+                                    # create the time series
+                                    if df_time_ser is not None:
+                                        for row in df_time_ser:
+                                            time_ser = time_ser + "|" + str(row)
+                                    new_comm[current_year]["timeSer"] = time_ser[1:]
+                                    for values in dsm_df.T:
+                                        if str(values) == str(items):
+                                            new_comm[current_year]["delay"] = dsm_df.loc[str(values)]["delay"]
+                                            new_comm[current_year]["eff"] = dsm_df.loc[str(values)]["eff"]
+                                            new_comm[current_year]["recov"] = dsm_df.loc[str(values)]["recov"]
+                                            new_comm[current_year]["cap-max-do"] = dsm_df.loc[str(values)]["cap-max-do"]
+                                            new_comm[current_year]["cap-max-up"] = dsm_df.loc[str(values)]["cap-max-up"]
+                                            comm_dict[str(comm_id)]["DSM"] = True
+                                    break
+                            else:
+                                raise UserWarning("No 'maxperhour' in Commodity! (possibly old file with 'maxperstep')")
             else:
-                print("No 'DSM' sheet in the input sheet!")
+                error_list.append("No 'DSM' sheet in the input sheet!")
         else:
-            print("No 'Commodity' sheet in the input sheet!")
+            error_list.append("No 'Commodity' sheet in the input sheet!")
 
         # Secondly, check all the processes
 
@@ -355,30 +380,31 @@ def read_commodities(site, years_list, input_list):
                     while process_dict["NewProcess#" + str(i)]["Name"] != str(processes):
                         i += 1
                     current_process = "NewProcess#" + str(i)
-
+                
                 process_dict[current_process]["Years"][current_year] = {
                     "inst-cap": 0.0,
                     "Action": "...",
                     "timeEff": "",
                     "lifetime": 0.0,
-                    "cap-lo": process_df.loc[processes]["cap-lo"].item(),
-                    "cap-up": process_df.loc[processes]["cap-up"].item(),
-                    "inv-cost": process_df.loc[processes]["inv-cost"].item(),
-                    "fix-cost": process_df.loc[processes]["fix-cost"].item(),
-                    "var-cost": process_df.loc[processes]["var-cost"].item(),
+                    #####################################################
+                    "cap-lo": float(process_df.loc[processes]["cap-lo"]),
+                    "cap-up": float(process_df.loc[processes]["cap-up"]),
+                    "inv-cost": float(process_df.loc[processes]["inv-cost"]),
+                    "fix-cost": float(process_df.loc[processes]["fix-cost"]),
+                    "var-cost": float(process_df.loc[processes]["var-cost"]),
                     "startup-cost": 0.0,
-                    "wacc": process_df.loc[processes]["wacc"].item(),
-                    "max-grad": process_df.loc[processes]["max-grad"].item(),
-                    "min-fraction": process_df.loc[processes]["min-fraction"].item(),
-                    "depreciation": process_df.loc[processes]["depreciation"].item(),
+                    "wacc": float(process_df.loc[processes]["wacc"]),
+                    "max-grad": float(process_df.loc[processes]["max-grad"]),
+                    "min-fraction": float(process_df.loc[processes]["min-fraction"]),
+                    "depreciation": float(process_df.loc[processes]["depreciation"]),
+                    #####################################################
                     "area-per-cap": 0.0
                 }
                 # 'inst-cap' is only provided in the first year of the analysis,
                 # it stays the same for all the following years;
                 # if the information is found in one sheet, the value should be assigned to every other year as well
                 if "inst-cap" in process_df:  # TODO: what's the warning?
-                    process_dict[current_process]["Years"][current_year]["inst-cap"] = process_df.loc[processes][
-                        "inst-cap"].item()
+                    process_dict[current_process]["Years"][current_year]["inst-cap"] = float(process_df.loc[processes]["inst-cap"])
                 for registered_years in process_dict[current_process]["Years"]:
                     if process_dict[current_process]["Years"][registered_years]["inst-cap"] != 0:
                         process_dict[current_process]["Years"][current_year][
@@ -417,7 +443,7 @@ def read_commodities(site, years_list, input_list):
                     time_var_eff_sheet = xls.parse("TimeVarEff").set_index("t")
                 else:
                     time_var_eff_sheet = None
-                    print("No 'TimeVarEff' sheet")
+                    error_list.append("No 'TimeVarEff' sheet")
 
                 if time_var_eff_sheet is not None:
                     if str(site) + "." + str(processes) in time_var_eff_sheet:
@@ -426,7 +452,7 @@ def read_commodities(site, years_list, input_list):
                             eff = eff + "|" + str(rows)
                         process_dict[current_process]["Years"][current_year]["timeEff"] = eff[1:]  # TODO what's the warning?
 
-                # IN and OUT commodities of one process
+                # IN and OUT commodities of one process            
                 if 'Process-Commodity' in xls.sheet_names:  # TODO error handling
                     process_comms_sheet = xls.parse("Process-Commodity")
                     process_comms_df = process_comms_sheet.loc[process_comms_sheet["Process"] == processes] \
@@ -441,9 +467,9 @@ def read_commodities(site, years_list, input_list):
                                         comm_dict[str(entries)]["Id"] not in process_dict[current_process]["OUT"]:
                                     process_dict[current_process]["OUT"].append(comm_dict[str(entries)]["Id"])
                 else:
-                    print("No sheet for the process commodities found.")
+                    error_list.append("No sheet for the process commodities found.")
         else:
-            print("No process sheet in the input!")
+            error_list.append("No process sheet in the input!")
 
         # Thirdly, check all the storage facilities and and them to the process dict
 
@@ -476,32 +502,34 @@ def read_commodities(site, years_list, input_list):
                     current_storage = "NewStorage#" + str(i)
                 # all the information provided by the input sheet for the current process and the current year
                 process_dict[current_storage]["Years"][current_year] = {
+                    #####################################################
                     "inst-cap-c": 0.0,
-                    "cap-lo-c": storage_df.loc[storage_types]["cap-lo-c"].item(),
-                    "cap-up-c": storage_df.loc[storage_types]["cap-up-c"].item(),
+                    "cap-lo-c": float(storage_df.loc[storage_types]["cap-lo-c"]),
+                    "cap-up-c": float(storage_df.loc[storage_types]["cap-up-c"]),
                     "inst-cap-p": 0.0,
-                    "cap-lo-p": storage_df.loc[storage_types]["cap-lo-p"].item(),
-                    "cap-up-p": storage_df.loc[storage_types]["cap-up-p"].item(),
-                    "eff-in": storage_df.loc[storage_types]["eff-in"].item(),
-                    "eff-out": storage_df.loc[storage_types]["eff-out"].item(),
-                    "inv-cost-p": storage_df.loc[storage_types]["inv-cost-p"].item(),
-                    "inv-cost-c": storage_df.loc[storage_types]["inv-cost-c"].item(),
-                    "fix-cost-p": storage_df.loc[storage_types]["fix-cost-p"].item(),
-                    "fix-cost-c": storage_df.loc[storage_types]["fix-cost-c"].item(),
-                    "var-cost-p": storage_df.loc[storage_types]["var-cost-p"].item(),
-                    "var-cost-c": storage_df.loc[storage_types]["var-cost-c"].item(),
+                    "cap-lo-p": float(storage_df.loc[storage_types]["cap-lo-p"]),
+                    "cap-up-p": float(storage_df.loc[storage_types]["cap-up-p"]),
+                    "eff-in": float(storage_df.loc[storage_types]["eff-in"]),
+                    "eff-out": float(storage_df.loc[storage_types]["eff-out"]),
+                    "inv-cost-p": float(storage_df.loc[storage_types]["inv-cost-p"]),
+                    "inv-cost-c": float(storage_df.loc[storage_types]["inv-cost-c"]),
+                    "fix-cost-p": float(storage_df.loc[storage_types]["fix-cost-p"]),
+                    "fix-cost-c": float(storage_df.loc[storage_types]["fix-cost-c"]),
+                    "var-cost-p": float(storage_df.loc[storage_types]["var-cost-p"]),
+                    "var-cost-c": float(storage_df.loc[storage_types]["var-cost-c"]),
                     "lifetime": 0.0,
-                    "depreciation": storage_df.loc[storage_types]["depreciation"].item(),
-                    "wacc": storage_df.loc[storage_types]["wacc"].item(),
-                    "init": storage_df.loc[storage_types]["init"].item(),
-                    "discharge": storage_df.loc[storage_types]["discharge"].item()
+                    "depreciation": float(storage_df.loc[storage_types]["depreciation"]),
+                    "wacc": float(storage_df.loc[storage_types]["wacc"]),
+                    "init": float(storage_df.loc[storage_types]["init"]),
+                    "discharge": float(storage_df.loc[storage_types]["discharge"])
+                    #####################################################
                     # "ep-ratio": ""  # TODO: it's in the excel sheets, not in the json files..
                 }
                 # 'inst-cap-c', 'inst-cap-p' and 'lifetime' only occur in the first observed year / the storage's first
                 # appearance in the simulation; after that they remain unchanged for the rest of the years
                 if "inst-cap-c" in storage_df:  # TODO: what's the warning?
-                    process_dict[current_storage]["Years"][current_year]["inst-cap-c"] = storage_df.loc[storage_types][
-                        "inst-cap-c"].item()
+                    process_dict[current_storage]["Years"][current_year]["inst-cap-c"] = float(storage_df.loc[storage_types][
+                        "inst-cap-c"])
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["inst-cap-c"] != 0:
                         process_dict[current_storage]["Years"][current_year][
@@ -509,17 +537,17 @@ def read_commodities(site, years_list, input_list):
                             "inst-cap-c"]
                         break
                 if "inst-cap-p" in storage_df:  # TODO: what's the warning?
-                    process_dict[current_storage]["Years"][current_year]["inst-cap-p"] = storage_df.loc[storage_types][
-                        "inst-cap-p"].item()
+                    process_dict[current_storage]["Years"][current_year]["inst-cap-p"] = float(storage_df.loc[storage_types][
+                        "inst-cap-p"])
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["inst-cap-p"] != 0:
                         process_dict[current_storage]["Years"][current_year][
-                            "inst-cap-p"] = process_dict[current_storage]["Years"][registered_years][
-                            "inst-cap-p"].item()
+                            "inst-cap-p"] = float(process_dict[current_storage]["Years"][registered_years][
+                            "inst-cap-p"])
                         break
                 if "lifetime" in storage_df:
-                    process_dict[current_storage]["Years"][current_year]["lifetime"] = storage_df.loc[storage_types][
-                        "lifetime"].item()
+                    process_dict[current_storage]["Years"][current_year]["lifetime"] = float(storage_df.loc[storage_types][
+                        "lifetime"])
                 for registered_years in process_dict[current_storage]["Years"]:
                     if process_dict[current_storage]["Years"][registered_years]["lifetime"] != 0:
                         process_dict[current_storage]["Years"][current_year][
@@ -532,7 +560,7 @@ def read_commodities(site, years_list, input_list):
                         process_dict[current_storage]["IN"].append(comm_dict[entries]["Id"])
                         break
         else:
-            print("No 'Storage' sheet in the input!")
+            error_list.append("No 'Storage' sheet in the input!")
 
         # lastly, create a dict for the connections (of the processes; IN-OUT-relation)
 
@@ -542,7 +570,7 @@ def read_commodities(site, years_list, input_list):
                 connections_df = process_comms_sheet.loc[process_comms_sheet["Process"] == process_dict[
                     process]["Name"]].set_index("Commodity")
             else:
-                print("No process commodities specified!")
+                error_list.append("No process commodities specified!")
                 break
             # create a new entry if the connection has not been accounted for, otherwise just update the information for
             # the years
@@ -632,6 +660,7 @@ def read_transmission(sheets_list, year):
 
             for row in trsm_sheet.itertuples(index=False, name="CurrentRow"):
                 # go through every row of the sheet (= every transmission)
+
                 # two rows necessary: the information 'lifetime' & 'inst-cap' are not included in every year
                 # --> these information are only stored in the original data frame; for the other information,
                 # the modified list is used
@@ -698,7 +727,7 @@ def read_transmission(sheets_list, year):
                     "depreciation": modified_row[11]
                 }
         else:
-            print("No information provided for the transmissions.")
+            error_list.append("No information provided for the transmissions.")
 
     return trsm_dict
 
@@ -787,14 +816,15 @@ def read_transmission_commodities(input_list, data_dict):
                         time_ser = time_ser + "|" + str(row)
                     trsm_comm_dict[str(key)]["Years"][current_year]["timeSer"] = time_ser[1:]
         else:
-            print("No 'Demand' sheet provided.")
+            error_list.append("No 'Demand' sheet provided.")
 
     return trsm_comm_dict
 
 if __name__ == "__main__":
-    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria_modified.xlsx']
+    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria_modified.xlsx']
     #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\bavaria.xlsx']
-    path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
+    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\germany.xlsx']
+    #path = ['C:\\Users\\maxho\\Documents\\GitHub\\urbs\\Input\\mimo-example.xlsx']
 
 
     start_time = time.time()

@@ -21,11 +21,8 @@ import time
 import urbs
 import wx
 
-#####################################################
-#import converter script from same folder urbs/gui for now
-import savetojson
+import ConvertToJSON
 import os
-#####################################################
 
 from pubsub import pub
 from Events import EVENTS
@@ -80,9 +77,7 @@ class Controller():
         pub.subscribe(self.OnItemMove, EVENTS.ITEM_MOVED)
         pub.subscribe(self.OnSaveConfig, EVENTS.SAVE_CONFIG)
         pub.subscribe(self.OnLoadConfig, EVENTS.LOAD_CONFIG)
-        #####################################################
         pub.subscribe(self.OnImportConfig, EVENTS.IMPORT_CONFIG)
-        #####################################################
 
         pub.subscribe(self.AddScenario, EVENTS.SCENARIO_ADDED)
         pub.subscribe(self.RemoveScenario, EVENTS.SCENARIO_REMOVED)
@@ -298,7 +293,6 @@ class Controller():
         with open(filename, 'w') as fp:
             json.dump(self._resModel, fp, default=self.SerializeObj, indent=2)
 
-    #####################################################
     def OnImportConfig(self, filename):
         # Import function calls converter script with a list of filepaths
         # and the first path in the list as output filename
@@ -306,13 +300,11 @@ class Controller():
         if len(filename) > 1:
             stems = [os.path.basename(os.path.splitext(path)[0]) for path in filename[1:]]
             stems.insert(0,os.path.splitext(filename[0])[0])
-            #stems.append('.json')
             savename = '_'.join(stems) + '.json'
         else:
             savename = os.path.splitext(filename[0])[0] + '.json'
-        savetojson.convert_to_json(filename, json_filename = savename)
+        ConvertToJSON.convert_to_json(filename, json_filename = savename)
         pub.sendMessage(EVENTS.LOAD_CONFIG, filename = savename)
-    #####################################################
 
     def OnLoadConfig(self, filename):
         self._view.RemoveRESTab(self._resModel._sites)

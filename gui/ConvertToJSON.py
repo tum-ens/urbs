@@ -24,24 +24,19 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     if input_files == 'Input':
         glob_input = os.path.join("..", input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
-    #####################################################
-    # removed packaging of filepath into list 
-    # so that multiple filepaths can be selected in gui which are already stored in a list
+    # test whether the input is a filepath or a list of filepaths
     elif isinstance(input_files, str):
         input_files = [input_files]
-    #####################################################
 
     # read all the excel sheets and store them in a list
     sheet_list = []
     for sheet in input_files:
         sheet_list.append(pd.ExcelFile(sheet))
 
-    #####################################################
     # test for source information in excel files which breaks most conversion functions. These columns and rows have to be removed by hand
     for xls in sheet_list:
         if "Source" in xls.parse().values:
             raise UserWarning("Some cells in " + sheet + " contain 'Source'. All columns and rows containing source information and the source sheet should be removed manually.")
-    #####################################################
 
     # create the dict that stores all relevant information
     data_dict = {'_years': read_year_and_budget(sheet_list, year),
@@ -59,10 +54,7 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     data_dict['_trnsmCommodities'] = read_transmission_commodities(sheet_list, data_dict)
 
     # make sure that json_filename is valid
-    #####################################################
     if os.path.splitext(json_filename)[1] != '.json': 
-    #####################################################
-    #if json_filename[-5:] is not '.json':
         json_filename += '.json'
 
     # create json file
@@ -71,7 +63,6 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
     f.write(json_file)
     f.close()
 
-    #####################################################
     # print list of errors related to formatting of excel but only print every errror once
     if len(error_list) > 1:
         print("\n".join(list(dict.fromkeys(error_list))))
@@ -79,7 +70,6 @@ def convert_to_json(input_files, year=date.today().year, json_filename='unnamed_
 
     else:
         print("No known errors related to connversion of the excel file occured")
-    #####################################################
 
 def read_year_and_budget(input_list, year):
     """
@@ -282,18 +272,15 @@ def read_commodities(site, years_list, input_list):
                         for comm_id in comm_dict:
                             # go through every existing commodity; if the current commodity is found: add the
                             # information, then break out of the for loop
-                            #####################################################
+                            # But only if maxperhour exist in any cell
                             if "maxperhour" in comm_df.columns:
-                            #####################################################
                                 if comm_dict[str(comm_id)]["Name"] == str(items):
                                     new_comm = comm_dict[str(comm_id)]["Years"]
                                     new_comm[current_year] = {
                                     "timeSer": "",
-                                    #####################################################
                                     "price": float(comm_df.T.loc["price"][items]),
                                     "max": float(comm_df.T.loc["max"][items]),
                                     "maxperhour": float(comm_df.T.loc["maxperhour"][items]),
-                                    #####################################################
                                     "Action": "...",
                                     "delay": 0.0,
                                     "eff": 0.0,
@@ -386,7 +373,6 @@ def read_commodities(site, years_list, input_list):
                     "Action": "...",
                     "timeEff": "",
                     "lifetime": 0.0,
-                    #####################################################
                     "cap-lo": float(process_df.loc[processes]["cap-lo"]),
                     "cap-up": float(process_df.loc[processes]["cap-up"]),
                     "inv-cost": float(process_df.loc[processes]["inv-cost"]),
@@ -397,7 +383,6 @@ def read_commodities(site, years_list, input_list):
                     "max-grad": float(process_df.loc[processes]["max-grad"]),
                     "min-fraction": float(process_df.loc[processes]["min-fraction"]),
                     "depreciation": float(process_df.loc[processes]["depreciation"]),
-                    #####################################################
                     "area-per-cap": 0.0
                 }
                 # 'inst-cap' is only provided in the first year of the analysis,
@@ -502,7 +487,6 @@ def read_commodities(site, years_list, input_list):
                     current_storage = "NewStorage#" + str(i)
                 # all the information provided by the input sheet for the current process and the current year
                 process_dict[current_storage]["Years"][current_year] = {
-                    #####################################################
                     "inst-cap-c": 0.0,
                     "cap-lo-c": float(storage_df.loc[storage_types]["cap-lo-c"]),
                     "cap-up-c": float(storage_df.loc[storage_types]["cap-up-c"]),
@@ -522,7 +506,6 @@ def read_commodities(site, years_list, input_list):
                     "wacc": float(storage_df.loc[storage_types]["wacc"]),
                     "init": float(storage_df.loc[storage_types]["init"]),
                     "discharge": float(storage_df.loc[storage_types]["discharge"])
-                    #####################################################
                     # "ep-ratio": ""  # TODO: it's in the excel sheets, not in the json files..
                 }
                 # 'inst-cap-c', 'inst-cap-p' and 'lifetime' only occur in the first observed year / the storage's first

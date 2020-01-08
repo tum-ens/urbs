@@ -69,9 +69,7 @@ class EVENTS():
     TRNSM_ITEM_MOVED = "TRNSM_ITEM_MOVED_"
     SAVE_CONFIG = "SAVE_CONFIG_"
     LOAD_CONFIG = "LOAD_CONFIG_"
-    #####################################################
     IMPORT_CONFIG = "IMPORT_CONFIG_"
-    #####################################################
 
     GL_PARAMS_LOADED = "GL_PARAMS_LOADED_"
 

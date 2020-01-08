@@ -18,11 +18,9 @@ class MainView (wx.Frame):
         menubar = wx.MenuBar()
         fileMenu = wx.Menu()
         omi = fileMenu.Append(wx.ID_OPEN, '&Load Config')
-        #####################################################
         # add import button to menu with name 'I'mport'M'enu'I'tem 
         # ID_ANY is used as there is no dedicated id for imports
         imi = fileMenu.Append(wx.ID_ANY, '&Import Excel')
-        #####################################################
         smi = fileMenu.Append(wx.ID_SAVE, '&Save Config')
         fileMenu.AppendSeparator()
         qmi = fileMenu.Append(wx.ID_EXIT, 'Exit', 'Quit application')
@@ -33,9 +31,7 @@ class MainView (wx.Frame):
         self.SetMenuBar(menubar)
         self.CreateStatusBar()
         self.Bind(wx.EVT_MENU, self.OnOpen, omi)
-        #####################################################
         self.Bind(wx.EVT_MENU, self.OnImport, imi)
-        #####################################################
         self.Bind(wx.EVT_MENU, self.OnSave, smi)
         self.Bind(wx.EVT_MENU, self.OnQuit, qmi)
         self.Bind(wx.EVT_MENU, self.OnHelp, hmi)
@@ -102,7 +98,6 @@ class MainView (wx.Frame):
             if s == wx.OK:
                 pub.sendMessage(EVENTS.LOAD_CONFIG, filename=fn)
 
-#####################################################
     def OnImport(self, event):
         # create import dialog where one can select multiple files
         # filepaths are returned as list
@@ -116,7 +111,6 @@ class MainView (wx.Frame):
                               'Warning', wx.OK | wx.CANCEL | wx.ICON_WARNING)
             if s == wx.OK:
                 pub.sendMessage(EVENTS.IMPORT_CONFIG, filename=fn)
-#####################################################
 
     def OnSave(self, event):
         openFileDialog = wx.FileDialog(self, "Save", "./samples", "",

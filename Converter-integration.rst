@@ -2,6 +2,7 @@ Converter integration
 =====================
 
 This file documents the integration of savetojson.py into the GUI of URBS.
+P.S.: It is renamed ConvertToJSON.py and moved to gui/.
 
 
 Reasoning

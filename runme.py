@@ -30,13 +30,31 @@ timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
-report_tuples = []
+report_tuples = [
+    (2020, 'North', 'Elec'),
+    (2020, 'Mid', 'Elec'),
+    (2020, 'South', 'Elec'),
+    (2020, ['North', 'Mid', 'South'], 'Elec'),(2020, 'North', 'CO2')
+    ,(2020,'Mid', 'CO2'),(2020, 'South', 'CO2'),
+    (2020, 'North', 'Solar'),
+    (2020, 'South', 'Solar'),
+    (2020, 'South', 'Solar')
+    ]
 
 # optional: define names for sites in report_tuples
 report_sites_name = {}
 
 # plotting commodities/sites
-plot_tuples = []
+plot_tuples = [
+    (2020, 'North', 'Elec'),
+    (2020, 'Mid', 'Elec'),
+    (2020, 'South', 'Elec'),
+    (2020, ['North', 'Mid', 'South'], 'Elec'),
+    (2020, 'North', 'Solar'),
+    (2020, 'South', 'Solar'),
+    (2020, 'South', 'Solar'),(2020, 'North', 'CO2')
+    ,(2020,'Mid', 'CO2'),(2020, 'South', 'CO2')
+    ]
 
 # optional: define names for sites in plot_tuples
 plot_sites_name = {}

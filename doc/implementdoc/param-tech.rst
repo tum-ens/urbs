@@ -100,6 +100,10 @@ Technical Parameters
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`k_{yvs}^\text{E/P}`                   |h   |Storage Energy to Power Ratio                      |    
     +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yvs}^\text{c,block}`             |MWh |Storage New Capacity Block                         |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yvs}^\text{p,block}`             |MW  |Storage New Power Block                            |
+    +---------------------------------------------+----+---------------------------------------------------+
     |**Transmission Technical Parameters**                                                                 |
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`e_{yaf}`                              | _  |Transmission Efficiency                            |
@@ -110,7 +114,9 @@ Technical Parameters
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`\overline{K}_{yaf}`                   |MW  |Transmission Capacity Upper Bound                  |
     +---------------------------------------------+----+---------------------------------------------------+
-    |:math:`T_{af}`                               |MW  |Remaining lifetime of installed transmission       |
+    |:math:`T_{af}`                               |year|Remaining lifetime of installed transmission       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yaf}^\text{block}`               |MW  |Transmission New Capacity Block                    |
     +---------------------------------------------+----+---------------------------------------------------+
     |**DCPF Transmission Technical Parameters**                                                            |
     +---------------------------------------------+----+---------------------------------------------------+
@@ -542,9 +548,8 @@ tracks the throughput and can be used as a reference. All other values of in-
 and output ratios can then be adjusted by scaling them by an appropriate factor
 to the reference commodity flow. 
 
-:math:`{P}_{yvp}^\text{start}`               | _  |Process Start Price 
 **Process New Capacity Block**, :math:`{K}_{yvp}^\text{block}`,
-``m.process_dict['start-time'][(stf, sit, pro)]``: The parameter 
+``m.process_dict['cap-block'][(stf, sit, pro)]``: The parameter 
 :math:`{K}_{yvp}^\text{block}` represents the capacity of all newly installed
 units of a process :math:`p` at a site :math:`v` in the support timeframe
 :math:`y`. The unit of this parameter is MW. The related section for
@@ -720,6 +725,28 @@ there is no desired set ratio for the storage energy and power capacities
 (which means the storage energy and power capacities can be sized independently
 from each other), this cell can be left empty.
 
+**Storage New Capacity Block**, :math:`{K}_{yvs}^\text{c,block}`,
+``m.storage_dict['c-block'][(stf, sit, sto, com)]``: The parameter 
+:math:`{K}_{yvs}^\text{c,block}` represents the capacity of all newly installed
+units of a storage :math:`s` at a site :math:`v` in the support timeframe
+:math:`y`. The unit of this parameter is MWh. The related section for
+this parameter in the spreadsheet can be found under the "Storage" sheet. Here
+each row represents another storage :math:`s` in a site :math:`v` and the
+column with the header label "c-block" represents the parameters
+:math:`{K}_{yvs}^\text{c,block}` of the corresponding storage :math:`s` and site
+:math:`v` combinations.
+
+**Storage New Power Block**, :math:`{K}_{yvs}^\text{p,block}`,
+``m.storage_dict['p-block'][(stf, sit, sto, com)]``: The parameter 
+:math:`{K}_{yvs}^\text{p,block}` represents the power of all newly installed
+units of a storage :math:`s` at a site :math:`v` in the support timeframe
+:math:`y`. The unit of this parameter is MW. The related section for
+this parameter in the spreadsheet can be found under the "Storage" sheet. Here
+each row represents another storage :math:`s` in a site :math:`v` and the
+column with the header label "c-block" represents the parameters
+:math:`{K}_{yvs}^\text{p,block}` of the corresponding storage :math:`s` and site
+:math:`v` combinations.
+
 Transmission Technical Parameters
 ---------------------------------
 
@@ -781,6 +808,17 @@ tuples.
 parameter :math:`T_{af}` represents the remaining lifetime of already installed
 units. It is used to determine the set `m.inst_tra_tuples`, i.e. to identify
 for which support timeframes the installed units can still be used.
+
+**Transmission New Capacity Block**, :math:`{K}_{yaf}^\text{block}`,
+``m.transmission_dict['tra-block'][(stf, sin, sout,tra, com)]``: The parameter 
+:math:`{K}_{yaf}^\text{block}` represents the capacity of all newly installed
+units of a transmission :math:`f` transferring a commodity :math:`c` through an arc
+:math:`a` in support timeframe :math:`y`.The unit of this parameter is MW.
+The related section for this parameter in the spreadsheet can be found under the 
+"Transmission" sheet. Here each row represents another transmission :math:`f`,
+arc :math:`a` combination. The column with the header label "tra-block" represents
+the parameters :math:`{K}_{yaf}^\text{block}` of the corresponding transmission
+tuples.
 
 DCPF Transmission Technical Parameters
 --------------------------------------

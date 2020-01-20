@@ -72,8 +72,6 @@ Technical Parameters
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`{K}_{yvp}^\text{block}`               |MW  |Process New Capacity Block                         |
     +---------------------------------------------+----+---------------------------------------------------+
-    |:math:`{P}_{yvp}^\text{start}`               | _  |Process Start Price                                |
-    +---------------------------------------------+----+---------------------------------------------------+
     |**Storage Technical Parameters**                                                                      |
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`I_{yvs}`                              | _  |Initial and Final State of Charge                  |
@@ -557,17 +555,6 @@ this parameter in the spreadsheet can be found under the "Process" sheet. Here
 each row represents another process :math:`p` in a site :math:`v` and the
 column with the header label "cap-block" represents the parameters
 :math:`{K}_{yvp}^\text{block}` of the corresponding process :math:`p` and site
-:math:`v` combinations.
-
-**Process Start Price**, :math:`{P}_{yvp}^\text{start}`,
-``m.process_dict['start-price'][(stf, sit, pro)]``: The parameter 
-:math:`{P}_{yvp}^\text{start}` represents the cost inquired by the starting
-of a process :math:`p` at a site :math:`v` in the support timeframe :math:`y`.
-The unit of this parameter is the currency used in the support timeframe :math:`y`.
-The related section for this parameter in the spreadsheet can be found under the 
-"Process" sheet. Here each row represents another process :math:`p` in a site :math:`v`
-and the column with the header label "start-price" represents the parameters
-:math:`{P}_{yvp}^\text{start}` of the corresponding process :math:`p` and site
 :math:`v` combinations.
 
 Storage Technical Parameters

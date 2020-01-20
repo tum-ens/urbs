@@ -38,6 +38,8 @@ Economic Parameters
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`k_{yvp}^\text{var}`        |€/MWh    |Process Throughput Variable Costs                |
 	+----------------------------------+---------+-------------------------------------------------+
+	|:math:`{P}_{yvp}^\text{start}`    |€/start  |Process Start Price                              |
+        +----------------------------------+---------+-------------------------------------------------+
 	|**Storage Economic Parameters**                                                               |
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`i_{yvs}`                   | _       |Weighted Average Cost of Capital for Storage     |
@@ -265,6 +267,17 @@ support timeframe :math:`y` can be found under the "Process" sheet. Here each
 row represents another process :math:`p` in a site :math:`v` and the column
 with the header label "var-cost" represents the parameters
 :math:`k_{yvp}^\text{var}` of the corresponding process :math:`p` and site
+:math:`v` combinations.
+
+**Process Start Price**, :math:`{P}_{yvp}^\text{start}`,
+``m.process_dict['start-price'][(stf, sit, pro)]``: The parameter 
+:math:`{P}_{yvp}^\text{start}` represents the cost inquired by the starting
+of a process :math:`p` at a site :math:`v` in the support timeframe :math:`y`.
+The unit of this parameter is the currency used in the support timeframe :math:`y`.
+The related section for this parameter in the spreadsheet can be found under the 
+"Process" sheet. Here each row represents another process :math:`p` in a site :math:`v`
+and the column with the header label "start-price" represents the parameters
+:math:`{P}_{yvp}^\text{start}` of the corresponding process :math:`p` and site
 :math:`v` combinations.
 
 Storage Economic Parameters

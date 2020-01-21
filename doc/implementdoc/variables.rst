@@ -55,7 +55,8 @@ Transmission, Storage and demand side management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\omicron_{yvpt}`                |-     | Process On/Off Marker             |
     +----------------------------------------+------+-----------------------------------+
-    start-ups
+    | :math:`\sigma_{yvpt}`                  |-     | Process Start-up Marker           |
+    +----------------------------------------+------+-----------------------------------+
     | **Transmission Variables**                                                        |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\kappa_{yaf}`                   | MW   | Total transmission Capacity       |
@@ -250,7 +251,37 @@ initialized by the following code fragment: ::
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Flow of commodity out of process at a given timestep')
+	
+**Process On/Off Marker**, :math:`\omicron_{yvpt}`, ``on_off``: The boolean
+variable :math:`\omicron_{yvpt}` marks whether process tuple :math:`p_{yv}` 
+(:math:`\forall p \in P^\text{on/off}, \forall v \in V, \forall y \in Y`) 
+is on and producing (:math:`\omicron_{yvpt}` is 1) or it is not 
+producing (:math:`\omicron_{yvpt}` is 0) at a timestep :math:`t`. While not 
+producing, the process is either turned off or it started, without reaching the
+minimum fraction :math:`\underline{P}_{yvp}`.
+In the script ``AdvancedProcesses.py``, this variable is defined by the model 
+variable ``on_off`` and initialized by the following code fragment: ::
 
+   m.on_off = pyomo.Var(
+        m.on_off = pyomo.Var(
+            m.t, m.pro_on_off_tuples,
+            within=pyomo.Boolean,
+            doc='Turn on/off a process with minimum working load')
+	    
+**Process Start-up Marker**, :math:`\sigma_{yvpt}`, ``start_ups``: The boolean
+variable :math:`\sigma_{yvpt}` marks whether process tuple :math:`p_{yv}` 
+(:math:`\forall p \in P^\text{on/off}, \forall v \in V, \forall y \in Y`) 
+is starting (:math:`\sigma_{yvpt}` becomes 1) or not (:math:`\sigma_{yvpt}` is 0) 
+at a timestep :math:`t`. The process is considered to start when its output
+``e_pro_out`` becomes greater than 0.
+In the script ``AdvancedProcesses.py``, this variable is defined by the model 
+variable ``start_ups`` and initialized by the following code fragment: ::
+
+    m.start_ups = pyomo.Var(
+            m.tm, m.pro_start_up_tuples,
+            within=pyomo.Boolean,
+            doc='Start-up marker')
+	    
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^
 

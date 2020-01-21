@@ -3,11 +3,12 @@ import os
 import glob
 from xlrd import XLRDError
 import pyomo.core as pyomo
-from .features.modelhelper import *
-from .identify import *
+from .features_nopt.modelhelper import *
+from .identify_nopt import *
+import ipdb
 
 
-def read_input(input_files, year):
+def read_input(input_files, near_optimal, year):
     """Read Excel input file and prepare URBS input dict.
 
     Reads the Excel spreadsheets that adheres to the structure shown in
@@ -45,9 +46,7 @@ def read_input(input_files, year):
         with pd.ExcelFile(filename) as xls:
 
             global_prop = xls.parse('Global').set_index(['Property'])
-
-
-            print(global_prop)
+            global_prop.loc['Near optimal status'] = near_optimal
             # create support timeframe index
             if ('Support timeframe' in
                     xls.parse('Global').set_index('Property').value):
@@ -61,7 +60,6 @@ def read_input(input_files, year):
             global_prop = pd.concat([global_prop], keys=[support_timeframe],
                                     names=['support_timeframe'])
 
-            print(global_prop.shape, global_prop)
             gl.append(global_prop)
             site = xls.parse('Site').set_index(['Name'])
             site = pd.concat([site], keys=[support_timeframe],
@@ -223,6 +221,8 @@ def pyomo_model_prep(data, timesteps):
     m.stf_list = m.global_prop.index.levels[0].tolist()
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
+    #creating list with near optimal processes
+    m.pro_near_optimal = ['PV']
 
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification
@@ -493,7 +493,7 @@ def pyomo_model_prep(data, timesteps):
             process.apply(
                 lambda x: invcost_factor(
                     x['depreciation'],
-                    x['wacc']),
+                    x['wacc']),   #interest rate is wacc
                 axis=1))
 
         # cost factor will be set to 1 for non intertemporal problems

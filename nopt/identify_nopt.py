@@ -1,5 +1,5 @@
 import pandas as pd
-
+import ipdb
 
 def identify_mode(data):
     """ Identify the urbs mode that is needed for running the current Input
@@ -22,39 +22,43 @@ def identify_mode(data):
 
     # create modes
     mode = {
-        'int': False,                   # intertemporal
-        'tra': False,                   # transmission
-        'sto': False,                   # storage
-        'dsm': False,                   # demand site management
-        'bsp': False,                   # buy sell price
-        'tve': False,                   # time variable efficiency
-        'dpf': False,                   # dc power flow
-        'exp': {                        # expansion
-                'pro': True,
-                'tra': False,
-                'sto-c': False,
-                'sto-p': False}
-        }
+        'int': False,  # intertemporal
+        'nopt': False,  # near_optimal
+        'tra': False,  # transmission
+        'sto': False,  # storage
+        'dsm': False,  # demand site management
+        'bsp': False,  # buy sell price
+        'tve': False,  # time variable efficiency
+        'dpf': False,  # dc power flow
+        'exp': {  # expansion
+            'pro': True,
+            'tra': False,
+            'sto-c': False,
+            'sto-p': False}
+    }
 
     # if number of support timeframes > 1 the the model is intertemporal
     if len(data['global_prop'].index.levels[0]) > 1:
         mode['int'] = True
-    #if  transmission data is given in excel sheet then model includes transmission networks
+
+    if data['global_prop'].loc[2020, 'Near optimal status'].value == 'near_optimal':
+        mode['nopt'] = True
+    # if  transmission data is given in excel sheet then model includes transmission networks
     if not data['transmission'].empty:
         mode['tra'] = True
         mode['exp']['tra'] = True
     # if storage data is given in excel sheet then model includes storage facilities
     if not data['storage'].empty:
         mode['sto'] = True
-        mode['exp']['sto-c'] = True #c stands for capacity
-        mode['exp']['sto-p'] = True #p stands for power
+        mode['exp']['sto-c'] = True  # c stands for capacity
+        mode['exp']['sto-p'] = True  # p stands for power
     if not data['dsm'].empty:
         mode['dsm'] = True
     if not data['buy_sell_price'].empty:
         mode['bsp'] = True
     if not data['eff_factor'].empty:
         mode['tve'] = True
-    # if there are any positive reactance values that indicates dc power flow
+    # if there are any positive reactance values that indicates dc power flow is present
     if 'reactance' in data['transmission'].keys():
         if any(data['transmission']['reactance'] > 0):
             mode['dpf'] = True

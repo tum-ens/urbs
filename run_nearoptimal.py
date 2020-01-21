@@ -1,14 +1,13 @@
 import os
 import shutil
-import urbs
-
+import nopt
 
 input_files = 'Intertemporal_example'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Intertemp-co2-20'
-result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
+result_name = 'Run'
+result_dir = nopt.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
 try:
@@ -24,32 +23,29 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 
+# Choose if near optimal analysis ('near_optimal', 'normal')
+near_optimal = 'near_optimal'
+
 # simulation timesteps
-(offset, length) = (0, 300)  # time step selection
+(offset, length) = (3500, 24)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
-    (2019, ['North', 'Mid', 'South'], 'Elec'),
-    (2024, ['North', 'Mid', 'South'], 'Elec'),
-    (2029, ['North', 'Mid', 'South'], 'Elec'),
-    (2034, ['North', 'Mid', 'South'], 'Elec'),    
+
     ]
 
 # optional: define names for sites in report_tuples
-report_sites_name = {('North', 'Mid', 'South'): 'All'}
+report_sites_name = {}
 
 # plotting commodities/sites
 plot_tuples = [
-    (2019, ['North', 'Mid', 'South'], 'Elec'),
-    (2024, ['North', 'Mid', 'South'], 'Elec'),
-    (2029, ['North', 'Mid', 'South'], 'Elec'),
-    (2034, ['North', 'Mid', 'South'], 'Elec'),
+
     ]
 
 # optional: define names for sites in plot_tuples
-plot_sites_name = {('North', 'Mid', 'South'): 'All'}
+plot_sites_name = {}
 
 # plotting timesteps
 plot_periods = {
@@ -57,21 +53,18 @@ plot_periods = {
 }
 
 # add or change plot colors
-my_colors = {
-    'South': (230, 200, 200),
-    'Mid': (200, 230, 200),
-    'North': (200, 200, 230)}
+my_colors = {}
 for country, color in my_colors.items():
-    urbs.COLORS[country] = color
+    nopt.COLORS[country] = color
 
 # select scenarios to be run
 scenarios = [
-             urbs.scenario_base, urbs.scenario_co2_limit,
+             nopt.scenario_base,
             ]
 
 for scenario in scenarios:
-    prob = urbs.run_scenario(input_path, solver, timesteps, scenario,
-                             result_dir, dt, objective,
+    prob = nopt.run_scenario(input_path, solver, timesteps, scenario,
+                             result_dir, dt, objective, near_optimal,
                              plot_tuples=plot_tuples,
                              plot_sites_name=plot_sites_name,
                              plot_periods=plot_periods,

@@ -313,17 +313,38 @@ tuple set is defined as:
         doc='Processes and Sites with area Restriction')
 
 Finally, processes that are subject to restrictions in the change of
-operational state are captured with the ``pro_maxgrad_tuples``. This subset is
-defined as:
+operational state are captured with the ``pro_rampupgrad_tuples`` and
+``pro_rampdowngrad_tuples``. This subsets are defined as:
 
 ::
 
-    m.pro_maxgrad_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
+    m.pro_rampupgrad_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
         initialize=[(stf, sit, pro)
                     for (stf, sit, pro) in m.pro_tuples
-                    if m.process.loc[stf, sit, pro]['max-grad'] < 1.0 / dt],
-        doc='Processes with maximum gradient smaller than timestep length')
+                    if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / dt],
+        doc='Processes with maximum ramp up gradient smaller than timestep length')
+	
+    m.pro_rampdowngrad_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, sit, pro)
+                    for (stf, sit, pro) in m.pro_tuples
+                    if m.process_dict['ramp-down-grad'][stf, sit, pro] < 1.0 / dt],
+        doc='Processes with maximum ramp down gradient smaller than timestep length')
+
+In the case of a a process which can be turned on and off and are subject to 
+restrictions in the change of operational state while starting are captured 
+with the ``pro_rampup_start_tuples``, subset which is defined as:
+
+::
+
+    m.pro_rampup_start_tuples = pyomo.Set(
+            within=m.stf * m.sit *m.pro,
+            initialize=[(stf, sit, pro)
+                        for (stf, sit, pro) in m.pro_on_off_tuples
+                        if m.process_dict['start-time'][stf, sit, pro]
+                                                            > 1.0 / m.dt],
+            doc='Proceses with different starting ramp up gradient')
 
 Transmission Tuples
 ^^^^^^^^^^^^^^^^^^^

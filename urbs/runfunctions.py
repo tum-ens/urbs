@@ -104,7 +104,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
-    save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    # save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # write report to spreadsheet
     report(

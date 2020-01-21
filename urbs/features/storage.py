@@ -254,8 +254,8 @@ def res_initial_and_final_storage_state_var_rule(m, t, stf, sit, sto, com):
 
 
 def def_storage_energy_power_ratio_rule(m, stf, sit, sto, com):
-    return (m.cap_sto_c[sit, sto, com] == m.cap_sto_p[sit, sto, com] *
-            m.storage_dict['ep-ratio'][(sit, sto, com)])
+    return (m.cap_sto_c[stf, sit, sto, com] == m.cap_sto_p[stf, sit, sto, com] *
+            m.storage_dict['ep-ratio'][(stf, sit, sto, com)])
 
 
 # storage balance

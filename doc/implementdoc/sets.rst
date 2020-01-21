@@ -283,23 +283,7 @@ These are represented by the set :math:`P_v`. A member :math:`p_{yv}` in set
 There are three subsets defined for process tuples, which each activate a
 different set of modeling constraints.
 
-The first subset of the process tuples ``pro_partial_tuples``
-:math:`P_{yv}^\text{partial}` is formed in order to identify processes that
-have partial operation properties. Programmatically, they are identified by
-those processes, which have the parameter ``ratio-min`` set for one of their
-input commodities in table *Process-Commodity*. The tuple set is defined as:
-        
-::
-
-    m.pro_partial_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
-        initialize=[(stf, site, process)
-                    for (stf, site, process) in m.pro_tuples
-                    for (s, pro, _) in m.r_in_min_fraction.index
-                    if process == pro and s == stf],
-        doc='Processes with partial input')        
-
-The second subset is formed in order to capture all processes that take up a
+The first subset is formed in order to capture all processes that take up a
 certain area and are thus subject to the area constraint at the given site.
 These processes are identified by the parameter ``area-per-cap`` set in table
 *Process*, if at the same time a value for ``area`` is set in table *Site*. The
@@ -311,10 +295,90 @@ tuple set is defined as:
         within=m.stf*m.sit*m.pro,
         initialize=m.proc_area.index,
         doc='Processes and Sites with area Restriction')
+	
+The second subset of the process tuples ``pro_minfraction_tuples``
+:math:`P_{yv}^\text{minfraction}` is formed in order to identify processes
+that have a minimum fraction defined without having partial operation 
+properties and cannot be turned off. Programatically, they are identified by
+those processes which have the parameter ``min-fraction`` set and the parameter 
+``on-off`` set to 0 in the table *Process*. The tuple set is defined in 
+AdvancedProcesses.py as:
+
+::
+
+    m.pro_minfraction_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (st, sit, pro) in tuple(m.min_fraction_dict.keys())
+                    if  stf == st and sit == site and process ==pro and
+                    m.process_dict['on-off'][stf, site, process] != 1],
+        doc='Processes with constant efficiency and minimum working load which'
+            'cannot be turned off')
+	    
+The third subset of the process tuples ``pro_partial_tuples``
+:math:`P_{yv}^\text{partial}` is formed in order to identify processes that
+have partial operation properties and cannot be turned off. Programmatically,
+they are identified by those processes, which have the parameter ``ratio-min``
+set for one of their input and/or outputcommodities in table *Process-Commodity*
+and the parameter ``on-off`` in the table *Process* set to 0. The tuple set is 
+defined in AdvancedProcesses.py as:
+        
+::
+
+    m.pro_partial_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro,
+            initialize=[(stf, site, process)
+                        for (stf, site, process) in m.pro_tuples
+                        for (s, pro, _) in tuple(m.r_in_min_fraction_dict.keys() or
+                                                 m.r_out_min_fraction_dict.keys())
+                        if process == pro and s == stf and
+                        m.process_dict['on-off'][stf, site, process] != 1],
+            doc='Processes with partial input/output which cannot be turned off')
+
+The fourth subset of the process tuples ``pro_on_off_tuples`` 
+:math:`P_{yv}^\text{on/off}` is formed in order to identify processes that
+have a minimum fraction defined without having partial operation 
+properties and can be turned off. Programatically, they are identified by
+those processes which have the parameter ``min-fraction`` set and the parameter 
+``on-off`` set to 1 in the table *Process*. The tuple set is defined in 
+AdvancedProcesses.py as:
+
+::
+
+m.pro_on_off_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro,
+            initialize=[(stf, site, process)
+                        for (stf, site, process) in
+                                                  tuple(m.min_fraction_dict.keys())
+                        for (st, sit, pro) in tuple(m.onoff_dict.keys())
+                        if stf == st and site == sit and process == pro],
+            doc='Processes with minimal fraction which can be turned off')
+	    
+The fifth subset of the process tuples ``pro_on_off_partial_tuples``
+:math:`P_{yv}^\text{partial on/off}` is formed in order to identify processes 
+that have a minimum fraction defined, partial operation 
+properties and can be turned off. Programmatically,
+they are identified by those processes, which have the parameter ``ratio-min``
+set for one of their input and/or outputcommodities in table *Process-Commodity*
+and the parameter ``on-off`` in the table *Process* set to 1. The tuple set is 
+defined in AdvancedProcesses.py as:
+
+::
+
+m.pro_partial_on_off_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro,
+            initialize=[(stf, site, process)
+                        for (stf, site, process) in m.pro_tuples
+                        for (st, pro, _) in tuple(m.r_in_min_fraction_dict.keys()
+                                                  or m.r_out_min_fraction_dict)
+                        if process == pro and stf == st and
+                        m.process_dict['on-off'][stf, site, process] == 1],
+            doc='Processes with partial input/output which can be turned off')
 
 Finally, processes that are subject to restrictions in the change of
 operational state are captured with the ``pro_rampupgrad_tuples`` and
-``pro_rampdowngrad_tuples``. This subsets are defined as:
+``pro_rampdowngrad_tuples``. This subsets are defined in AdvancedProcesses as:
 
 ::
 

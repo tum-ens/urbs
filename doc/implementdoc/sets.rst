@@ -398,7 +398,8 @@ operational state are captured with the ``pro_rampupgrad_tuples`` and
 
 In the case of a a process which can be turned on and off and are subject to 
 restrictions in the change of operational state while starting are captured 
-with the ``pro_rampup_start_tuples``, subset which is defined as:
+with the ``pro_rampup_start_tuples``, subset which is defined in advancedProcesses.py
+as:
 
 ::
 
@@ -574,7 +575,7 @@ fragment:
 		
 Where: ``r_out`` represents the process output ratio as set in the input.
 
-There are two alternative tuple sets that are active whenever their respective
+There are several alternative tuple sets that are active whenever their respective
 features are set in the input.
 
 First, for processes in the tuple set ``pro_partial_tuples``, the tuple set
@@ -593,6 +594,82 @@ following code fragment:
                     if process == pro and s == stf],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
 
+Second, for processes in the tuple set ``pro_on_off_tuples``, the tuple set
+``pro_on_off_output_tuples`` enumerates their output commodities. It is used
+to index the constraints that modifies a process' output commodity flow with
+respect to the standard case without the on/off feature. It is defined by the
+following code fragment in AdvancedProcesses.py:
+
+::
+
+    m.pro_on_off_output_tuples = pyomo.Set(
+	within=m.stf * m.sit * m.pro * m.com,
+	initialize=[(stf, site, process, commodity)
+	            for (stf, site, process) in m.pro_on_off_tuples
+	            for (s, pro, commodity) in tuple(m.r_out_dict.keys())
+	            if process == pro and stf == s],
+	doc='Commodities for on/off output')
+	
+Third, for processes in the tuple set ``pro_partial_on_off_tuples``, the 
+tuple set ``pro_partial_on_off_output_tuples`` enumerates their output 
+commodities. It is used to index the constraints that modifies a process'
+output commodity flow with respect to the standard case without the on/off
+feature and partial operation. It is defined by the following code fragment
+in AdvancedProcesses.py:
+
+::
+
+    m.pro_partial_on_off_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, site, process, commodity)
+                        for (stf, site, process) in m.pro_partial_on_off_tuples
+                        for (s, pro, commodity) in tuple(m.r_out_min_fraction_dict
+                                                         .keys())
+                        if process == pro and s == stf],
+            doc='Commodities for on/off output with partial behaviour')	
+
+Fourth, the processes in the tuple sets ``pro_on_off_tuples`` and
+``pro_partial_on_off_tuples`` require another constraint
+
+m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, sit, pro, com)
+                        for (stf, sit, pro, com) in m.pro_on_off_output_tuples
+                        if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / m.dt and
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] <=
+                           m.min_fraction_dict[stf, sit, pro] and
+                           m.min_fraction_dict[stf, sit, pro] %
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] == 0 and
+                           com not in m.com_env],
+            doc='Output commodities of processes with ramp-up-grad smaller than'
+                'timestep length and smaller equal than min-fraction and is a '
+                'divisor of min-fraction')
+    
+        m.pro_rampup_not_divides_minfraction_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, sit, pro, com)
+                        for (stf, sit, pro, com) in m.pro_on_off_output_tuples
+                        if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / m.dt and
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] <
+                           m.min_fraction_dict[stf, sit, pro] and
+                           m.min_fraction_dict[stf, sit, pro] %
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] != 0 and
+                           com not in m.com_env],
+            doc='Output commodities of processes with ramp-up-grad smaller than'
+                'timestep length and smaller than min-fraction and is NOT a '
+                'divisor of min-fraction')
+    
+        m.pro_rampup_bigger_minfraction_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, sit, pro, com)
+                        for (stf, sit, pro, com) in m.pro_on_off_output_tuples
+                        if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / m.dt and
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] >
+                           m.min_fraction_dict[stf, sit, pro] and
+                           com not in m.com_env],
+            doc='Output commodities of processes with ramp up gradient smaller'
+                'than timestep length and greater than min-fraction')
+		
 Second, the output of all processes that have a time dependent efficiency are
 collected in an additional tuple set. The set contains all outputs
 corresponding to processes that are specified as column indices in the input

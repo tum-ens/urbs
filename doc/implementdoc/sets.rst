@@ -629,7 +629,17 @@ in AdvancedProcesses.py:
             doc='Commodities for on/off output with partial behaviour')	
 
 Fourth, the processes in the tuple sets ``pro_on_off_tuples`` and
-``pro_partial_on_off_tuples`` require another constraint
+``pro_partial_on_off_tuples`` require another constraint to limit the 
+excesive growth of the output of a process. This is required due to the
+fact that in the point of minimum load, without these limiting constraints,
+the process on/off marker :math:`\omicron_{yvpt}` can be both on and off.
+There are three cases to be considered:
+
+The first case is represented by the tuple set 
+``pro_rampup_divides_minfraction_output_tuples``, which covers the outputs of the
+processes for which the defined ramp up gradient and is smaller than the minimum
+load fraction and is a divisor of it. It is defined by the following code fragment
+in AdvancedProcesses.py:
 
 m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
@@ -644,7 +654,13 @@ m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
             doc='Output commodities of processes with ramp-up-grad smaller than'
                 'timestep length and smaller equal than min-fraction and is a '
                 'divisor of min-fraction')
-    
+
+The second case is represented by the tuple set 
+``pro_rampup_not_divides_minfraction_output_tuples``, which covers the outputs of the
+processes for which the defined ramp up gradient and is smaller than the minimum
+load fraction and is not a divisor of it. It is defined by the following code fragment
+in AdvancedProcesses.py:
+
         m.pro_rampup_not_divides_minfraction_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
             initialize=[(stf, sit, pro, com)
@@ -658,6 +674,12 @@ m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
             doc='Output commodities of processes with ramp-up-grad smaller than'
                 'timestep length and smaller than min-fraction and is NOT a '
                 'divisor of min-fraction')
+
+The third and last case is represented by the tuple set 
+``pro_rampup_bigger_minfraction_output_tuples``, which covers the outputs of the
+processes for which the defined ramp up gradient and is greater than the minimum
+load fraction. It is defined by the following code fragment
+in AdvancedProcesses.py:
     
         m.pro_rampup_bigger_minfraction_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
@@ -670,7 +692,7 @@ m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
             doc='Output commodities of processes with ramp up gradient smaller'
                 'than timestep length and greater than min-fraction')
 		
-Second, the output of all processes that have a time dependent efficiency are
+Last, the output of all processes that have a time dependent efficiency are
 collected in an additional tuple set. The set contains all outputs
 corresponding to processes that are specified as column indices in the input
 file worksheet ``TimeVarEff``.
@@ -683,7 +705,7 @@ file worksheet ``TimeVarEff``.
                     for (pro, commodity) in m.r_out.index
                     if process == pro],
         doc='Outputs of processes with time dependent efficiency')
-
+	
 Demand Side Management Tuples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 There are two kinds of demand side management (DSM) tuples in the model:

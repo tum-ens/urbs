@@ -641,7 +641,9 @@ processes for which the defined ramp up gradient and is smaller than the minimum
 load fraction and is a divisor of it. It is defined by the following code fragment
 in AdvancedProcesses.py:
 
-m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
+::
+     
+        m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
             initialize=[(stf, sit, pro, com)
                         for (stf, sit, pro, com) in m.pro_on_off_output_tuples
@@ -661,6 +663,8 @@ processes for which the defined ramp up gradient and is smaller than the minimum
 load fraction and is not a divisor of it. It is defined by the following code fragment
 in AdvancedProcesses.py:
 
+::
+     
         m.pro_rampup_not_divides_minfraction_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
             initialize=[(stf, sit, pro, com)
@@ -680,7 +684,9 @@ The third and last case is represented by the tuple set
 processes for which the defined ramp up gradient and is greater than the minimum
 load fraction. It is defined by the following code fragment
 in AdvancedProcesses.py:
-    
+
+::
+     
         m.pro_rampup_bigger_minfraction_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
             initialize=[(stf, sit, pro, com)
@@ -696,6 +702,7 @@ Last, the output of all processes that have a time dependent efficiency are
 collected in an additional tuple set. The set contains all outputs
 corresponding to processes that are specified as column indices in the input
 file worksheet ``TimeVarEff``.
+
 ::
 
     m.pro_timevar_output_tuples = pyomo.Set(

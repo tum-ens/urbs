@@ -2,13 +2,14 @@ import os
 import pyomo.environ
 from pyomo.opt.base import SolverFactory
 from datetime import datetime, date
-from .model_nopt import create_model
+from .model_nopt import create_model, res_global_cost_limit_rule, co2_rule
 from .report_nopt import *
 from .plot_nopt import *
 from .input_nopt import *
 from .validation_nopt import *
 from .saveload_nopt import *
-
+from .features_nopt import *
+import math
 
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder.
@@ -54,7 +55,7 @@ def setup_solver(optim, logfile='solver.log'):
 
 
 def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
-                 objective, near_optimal='normal', plot_tuples=None,  plot_sites_name=None,
+                 objective, near_optimal='optimal', plot_tuples=None,  plot_sites_name=None,
                  plot_periods=None, report_tuples=None,
                  report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -92,28 +93,36 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     validate_input(data)
     validate_dc_objective(data, objective)
+    # refresh time stamp string and create filename for logfile
+    log_filename = os.path.join(result_dir, '{}.log').format(sce)
     #If the near optimal feature is activated solve the problem first for cost
     if near_optimal == 'near optimal':
         #create cost opt model
-        prob_co = create_model(data, dt, timesteps, 'cost')
+        prob = create_model(data, dt, timesteps, 'cost')
         # solve cost model and read optimized cost
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
         optim = setup_solver(optim, logfile=log_filename)
-        result = optim.solve(prob_co, tee=True)
+        result = optim.solve(prob, tee=True)
         assert str(result.solver.termination_condition) == 'optimal'
         opt_cost_sum = 0
-        for key in prob_co.costs.keys():
-            opt_cost_sum += prob_co.costs[key].value
-        for stf in prob_co.stf:
+        for key in prob.costs.keys():
+            opt_cost_sum += prob.costs[key].value
+        for stf in prob.stf:
             data['global_prop'].loc[(stf, 'Cost_opt'), :] = opt_cost_sum
     else:
         pass
-    # create model
+    # add to model
+    '''prob.res_global_cost_limit = pyomo.Constraint(
+        rule=res_global_cost_limit_rule,
+        doc='total costs <= Global cost limit')
+    prob.objective_function = pyomo.Objective(
+        rule=co2_rule,
+        sense=pyomo.minimize,
+        doc='minimize total CO2 emissions')'''
     prob = create_model(data, dt, timesteps, objective)
     # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
-    # refresh time stamp string and create filename for logfile
-    log_filename = os.path.join(result_dir, '{}.log').format(sce)
+
 
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...

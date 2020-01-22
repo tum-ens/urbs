@@ -19,7 +19,7 @@ except NotADirectoryError:
 shutil.copy(__file__, result_dir)
 
 # objective function
-objective = 'cost'  # set either 'cost' or 'CO2' as objective
+objective = 'CO2'  # set either 'cost' or 'CO2' as objective
 
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'glpk'
@@ -31,10 +31,7 @@ dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+
     ]
 
 # optional: define names for sites in report_tuples
@@ -42,10 +39,7 @@ report_sites_name = {('North', 'Mid', 'South'): 'All'}
 
 # plotting commodities/sites
 plot_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+
     ]
 
 # optional: define names for sites in plot_tuples
@@ -67,12 +61,7 @@ for country, color in my_colors.items():
 # select scenarios to be run
 scenarios = [
              urbs.scenario_base,
-             urbs.scenario_stock_prices,
-             urbs.scenario_co2_limit,
-             urbs.scenario_co2_tax_mid,
-             urbs.scenario_no_dsm,
-             urbs.scenario_north_process_caps,
-             urbs.scenario_all_together
+
             ]
 
 for scenario in scenarios:

@@ -24,8 +24,8 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 
-# Choose if near optimal analysis ('near_optimal', 'normal')
-near_optimal = 'normal'
+# Choose analysis type('near_optimal', 'optimal')
+near_optimal = 'near optimal'
 
 # simulation timesteps
 (offset, length) = (3500, 24)  # time step selection
@@ -34,10 +34,7 @@ dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
-    (2020, 'North', 'Elec'),
-    (2020, 'Mid', 'Elec'),
-    (2020, 'South', 'Elec'),
-    (2020, ['North', 'Mid', 'South'], 'Elec')
+
     ]
 
 # optional: define names for sites in report_tuples

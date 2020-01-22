@@ -305,10 +305,10 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # their name in the "rule" keyword.
     #ipdb.set_trace()
     # commodity
-    '''if m.mode['nopt']:
+    if m.mode['nopt']:
         m.res_cost_restrict = pyomo.Constraint(
             m, rule=res_cost_restrict_rule,
-            doc='cost upper limit = cost * cost_factor')'''
+            doc='cost upper limit = cost * cost_factor')
     m.res_vertex = pyomo.Constraint(
         m.tm, m.com_tuples,
         rule=res_vertex_rule,
@@ -425,7 +425,14 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             rule=co2_rule,
             sense=pyomo.minimize,
             doc='minimize total CO2 emissions')
+    elif m.obj.value == 'pv':
 
+
+
+        m.objective_function = pyomo.Objective(
+            rule=co2_rule,
+            sense=pyomo.minimize,
+            doc='minimize total CO2 emissions')
     else:
         raise NotImplementedError("Non-implemented objective quantity. Set "
                                   "either 'cost' or 'CO2' as the objective in "
@@ -833,5 +840,10 @@ def co2_rule(m):
 
     return (co2_output_sum)
 
+def capacity_rule(m,):
+    for stf in m.stf:
+        for sit in m.sit
+
 def res_cost_restrict_rule(m):
-    return cost_rule(m)<= m.cost_factor*
+    cost_factor=m.cost_slack_list[0]
+    return cost_rule(m)== cost_factor* m.global_prop.loc[2020,'Cost_opt'].value

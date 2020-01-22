@@ -46,7 +46,7 @@ def read_input(input_files, near_optimal, year):
         with pd.ExcelFile(filename) as xls:
 
             global_prop = xls.parse('Global').set_index(['Property'])
-            global_prop.loc['Near optimal status'] = near_optimal
+            global_prop.loc['Near optimal status'] = [near_optimal, "activate near optimal solution by giving 'near optimal' as string "]
             # create support timeframe index
             if ('Support timeframe' in
                     xls.parse('Global').set_index('Property').value):

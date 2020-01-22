@@ -299,13 +299,16 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.pro_timevar_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
             doc='empty set needed for (partial) process output')
-    if m.mode['nopt']:
-        m = add_cost_restriction(m)
+
     # Equation declarations
     # equation bodies are defined in separate functions, referred to here by
     # their name in the "rule" keyword.
-
+    #ipdb.set_trace()
     # commodity
+    '''if m.mode['nopt']:
+        m.res_cost_restrict = pyomo.Constraint(
+            m, rule=res_cost_restrict_rule,
+            doc='cost upper limit = cost * cost_factor')'''
     m.res_vertex = pyomo.Constraint(
         m.tm, m.com_tuples,
         rule=res_vertex_rule,
@@ -427,6 +430,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         raise NotImplementedError("Non-implemented objective quantity. Set "
                                   "either 'cost' or 'CO2' as the objective in "
                                   "runme.py!")
+
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
@@ -828,3 +832,6 @@ def co2_rule(m):
                                    stf_dist(stf, m))
 
     return (co2_output_sum)
+
+def res_cost_restrict_rule(m):
+    return cost_rule(m)<= m.cost_factor*

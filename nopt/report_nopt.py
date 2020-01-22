@@ -4,7 +4,7 @@ from .output_nopt import get_constants, get_timeseries
 from .util_nopt import is_string
 
 
-def report(instance, filename, report_tuples=None, report_sites_name={}):
+def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob is given as instance
     """Write result summary to a spreadsheet file
 
     Args:
@@ -20,7 +20,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
     if report_tuples is None:
         report_tuples = get_input(instance, 'demand').columns
 
-    costs, cpro, ctra, csto = get_constants(instance)
+    costs, cpro, ctra, csto = get_constants(instance) #finds these values from model instance prob
 
     # create spreadsheet writer object
     with pd.ExcelWriter(filename) as writer:

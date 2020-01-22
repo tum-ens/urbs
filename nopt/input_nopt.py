@@ -221,6 +221,7 @@ def pyomo_model_prep(data, timesteps):
     m.stf_list = m.global_prop.index.levels[0].tolist()
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
+    m.cost_slack_list = [0.05]
     #creating list with near optimal processes
     m.pro_near_optimal = ['PV']
 

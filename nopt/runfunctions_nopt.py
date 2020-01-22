@@ -89,10 +89,25 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     sce = scenario.__name__
     data = read_input(input_files,near_optimal, year)
     data = scenario(data)
-    #ipdb.set_trace()
+
     validate_input(data)
     validate_dc_objective(data, objective)
-
+    #If the near optimal feature is activated solve the problem first for cost
+    if near_optimal == 'near optimal':
+        #create cost opt model
+        prob_co = create_model(data, dt, timesteps, 'cost')
+        # solve cost model and read optimized cost
+        optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+        optim = setup_solver(optim, logfile=log_filename)
+        result = optim.solve(prob_co, tee=True)
+        assert str(result.solver.termination_condition) == 'optimal'
+        opt_cost_sum = 0
+        for key in prob_co.costs.keys():
+            opt_cost_sum += prob_co.costs[key].value
+        for stf in prob_co.stf:
+            data['global_prop'].loc[(stf, 'Cost_opt'), :] = opt_cost_sum
+    else:
+        pass
     # create model
     prob = create_model(data, dt, timesteps, objective)
     # prob.write('model.lp', io_options={'symbolic_solver_labels':True})

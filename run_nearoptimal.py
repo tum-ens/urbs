@@ -1,8 +1,9 @@
 import os
 import shutil
 import nopt
+import ipdb
 
-input_files = 'Intertemporal_example'  # for single year file name, for intertemporal folder name
+input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
@@ -24,7 +25,7 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # Choose if near optimal analysis ('near_optimal', 'normal')
-near_optimal = 'near_optimal'
+near_optimal = 'normal'
 
 # simulation timesteps
 (offset, length) = (3500, 24)  # time step selection
@@ -33,7 +34,10 @@ dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
-
+    (2020, 'North', 'Elec'),
+    (2020, 'Mid', 'Elec'),
+    (2020, 'South', 'Elec'),
+    (2020, ['North', 'Mid', 'South'], 'Elec')
     ]
 
 # optional: define names for sites in report_tuples

@@ -437,6 +437,17 @@ site `Mid` carrying commodity `Elec` in year `2020`. This set is defined as
         doc='Combinations of possible transmissions, e.g. '
             '(2020,South,Mid,hvac,Elec)')
 
+The set :math:`F^{blocks}_{yc{v_\text{out}}{v_\text{in}}}` includes all transmission lines
+which have a defined capacity block for the building of new transmission capacities.
+
+::
+	    
+    m.tra_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=[(stf, sit, sit_, tra, com)
+                    for (stf, sit, sit_, tra, com) in tuple(m.tra_block_dict.keys())],
+        doc='Transmission with new block capacities')
+
 DCPF Transmission Tuples
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

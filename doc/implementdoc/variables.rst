@@ -47,6 +47,8 @@ Transmission, Storage and demand side management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvp}`             | MW   | New Process Capacity              |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvp}                     | -    | New Process Capacity Units        |
+    +----------------------------------------+------+-----------------------------------+
     | :math:`\tau_{yvpt}`                    | MWh  | Process Throughput                |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvcpt}^\text{in}`     | MWh  | Process Input Commodity Flow      |
@@ -62,6 +64,8 @@ Transmission, Storage and demand side management.
     | :math:`\kappa_{yaf}`                   | MW   | Total transmission Capacity       |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yaf}`             | MW   | New Transmission Capacity         |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yaf}`                    |-     | New Transmission Capacity Units   |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\pi_{yaft}^\text{in}`           | MWh  | Transmission Input Commodity Flow |
     +----------------------------------------+------+-----------------------------------+
@@ -79,9 +83,13 @@ Transmission, Storage and demand side management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvs}^\text{c}`    | MWh  | New Storage Size                  |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvs}^\text{c}`           | -    | New Storage Size Units            |
+    +----------------------------------------+------+-----------------------------------+
     | :math:`\kappa_{yvs}^\text{p}`          | MW   | Total Storage Power               |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvs}^\text{p}`    | MW   | New Storage Power                 |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvs}^\text{c}`           | -    | New Storage Power Units           |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvst}^\text{in}`      | MWh  | Storage Input Commodity Flow      |
     +----------------------------------------+------+-----------------------------------+

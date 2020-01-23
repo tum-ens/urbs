@@ -500,7 +500,7 @@ and given by the code fragment:
         doc='Combinations of possible storage by site,'
             'e.g. (2020,Mid,Bat,Elec)')
 
-There are two subsets of storage tuples.
+There are four subsets of storage tuples.
 
 In a first subset of the storage tuples are all storages that have a user
 defined fixed value for the initial state are collected.
@@ -521,6 +521,20 @@ charging/discharging power and storage content.
         within=m.stf*m.sit*m.sto*m.com,
         initialize=tuple(m.sto_ep_ratio_dict.keys()),
         doc='storages with given energy to power ratio')
+	
+The third and fourth subsets are defined for all the storages that have a
+capacity or power expansion block defined in the input.
+
+::
+  
+    m.sto_block_c_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.sto_block_c_dict.keys()),
+        doc='storages with new energy block capacities')
+    m.sto_block_p_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.sto_block_p_dict.keys()),
+        doc='storages with new power block capacities')
 
 
 Process Input Tuples

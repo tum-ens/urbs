@@ -327,14 +327,14 @@ defined in AdvancedProcesses.py as:
 ::
 
     m.pro_partial_tuples = pyomo.Set(
-            within=m.stf * m.sit * m.pro,
-            initialize=[(stf, site, process)
-                        for (stf, site, process) in m.pro_tuples
-                        for (s, pro, _) in tuple(m.r_in_min_fraction_dict.keys() or
-                                                 m.r_out_min_fraction_dict.keys())
-                        if process == pro and s == stf and
-                        m.process_dict['on-off'][stf, site, process] != 1],
-            doc='Processes with partial input/output which cannot be turned off')
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (s, pro, _) in tuple(m.r_in_min_fraction_dict.keys() or
+                                             m.r_out_min_fraction_dict.keys())
+                    if process == pro and s == stf and
+                    m.process_dict['on-off'][stf, site, process] != 1],
+        doc='Processes with partial input/output which cannot be turned off')
 
 The fourth subset of the process tuples ``pro_on_off_tuples`` 
 :math:`P_{yv}^\text{on/off}` is formed in order to identify processes that
@@ -346,14 +346,14 @@ AdvancedProcesses.py as:
 
 ::
 
-m.pro_on_off_tuples = pyomo.Set(
-            within=m.stf * m.sit * m.pro,
-            initialize=[(stf, site, process)
-                        for (stf, site, process) in
-                                                  tuple(m.min_fraction_dict.keys())
-                        for (st, sit, pro) in tuple(m.onoff_dict.keys())
-                        if stf == st and site == sit and process == pro],
-            doc='Processes with minimal fraction which can be turned off')
+    m.pro_on_off_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in
+                                              tuple(m.min_fraction_dict.keys())
+                    for (st, sit, pro) in tuple(m.onoff_dict.keys())
+                    if stf == st and site == sit and process == pro],
+        doc='Processes with minimal fraction which can be turned off')
 	    
 The fifth subset of the process tuples ``pro_on_off_partial_tuples``
 :math:`P_{yv}^\text{partial on/off}` is formed in order to identify processes 
@@ -366,15 +366,15 @@ defined in AdvancedProcesses.py as:
 
 ::
 
-m.pro_partial_on_off_tuples = pyomo.Set(
-            within=m.stf * m.sit * m.pro,
-            initialize=[(stf, site, process)
-                        for (stf, site, process) in m.pro_tuples
-                        for (st, pro, _) in tuple(m.r_in_min_fraction_dict.keys()
-                                                  or m.r_out_min_fraction_dict)
-                        if process == pro and stf == st and
-                        m.process_dict['on-off'][stf, site, process] == 1],
-            doc='Processes with partial input/output which can be turned off')
+    m.pro_partial_on_off_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (st, pro, _) in tuple(m.r_in_min_fraction_dict.keys()
+                                              or m.r_out_min_fraction_dict)
+                    if process == pro and stf == st and
+                    m.process_dict['on-off'][stf, site, process] == 1],
+        doc='Processes with partial input/output which can be turned off')
 
 Finally, processes that are subject to restrictions in the change of
 operational state are captured with the ``pro_rampupgrad_tuples`` and
@@ -388,6 +388,8 @@ operational state are captured with the ``pro_rampupgrad_tuples`` and
                     for (stf, sit, pro) in m.pro_tuples
                     if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / dt],
         doc='Processes with maximum ramp up gradient smaller than timestep length')
+
+::
 	
     m.pro_rampdowngrad_tuples = pyomo.Set(
         within=m.stf * m.sit * m.pro,
@@ -551,7 +553,43 @@ following code fragment:
         doc='Commodities with partial input ratio,'
             'e.g. (2020,Mid,Coal PP,Coal)')
 
+Where: ``r_in_min_fraction`` represents the process input ratio as set in the input
+for the minimum load of the process.
 
+For processes in the tuple set ``pro_on_off_tuples``, the following tuple set
+``pro_on_off_input_tuples`` enumerates their input commodities. It is used to
+index the constraints that modifies a process' input commodity flow with
+respect to the standard case without the on/off feature. It is defined by the
+following code fragment in AdvancedProcesses.py:
+
+::
+
+    m.pro_on_off_input_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro * m.com,
+        initialize=[(stf, site, process, commodity)
+                    for (stf, site, process) in m.pro_on_off_tuples
+                    for (s, pro, commodity) in tuple(m.r_in_dict.keys())
+                    if process == pro and stf == s],
+        doc='Commodities for on/off input')
+
+For processes in the tuple set ``pro_partial_on_off_tuples``, the following tuple set
+``pro_partial_on_off_input_tuples`` enumerates their input commodities. It is used to
+index the constraints that modifies a process' input commodity flow with
+respect to the standard case without the on/off feature and partial operation. It is 
+defined by the following code fragment in AdvancedProcesses.py:
+
+::
+
+    m.pro_partial_on_off_input_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro * m.com,
+	initialize=[(stf, site, process, commodity)
+                    for (stf, site, process) in m.pro_partial_on_off_tuples
+                    for (s, pro, commodity) in tuple(m.r_in_min_fraction_dict
+		                                     .keys())
+                    if process == pro and s == stf],
+        doc='Commodities with partial input ratio which can be turned off,'
+                'e.g. (2020,Mid,Coal PP,Coal)')
+		
 Process Output Tuples
 ^^^^^^^^^^^^^^^^^^^^^
 Process output tuples represent commodities generated by processes. These are

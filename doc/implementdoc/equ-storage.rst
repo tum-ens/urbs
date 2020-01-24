@@ -67,6 +67,43 @@ calculated by the following code fragment:
 
 .. literalinclude:: /../urbs/features/storage.py
    :pyobject: def_storage_capacity_rule
+   
+**Storage New Capacity Rule**: The constraint storage new capacity rule defines
+the newly installed capacity of a storage :math:`\hat{\kappa}_{yvs}^\text{c}`.
+This variable is defined by the constaint as the product between the variable
+new storage size units :math:`\beta_{yvs}^\text{c}` and the parameter storage
+new capacity block :math:`{K}_{yvs}^\text{c,block}`. The mathematical explanation 
+of this rule is given in :ref:`theory-storage`.
+
+In script ``storage.py`` the constraint storage capacity rule is defined and
+calculated by the following code fragment:
+::
+   
+    m.def_new_cap_sto_c = pyomo.Constraint(
+        m.sto_block_c_tuples,
+        rule=def_new_cap_sto_c_rule,
+        doc='cap_sto_c_new = cap_sto_c_unit * c-block')
+
+.. literalinclude:: /../urbs/features/storage.py
+   :pyobject: def_storage_capacity_rule
+
+**Storage New Power Rule**: The constraint storage new power rule defines
+the newly installed power of a storage :math:`\hat{\kappa}_{yvs}^\text{p}`.
+This variable is defined by the constaint as the product between the variable
+new power size units :math:`\beta_{yvs}^\text{p}` and the parameter storage
+new power block :math:`{K}_{yvs}^\text{p,block}`. The mathematical explanation 
+of this rule is given in :ref:`theory-storage`.
+
+In script ``storage.py`` the constraint storage capacity rule is defined and
+calculated by the following code fragment:
+::
+    m.def_new_cap_sto_p = pyomo.Constraint(
+        m.sto_block_p_tuples,
+        rule=def_new_cap_sto_p_rule,
+        doc='cap_sto_p_new = cap_sto_p_unit * p-block')
+	
+.. literalinclude:: /../urbs/features/storage.py
+   :pyobject: def_storage_capacity_rule
 
 **Storage Input By Power Rule**: The constraint storage input by power rule
 limits the variable storage input commodity flow

@@ -2,24 +2,26 @@ import os
 import shutil
 import urbs
 from Database_to_urbs import Database_to_urbs
+import time
 
 # # User preferences
 
-version = '1.92'
-suffix = "_green"
-result_folder = 'v1.92_green_2020-20200117T0307'
+version = 'v2.00'
+suffix = "_eu"
+result_folder = 'v2.00_2025_eu-20200125T1840'
+fs = os.path.sep
 
-for year in [2025, 2030, 2035, 2040, 2045, 2050]:
+for year in [2030, 2035, 2040, 2045, 2050]:
 
     # Generate input file from database
     Database_to_urbs(version, suffix, year, result_folder)
     year = str(int(year))
     
-    input_files = 'urbs_model_v' + version + suffix + '_' + year + '.xlsx'  # for single year file name, for intertemporal folder name
-    input_dir = 'Input'
+    input_files = year + suffix + '.xlsx'  # for single year file name, for intertemporal folder name
+    input_dir = 'Input' + fs + version
     input_path = os.path.join(input_dir, input_files)
-    
-    result_name = 'v' + version + suffix + '_' + str(year)
+
+    result_name = version + '_' + str(year) + suffix 
     result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
     result_folder = result_dir
     
@@ -105,4 +107,6 @@ for year in [2025, 2030, 2035, 2040, 2045, 2050]:
                                 plot_periods=plot_periods,
                                 report_tuples=report_tuples,
                                 report_sites_name=report_sites_name)
+                                
+    time.sleep(60*60)
     

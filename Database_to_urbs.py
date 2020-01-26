@@ -1,32 +1,16 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # Description
-
-# This code reads the database file in Excel and updates the urbs input file based on it.
-# 
-# ### Inputs
-# - 4NEMO_Database_vx.xx.xlsx
-# - urbs_model_vx.xx_yyyy.xlsx
-# 
-# ### Outputs
-# - updated file urbs_model_vx.xx_yyyy.xlsx
-
-
-
-
-# # Libraries
+# Libraries
 
 import pandas as pd
 import numpy as np
 from openpyxl import load_workbook
 import itertools
 import os
+import urbs
 
 
 def write_Global(Global, version, suffix, year, writer):
     print("Global")
-    Global_updated = pd.read_excel('Input' + fs + 'urbs_model_v' + version + suffix + '_' + str(year) + '.xlsx', sheet_name="Global", index_col=0)
+    Global_updated = pd.read_excel('Input' + fs + version + fs + str(year) + suffix + '.xlsx', sheet_name="Global", index_col=0)
     Global_updated.loc['Support timeframe', 'value'] = year
     Global_updated.to_excel(writer, sheet_name='Global', index=True)
     
@@ -62,22 +46,20 @@ def write_Commodity(Commodity, version, suffix, year, writer):
     Commodity_year.loc[Commodity_year["Commodity"] == "Solar_PV_high", "Commodity"] = "Solar_high"
     Commodity_year.loc[Commodity_year["Commodity"] == "Solar_PV_mid", "Commodity"] = "Solar_mid"
     Commodity_year.loc[Commodity_year["Commodity"] == "Solar_PV_low", "Commodity"] = "Solar_low"
-    Commodity_year.set_index(["Site", "Commodity", "Type"], inplace=True)
     
     # Add Slack
     if year == 2015:
-        sites = list(Commodity_year.index.get_level_values("Site").unique())
+        sites = list(Commodity_year["Site"].unique())
         df = pd.DataFrame(999, index=pd.MultiIndex.from_product([sites, ["Slack"], ["Stock"]], names=["Site", "Commodity", "Type"]), columns=["price", "max", "maxperhour"])
         df["max"] = np.inf
         df["maxperhour"] = np.inf
-        Commodity_year = Commodity_year.reset_index().append(df.reset_index(), ignore_index=True)
+        Commodity_year = Commodity_year.append(df.reset_index(), ignore_index=True)
         
     # Correct maxperhour for CCS_CO2
     if year > 2015:
-        Commodity_year.loc[(slice(None), "CCS_CO2", "Env"), "maxperhour"] = np.inf
+        Commodity_year.loc[Commodity_year["Commodity"] == "CCS_CO2", "maxperhour"] = np.inf
     
     # Write
-    Commodity_year.reset_index(inplace=True)
     Commodity_year.to_excel(writer, sheet_name='Commodity', index=False)
     
     return annual
@@ -101,9 +83,9 @@ def write_Process(Process, Process_prev, EE_limits, version, suffix, year, write
     # Filter possible expansion for that year
     Process_year = Process[Process['scenario-year']==year]
     Process_year = Process_year[Process_year['cap-up']!=0]
-    Process_year["inst-cap"] = 0
         
     if year > 2015:
+        Process_year["inst-cap"] = 0
         Process_prev = Process_prev.join(Process["lifetime"], how="inner")
         Process_prev['Construction year'] = [int(x[-4:]) for x in Process_prev.index.get_level_values(level='Process')]
         idx_old = Process_prev.loc[(Process_prev['Construction year'] + Process_prev['lifetime']) <= year].index
@@ -130,8 +112,8 @@ def write_Process(Process, Process_prev, EE_limits, version, suffix, year, write
     # Correct cap-up
     Process_year.loc[Process_year["cap-up"] == -1, "cap-up"] = np.inf
     Process_year.reset_index(inplace=True)
-    if suffix in ["_eu", "_nation"]:
-        Process_group = Process_year.reset_index()
+    if (suffix in ["_eu", "_nation"]) and (year>2015):
+        Process_group = Process_year.copy()
         Process_group["Category"] = [x.split("_")[0]+"_"+x.split("_")[-2] for x in Process_group["Process"]]
         Process_group = Process_group[["Site", "Category","inst-cap"]]
         Process_group = Process_group.groupby(["Site", "Category"]).sum()
@@ -171,7 +153,14 @@ def write_Process(Process, Process_prev, EE_limits, version, suffix, year, write
     
 def write_ProCom(ProCom, pro, year, writer):
     print("Process-Commodity")
-    ProCom = ProCom.loc[ProCom.index.isin(pro)].reset_index()
+    pro_renamed = []
+    for elem in pro:
+        if elem.startswith("Solar_"):
+            pro_renamed = pro_renamed + [elem[:5] + "_PV" + elem[5:]]
+        else:
+            pro_renamed = pro_renamed + [elem]
+       
+    ProCom = ProCom.loc[ProCom.index.isin(pro_renamed)].reset_index()
     ProCom = ProCom.loc[ProCom["ratio"] != 0]
     
     # Prepare sheet
@@ -232,9 +221,10 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
         Storage_prev['Construction year'] = [int(x[-4:]) for x in Storage_prev.index.get_level_values(level='Storage')]
         idx_old = Storage_prev.loc[(Storage_prev['Construction year'] + Storage_prev['lifetime']) <= year].index
         idx_decommissioned = Storage_prev.index.intersection(idx_old)
-        Storage_prev.loc[idx_decommissioned, "C Total"] = 0
+        #Storage_prev.loc[idx_decommissioned, "C Total"] = 0
         Storage_prev.loc[idx_decommissioned, "P Total"] = 0
-        Storage_prev.rename(columns={"C Total": "inst-cap-c", "P Total": "inst-cap-p"}, inplace=True)
+        #Storage_prev.rename(columns={"C Total": "inst-cap-c", "P Total": "inst-cap-p"}, inplace=True)
+        Storage_prev.rename(columns={"P Total": "inst-cap-p"}, inplace=True)
         Storage_prev['inst-cap-p'] = Storage_prev['inst-cap-p'].round(2)
         Storage_prev['inst-cap-c'] = Storage_prev['inst-cap-p'] * Storage_prev['ep-ratio']
         Storage_prev["cap-up-c"] = Storage_prev["inst-cap-c"]
@@ -266,7 +256,7 @@ def Database_to_urbs(version, suffix, year, result_folder):
     fs = os.path.sep
     
     # Read the database file
-    db = pd.read_excel('Input' + fs + '4NEMO_Database_v' + version + suffix + '.xlsx', sheet_name=None)
+    db = pd.read_excel('Input' + fs + '4NEMO_Database_' + version + suffix + '.xlsx', sheet_name=None)
     Global = db['Global'].copy().set_index('Parameter')
     Site = db['Site'].copy()
     Commodity = db['Commodity'].copy().set_index(["Site", "Commodity", "Type"])
@@ -278,19 +268,31 @@ def Database_to_urbs(version, suffix, year, result_folder):
     db = None
     
     # Read the time series
-    ts = pd.read_excel('Input' + fs + '4NEMO_Database_v'+version+'_timeseries.xlsx', sheet_name=None)
+    ts = pd.read_excel('Input' + fs + '4NEMO_Database_'+version+'_timeseries.xlsx', sheet_name=None)
     Demand = ts['Demand'].copy()
     SupIm = ts['SupIm'].copy()
     ts = None
     
     # Eventually read the results of the previous year
-    Process_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Process caps", index_col=[1,2])[["Total"]]
-    Storage_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Storage caps", index_col=[1,2,3])[["C Total", "P Total"]]
-    Transmission_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Transmission caps", index_col=[1,2,3,4])[["New"]]
+    urbs_path = os.path.join("result", result_folder, "scenario_base.h5")
+    helpdf = urbs.load(urbs_path)
+    df_result = helpdf._result
+    df_data = helpdf._data
+    
+    Process_prev = df_data["process"].droplevel(0)[["inst-cap"]].rename(columns={"inst-cap": "Total"})
+    Process_prev_new = df_result["cap_pro_new"].droplevel(0).reset_index().rename(columns={"sit":"Site", "pro":"Process", "cap_pro_new":"Total"}).set_index(["Site", "Process"]).fillna(0)
+    Process_prev = Process_prev + Process_prev_new
+    Storage_prev = df_data["storage"].droplevel(0)[["inst-cap-p"]].rename(columns={"inst-cap-p": "P Total"})
+    Storage_prev_new = df_result["cap_sto_p_new"].droplevel(0).reset_index().rename(columns={"sit":"Site", "sto":"Storage", "cap_sto_p_new":"P Total", "com":"Commodity"}).set_index(["Site", "Storage", "Commodity"]).fillna(0)
+    Storage_prev = Storage_prev + Storage_prev_new
+    Transmission_prev = df_result["cap_tra_new"].droplevel(0).reset_index().rename(columns={"sit": "Site In", "sit_": "Site Out", "tra": "Transmission", "com": "Commodity", "cap_tra_new": "New"}).set_index(["Site In", "Site Out", "Transmission", "Commodity"])
+    #Process_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Process caps", index_col=[1,2])[["Total"]]
+    #Storage_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Storage caps", index_col=[1,2,3])[["C Total", "P Total"]]
+    #Transmission_prev = pd.read_excel('result' + fs + result_folder + fs + 'scenario_base.xlsx', sheet_name="Transmission caps", index_col=[1,2,3,4])[["New"]]
         
     # Prepare the output
-    book = load_workbook('Input' + fs + 'urbs_model_v' + version + suffix + '_' + str(year) + '.xlsx')
-    writer = pd.ExcelWriter('Input' + fs + 'urbs_model_v'+version + suffix + '_'+str(year)+'.xlsx', engine='openpyxl') 
+    book = load_workbook('Input' + fs + version + fs + str(year) + suffix + '.xlsx')
+    writer = pd.ExcelWriter('Input' + fs + version + fs + str(year) + suffix + '.xlsx', engine='openpyxl') 
     writer.book = book
     writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
@@ -359,8 +361,6 @@ def Database_to_urbs(version, suffix, year, result_folder):
     SupIm.loc[0] = 0
     SupIm.sort_index(inplace=True)
     for c in SupIm.columns:
-        # if c[-5:]=='Hydro':
-            # SupIm[c] = annual_hydro[c[:2]] * SupIm[c]
         cnew = c.replace('_','.',1)
         if cnew[3:11] == "Solar_PV":
             cnew = cnew.replace("Solar_PV","Solar",1)

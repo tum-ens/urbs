@@ -2,23 +2,27 @@ import os
 import shutil
 import urbs
 from Database_to_urbs import Database_to_urbs
+import time
 
 # # User preferences
-
-version = '1.92'
-suffix = "_eu"
+fs = os.path.sep
+version = 'v2.00'
+suffix = "_nation"
 year = 2020
-result_folder = 'v1.91_eu_2015-20191220T0951_dummy'
+result_folder = 'v2.00_2015_eu-20200123T0827'
 
 # Generate input file from database
-#Database_to_urbs(version, suffix, year, result_folder)
+# for suffix in ["_eu", "_nation", "_green", "_gas"]:
+time.sleep(420*60)
+Database_to_urbs(version, suffix, year, result_folder)
+# import pdb; pdb.set_trace()
 year = str(int(year))
 
-input_files = 'urbs_model_v' + version + suffix + '_' + year + '.xlsx'  # for single year file name, for intertemporal folder name
-input_dir = 'Input'
+input_files = year + suffix + '.xlsx'  # for single year file name, for intertemporal folder name
+input_dir = 'Input' + fs + version
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'v' + version + suffix + '_' + str(year)
+result_name = version + '_' + str(year) + suffix 
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory

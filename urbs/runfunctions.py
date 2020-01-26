@@ -104,24 +104,24 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
-    # save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # write report to spreadsheet
-    report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples,
-        report_sites_name=report_sites_name)
+    # report(
+        # prob,
+        # os.path.join(result_dir, '{}.xlsx').format(sce),
+        # report_tuples=report_tuples,
+        # report_sites_name=report_sites_name)
 
     # result plots
-    result_figures(
-        prob,
-        os.path.join(result_dir, '{}'.format(sce)),
-        timesteps,
-        plot_title_prefix=sce.replace('_', ' '),
-        plot_tuples=plot_tuples,
-        plot_sites_name=plot_sites_name,
-        periods=plot_periods,
-        figure_size=(24, 9))
+    # result_figures(
+        # prob,
+        # os.path.join(result_dir, '{}'.format(sce)),
+        # timesteps,
+        # plot_title_prefix=sce.replace('_', ' '),
+        # plot_tuples=plot_tuples,
+        # plot_sites_name=plot_sites_name,
+        # periods=plot_periods,
+        # figure_size=(24, 9))
 
     return prob

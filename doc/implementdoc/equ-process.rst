@@ -113,28 +113,30 @@ defined and calculated by the following code fragment:
 gradient rule limits the process power gradient
 :math:`\left| \tau_{yvpt} - \tau_{yvp(t-1)} \right|`. This constraint prevents
 processes from exceeding their maximal possible change in activity from one
-time step to the next. The constraint states that absolute power gradient must
-be less than or equal to the maximal power gradient :math:`\overline{PG}_{yvp}`
-parameter (scaled to capacity and by time step duration). The mathematical
+time step to the next. The constraint states that the absolute power gradient must
+be less than or equal to the maximal power ramp up gradient 
+:math:`overline{PG}_{yvp}^\text{up}` parameter when increasing power or to the
+maximal power ramp down gradient :math:`\overline{PG}_{yvp}^\text{up}` parameter
+(both scaled to capacity and by time step duration). The mathematical
 explanation of this rule is given in :ref:`theory-min`.
 
 In script ``model.py`` the constraint process throughput gradient rule is split
 into 2 parts and defined and calculated by the following code fragments:
 ::
 
-    m.res_process_maxgrad_lower = pyomo.Constraint(
-        m.tm, m.pro_maxgrad_tuples,
-        rule=res_process_maxgrad_lower_rule,
-        doc='throughput may not decrease faster than maximal gradient')
-    m.res_process_maxgrad_upper = pyomo.Constraint(
-        m.tm, m.pro_maxgrad_tuples,
-        rule=res_process_maxgrad_upper_rule,
-        doc='throughput may not increase faster than maximal gradient')
+    m.res_process_rampdown = pyomo.Constraint(
+        m.tm, m.pro_rampdowngrad_tuples,
+        rule=res_process_rampdown_rule,
+        doc='throughput may not decrease faster than maximal ramp down gradient')
+    m.res_process_ramp_up = pyomo.Constraint(
+        m.tm, m.pro_rampupgrad_tuples,# - m.pro_rampup_start_tuples,
+        rule=res_process_rampup_rule,
+        doc='throughput may not increase faster than maximal ramp up gradient')
 
 .. literalinclude:: /../urbs/model.py
-   :pyobject: res_process_maxgrad_lower_rule
+   :pyobject: res_process_rampdown_rule
 .. literalinclude:: /../urbs/model.py
-   :pyobject: res_process_maxgrad_upper_rule
+   :pyobject: res_process_ramp_up_rule
 
 **Process Capacity Limit Rule**: The constraint process capacity limit rule
 limits the variable total process capacity :math:`\kappa_{yvp}`. This

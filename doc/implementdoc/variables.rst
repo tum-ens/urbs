@@ -47,7 +47,7 @@ Transmission, Storage and demand side management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvp}`             | MW   | New Process Capacity              |
     +----------------------------------------+------+-----------------------------------+
-    | :math:`\beta_{yvp}                     | -    | New Process Capacity Units        |
+    | :math:`\beta_{yvp}`                    | -    | New Process Capacity Units        |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\tau_{yvpt}`                    | MWh  | Process Throughput                |
     +----------------------------------------+------+-----------------------------------+
@@ -211,6 +211,19 @@ fragment: ::
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
+	
+**New Process Capacity Units**, :math:`\beta_{yvp}`, ``cap_unit``: The
+variable :math:`\beta_{yvp}` represents the number of capacity blocks of a
+process tuple :math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V`) that
+needs to be installed additionally to the energy system in support timeframe
+:math:`y` in site :math:`v` in order to provide the optimal solution. In 
+script ``model.py`` this variable is defined by the model variable
+``cap_pro_new`` and initialized by the following code fragment: ::  
+
+    m.cap_unit = pyomo.Var(
+        m.pro_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='Number of newly installed capacity units')
 
 **Process Throughput**, :math:`\tau_{yvpt}`, ``tau_pro`` : The variable
 :math:`\tau_{yvpt}` represents the measure of (energetic) activity of a process
@@ -300,7 +313,7 @@ an origin site :math:`v_\text{out}` to a destination site
 :math:`{v_\text{in}}`. The total transmission capacity includes both the
 already installed transmission capacity and the additional new transmission
 capacity that needs to be installed. This variable is expressed in the unit MW.
-In script ``model.py`` this variable is defined by the model variable
+In script ``transmission.py`` this variable is defined by the model variable
 ``cap_tra`` and initialized by the following code fragment: ::
 
     m.cap_tra = pyomo.Var(
@@ -313,13 +326,26 @@ variable :math:`\hat{\kappa}_{yaf}` represents the additional capacity, that
 needs to be installed, of a transmission tuple :math:`f_{yca}`, where :math:`a`
 represents the arc from an origin site :math:`v_\text{out}` to a destination
 site :math:`v_\text{in}`. This variable is expressed in the unit MW.
-In script ``model.py`` this variable is defined by the model variable
+In script ``transmission.py`` this variable is defined by the model variable
 ``cap_tra_new`` and initialized by the following code fragment: ::
 
     m.cap_tra_new = pyomo.Var(
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+
+**New Transmission Capacity Units**, :math:`\beta_{yaf}`, ``cap_unit_tra``: The
+variable :math:`\beta_{yaf}` represents the number of additional capacity blocks
+of a transmission tuple :math:`f_{yca}` that need to be installed , where 
+:math:`a` represents the arc from an origin site :math:`v_\text{out}` to a 
+destination site :math:`v_\text{in}`. In script ``transmission.py`` this variable
+is defined by the model variable ``cap_tra_new`` and initialized by the following 
+code fragment: ::
+
+    m.cap_unit_tra =pyomo.Var(
+        m.tra_block_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New transmission capacity blocks')
 
 **Transmission Input Commodity Flow**, :math:`\pi_{yaft}^\text{in}`,
 ``e_tra_in``: The variable :math:`\pi_{yaft}^\text{in}` represents the
@@ -437,6 +463,18 @@ following code fragment: ::
         within=pyomo.NonNegativeReals,
         doc='New storage size (MWh)')
 
+**New Storage Size Units**, :math:`\beta_{yvs}^\text{c}`, ``cap_sto_c_new``:
+The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the number of
+additional storage load capacity blocks of a storage tuple :math:`s_{vc}` that
+needs to be installed to the energy system in order to provide the optimal solution. 
+In script ``storage.py`` this variable is defined by the model variable ``cap_sto_c_unit``
+and initialized by the following code fragment: ::
+
+    m.cap_sto_c_unit = pyomo.Var(
+        m.sto_block_c_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage size units')
+	
 **Total Storage Power**, :math:`\kappa_{yvs}^\text{p}`, ``cap_sto_p``: The
 variable :math:`\kappa_{yvs}^\text{p}` represents the total potential discharge
 power of a storage tuple :math:`s_{vc}`. The total storage power includes both
@@ -465,6 +503,19 @@ following code fragment:
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
 
+**New Storage Power Units**, :math:`\beta_{yvs}^\text{c}`, ``cap_sto_p_unit``:
+The variable :math:`\beta_{yvs}^\text{c}` represents the number of additional
+potential discharge power blocks of a storage tuple :math:`s_{vc}` that needs 
+to be installed to the energy system in order to provide the optimal solution. 
+In the script ``storage.py`` this variable is defined by the model variable
+``cap_sto_p_unit`` and initialized by the following code fragment:
+::	
+
+m.cap_sto_p_unit = pyomo.Var(
+        m.sto_block_p_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage power units')
+	
 **Storage Input Commodity Flow**, :math:`\epsilon_{yvst}^\text{in}`,
 ``e_sto_in``: The variable :math:`\epsilon_{yvst}^\text{in}` represents the
 input commodity flow into a storage tuple :math:`s_{yvc}` at a timestep

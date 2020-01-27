@@ -385,11 +385,11 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-    if m.mode['int']:
-        m.res_global_co2_limit = pyomo.Constraint(
-            m.stf,
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= global.prop CO2 limit')
+    #if m.mode['int']:
+        #m.res_global_co2_limit = pyomo.Constraint(
+           # m.stf,
+            #rule=res_global_co2_limit_rule,
+            #doc='total co2 commodity output <= global.prop CO2 limit')
 
     # costs
     m.def_costs = pyomo.Constraint(
@@ -399,17 +399,20 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # objective and global constraints
     if m.obj.value == 'cost':
+        m.res_global_co2_limit = pyomo.Constraint(
+            m.stf,
+            rule=res_global_co2_limit_rule,
+            doc='total co2 commodity output <= Global CO2 limit')
 
         if m.mode['int']:
             m.res_global_co2_budget = pyomo.Constraint(
                 rule=res_global_co2_budget_rule,
                 doc='total co2 commodity output <= global.prop CO2 budget')
-        else:
-            m.res_global_co2_limit = pyomo.Constraint(
-                m.stf,
-                rule=res_global_co2_limit_rule,
-                doc='total co2 commodity output <= Global CO2 limit')
 
+            m.res_global_cost_limit = pyomo.Constraint(
+                m.stf,
+                rule=res_global_cost_limit_rule,
+                doc='total costs <= Global cost limit')
         m.objective_function = pyomo.Objective(
             rule=cost_rule,
             sense=pyomo.minimize,
@@ -418,21 +421,40 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     elif m.obj.value == 'CO2':
 
         m.res_global_cost_limit = pyomo.Constraint(
+            m.stf,
             rule=res_global_cost_limit_rule,
             doc='total costs <= Global cost limit')
+        if m.mode['int']:
+            m.res_global_cost_budget = pyomo.Constraint(
+                rule=res_global_cost_budget_rule,
+                doc='total costs <= global.prop Cost budget')
+            m.res_global_co2_limit = pyomo.Constraint(
+                m.stf,
+                rule=res_global_co2_limit_rule,
+                doc='total co2 commodity output <= Global CO2 limit')
 
         m.objective_function = pyomo.Objective(
             rule=co2_rule,
             sense=pyomo.minimize,
             doc='minimize total CO2 emissions')
+
     elif m.obj.value == 'pv':
-
-
+        m.res_cost_restrict = pyomo.Constraint(
+            m.stf,
+            rule=res_cost_restrict_rule,
+            doc='total costs <= Optimum cost *(1+e)')
+        if m.mode['int']:
+            m.res_global_cost_budget = pyomo.Constraint(
+                rule=res_global_cost_budget_rule,
+                doc='total costs <= global.prop Cost budget')
+            m.res_global_co2_budget = pyomo.Constraint(
+                rule=res_global_co2_budget_rule,
+                doc='total co2 commodity output <= global.prop CO2 budget')
 
         m.objective_function = pyomo.Objective(
-            rule=co2_rule,
+            rule=pv_capacity_rule,
             sense=pyomo.minimize,
-            doc='minimize total CO2 emissions')
+            doc='minimize PV capacity emissions')
     else:
         raise NotImplementedError("Non-implemented objective quantity. Set "
                                   "either 'cost' or 'CO2' as the objective in "
@@ -723,12 +745,24 @@ def res_global_co2_budget_rule(m):
         return pyomo.Constraint.Skip
 
 
-def res_global_cost_limit_rule(m):
-    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost limit"]):
+# total cost of one year <= Global cost limit
+def res_global_cost_limit_rule(m, stf):
+    if math.isinf(m.global_prop_dict["value"][stf, "Cost limit"]):
         return pyomo.Constraint.Skip
-    elif m.global_prop_dict["value"][min(m.stf), "Cost limit"] >= 0:
+    elif m.global_prop_dict["value"][stf, "Cost limit"] >= 0:
         return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
-               [min(m.stf), "Cost limit"])
+               [stf, "Cost limit"])
+    else:
+        return pyomo.Constraint.Skip
+
+
+# total cost in entire period <= Global cost budget
+def res_global_cost_budget_rule(m):
+    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost budget"]):
+        return pyomo.Constraint.Skip
+    elif m.global_prop_dict["value"][min(m.stf), "Cost budget"] >= 0:
+        return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
+            [min(m.stf), "Cost budget"])
     else:
         return pyomo.Constraint.Skip
 
@@ -831,19 +865,30 @@ def co2_rule(m):
     for stf in m.stf:
         for tm in m.tm:
             for sit in m.sit:
-                # minus because negative commodity_balance represents
-                # creation of that commodity.
-                co2_output_sum += (- commodity_balance
-                                   (m, tm, stf, sit, 'CO2') *
-                                   m.weight *
-                                   stf_dist(stf, m))
+                if m.mode['int']:
+                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
+                                       m.weight * stf_dist(stf, m))
+                else:
+                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
+                                       m.weight)
 
     return (co2_output_sum)
 
-def capacity_rule(m,):
+def pv_capacity_rule(m, 'Photovoltaics'):
+    capacity_sum = 0
     for stf in m.stf:
-        for sit in m.sit
+        for sit in m.sit:
+            capacity_sum += def_process_capacity_rule(m, stf, sit, pro)
+    return (capacity_sum)
 
-def res_cost_restrict_rule(m):
-    cost_factor=m.cost_slack_list[0]
-    return cost_rule(m)== cost_factor* m.global_prop.loc[2020,'Cost_opt'].value
+def res_cost_restrict_rule(m,stf):
+    try:
+        cost_factor = m.cost_slack_list[0]
+        cost_factor < 1.0
+    except:
+        print('slack value is not defined properly. Slack value must be a positive number and smaller than 1.0')
+    if m.global_prop_dict["value"][stf, 'Cost_opt'] >= 0:
+        return (pyomo.summation(m.costs)<= (1+cost_factor)* m.global_prop_dict["value"][stf, 'Cost_opt'])
+    else:
+        raise ValueError ('optimized cost is not found in model data')
+

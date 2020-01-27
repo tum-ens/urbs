@@ -83,7 +83,11 @@ def stf_dist(stf, m):
 
     for s in sorted_stf:
         if s == max(sorted_stf):
-            dist.append(m.global_prop.loc[(s, 'Weight')]['value'])
+            try:
+                dist.append(m.global_prop.loc[(s, 'Weight')]['value'])
+            except:
+                dist.appens(m.weight.value)
+
         else:
             dist.append(sorted_stf[sorted_stf.index(s) + 1] - s)
 

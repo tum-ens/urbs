@@ -98,16 +98,18 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     #If the near optimal feature is activated solve the problem first for cost
     if near_optimal == 'near optimal':
         #create cost opt model
-        prob = create_model(data, dt, timesteps, 'cost')
+        prob_co = create_model(data, dt, timesteps, 'cost')
         # solve cost model and read optimized cost
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
         optim = setup_solver(optim, logfile=log_filename)
-        result = optim.solve(prob, tee=True)
+        result = optim.solve(prob_co, tee=True)
         assert str(result.solver.termination_condition) == 'optimal'
+        print('\n','Optimum cost calculated')
         opt_cost_sum = 0
-        for key in prob.costs.keys():
-            opt_cost_sum += prob.costs[key].value
-        for stf in prob.stf:
+        for key in prob_co.costs.keys():
+            opt_cost_sum += prob_co.costs[key].value
+        print('\n',opt_cost_sum, 'Euros','\n')
+        for stf in prob_co.stf:
             data['global_prop'].loc[(stf, 'Cost_opt'), :] = opt_cost_sum
     else:
         pass

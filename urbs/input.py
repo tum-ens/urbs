@@ -47,7 +47,7 @@ def read_input(input_files, year):
             global_prop = xls.parse('Global').set_index(['Property'])
 
 
-            print(global_prop)
+
             # create support timeframe index
             if ('Support timeframe' in
                     xls.parse('Global').set_index('Property').value):
@@ -61,7 +61,7 @@ def read_input(input_files, year):
             global_prop = pd.concat([global_prop], keys=[support_timeframe],
                                     names=['support_timeframe'])
 
-            print(global_prop.shape, global_prop)
+
             gl.append(global_prop)
             site = xls.parse('Site').set_index(['Name'])
             site = pd.concat([site], keys=[support_timeframe],

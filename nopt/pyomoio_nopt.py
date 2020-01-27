@@ -117,7 +117,7 @@ def get_entity(instance, name):
     return results
 
 
-def get_entities(instance, names):
+def get_entities(instance, names):           #same with get entity just merges multiple entities together in a data frame
     """ Return one DataFrame with entities in columns and a common index.
 
     Works only on entities that share a common domain (set or set_tuple), which

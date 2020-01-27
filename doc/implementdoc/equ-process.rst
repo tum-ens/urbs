@@ -218,22 +218,24 @@ Process Constraints for partial operation
 -----------------------------------------
 The process constraints for partial operation described in the following are
 only activated if in the input file there is a value set in the column
-**ratio-min** for an **input commodity** in the **process-commodity** sheet for
-the process in question. Values for **output commodities** in the **ratio_min**
-column do not have any effect.
+**ratio-min** for an **input commodity** or for an **output commodity** in the
+**process-commodity** sheet for the process in question.
 
-The partial load feature can only be used for processes that are never meant
-to be shut down and are always operating only between a given part load state
-and full load. It is important to understand that this partial load formulation
+ It is important to understand that this partial load formulation
 can only work if its accompanied by a non-zero value for the minimum partial
 load fraction :math:`\underline{P}_{yvp}`.
+
+Without activating the on/off feature in the **process** sheet, the partial load
+feature can only be used for processes that are never meant to be shut down and
+are always operating only between a given part load state and full load. Please
+see the next chapter for the combined on/off and partial operation features.
 
 **Throughput by Min fraction Rule**: This constraint limits the minimal
 operational state of a process downward, making sure that the minimal part load
 fraction is honored. The mathematical explanation of this rule is given in
 :ref:`theory-min`.
 
-In script ``model.py`` this constraint is defined and calculated by the
+In script ``AdvancedProcesses.py`` this constraint is defined and calculated by the
 following code fragment:
 
 ::
@@ -243,7 +245,7 @@ following code fragment:
         rule=res_throughput_by_capacity_min_rule,
         doc='cap_pro * min-fraction <= tau_pro')
         
-.. literalinclude:: /../urbs/model.py
+.. literalinclude:: /../urbs/AdvancedProcesses.py
    :pyobject: res_throughput_by_capacity_min_rule
 
 **Partial Process Input Rule**: The link between operational state
@@ -264,7 +266,7 @@ input ratio (and analogous for the output ratios):
         doc='e_pro_in = cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
                      '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-.. literalinclude:: /../urbs/model.py
+.. literalinclude:: /../urbs/AdvancedProcesses.py.py
    :pyobject: def_partial_process_input_rule
 
 In case of a process where also a time variable output efficiency is given the
@@ -276,5 +278,121 @@ code for the output changes to.
         rule=def_pro_partial_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
-.. literalinclude:: /../urbs/features/TimeVarEff.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
    :pyobject: def_pro_partial_timevar_output_rule
+ 
+ 
+Process Constraints for the on/off feature
+------------------------------------------
+The process constraints for the on/off feature described in this chapter are
+only activated if, in the input file, the value „1” is set is set in the 
+column **on-off** for a process in the **process** sheet.
+
+**Process Throughput and On/Off Coupling Rule**: 
+::
+    m.res_throughput_by_on_off_lower = pyomo.Constraint(
+        m.tm, m.pro_on_off_tuples | m.pro_partial_on_off_tuples,
+        rule=res_throughput_by_on_off_lower_rule,
+        doc='tau_pro >= min-fraction * cap_pro * on_off')
+    m.res_throughput_by_on_off_upper = pyomo.Constraint(
+        m.tm, m.pro_on_off_tuples | m.pro_partial_on_off_tuples,
+        rule=res_throughput_by_on_off_upper_rule,
+        doc='tau_pro <='
+            'cap_pro * on_off + min-fraction * cap_pro * (1 - on_off)')
+            
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
+   :pyobject: res_throughput_by_on_off_lower
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
+   :pyobject: res_throughput_by_on_off_upper
+
+**Process On/Off Input Rule**:
+::
+
+   m.def_process_on_off_input = pyomo.Constraint(
+        m.tm, m.pro_on_off_input_tuples - m.pro_partial_on_off_input_tuples,
+        rule=def_process_on_off_input_rule,
+        doc='e_pro_in ='
+            ' tau_pro * r_in')
+            
+**Process On/Off Output Rule**:
+::
+
+    m.def_process_on_off_output = pyomo.Constraint(
+        m.tm, m.pro_on_off_output_tuples - m.pro_timevar_output_tuples -
+              m.pro_partial_on_off_output_tuples,
+        rule=def_process_on_off_output_rule,
+        doc='e_pro_out = tau_pro * r_out * on_off')
+
+**Process On/Off Partial Input Rule**:
+::
+
+    m.def_partial_process_on_off_input = pyomo.Constraint(
+        m.tm, m.pro_partial_on_off_input_tuples,
+        rule=def_partial_process_on_off_input_rule,
+        doc='e_pro_in = '
+            ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
+            ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction))')
+            
+**Process On/Off Partial Output Rule**:
+::
+
+    m.def_partial_process_on_off_output = pyomo.Constraint(
+        m.tm, m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=def_partial_process_on_off_output_rule,
+        doc='e_pro_out = on_off *'
+            ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction) '
+            '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)) ')
+            
+**Process Starting Ramp-up Rule**:
+::
+
+    m.res_starting_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_start_tuples,
+        rule=res_starting_rampup_rule,
+        doc='throughput may not increase faster than maximal starting ramp up '
+            'gradient until reaching minimum capacity')
+            
+**Process Output Ramping Rule**:
+::
+
+ m.res_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+    m.res_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+    m.res_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+    m.res_partial_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_partial_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+    m.res_partial_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_partial_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+    m.res_partial_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_partial_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+**Process Start-Up Rule**:
+::
+
+    m.res_start_ups = pyomo.Constraint(
+        m.tm, m.pro_start_up_tuples,
+        rule=res_start_ups_rule,
+        doc='start >= on_off(t) - on_off(t-1)')

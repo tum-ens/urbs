@@ -305,10 +305,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # their name in the "rule" keyword.
     #ipdb.set_trace()
     # commodity
-    if m.mode['nopt']:
-        m.res_cost_restrict = pyomo.Constraint(
-            m, rule=res_cost_restrict_rule,
-            doc='cost upper limit = cost * cost_factor')
+
     m.res_vertex = pyomo.Constraint(
         m.tm, m.com_tuples,
         rule=res_vertex_rule,
@@ -439,6 +436,17 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             doc='minimize total CO2 emissions')
 
     elif m.obj.value == 'pv':
+        def res_cost_restrict_rule(m, stf):
+            try:
+                cost_factor = m.cost_slack_list[0]
+                cost_factor < 1.0
+            except:
+                print('slack value is not defined properly. Slack value must be a positive number and smaller than 1.0')
+            if m.global_prop_dict["value"][stf, 'Cost_opt'] >= 0:
+                return (pyomo.summation(m.costs) <= (1 + cost_factor) * m.global_prop_dict["value"][stf, 'Cost_opt'])
+            else:
+                raise ValueError('optimized cost is not found in model data')
+
         m.res_cost_restrict = pyomo.Constraint(
             m.stf,
             rule=res_cost_restrict_rule,
@@ -452,7 +460,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                 doc='total co2 commodity output <= global.prop CO2 budget')
 
         m.objective_function = pyomo.Objective(
-            rule=pv_capacity_rule,
+            rule=capacity_rule,
             sense=pyomo.minimize,
             doc='minimize PV capacity emissions')
     else:
@@ -874,21 +882,17 @@ def co2_rule(m):
 
     return (co2_output_sum)
 
-def pv_capacity_rule(m, 'Photovoltaics'):
+def capacity_rule(m):
     capacity_sum = 0
+    if m.obj.value == 'pv':
+        pro = "Photovoltaics"
+    #this condition can be utilized, when other capacitiy objectives are implemented
+    else:
+        pro = "Photovoltaics"
     for stf in m.stf:
         for sit in m.sit:
             capacity_sum += def_process_capacity_rule(m, stf, sit, pro)
     return (capacity_sum)
 
-def res_cost_restrict_rule(m,stf):
-    try:
-        cost_factor = m.cost_slack_list[0]
-        cost_factor < 1.0
-    except:
-        print('slack value is not defined properly. Slack value must be a positive number and smaller than 1.0')
-    if m.global_prop_dict["value"][stf, 'Cost_opt'] >= 0:
-        return (pyomo.summation(m.costs)<= (1+cost_factor)* m.global_prop_dict["value"][stf, 'Cost_opt'])
-    else:
-        raise ValueError ('optimized cost is not found in model data')
+
 

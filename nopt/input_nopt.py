@@ -223,7 +223,7 @@ def pyomo_model_prep(data, timesteps):
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
     m.cost_slack_list = [0.05]
     #creating list with near optimal processes
-    m.pro_near_optimal = ['PV']
+    #m.pro_near_optimal = ['PV']
 
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification

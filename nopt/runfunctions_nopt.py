@@ -96,7 +96,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
     #If the near optimal feature is activated solve the problem first for cost
-    if near_optimal == 'near optimal':
+    if near_optimal == 'near_optimal':
         #create cost opt model
         prob_co = create_model(data, dt, timesteps, 'cost')
         # solve cost model and read optimized cost
@@ -113,18 +113,29 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             data['global_prop'].loc[(stf, 'Cost_opt'), :] = opt_cost_sum
     else:
         pass
-    # add to model
-    '''prob.res_global_cost_limit = pyomo.Constraint(
+
+    prob = create_model(data, dt, timesteps, objective)
+   ### # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
+
+    '''Try to over-write the objective
+    prob_co.res_global_cost_limit = pyomo.Constraint(
+        prob_co.stf,
         rule=res_global_cost_limit_rule,
         doc='total costs <= Global cost limit')
-    prob.objective_function = pyomo.Objective(
+    if prob_co.mode['int']:
+        prob_co.res_global_cost_budget = pyomo.Constraint(
+            rule=res_global_cost_budget_rule,
+            doc='total costs <= global.prop Cost budget')
+        prob_co.res_global_co2_limit = pyomo.Constraint(
+            prob_co.stf,
+            rule=res_global_co2_limit_rule,
+            doc='total co2 commodity output <= Global CO2 limit')
+
+    prob_co.objective_function = pyomo.Objective(
         rule=co2_rule,
         sense=pyomo.minimize,
-        doc='minimize total CO2 emissions')'''
-    prob = create_model(data, dt, timesteps, objective)
-    # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
-
-
+        doc='minimize total CO2 emissions')
+        End of try to overwrite the objective'''
 
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...

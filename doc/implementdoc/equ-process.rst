@@ -355,6 +355,19 @@ is defined and calculated by the following code fragment:
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_process_on_off_output_rule
    
+In the case of a process where also a time variable output efficiency is given the
+code for the output changes to:
+::
+
+    m.def_process_on_off_timevar_output = pyomo.Constraint(
+        m.tm, m.pro_timevar_output_tuples & m.pro_on_off_output_tuples -
+              m.pro_partial_on_off_output_tuples,
+        rule=def_process_on_off_timevar_output_rule,
+        doc='e_pro_out == tau_pro * r_out * on_off * eff_factor')
+        
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_process_on_off_timevar_output_rule
+   
 **Process On/Off Partial Input Rule**:
 ::
 
@@ -378,6 +391,18 @@ is defined and calculated by the following code fragment:
             ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction) '
             '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)) ')
 
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_partial_process_on_off_output_rule
+
+In the case of a process where also a time variable output efficiency is given the
+code for the output changes to:
+::
+
+    m.def_process_partial_on_off_timevar_output = pyomo.Constraint(
+        m.tm, m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=def_pro_partial_on_off_timevar_output_rule,
+        doc='e_pro_out == tau_pro * r_out * on_off * eff_factor')
+        
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_partial_process_on_off_output_rule
    

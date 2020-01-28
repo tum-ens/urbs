@@ -208,7 +208,7 @@ defined and calculated by the following code fragment:
         rule=def_pro_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
-.. literalinclude:: /../urbs/features/TimeVarEff.py
+.. literalinclude:: /../urbs/features/AdvancedProcess.py
    :pyobject: def_pro_timevar_output_rule
 
 .. _sec-partial-startup-constr:
@@ -288,7 +288,14 @@ The process constraints for the on/off feature described in this chapter are
 only activated if, in the input file, the value „1” is set is set in the 
 column **on-off** for a process in the **process** sheet.
 
-**Process Throughput and On/Off Coupling Rule**: 
+**Process Throughput and On/Off Coupling Rule**: These two constraints couple
+the variables process throughput :math:`\tau_{yvpt}` and process on/off marker
+:math:`\omicron_{yvpt}`. This is done by turning the marker on (boolean value 1)
+when the throughput is greater than the minimum load of the process.The
+mathematical explanation of this rule is given in :ref:`theory-min`.
+
+In script ``AdvancedProcesses.py`` this constraint is defined and calculated by the
+following code fragment:
 ::
     m.res_throughput_by_on_off_lower = pyomo.Constraint(
         m.tm, m.pro_on_off_tuples | m.pro_partial_on_off_tuples,
@@ -305,7 +312,16 @@ column **on-off** for a process in the **process** sheet.
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
    :pyobject: res_throughput_by_on_off_upper
 
-**Process On/Off Input Rule**:
+**Process On/Off Input Rule**:The link between operational state
+:math:`tau_{yvpt}` and commodity in/outputs is changed from a simple
+linear behavior to a more complex one. Instead of constant in- and output
+ratios these are now interpolated linearly between the value for full operation
+:math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios
+:math:`\underline{r}^{\text{in/out}}_{yvp}` at the minimum operation point. The
+mathematical explanation of this rule is given in :ref:`theory-min`.   
+
+In script `AdvancedProcesses.py` this expression is written in the following way for the
+input ratio (and analogous for the output ratios):
 ::
 
    m.def_process_on_off_input = pyomo.Constraint(
@@ -314,7 +330,20 @@ column **on-off** for a process in the **process** sheet.
         doc='e_pro_in ='
             ' tau_pro * r_in')
             
-**Process On/Off Output Rule**:
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_process_on_off_oinput_rule
+            
+**Process On/Off Output Rule**: This constraint modifies the process output 
+commodity flow :math:`\epsilon_{yvcpt}^\text{out}` when compared to the 
+original version without the on/off feature in two ways by differentiating 
+between the output **commodity type** :math:`q`. When the **commodity type**
+is ``Env``, he output remains the same as without the on/off feature. Otherwise, 
+the original output equation is multiplied with the variable process on/off 
+marker :math:`\omicron_{yvpt}`. The mathematical explanation of this rule
+is given in :ref:`theory-min`.
+
+In script ``AdvancedProcesses.py`` the constraint process on/off output rule 
+is defined and calculated by the following code fragment:
 ::
 
     m.def_process_on_off_output = pyomo.Constraint(
@@ -323,6 +352,9 @@ column **on-off** for a process in the **process** sheet.
         rule=def_process_on_off_output_rule,
         doc='e_pro_out = tau_pro * r_out * on_off')
 
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_process_on_off_output_rule
+   
 **Process On/Off Partial Input Rule**:
 ::
 
@@ -332,7 +364,10 @@ column **on-off** for a process in the **process** sheet.
         doc='e_pro_in = '
             ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction))')
-            
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_partial_process_on_off_input_rule
+   
 **Process On/Off Partial Output Rule**:
 ::
 
@@ -342,8 +377,20 @@ column **on-off** for a process in the **process** sheet.
         doc='e_pro_out = on_off *'
             ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction) '
             '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)) ')
-            
-**Process Starting Ramp-up Rule**:
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_partial_process_on_off_output_rule
+   
+**Process Starting Ramp-up Rule**: This constraint replaces the process
+throughput ramping rule when the parameter process starting time 
+:math:`\overline{ST}_{yvp}^\text{start}` is defined in the input 
+**process** sheet. This is done only until the variable process throughput 
+:math:`\tau_{yvpt}` reaches the minimum load value and only while increasing
+the process throughput :math:`\tau_{yvpt}`. The mathematical explanation of 
+this rule is given in :ref:`theory-min`.
+
+In script ``AdvancedProcesses.py`` the constraint process starting ramp-up rule
+is defined and calculated by the following code fragment:
 ::
 
     m.res_starting_rampup = pyomo.Constraint(
@@ -351,7 +398,10 @@ column **on-off** for a process in the **process** sheet.
         rule=res_starting_rampup_rule,
         doc='throughput may not increase faster than maximal starting ramp up '
             'gradient until reaching minimum capacity')
-            
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_starting_rampup_rule
+   
 **Process Output Ramping Rule**:
 ::
 
@@ -389,10 +439,19 @@ column **on-off** for a process in the **process** sheet.
         rule=res_partial_output_rampup_rule,
         doc='Output may not increase faster than the ramping up gradient')
 
-**Process Start-Up Rule**:
+**Process Start-Up Rule**: The constraint process start-up rule marks in the
+variable process start marker :math:`\sigma_{yvpt}` whether a process :math:`p`
+started in timestep :math:`t` or not. The mathematical explanation of 
+this rule is given in :ref:`theory-min`.
+
+In script ``AdvancedProcesses.py`` the constraint process start ups rule
+is defined and calculated by the following code fragment:
 ::
 
     m.res_start_ups = pyomo.Constraint(
         m.tm, m.pro_start_up_tuples,
         rule=res_start_ups_rule,
         doc='start >= on_off(t) - on_off(t-1)')
+        
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_start_ups_rule

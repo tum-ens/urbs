@@ -2,17 +2,16 @@ import os
 import shutil
 import urbs
 from Database_to_urbs import Database_to_urbs
-import time
 
 # # User preferences
 
 version = 'v2.00'
 suffix = "_eu"
-result_folder = 'v2.00_2025_eu-20200125T1840'
+result_folder = 'v2.00_2035_eu-20200126T1344'
 fs = os.path.sep
 
-for year in [2030, 2035, 2040, 2045, 2050]:
-
+for year in [2040, 2045, 2050]:
+    
     # Generate input file from database
     Database_to_urbs(version, suffix, year, result_folder)
     year = str(int(year))
@@ -107,6 +106,5 @@ for year in [2030, 2035, 2040, 2045, 2050]:
                                 plot_periods=plot_periods,
                                 report_tuples=report_tuples,
                                 report_sites_name=report_sites_name)
-                                
-    time.sleep(60*60)
+    del prob
     

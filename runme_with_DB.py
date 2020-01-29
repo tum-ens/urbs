@@ -7,13 +7,12 @@ import time
 # # User preferences
 fs = os.path.sep
 version = 'v2.00'
-suffix = "_nation"
+suffix = "_green"
 year = 2020
 result_folder = 'v2.00_2015_eu-20200123T0827'
 
 # Generate input file from database
 # for suffix in ["_eu", "_nation", "_green", "_gas"]:
-time.sleep(420*60)
 Database_to_urbs(version, suffix, year, result_folder)
 # import pdb; pdb.set_trace()
 year = str(int(year))

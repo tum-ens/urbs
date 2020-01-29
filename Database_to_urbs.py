@@ -6,6 +6,7 @@ from openpyxl import load_workbook
 import itertools
 import os
 import urbs
+import time
 
 
 def write_Global(Global, version, suffix, year, writer):
@@ -275,6 +276,10 @@ def Database_to_urbs(version, suffix, year, result_folder):
     
     # Eventually read the results of the previous year
     urbs_path = os.path.join("result", result_folder, "scenario_base.h5")
+    while not os.path.exists(urbs_path):
+        print("waiting for the creation of ", urbs_path)
+        time.sleep(10*60)
+    print(urbs_path, "exists")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data

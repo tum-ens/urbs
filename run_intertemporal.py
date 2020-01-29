@@ -1,13 +1,21 @@
 import os
 import shutil
 import urbs
+from Database_to_urbs_intertemporal import Database_to_urbs
 
+version = "v2.00"
+suffix = "_eu"
+scen = suffix[1:].upper()
+time_slices = [i for j in (range(169), range(2161, 2329), range(4345, 4513), range(6553, 6721)) for i in j]
 
-input_files = 'Intertemporal'  # for single year file name, for intertemporal folder name
+# Create input files
+#Database_to_urbs(version, suffix, time_slices)
+
+input_files = version+suffix  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Intertemp'
+result_name = scen
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -22,54 +30,22 @@ shutil.copy(__file__, result_dir)
 objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
 # Choose Solver (cplex, glpk, gurobi, ...)
-solver = 'glpk'
+solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (0, 8760)  # time step selection
+(offset, length) = (0, len(time_slices)-1)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
-report_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec'),
-    (2024, 'North', 'Elec'),
-    (2024, 'Mid', 'Elec'),
-    (2024, 'South', 'Elec'),
-    (2024, ['North', 'Mid', 'South'], 'Elec'),
-    (2029, 'North', 'Elec'),
-    (2029, 'Mid', 'Elec'),
-    (2029, 'South', 'Elec'),
-    (2029, ['North', 'Mid', 'South'], 'Elec'),
-    (2034, 'North', 'Elec'),
-    (2034, 'Mid', 'Elec'),
-    (2034, 'South', 'Elec'),
-    (2034, ['North', 'Mid', 'South'], 'Elec'),    
+report_tuples = [  
     ]
 
 # optional: define names for sites in report_tuples
 report_sites_name = {('North', 'Mid', 'South'): 'All'}
 
 # plotting commodities/sites
-plot_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec'),
-    (2024, 'North', 'Elec'),
-    (2024, 'Mid', 'Elec'),
-    (2024, 'South', 'Elec'),
-    (2024, ['North', 'Mid', 'South'], 'Elec'),
-    (2029, 'North', 'Elec'),
-    (2029, 'Mid', 'Elec'),
-    (2029, 'South', 'Elec'),
-    (2029, ['North', 'Mid', 'South'], 'Elec'),
-    (2034, 'North', 'Elec'),
-    (2034, 'Mid', 'Elec'),
-    (2034, 'South', 'Elec'),
-    (2034, ['North', 'Mid', 'South'], 'Elec'),    
+plot_tuples = [  
     ]
 
 # optional: define names for sites in plot_tuples
@@ -91,12 +67,6 @@ for country, color in my_colors.items():
 # select scenarios to be run
 scenarios = [
              urbs.scenario_base,
-             urbs.scenario_stock_prices,
-             urbs.scenario_co2_limit,
-             urbs.scenario_co2_tax_mid,
-             urbs.scenario_no_dsm,
-             urbs.scenario_north_process_caps,
-             urbs.scenario_all_together
             ]
 
 for scenario in scenarios:

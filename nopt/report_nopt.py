@@ -4,7 +4,7 @@ from .output_nopt import get_constants, get_timeseries
 from .util_nopt import is_string
 
 
-def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob is given as instance
+def report(instance,near_optimal, filename, report_tuples=None, report_sites_name={}):  #prob is given as instance
     """Write result summary to a spreadsheet file
 
     Args:
@@ -21,6 +21,19 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob
         report_tuples = get_input(instance, 'demand').columns
 
     costs, cpro, ctra, csto = get_constants(instance) #finds these values from model instance prob
+    # Report new  optimized capacities:
+
+    if (near_optimal == 'near_optimal' and instance.objective_function.sense == 1):
+        objective_arg = instance.pro_obj[instance.obj.value]
+        optimized_cap =pd.DataFrame()
+        for stf in instance.stf:
+            for sit in instance.sit:
+                optimized_cap = cpro.xs(objective_arg, level='Process')['Total']
+            optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],
+                                names=['Objective-minimize'])
+        total_cost=pd.Series(costs.sum(), index=['Total Cost'])
+        optimum_cost=pd.Series(instance.global_prop.loc[min(instance.stf),'Cost_opt'].value, index= ['Optimum Cost'])
+        costs = costs.append([total_cost,optimum_cost])
 
     # create spreadsheet writer object
     with pd.ExcelWriter(filename) as writer:
@@ -30,6 +43,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob
         cpro.to_excel(writer, 'Process caps')
         ctra.to_excel(writer, 'Transmission caps')
         csto.to_excel(writer, 'Storage caps')
+        try:
+            optimized_cap.to_excel(writer, 'Optimized Process Capacity')
+        except:
+            pass
 
         # initialize timeseries tableaus
         energies = []

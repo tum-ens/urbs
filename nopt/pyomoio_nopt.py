@@ -18,7 +18,7 @@ def get_entity(instance, name):
         return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names
-    try:
+    try:  #for cap_pro onset names therefore labels are :['stf', 'sit', 'pro']
         entity = instance.__getattribute__(name)
         labels = _get_onset_names(entity)
     except AttributeError:
@@ -26,12 +26,12 @@ def get_entity(instance, name):
 
     # extract values
     if isinstance(entity, pyomo.Set):
-        if entity.dimen > 1:
-            results = pd.DataFrame([v + (1,) for v in entity.value])
+        if entity.dimen > 1:   #if domain has more than one var. ex com_tuples has 4 (stf,sit,com,com_type)
+            results = pd.DataFrame([v + (1,) for v in entity.value]) # this gives (2024, 'North', 'Lignite', 'Stock', 1), ....
         else:
             # Pyomo sets don't have values, only elements
-            results = pd.DataFrame([(v, 1) for v in entity.value])
-
+            results = pd.DataFrame([(v, 1) for v in entity.value]) #this gives for dim >1  (2034, 'South', 'Lignite', 'Stock') 1, ...
+                                                                # for dim=1  gives this : Hydro 1, ...
         # for unconstrained sets, the column label is identical to their index
         # hence, make index equal to entity name and append underscore to name
         # (=the later column title) to preserve identical index names for both
@@ -40,7 +40,7 @@ def get_entity(instance, name):
             labels = [name]
             name = name + '_'
 
-    elif isinstance(entity, pyomo.Param):
+    elif isinstance(entity, pyomo.Param): #dt,weight,obj
         if entity.dim() > 1:
             results = pd.DataFrame(
                 [v[0] + (v[1],) for v in entity.iteritems()])

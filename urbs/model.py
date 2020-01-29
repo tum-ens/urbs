@@ -369,7 +369,11 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-
+    if m.mode['int']:
+        m.res_global_co2_limit = pyomo.Constraint(
+            m.stf,
+            rule=res_global_co2_limit_rule,
+            doc='total co2 commodity output <= global.prop CO2 limit')
 
     # costs
     m.def_costs = pyomo.Constraint(
@@ -379,20 +383,16 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # objective and global constraints
     if m.obj.value == 'cost':
-        m.res_global_co2_limit = pyomo.Constraint(
-            m.stf,
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= Global CO2 limit')
 
         if m.mode['int']:
             m.res_global_co2_budget = pyomo.Constraint(
                 rule=res_global_co2_budget_rule,
                 doc='total co2 commodity output <= global.prop CO2 budget')
-
-            m.res_global_cost_limit = pyomo.Constraint(
+        else:
+            m.res_global_co2_limit = pyomo.Constraint(
                 m.stf,
-                rule=res_global_cost_limit_rule,
-                doc='total costs <= Global cost limit')
+                rule=res_global_co2_limit_rule,
+                doc='total co2 commodity output <= Global CO2 limit')
 
         m.objective_function = pyomo.Objective(
             rule=cost_rule,
@@ -402,17 +402,8 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     elif m.obj.value == 'CO2':
 
         m.res_global_cost_limit = pyomo.Constraint(
-            m.stf,
             rule=res_global_cost_limit_rule,
             doc='total costs <= Global cost limit')
-        if m.mode['int']:
-            m.res_global_cost_budget = pyomo.Constraint(
-                rule=res_global_cost_budget_rule,
-                doc='total costs <= global.prop Cost budget')
-            m.res_global_co2_limit = pyomo.Constraint(
-                m.stf,
-                rule=res_global_co2_limit_rule,
-                doc='total co2 commodity output <= Global CO2 limit')
 
         m.objective_function = pyomo.Objective(
             rule=co2_rule,
@@ -708,24 +699,12 @@ def res_global_co2_budget_rule(m):
         return pyomo.Constraint.Skip
 
 
-# total cost of one year <= Global cost limit
-def res_global_cost_limit_rule(m, stf):
-    if math.isinf(m.global_prop_dict["value"][stf, "Cost limit"]):
+def res_global_cost_limit_rule(m):
+    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost limit"]):
         return pyomo.Constraint.Skip
-    elif m.global_prop_dict["value"][stf, "Cost limit"] >= 0:
+    elif m.global_prop_dict["value"][min(m.stf), "Cost limit"] >= 0:
         return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
-               [stf, "Cost limit"])
-    else:
-        return pyomo.Constraint.Skip
-
-
-# total cost in entire period <= Global cost budget
-def res_global_cost_budget_rule(m):
-    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost budget"]):
-        return pyomo.Constraint.Skip
-    elif m.global_prop_dict["value"][min(m.stf), "Cost budget"] >= 0:
-        return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
-               [min(m.stf), "Cost budget"])
+               [min(m.stf), "Cost limit"])
     else:
         return pyomo.Constraint.Skip
 
@@ -830,11 +809,9 @@ def co2_rule(m):
             for sit in m.sit:
                 # minus because negative commodity_balance represents
                 # creation of that commodity.
-                if m.mode['int']:
-                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
-                                       m.weight * stf_dist(stf, m))
-                else:
-                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
-                                       m.weight)
+                co2_output_sum += (- commodity_balance
+                                   (m, tm, stf, sit, 'CO2') *
+                                   m.weight *
+                                   stf_dist(stf, m))
 
     return (co2_output_sum)

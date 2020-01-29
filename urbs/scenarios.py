@@ -18,16 +18,15 @@ def scenario_stock_prices(data):
     return data
 
 
-def scenario_co2_limit(data) :
+def scenario_co2_limit(data):
     # change global CO2 limit
     global_prop = data['global_prop']
     for stf in global_prop.index.levels[0].tolist():
-        global_prop.loc[(stf, 'CO2 limit'), 'value'] *= 0.2
+        global_prop.loc[(stf, 'CO2 limit'), 'value'] *= 0.05
     return data
 
 
 def scenario_co2_tax_mid(data):
-
     # change CO2 price in Mid
     co = data['commodity']
     for stf in data['global_prop'].index.levels[0].tolist():

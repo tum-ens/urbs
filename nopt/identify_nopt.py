@@ -23,7 +23,6 @@ def identify_mode(data):
     # create modes
     mode = {
         'int': False,  # intertemporal
-        'nopt': False,  # near_optimal
         'tra': False,  # transmission
         'sto': False,  # storage
         'dsm': False,  # demand site management
@@ -41,8 +40,7 @@ def identify_mode(data):
     if len(data['global_prop'].index.levels[0]) > 1:
         mode['int'] = True
 
-    if data['global_prop'].loc[2020, 'Near optimal status'].value == 'near_optimal':
-        mode['nopt'] = True
+
     # if  transmission data is given in excel sheet then model includes transmission networks
     if not data['transmission'].empty:
         mode['tra'] = True

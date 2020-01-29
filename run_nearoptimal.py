@@ -3,11 +3,11 @@ import shutil
 import nopt
 import ipdb
 
-input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'Intertemporal_example'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Run-near_optimal'
+result_name = 'int-pv'
 result_dir = nopt.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory

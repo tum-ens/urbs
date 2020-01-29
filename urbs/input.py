@@ -1,4 +1,4 @@
-
+import pandas as pd
 import os
 import glob
 from xlrd import XLRDError
@@ -45,9 +45,6 @@ def read_input(input_files, year):
         with pd.ExcelFile(filename) as xls:
 
             global_prop = xls.parse('Global').set_index(['Property'])
-
-
-
             # create support timeframe index
             if ('Support timeframe' in
                     xls.parse('Global').set_index('Property').value):
@@ -60,8 +57,6 @@ def read_input(input_files, year):
                 support_timeframe = year
             global_prop = pd.concat([global_prop], keys=[support_timeframe],
                                     names=['support_timeframe'])
-
-
             gl.append(global_prop)
             site = xls.parse('Site').set_index(['Name'])
             site = pd.concat([site], keys=[support_timeframe],
@@ -182,9 +177,6 @@ def read_input(input_files, year):
         if isinstance(data[key].index, pd.core.index.MultiIndex):
             data[key].sort_index(inplace=True)
     return data
-
-
-
 
 
 # preparing the pyomo model

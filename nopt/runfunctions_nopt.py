@@ -8,6 +8,7 @@ from .plot_nopt import *
 from .input_nopt import *
 from .validation_nopt import *
 from .saveload_nopt import *
+
 from .features_nopt import *
 import math
 
@@ -117,25 +118,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     prob = create_model(data, dt, timesteps, objective)
    ### # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
-    '''Try to over-write the objective
-    prob_co.res_global_cost_limit = pyomo.Constraint(
-        prob_co.stf,
-        rule=res_global_cost_limit_rule,
-        doc='total costs <= Global cost limit')
-    if prob_co.mode['int']:
-        prob_co.res_global_cost_budget = pyomo.Constraint(
-            rule=res_global_cost_budget_rule,
-            doc='total costs <= global.prop Cost budget')
-        prob_co.res_global_co2_limit = pyomo.Constraint(
-            prob_co.stf,
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= Global CO2 limit')
 
-    prob_co.objective_function = pyomo.Objective(
-        rule=co2_rule,
-        sense=pyomo.minimize,
-        doc='minimize total CO2 emissions')
-        End of try to overwrite the objective'''
 
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
@@ -148,15 +131,15 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     # write report to spreadsheet
     report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
+        prob, near_optimal,
+        os.path.join(result_dir, '{}{}{}.xlsx').format(near_optimal,objective,sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
 
     # result plots
     result_figures(
         prob,
-        os.path.join(result_dir, '{}'.format(sce)),
+        os.path.join(result_dir, '{}{}{}'.format(near_optimal,objective,sce)),
         timesteps,
         plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,

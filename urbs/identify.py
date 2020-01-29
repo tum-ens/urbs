@@ -36,25 +36,22 @@ def identify_mode(data):
                 'sto-p': False}
         }
 
-    # if number of support timeframes > 1 the the model is intertemporal
+    # if number of support timeframes > 1
     if len(data['global_prop'].index.levels[0]) > 1:
         mode['int'] = True
-    #if  transmission data is given in excel sheet then model includes transmission networks
     if not data['transmission'].empty:
         mode['tra'] = True
         mode['exp']['tra'] = True
-    # if storage data is given in excel sheet then model includes storage facilities
     if not data['storage'].empty:
         mode['sto'] = True
-        mode['exp']['sto-c'] = True #c stands for capacity
-        mode['exp']['sto-p'] = True #p stands for power
+        mode['exp']['sto-c'] = True
+        mode['exp']['sto-p'] = True
     if not data['dsm'].empty:
         mode['dsm'] = True
     if not data['buy_sell_price'].empty:
         mode['bsp'] = True
     if not data['eff_factor'].empty:
         mode['tve'] = True
-    # if there are any positive reactance values that indicates dc power flow
     if 'reactance' in data['transmission'].keys():
         if any(data['transmission']['reactance'] > 0):
             mode['dpf'] = True

@@ -50,7 +50,7 @@ def read_input(input_files, near_optimal, year):
             # create support timeframe index
             if ('Support timeframe' in
                     xls.parse('Global').set_index('Property').value):
-                support_timeframe = (
+                support_timeframe = int(
                     global_prop.loc['Support timeframe']['value'])
                 global_prop = (
                     global_prop.drop(['Support timeframe'])
@@ -221,9 +221,9 @@ def pyomo_model_prep(data, timesteps):
     m.stf_list = m.global_prop.index.levels[0].tolist()
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
-    m.cost_slack_list = [0.05]
+    m.cost_slack_list = [0.05, 0.1]
     #creating list with near optimal processes
-    #m.pro_near_optimal = ['PV']
+    m.pro_obj = {'pv':'Photovoltaics'}
 
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification

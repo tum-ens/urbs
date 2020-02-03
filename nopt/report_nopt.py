@@ -4,7 +4,7 @@ from .output_nopt import get_constants, get_timeseries
 from .util_nopt import is_string
 
 
-def report(instance,near_optimal, filename, report_tuples=None, report_sites_name={}):  #prob is given as instance
+def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob is given as instance
     """Write result summary to a spreadsheet file
 
     Args:
@@ -23,14 +23,10 @@ def report(instance,near_optimal, filename, report_tuples=None, report_sites_nam
     costs, cpro, ctra, csto = get_constants(instance) #finds these values from model instance prob
     # Report new  optimized capacities:
 
-    if (near_optimal == 'near_optimal' and instance.objective_function.sense == 1):
-        objective_arg = instance.pro_obj[instance.obj.value]
-        optimized_cap =pd.DataFrame()
-        for stf in instance.stf:
-            for sit in instance.sit:
-                optimized_cap = cpro.xs(objective_arg, level='Process')['Total']
-            optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],
-                                names=['Objective-minimize'])
+    if (instance.cap_obj != 'cost' and instance.cap_obj != 'CO2'):
+
+        near_optimal_capacities = instance.cost_optimized_cap_pro.join(instance.minimized_cap_pro, how='outer')
+        near_optimal_capacities = near_optimal_capacities.join(instance.maximized_cap_pro, how='outer')
         total_cost=pd.Series(costs.sum(), index=['Total Cost'])
         optimum_cost=pd.Series(instance.global_prop.loc[min(instance.stf),'Cost_opt'].value, index= ['Optimum Cost'])
         costs = costs.append([total_cost,optimum_cost])
@@ -39,15 +35,15 @@ def report(instance,near_optimal, filename, report_tuples=None, report_sites_nam
     with pd.ExcelWriter(filename) as writer:
 
         # write constants to spreadsheet
-        costs.to_frame().to_excel(writer, 'Costs')
+        costs.to_frame(name='Costs').to_excel(writer, 'Costs')
         cpro.to_excel(writer, 'Process caps')
         ctra.to_excel(writer, 'Transmission caps')
         csto.to_excel(writer, 'Storage caps')
         try:
-            optimized_cap.to_excel(writer, 'Optimized Process Capacity')
+            near_optimal_capacities.to_excel(writer, 'Near-Optimal Process Capacities')
         except:
             pass
-
+#pd.merge(optimized_cap_pro,instance.cost_optimized_cap_pro, left_on=[''])
         # initialize timeseries tableaus
         energies = []
         timeseries = {}

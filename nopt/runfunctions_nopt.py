@@ -2,7 +2,7 @@ import os
 import pyomo.environ
 from pyomo.opt.base import SolverFactory
 from datetime import datetime, date
-from .model_nopt import create_model, res_global_cost_limit_rule, co2_rule
+from .model_nopt import create_model,capacity_rule
 from .report_nopt import *
 from .plot_nopt import *
 from .input_nopt import *
@@ -56,7 +56,7 @@ def setup_solver(optim, logfile='solver.log'):
 
 
 def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
-                 objective, near_optimal='optimal', plot_tuples=None,  plot_sites_name=None,
+                 objective, plot_tuples=None,  plot_sites_name=None,
                  plot_periods=None, report_tuples=None,
                  report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -69,7 +69,6 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         - result_dir: directory name for result spreadsheet and plots
         - dt: length of each time step (unit: hours)
         - objective: objective function chosen (either "cost" or "CO2")
-        - near_optimal : True if near optimal analysis
         - plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
         - plot_sites_name: (optional) dict of names for sites in plot_tuples
         - plot_periods: (optional) dict of plot periods
@@ -89,57 +88,103 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = read_input(input_files,near_optimal, year)
+    data = read_input(input_files, year)
     data = scenario(data)
 
     validate_input(data)
     validate_dc_objective(data, objective)
+    #data.update(cap_obj=objective)
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
-    #If the near optimal feature is activated solve the problem first for cost
-    if near_optimal == 'near_optimal':
-        #create cost opt model
-        prob_co = create_model(data, dt, timesteps, 'cost')
+    #For near optimal analysis (obj!=cost/co2) solve the problem first for cost then update objective function and solve for restricted cost
+
+    if (objective != 'cost' and objective != 'CO2'):
+
+       #create cost opt model
+        prob = create_model(data, dt, timesteps, 'cost')
+
         # solve cost model and read optimized cost
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
         optim = setup_solver(optim, logfile=log_filename)
-        result = optim.solve(prob_co, tee=True)
-        assert str(result.solver.termination_condition) == 'optimal'
-        print('\n','Optimum cost calculated')
+        result_cost_opt = optim.solve(prob, tee=True)
+        assert str(result_cost_opt.solver.termination_condition) == 'optimal'
+
+        # store real objective in model because model.obj is still cost
+        prob.cap_obj = objective
+        cost_optimized_cap_pro = read_capacity(prob)
+        prob.cost_optimized_cap_pro= cost_optimized_cap_pro.to_frame(name='Optimum-Cost')
+        #print('\n','Optimum cost calculated')
         opt_cost_sum = 0
-        for key in prob_co.costs.keys():
-            opt_cost_sum += prob_co.costs[key].value
-        print('\n',opt_cost_sum, 'Euros','\n')
-        for stf in prob_co.stf:
+        for key in prob.costs.keys():
+            opt_cost_sum += prob.costs[key].value
+        #print('\n',opt_cost_sum, 'Euros','\n')
+        for stf in prob.stf:
             data['global_prop'].loc[(stf, 'Cost_opt'), :] = opt_cost_sum
-    else:
-        pass
+        prob.opt_cost_sum = opt_cost_sum
 
-    prob = create_model(data, dt, timesteps, objective)
-   ### # prob.write('model.lp', io_options={'symbolic_solver_labels':True})
-
+        #del objective component first to write real objective
+        prob.del_component(prob.objective_function)
 
 
+        def res_cost_restrict_rule(m):
+            cost_factor = m.cost_slack_list[0]
+            #assert cost_factor < 1.0, "slack value is not defined properly. Slack value must be smaller than 1.0"
+            assert cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
+            return (pyomo.summation(m.costs) == (1 + cost_factor) * m.opt_cost_sum)
+
+        prob.res_cost_restrict = pyomo.Constraint(
+            rule=res_cost_restrict_rule,
+            doc='total costs <= Optimum cost *(1+e)')
+
+
+        prob.objective_function = pyomo.Objective(
+            rule=capacity_rule,
+            sense=pyomo.minimize,
+            doc='minimize objective process capacity emissions')
+        optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+        optim = setup_solver(optim, logfile=log_filename)
+        result_min = optim.solve(prob, tee=True)
+        assert str(result_min.solver.termination_condition) == 'optimal'
+       #read minimized capacities from instance
+        minimized_cap_pro = read_capacity(prob)
+        prob.minimized_cap_pro = minimized_cap_pro.to_frame(name='Min'+'-'+ str(prob.cost_slack_list[0]))
+       #del minimization objective for maximization
+        prob.del_component(prob.objective_function)
+       #Maximize
+        prob.objective_function = pyomo.Objective(
+            rule=capacity_rule,
+            sense=pyomo.maximize,
+            doc='maximize objective process capacity emissions')
     # solve model and read results
-    optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-    optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
-    assert str(result.solver.termination_condition) == 'optimal'
+        optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+        optim = setup_solver(optim, logfile=log_filename)
+        result_max = optim.solve(prob, tee=True)
+        assert str(result_max.solver.termination_condition) == 'optimal'
+       #read maximized capacities from instance
+        maximized_cap_pro = read_capacity(prob)
+        prob.maximized_cap_pro = maximized_cap_pro.to_frame(name='Max'+'-'+ str(prob.cost_slack_list[0]))
+    else:
+        prob = create_model(data, dt, timesteps, objective)
+        # solve model and read results
+        optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+        optim = setup_solver(optim, logfile=log_filename)
+        result = optim.solve(prob, tee=True)
+        assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
     save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
     # write report to spreadsheet
     report(
-        prob, near_optimal,
-        os.path.join(result_dir, '{}{}{}.xlsx').format(near_optimal,objective,sce),
+        prob,
+        os.path.join(result_dir, '{}-{}-{}.xlsx').format(input_files[0:3],objective,sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
 
     # result plots
     result_figures(
         prob,
-        os.path.join(result_dir, '{}{}{}'.format(near_optimal,objective,sce)),
+        os.path.join(result_dir, '{}-{}-{}'.format(input_files[0:3],objective,sce)),
         timesteps,
         plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,

@@ -3,11 +3,11 @@ import shutil
 import nopt
 import ipdb
 
-input_files = 'Intertemporal_example'  # for single year file name, for intertemporal folder name
+input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'int-pv'
+result_name = input_files[0:3]+'-'+'pv'
 result_dir = nopt.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -18,14 +18,14 @@ except NotADirectoryError:
 # copy run file to result directory
 shutil.copy(__file__, result_dir)
 
-# objective function
-objective = 'pv'  # set either 'cost' or 'CO2' as objective
+# objective function..
+# [ 'cost' 'CO2' 'Biomass plant','Coal plant',...
+#'Feed-in', 'Gas plant', 'Hydro plant', 'Lignite plant',...
+#  'Photovoltaics', 'Purchase', 'Slack powerplant', 'Wind park']
 
+objective = 'Photovoltaics'
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
-
-# Choose analysis type('near_optimal', 'optimal')
-near_optimal = 'near_optimal'
 
 # simulation timesteps
 (offset, length) = (3500, 24)  # time step selection
@@ -65,7 +65,7 @@ scenarios = [
 
 for scenario in scenarios:
     prob = nopt.run_scenario(input_path, solver, timesteps, scenario,
-                             result_dir, dt, objective, near_optimal,
+                             result_dir, dt, objective,
                              plot_tuples=plot_tuples,
                              plot_sites_name=plot_sites_name,
                              plot_periods=plot_periods,

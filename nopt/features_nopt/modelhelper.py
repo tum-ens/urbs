@@ -1,5 +1,7 @@
 from .transmission import transmission_balance
 from .storage import storage_balance
+import pandas as pd
+from ..pyomoio_nopt import get_entities, get_entity
 
 
 def invcost_factor(dep_prd, interest, discount=None, year_built=None,
@@ -215,3 +217,14 @@ def inst_pro_tuples(m):
                 inst_pro.append((sit, pro, stf_later))
 
     return inst_pro
+
+def read_capacity(m):
+    objective_arg = m.cap_obj
+    cpro = get_entities(m, ['cap_pro', 'cap_pro_new'])
+    if not cpro.empty:
+        cpro.index.names = ['Stf', 'Site', 'Process']
+        cpro.columns = ['Total', 'New']
+        cpro.sort_index(inplace=True)
+    optimized_cap = cpro['Total'][:, :, objective_arg]
+    optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],names=['Objective'])
+    return optimized_cap

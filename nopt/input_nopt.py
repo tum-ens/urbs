@@ -8,7 +8,7 @@ from .identify_nopt import *
 import ipdb
 
 
-def read_input(input_files, near_optimal, year):
+def read_input(input_files, year):
     """Read Excel input file and prepare URBS input dict.
 
     Reads the Excel spreadsheets that adheres to the structure shown in
@@ -46,7 +46,8 @@ def read_input(input_files, near_optimal, year):
         with pd.ExcelFile(filename) as xls:
 
             global_prop = xls.parse('Global').set_index(['Property'])
-            global_prop.loc['Near optimal status'] = [near_optimal, "activate near optimal solution by giving 'near optimal' as string "]
+            #global_prop.loc['Near optimal status'] = [near_optimal, "activate near optimal solution by giving 'near optimal' as string "]
+
             # create support timeframe index
             if ('Support timeframe' in
                     xls.parse('Global').set_index('Property').value):
@@ -213,7 +214,7 @@ def pyomo_model_prep(data, timesteps):
     m.global_prop = data['global_prop']
     commodity = data['commodity']
     process = data['process']
-
+    #m.cap_obj= data['cap_obj']
     # create no expansion dataframes
     pro_const_cap = process[process['inst-cap'] == process['cap-up']]
 
@@ -223,7 +224,7 @@ def pyomo_model_prep(data, timesteps):
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
     m.cost_slack_list = [0.05, 0.1]
     #creating list with near optimal processes
-    m.pro_obj = {'pv':'Photovoltaics'}
+    #m.pro_obj = {'pv':'Photovoltaics'}
 
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification

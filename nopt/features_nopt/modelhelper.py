@@ -218,37 +218,32 @@ def inst_pro_tuples(m):
 
     return inst_pro
 
+
+
 def read_capacity(m, name):
     objective_arg = m.cap_obj
+    objective_sites = str(m.cap_sites)
     cpro = get_entities(m, ['cap_pro', 'cap_pro_new'])
     if not cpro.empty:
         cpro.index.names = ['Stf', 'Site', 'Process']
         cpro.columns = ['Total', 'New']
         cpro.sort_index(inplace=True)
     optimized_cap = cpro['Total'][:, :, objective_arg]
-    optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],names=['Objective'])
+    optimized_cap = pd.concat([optimized_cap], keys=[objective_sites], names=['Objective_Sites'])
+    optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],names=['Objective_Process'])
+
     optimized_cap = optimized_cap.to_frame(name=name)
     return optimized_cap
 
-#def change_objective (m, objective):
-
-def read_capacity(m, name):
-    objective_arg = m.cap_obj
-    cpro = get_entities(m, ['cap_pro', 'cap_pro_new'])
-    if not cpro.empty:
-        cpro.index.names = ['Stf', 'Site', 'Process']
-        cpro.columns = ['Total', 'New']
-        cpro.sort_index(inplace=True)
-    optimized_cap = cpro['Total'][:, :, objective_arg]
-    optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],names=['Objective'])
-    optimized_cap = optimized_cap.to_frame(name=name)
-    return optimized_cap
 
 def read_costs (m,name):
     objective_arg = m.cap_obj
+    objective_sites= str(m.cap_sites)
     costs = get_entity(m, 'costs')
     total_cost = pd.Series(costs.sum(), index=['Total Cost'])
     costs = costs.append([total_cost])
-    costs = pd.concat([costs], keys=[objective_arg], names=['Objective'])
+    costs = pd.concat([costs], keys=[objective_sites], names=['Objective_Sites'])
+    costs = pd.concat([costs], keys=[objective_arg], names=['Objective_Process'])
+
     costs = costs.to_frame(name=name)
     return costs

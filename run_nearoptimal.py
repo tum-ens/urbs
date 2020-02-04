@@ -18,12 +18,13 @@ except NotADirectoryError:
 # copy run file to result directory
 shutil.copy(__file__, result_dir)
 
-# objective function..
-# [ 'cost' 'CO2' 'Biomass plant','Coal plant',...
-#'Feed-in', 'Gas plant', 'Hydro plant', 'Lignite plant',...
-#  'Photovoltaics', 'Purchase', 'Slack powerplant', 'Wind park']
+# objective is a list of tuples. Last element of the Tuple must be the optimization objective. Possible objectives are given in the list below:
+# [ 'cost' 'CO2' 'Biomass plant','Coal plant','Feed-in', 'Gas plant', 'Hydro plant', 'Lignite plant','Photovoltaics', 'Purchase', 'Slack powerplant', 'Wind park']
+# Site names that will be subjected to the minimization must be given before the objective name.
+# No site name indicates minimize/maximize total capacity of all sites
+# example objectives [('South','Photovoltaics'),('Photovoltaics'),('South','North','cost')] etc.
 
-objective = 'Photovoltaics'
+objective = [('Photovoltaics')]
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 

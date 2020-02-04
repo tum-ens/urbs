@@ -6,7 +6,7 @@ from .input_nopt import *
 #import ipdb
 
 
-def create_model(data, dt=1, timesteps=None, objective='cost',
+def create_model(data, dt=1, timesteps=None, objective=[('cost')],
                  dual=True):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
@@ -15,13 +15,22 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         - dt: timestep duration in hours (default: 1)
         - timesteps: optional list of timesteps, default: demand timeseries
         - objective: Either "cost" or "CO2" for choice of objective function,
-          default: "cost"
+
         - dual: set True to add dual variables to model output
           (marginally slower), default: True
 
     Returns:
         a pyomo ConcreteModel object
     """
+    if isinstance(objective[0],tuple):
+        objective_pro = objective[0][-1]
+        #objective_sites = list(objective[0][:-1])
+    else:
+        objective_pro = objective[0]
+        #objective_sites =[]
+        #site_dict=data['site'].to_dict()
+        #for key in site_dict['area']:
+            #objective_sites.append(key[1])
 
     # Optional
     if not timesteps:
@@ -52,7 +61,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # import objective function information
     m.obj = pyomo.Param(
-        initialize=objective,
+        initialize=objective_pro,
         doc='Specification of minimized quantity, default: "cost"')
 
     # Sets
@@ -424,32 +433,9 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             sense=pyomo.minimize,
             doc='minimize total CO2 emissions')
 
-    elif (m.obj.value !='cost' and m.obj.value !='CO2'):
-        def res_cost_restrict_rule(m, stf):
-            cost_factor = m.cost_slack_list[0]
-            assert cost_factor < 1.0, "slack value is not defined properly. Slack value must be a positive number and smaller than 1.0"
-            assert cost_factor >= 0 , "slack value is not defined properly. Slack value must be a positive number and smaller than 1.0"
-            return(pyomo.summation(m.costs) == (1 + cost_factor) * m.global_prop_dict["value"][stf, 'Cost_opt'])
+    elif m.obj.value in ['cost' 'CO2' 'Biomass plant','Coal plant','Feed-in','Gas plant', 'Hydro plant', 'Lignite plant','Photovoltaics', 'Purchase', 'Slack powerplant', 'Wind park']:
+      pass
 
-        m.res_cost_restrict = pyomo.Constraint(
-            m.stf,
-            rule=res_cost_restrict_rule,
-            doc='total costs <= Optimum cost *(1+e)')
-        if m.mode['int']:
-            m.res_global_co2_budget = pyomo.Constraint(
-                rule=res_global_co2_budget_rule,
-                doc='total co2 commodity output <= global.prop CO2 budget')
-
-        else:
-            m.res_global_co2_limit = pyomo.Constraint(
-                rule=res_global_co2_limit_rule,
-                doc='total co2 commodity output <= Global CO2 limit')
-
-
-        m.objective_function = pyomo.Objective(
-            rule=capacity_rule,
-            sense=pyomo.minimize,
-            doc='minimize objective process capacity emissions')
     else:
         raise NotImplementedError("Non-implemented objective quantity. Set "
                                   "either 'cost' or 'CO2' as the objective in "
@@ -861,10 +847,12 @@ def co2_rule(m):
 def capacity_rule(m):
     capacity_sum = 0
     pro= m.cap_obj
-        #this condition can be utilized, when other capacitiy objectives are implemented
+    sites= m.cap_sites
+    if len(sites)==0:
+        sites=m.sit
     stf = max(m.stf)
     #for stf in m.stf:
-    for sit in m.sit:
+    for sit in sites:
         capacity_sum += def_process_capacity_rule(m, stf, sit, pro)
     return (capacity_sum)
 

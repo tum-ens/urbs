@@ -83,6 +83,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         the urbs model instance
     """
 
+
     # sets a modeled year for non-intertemporal problems
     # (necessary for consitency)
     year = date.today().year
@@ -92,17 +93,28 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     data = read_input(input_files, year)
     data = scenario(data)
 
+
+    if isinstance(objective[0],tuple):
+        objective_pro = objective[0][-1]
+        objective_sites = list(objective[0][:-1])
+    else:
+        objective_pro = objective[0]
+        objective_sites =[]
+        site_dict=data['site'].to_dict()
+        for key in site_dict['area']:
+            objective_sites.append(key[1])
+
     validate_input(data)
-    validate_dc_objective(data, objective)
-    # data.update(cap_obj=objective)
+    validate_dc_objective(data, objective_pro)
+
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
     # For near optimal analysis (obj!=cost/co2) solve the problem first for cost then update objective function and solve for restricted cost
 
-    if (objective != 'cost' and objective != 'CO2'):
+    if (objective_pro != 'cost' and objective_pro != 'CO2'):
 
         # create cost opt model
-        prob = create_model(data, dt, timesteps, 'cost')
+        prob = create_model(data, dt, timesteps, [('cost')])
 
         # solve cost model and read optimized cost
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
@@ -110,8 +122,12 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         result_cost_opt = optim.solve(prob, tee=True)
         assert str(result_cost_opt.solver.termination_condition) == 'optimal'
 
+        #if len(objective_sites) == 0:
+            #objective_sites = prob.sit.value_list
+
         # store real objective in model because model.obj is still cost
-        prob.cap_obj = objective
+        prob.cap_obj = objective_pro
+        prob.cap_sites = objective_sites
         opt_cost_sum = 0
         for key in prob.costs.keys():
             opt_cost_sum += prob.costs[key].value
@@ -151,7 +167,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             assert str(result_min.solver.termination_condition) == 'optimal'
             # read minimized capacities from instance
             minimized_cap_pro = read_capacity(prob, 'Min' + '-' + str(slack))
-            minimized_cap_costs= read_costs(prob, 'Min' + '-' + str(slack))
+            minimized_cap_costs = read_costs(prob, 'Min' + '-' + str(slack))
             # del minimization objective for maximization
             prob.del_component(prob.objective_function)
             # Maximize
@@ -166,7 +182,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             assert str(result_max.solver.termination_condition) == 'optimal'
             # read maximized capacities from instance
             maximized_cap_pro = read_capacity(prob, 'Max' + '-' + str(slack))
-            maximized_cap_costs = read_costs(prob,'Max' + '-' + str(slack))
+            maximized_cap_costs = read_costs(prob, 'Max' + '-' + str(slack))
             # store optimized capacities in a data frame
 
             prob.near_optimal_capacities = prob.near_optimal_capacities.join(maximized_cap_pro, how='outer')
@@ -187,14 +203,14 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     # write report to spreadsheet
     report(
         prob,
-        os.path.join(result_dir, '{}-{}-{}.xlsx').format(prob.stf_list, objective, sce),
+        os.path.join(result_dir, '{}-{}-{}-{}.xlsx').format(prob.stf_list, objective_pro, objective_sites, sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
 
     # result plots
     result_figures(
         prob,
-        os.path.join(result_dir, '{}-{}-{}'.format(prob.stf_list, objective, sce)),
+        os.path.join(result_dir, '{}-{}-{}-{}'.format(prob.stf_list, objective_pro, objective_sites, sce)),
         timesteps,
         plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,

@@ -214,7 +214,7 @@ def pyomo_model_prep(data, timesteps):
     m.global_prop = data['global_prop']
     commodity = data['commodity']
     process = data['process']
-    #m.cap_obj= data['cap_obj']
+
     # create no expansion dataframes
     pro_const_cap = process[process['inst-cap'] == process['cap-up']]
 

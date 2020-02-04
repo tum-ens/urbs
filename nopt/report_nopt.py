@@ -4,7 +4,7 @@ from .output_nopt import get_constants, get_timeseries
 from .util_nopt import is_string
 
 
-def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob is given as instance
+def report(instance, filename, report_tuples=None, report_sites_name={}):  # prob is given as instance
     """Write result summary to a spreadsheet file
 
     Args:
@@ -20,30 +20,26 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob
     if report_tuples is None:
         report_tuples = get_input(instance, 'demand').columns
 
-    costs, cpro, ctra, csto = get_constants(instance) #finds these values from model instance prob
+    costs, cpro, ctra, csto = get_constants(instance)  # finds these values from model instance prob
     # Report new  optimized capacities:
 
-    if (instance.cap_obj != 'cost' and instance.cap_obj != 'CO2'):
-
-        near_optimal_capacities = instance.cost_optimized_cap_pro.join(instance.minimized_cap_pro, how='outer')
-        near_optimal_capacities = near_optimal_capacities.join(instance.maximized_cap_pro, how='outer')
-        total_cost=pd.Series(costs.sum(), index=['Total Cost'])
-        optimum_cost=pd.Series(instance.global_prop.loc[min(instance.stf),'Cost_opt'].value, index= ['Optimum Cost'])
-        costs = costs.append([total_cost,optimum_cost])
-
+    if instance.cap_obj != 'cost' and instance.cap_obj != 'CO2':
+        costs = instance.minimum_cost
+    else:
+        costs = costs.to_frame(name='Costs')
     # create spreadsheet writer object
     with pd.ExcelWriter(filename) as writer:
 
         # write constants to spreadsheet
-        costs.to_frame(name='Costs').to_excel(writer, 'Costs')
+        costs.to_excel(writer, 'Costs')
         cpro.to_excel(writer, 'Process caps')
         ctra.to_excel(writer, 'Transmission caps')
         csto.to_excel(writer, 'Storage caps')
         try:
-            near_optimal_capacities.to_excel(writer, 'Near-Optimal Process Capacities')
+            instance.near_optimal_capacities.to_excel(writer, 'Near-Optimal Process Capacities')
         except:
             pass
-#pd.merge(optimized_cap_pro,instance.cost_optimized_cap_pro, left_on=[''])
+        # pd.merge(optimized_cap_pro,instance.cost_optimized_cap_pro, left_on=[''])
         # initialize timeseries tableaus
         energies = []
         timeseries = {}
@@ -72,8 +68,8 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob
                 overprod = pd.DataFrame(
                     columns=['Overproduction'],
                     data=created.sum(axis=1) - consumed.sum(axis=1) +
-                    imported.sum(axis=1) - exported.sum(axis=1) +
-                    stored['Retrieved'] - stored['Stored'])
+                         imported.sum(axis=1) - exported.sum(axis=1) +
+                         stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
                     [created, consumed, stored, imported, exported, overprod,
@@ -95,7 +91,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  #prob
                 try:
                     timeseries[(stf, report_sites_name[sit], com)] = \
                         timeseries[(stf, report_sites_name[sit], com)].add(
-                        help_ts[(stf, lv, com)], axis=1, fill_value=0)
+                            help_ts[(stf, lv, com)], axis=1, fill_value=0)
                     sums = sums.add(help_sums, fill_value=0)
                 except BaseException:
                     timeseries[(stf, report_sites_name[sit], com)] = help_ts[

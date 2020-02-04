@@ -2,7 +2,7 @@ import os
 import pyomo.environ
 from pyomo.opt.base import SolverFactory
 from datetime import datetime, date
-from .model_nopt import create_model,capacity_rule
+from .model_nopt import create_model, capacity_rule
 from .report_nopt import *
 from .plot_nopt import *
 from .input_nopt import *
@@ -11,6 +11,7 @@ from .saveload_nopt import *
 
 from .features_nopt import *
 import math
+
 
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder.
@@ -56,7 +57,7 @@ def setup_solver(optim, logfile='solver.log'):
 
 
 def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
-                 objective, plot_tuples=None,  plot_sites_name=None,
+                 objective, plot_tuples=None, plot_sites_name=None,
                  plot_periods=None, report_tuples=None,
                  report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -93,14 +94,14 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     validate_input(data)
     validate_dc_objective(data, objective)
-    #data.update(cap_obj=objective)
+    # data.update(cap_obj=objective)
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
-    #For near optimal analysis (obj!=cost/co2) solve the problem first for cost then update objective function and solve for restricted cost
+    # For near optimal analysis (obj!=cost/co2) solve the problem first for cost then update objective function and solve for restricted cost
 
     if (objective != 'cost' and objective != 'CO2'):
 
-       #create cost opt model
+        # create cost opt model
         prob = create_model(data, dt, timesteps, 'cost')
 
         # solve cost model and read optimized cost
@@ -111,58 +112,67 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         # store real objective in model because model.obj is still cost
         prob.cap_obj = objective
-        cost_optimized_cap_pro = read_capacity(prob)
-        prob.cost_optimized_cap_pro= cost_optimized_cap_pro.to_frame(name='Optimum-Cost')
-        #print('\n','Optimum cost calculated')
         opt_cost_sum = 0
         for key in prob.costs.keys():
             opt_cost_sum += prob.costs[key].value
-        #print('\n',opt_cost_sum, 'Euros','\n')
-        for stf in prob.stf:
-            data['global_prop'].loc[(stf, 'Cost_opt'), :] = opt_cost_sum
         prob.opt_cost_sum = opt_cost_sum
 
-        #del objective component first to write real objective
-        prob.del_component(prob.objective_function)
+        cost_optimized_cap_pro = read_capacity(prob, 'Minimum Cost')
+        prob.near_optimal_capacities = cost_optimized_cap_pro
+        # Calculate minimum total cost
+        prob.minimum_cost = read_costs(prob, 'Minimum Cost')
 
+        # del objective component first to write real objective
+        prob.del_component(prob.objective_function)
 
         def res_cost_restrict_rule(m):
-            cost_factor = m.cost_slack_list[0]
-            #assert cost_factor < 1.0, "slack value is not defined properly. Slack value must be smaller than 1.0"
-            assert cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
-            return (pyomo.summation(m.costs) == (1 + cost_factor) * m.opt_cost_sum)
+            # assert cost_factor < 1.0, "slack value is not defined properly. Slack value must be smaller than 1.0"
+            assert m.cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
+            return (pyomo.summation(m.costs) == (1 + m.cost_factor) * m.opt_cost_sum)
 
-        prob.res_cost_restrict = pyomo.Constraint(
-            rule=res_cost_restrict_rule,
-            doc='total costs <= Optimum cost *(1+e)')
+        for slack in prob.cost_slack_list:
+            prob.cost_factor = slack
 
+            if prob.find_component('res_cost_restrict'):
+                prob.del_component('res_cost_restrict')
 
-        prob.objective_function = pyomo.Objective(
-            rule=capacity_rule,
-            sense=pyomo.minimize,
-            doc='minimize objective process capacity emissions')
-        optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-        optim = setup_solver(optim, logfile=log_filename)
-        result_min = optim.solve(prob, tee=True)
-        assert str(result_min.solver.termination_condition) == 'optimal'
-       #read minimized capacities from instance
-        minimized_cap_pro = read_capacity(prob)
-        prob.minimized_cap_pro = minimized_cap_pro.to_frame(name='Min'+'-'+ str(prob.cost_slack_list[0]))
-       #del minimization objective for maximization
-        prob.del_component(prob.objective_function)
-       #Maximize
-        prob.objective_function = pyomo.Objective(
-            rule=capacity_rule,
-            sense=pyomo.maximize,
-            doc='maximize objective process capacity emissions')
-    # solve model and read results
-        optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-        optim = setup_solver(optim, logfile=log_filename)
-        result_max = optim.solve(prob, tee=True)
-        assert str(result_max.solver.termination_condition) == 'optimal'
-       #read maximized capacities from instance
-        maximized_cap_pro = read_capacity(prob)
-        prob.maximized_cap_pro = maximized_cap_pro.to_frame(name='Max'+'-'+ str(prob.cost_slack_list[0]))
+            prob.res_cost_restrict = pyomo.Constraint(
+                rule=res_cost_restrict_rule,
+                doc='total costs <= Optimum cost *(1+e)')
+
+            # Minimize
+            prob.objective_function = pyomo.Objective(
+                rule=capacity_rule,
+                sense=pyomo.minimize,
+                doc='minimize objective process capacity emissions')
+            optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+            optim = setup_solver(optim, logfile=log_filename)
+            result_min = optim.solve(prob, tee=True)
+            assert str(result_min.solver.termination_condition) == 'optimal'
+            # read minimized capacities from instance
+            minimized_cap_pro = read_capacity(prob, 'Min' + '-' + str(slack))
+            minimized_cap_costs= read_costs(prob, 'Min' + '-' + str(slack))
+            # del minimization objective for maximization
+            prob.del_component(prob.objective_function)
+            # Maximize
+            prob.objective_function = pyomo.Objective(
+                rule=capacity_rule,
+                sense=pyomo.maximize,
+                doc='maximize objective process capacity emissions')
+            # solve model and read results
+            optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+            optim = setup_solver(optim, logfile=log_filename)
+            result_max = optim.solve(prob, tee=True)
+            assert str(result_max.solver.termination_condition) == 'optimal'
+            # read maximized capacities from instance
+            maximized_cap_pro = read_capacity(prob, 'Max' + '-' + str(slack))
+            maximized_cap_costs = read_costs(prob,'Max' + '-' + str(slack))
+            # store optimized capacities in a data frame
+
+            prob.near_optimal_capacities = prob.near_optimal_capacities.join(maximized_cap_pro, how='outer')
+            prob.near_optimal_capacities = prob.near_optimal_capacities.join(minimized_cap_pro, how='outer')
+            prob.minimum_cost = prob.minimum_cost.join(maximized_cap_costs, how='outer')
+            prob.minimum_cost = prob.minimum_cost.join(minimized_cap_costs, how='outer')
     else:
         prob = create_model(data, dt, timesteps, objective)
         # solve model and read results
@@ -177,14 +187,14 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     # write report to spreadsheet
     report(
         prob,
-        os.path.join(result_dir, '{}-{}-{}.xlsx').format(input_files[0:3],objective,sce),
+        os.path.join(result_dir, '{}-{}-{}.xlsx').format(prob.stf_list, objective, sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
 
     # result plots
     result_figures(
         prob,
-        os.path.join(result_dir, '{}-{}-{}'.format(input_files[0:3],objective,sce)),
+        os.path.join(result_dir, '{}-{}-{}'.format(prob.stf_list, objective, sce)),
         timesteps,
         plot_title_prefix=sce.replace('_', ' '),
         plot_tuples=plot_tuples,

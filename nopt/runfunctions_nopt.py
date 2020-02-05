@@ -122,12 +122,23 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         result_cost_opt = optim.solve(prob, tee=True)
         assert str(result_cost_opt.solver.termination_condition) == 'optimal'
 
-        #if len(objective_sites) == 0:
-            #objective_sites = prob.sit.value_list
+        #result_figures(
+            #prob,
+           # os.path.join(result_dir,
+                         #'{} {} {} {} {}'.format('cost minimized',str(prob.stf_list).strip("[]").replace("'", ""), objective_pro,
+                                             # str(objective_sites).strip("[]").replace("'", ""), sce)),
+            #timesteps,
+           # plot_title_prefix=sce.replace('_', ' '),
+            #plot_tuples=plot_tuples,
+            #plot_sites_name=plot_sites_name,
+            #periods=plot_periods,
+            #figure_size=(24, 9))
 
         # store real objective in model because model.obj is still cost
         prob.cap_obj = objective_pro
         prob.cap_sites = objective_sites
+
+        # Minimized costs
         opt_cost_sum = 0
         for key in prob.costs.keys():
             opt_cost_sum += prob.costs[key].value
@@ -135,10 +146,12 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         cost_optimized_cap_pro = read_capacity(prob, 'Minimum Cost')
         prob.near_optimal_capacities = cost_optimized_cap_pro
-        # Calculate minimum total cost
+        #plot_tuple_values
+        prob.plot_tuple = (prob.stf_list,('cost','minimize'))
+        # Record minimum costs for reporting
         prob.minimum_cost = read_costs(prob, 'Minimum Cost')
 
-        # del objective component first to write real objective
+        # del objective_function  component to write real objective
         prob.del_component(prob.objective_function)
 
         def res_cost_restrict_rule(m):
@@ -168,6 +181,19 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             # read minimized capacities from instance
             minimized_cap_pro = read_capacity(prob, 'Min' + '-' + str(slack))
             minimized_cap_costs = read_costs(prob, 'Min' + '-' + str(slack))
+            #plot minimized capacities
+            #result_figures(
+             #   prob,
+             #   os.path.join(result_dir,
+             #                '{} {} {} {} {}'.format('obj minimized', str(prob.stf_list).strip("[]").replace("'", ""),
+             #                                        objective_pro,
+              #                                       str(objective_sites).strip("[]").replace("'", ""), sce)),
+             #   timesteps,
+             #   plot_title_prefix=sce.replace('_', ' '),
+             #   plot_tuples=plot_tuples,
+             #   plot_sites_name=plot_sites_name,
+             #   periods=plot_periods,
+             #   figure_size=(24, 9))
             # del minimization objective for maximization
             prob.del_component(prob.objective_function)
             # Maximize
@@ -183,8 +209,21 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             # read maximized capacities from instance
             maximized_cap_pro = read_capacity(prob, 'Max' + '-' + str(slack))
             maximized_cap_costs = read_costs(prob, 'Max' + '-' + str(slack))
-            # store optimized capacities in a data frame
+            # plot maximized capacities
+            #result_figures(
+            #    prob,
+            #    os.path.join(result_dir,
+            #                 '{} {} {} {} {}'.format('obj maximized', str(prob.stf_list).strip("[]").replace("'", ""),
+            #                                         objective_pro,
+            #                                         str(objective_sites).strip("[]").replace("'", ""), sce)),
+            #    timesteps,
+            #    plot_title_prefix=sce.replace('_', ' '),
+            #    plot_tuples=plot_tuples,
+            #   plot_sites_name=plot_sites_name,
+            #   periods=plot_periods,
+            #    figure_size=(24, 9))
 
+            # store optimized capacities in a data frame
             prob.near_optimal_capacities = prob.near_optimal_capacities.join(maximized_cap_pro, how='outer')
             prob.near_optimal_capacities = prob.near_optimal_capacities.join(minimized_cap_pro, how='outer')
             prob.minimum_cost = prob.minimum_cost.join(maximized_cap_costs, how='outer')
@@ -196,6 +235,18 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         optim = setup_solver(optim, logfile=log_filename)
         result = optim.solve(prob, tee=True)
         assert str(result.solver.termination_condition) == 'optimal'
+        # result plots
+        result_figures(
+            prob,
+            os.path.join(result_dir,
+                         '{} {} {} {}'.format(str(prob.stf_list).strip("[]").replace("'", ""), objective_pro,
+                                              str(objective_sites).strip("[]").replace("'", ""), sce)),
+            timesteps,
+            plot_title_prefix=sce.replace('_', ' '),
+            plot_tuples=plot_tuples,
+            plot_sites_name=plot_sites_name,
+            periods=plot_periods,
+            figure_size=(24, 9))
 
     # save problem solution (and input data) to HDF5 file
     save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
@@ -203,19 +254,10 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     # write report to spreadsheet
     report(
         prob,
-        os.path.join(result_dir, '{}-{}-{}-{}.xlsx').format(prob.stf_list, objective_pro, objective_sites, sce),
+        os.path.join(result_dir, '{}-{}-{}-{}.xlsx').format(str(prob.stf_list).strip("[]").replace("'",""), objective_pro, str(objective_sites).strip("[]").replace("'","") , sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
 
-    # result plots
-    result_figures(
-        prob,
-        os.path.join(result_dir, '{}-{}-{}-{}'.format(prob.stf_list, objective_pro, objective_sites, sce)),
-        timesteps,
-        plot_title_prefix=sce.replace('_', ' '),
-        plot_tuples=plot_tuples,
-        plot_sites_name=plot_sites_name,
-        periods=plot_periods,
-        figure_size=(24, 9))
+
 
     return prob

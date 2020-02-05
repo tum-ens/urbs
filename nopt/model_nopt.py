@@ -24,13 +24,8 @@ def create_model(data, dt=1, timesteps=None, objective=[('cost')],
     """
     if isinstance(objective[0],tuple):
         objective_pro = objective[0][-1]
-        #objective_sites = list(objective[0][:-1])
     else:
         objective_pro = objective[0]
-        #objective_sites =[]
-        #site_dict=data['site'].to_dict()
-        #for key in site_dict['area']:
-            #objective_sites.append(key[1])
 
     # Optional
     if not timesteps:

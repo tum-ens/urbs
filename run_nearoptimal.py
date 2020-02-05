@@ -43,7 +43,7 @@ report_sites_name = {}
 
 # plotting commodities/sites
 plot_tuples = [
-
+    (2020, 'South', 'Elec')
     ]
 
 # optional: define names for sites in plot_tuples

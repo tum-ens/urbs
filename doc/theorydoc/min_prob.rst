@@ -153,7 +153,7 @@ environmental commodity is then given by:
    k^{\text{env}}_{c}\text{CB}(c,t),
 
 where :math:`k^{\text{env}}_{c}` are the specific costs per unit of
-environmental commodity and :math:`CB` is the momentary commodity balnce of
+environmental commodity and :math:`CB` is the momentary commodity balance of
 commodity :math:`c` at time :math:`t`. The minus sign is due to the sign
 convention used for the commodity balance which is positive when the system
 takes in a unit of a commodity.

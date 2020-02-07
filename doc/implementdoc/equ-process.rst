@@ -428,43 +428,170 @@ is defined and calculated by the following code fragment:
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: res_starting_rampup_rule
    
-**Process Output Ramping Rule**:
+**Process Output Ramping Rule**: These constraints act as a limiter for the
+process output :math:`\epsilon_{yvcpt}^\text{out}` with the on/off feature 
+because the process on/off marker :math:`\omicron_{yvpt}` can be both on and off
+in the minimum load point. There are three possible cases, as follows, defined in
+the script ``AdvanceProcesses.py``. The mathematical explanation of this rule is 
+given in :ref:`theory-AP`
+
+Case I: The parameter process minimum load fraction :math:`\underline{P}_{yvp}`
+is greater than the parameter process maximum power ramp up gradient 
+:math:`\overline{PG}_{yvp}^\text{up}` and is divisible with it. It is defined
+and calculated by the following code fragment:
 ::
 
- m.res_output_minfraction_rampup = pyomo.Constraint(
+    m.res_output_minfraction_rampup = pyomo.Constraint(
         m.tm, m.pro_rampup_divides_minfraction_output_tuples -
               m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
         rule=res_output_minfraction_rampup_rule,
         doc='Output may not increase faster than the minimal working capacity')
-    m.res_output_minfraction_rampup_rampup = pyomo.Constraint(
-        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples -
-              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
-        rule=res_output_minfraction_rampup_rampup_rule,
-        doc='Output may not increase faster than the first multiple of the'
-            'ramping up gradient greater than the minimal working capacity')
-    m.res_output_rampup = pyomo.Constraint(
-        m.tm, m.pro_rampup_bigger_minfraction_output_tuples -
-              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
-        rule=res_output_rampup_rule,
-        doc='Output may not increase faster than the ramping up gradient')
+        
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_output_minfraction_rampup_rule        
+   
+If the process has partial operation, the code changes to:
+::
 
     m.res_partial_output_minfraction_rampup = pyomo.Constraint(
         m.tm, m.pro_rampup_divides_minfraction_output_tuples &
               m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
         rule=res_partial_output_minfraction_rampup_rule,
         doc='Output may not increase faster than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_output_minfraction_rampup_rule
+   
+If the process has time variable efficiency, the code changes to:
+::
+
+    m.res_timevar_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples &
+              m.pro_timevar_output_tuples - m.pro_partial_on_off_output_tuples,
+        rule=res_timevar_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_timevar_output_minfraction_rampup_rule
+   
+If the process has both partial operation and time variable efficiency, the code changes to:
+::
+
+    m.res_partial_timevar_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=res_partial_timevar_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_timevar_output_minfraction_rampup_rule
+   
+Case II: The parameter process minimum load fraction :math:`\underline{P}_{yvp}`
+is greater than the parameter process maximum power ramp up gradient 
+:math:`\overline{PG}_{yvp}^\text{up}`, but is not divisible with it. It is defined
+and calculated by the following code fragment:
+::
+
+    m.res_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_output_minfraction_rampup_rampup_rule
+   
+If the process has partial operation, the code changes to:
+::
+
     m.res_partial_output_minfraction_rampup_rampup = pyomo.Constraint(
         m.tm, m.pro_rampup_not_divides_minfraction_output_tuples &
               m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
         rule=res_partial_output_minfraction_rampup_rampup_rule,
         doc='Output may not increase faster than the first multiple of the'
             'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_output_minfraction_rampup_rampup_rule
+   
+ If the process has time variable efficiency, the code changes to:
+::
+
+    m.res_timevar_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples &
+              m.pro_timevar_output_tuples - m.pro_partial_on_off_output_tuples,
+        rule=res_timevar_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_timevar_output_minfraction_rampup_rampup_rule
+   
+If the process has both partial operation and time variable efficiency, the code changes to:
+::
+
+    m.res_partial_timevar_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=res_partial_timevar_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_timevar_output_minfraction_rampup_rampup_rule
+   
+Case III: The parameter process minimum load fraction :math:`\underline{P}_{yvp}`
+is smaller than the parameter process maximum power ramp up gradient 
+:math:`\overline{PG}_{yvp}^\text{up}`. It is defined and calculated by the following 
+code fragment:
+::
+
+    m.res_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_output_rampup_rule
+   
+If the process has partial operation, the code changes to:
+::
+
     m.res_partial_output_rampup = pyomo.Constraint(
         m.tm, m.pro_rampup_bigger_minfraction_output_tuples &
               m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
         rule=res_partial_output_rampup_rule,
         doc='Output may not increase faster than the ramping up gradient')
 
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_output_rampup_rule
+   
+If the process has time variable efficiency, the code changes to:
+::
+
+    m.res_timevar_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples &
+              m.pro_timevar_output_tuples - m.pro_partial_on_off_output_tuples,
+        rule=res_timevar_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_timevar_output_rampup_rule
+   
+If the process has both partial operation and time variable efficiency, the code changes to:
+::
+
+    m.res_partial_timevar_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=res_partial_timevar_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_timevar_output_rampup_rule
+   
 **Process Start-Up Rule**: The constraint process start-up rule marks in the
 variable process start marker :math:`\sigma_{yvpt}` whether a process :math:`p`
 started in timestep :math:`t` or not. The mathematical explanation of 

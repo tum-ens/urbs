@@ -196,7 +196,7 @@ efficiency with the parameter time series :math:`f_{yvpt}^\text{out}`. The
 process output for all commodities is thus manipulated depending on time. This
 constraint is not valid for environmental commodities since these are typically
 linked to an input commodity flow rather than an output commodity flow. The
-mathematical explanation of this rule is given in :ref:`theory-TVE`.
+mathematical explanation of this rule is given in :ref:`theory-AP`.
 
 In script ``TimeVarEff.py`` the constraint process time variable output rule is
 defined and calculated by the following code fragment:
@@ -233,7 +233,7 @@ see the next chapter for the combined on/off and partial operation features.
 **Throughput by Min fraction Rule**: This constraint limits the minimal
 operational state of a process downward, making sure that the minimal part load
 fraction is honored. The mathematical explanation of this rule is given in
-:ref:`theory-min`.
+:ref:`theory-AP`.
 
 In script ``AdvancedProcesses.py`` this constraint is defined and calculated by the
 following code fragment:
@@ -254,7 +254,7 @@ linear behavior to a more complex one. Instead of constant in- and output
 ratios these are now interpolated linearly between the value for full operation
 :math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios
 :math:`\underline{r}^{\text{in/out}}_{yvp}` at the minimum operation point. The
-mathematical explanation of this rule is given in :ref:`theory-min`.   
+mathematical explanation of this rule is given in :ref:`theory-AP`.   
 
 In script `model.py` this expression is written in the following way for the
 input ratio (and analogous for the output ratios):
@@ -292,7 +292,7 @@ column **on-off** for a process in the **process** sheet.
 the variables process throughput :math:`\tau_{yvpt}` and process on/off marker
 :math:`\omicron_{yvpt}`. This is done by turning the marker on (boolean value 1)
 when the throughput is greater than the minimum load of the process.The
-mathematical explanation of this rule is given in :ref:`theory-min`.
+mathematical explanation of this rule is given in :ref:`theory-AP`.
 
 In script ``AdvancedProcesses.py`` this constraint is defined and calculated by the
 following code fragment:
@@ -318,7 +318,7 @@ linear behavior to a more complex one. Instead of constant in- and output
 ratios these are now interpolated linearly between the value for full operation
 :math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios
 :math:`\underline{r}^{\text{in/out}}_{yvp}` at the minimum operation point. The
-mathematical explanation of this rule is given in :ref:`theory-min`.   
+mathematical explanation of this rule is given in :ref:`theory-AP`.   
 
 In script `AdvancedProcesses.py` this expression is written in the following way for the
 input ratio (and analogous for the output ratios):
@@ -340,7 +340,7 @@ between the output **commodity type** :math:`q`. When the **commodity type**
 is ``Env``, he output remains the same as without the on/off feature. Otherwise, 
 the original output equation is multiplied with the variable process on/off 
 marker :math:`\omicron_{yvpt}`. The mathematical explanation of this rule
-is given in :ref:`theory-min`.
+is given in :ref:`theory-AP`.
 
 In script ``AdvancedProcesses.py`` the constraint process on/off output rule 
 is defined and calculated by the following code fragment:
@@ -412,7 +412,7 @@ throughput ramping rule when the parameter process starting time
 **process** sheet. This is done only until the variable process throughput 
 :math:`\tau_{yvpt}` reaches the minimum load value and only while increasing
 the process throughput :math:`\tau_{yvpt}`. The mathematical explanation of 
-this rule is given in :ref:`theory-min`.
+this rule is given in :ref:`theory-AP`.
 
 In script ``AdvancedProcesses.py`` the constraint process starting ramp-up rule
 is defined and calculated by the following code fragment:
@@ -467,7 +467,7 @@ is defined and calculated by the following code fragment:
 **Process Start-Up Rule**: The constraint process start-up rule marks in the
 variable process start marker :math:`\sigma_{yvpt}` whether a process :math:`p`
 started in timestep :math:`t` or not. The mathematical explanation of 
-this rule is given in :ref:`theory-min`.
+this rule is given in :ref:`theory-AP`.
 
 In script ``AdvancedProcesses.py`` the constraint process start ups rule
 is defined and calculated by the following code fragment:

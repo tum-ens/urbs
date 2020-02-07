@@ -312,32 +312,11 @@ following code fragment:
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
    :pyobject: res_throughput_by_on_off_upper
 
-**Process On/Off Input Rule**:The link between operational state
-:math:`tau_{yvpt}` and commodity in/outputs is changed from a simple
-linear behavior to a more complex one. Instead of constant in- and output
-ratios these are now interpolated linearly between the value for full operation
-:math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios
-:math:`\underline{r}^{\text{in/out}}_{yvp}` at the minimum operation point. The
-mathematical explanation of this rule is given in :ref:`theory-AP`.   
-
-In script `AdvancedProcesses.py` this expression is written in the following way for the
-input ratio (and analogous for the output ratios):
-::
-
-   m.def_process_on_off_input = pyomo.Constraint(
-        m.tm, m.pro_on_off_input_tuples - m.pro_partial_on_off_input_tuples,
-        rule=def_process_on_off_input_rule,
-        doc='e_pro_in ='
-            ' tau_pro * r_in')
-            
-.. literalinclude:: /../urbs/features/AdvancedProcesses.py
-   :pyobject: def_process_on_off_oinput_rule
-            
 **Process On/Off Output Rule**: This constraint modifies the process output 
 commodity flow :math:`\epsilon_{yvcpt}^\text{out}` when compared to the 
 original version without the on/off feature in two ways by differentiating 
 between the output **commodity type** :math:`q`. When the **commodity type**
-is ``Env``, he output remains the same as without the on/off feature. Otherwise, 
+is ``Env``, the output remains the same as without the on/off feature. Otherwise, 
 the original output equation is multiplied with the variable process on/off 
 marker :math:`\omicron_{yvpt}`. The mathematical explanation of this rule
 is given in :ref:`theory-AP`.
@@ -368,7 +347,19 @@ code for the output changes to:
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_process_on_off_timevar_output_rule
    
-**Process On/Off Partial Input Rule**:
+**Process On/Off Partial Input Rule**: This constraint modifies the process input 
+commodity flow :math:`\epsilon_{yvcpt}^\text{in}` when compared to the 
+original partial operation version without the on/off feature in by differentiating 
+between two possible input functions, depending on the process on/off marker
+:math:`\omicron_{yvpt}`. When the marker is on, the input function is the same as
+in the case of simple partial operation. When the marker is off, the input function
+becomes the product of the variable process throughput :math:`\tau_{yvpt}` and the 
+parameter process partial input ratio :math:`\underline{r}_{ypc}^\text{in}`.
+the output **commodity type** :math:`q`. When the **commodity type**. The mathematical
+explanation of this rule is given in :ref:`theory-AP`.
+
+In script ``AdvancedProcesses.py`` the constraint process on/off output rule 
+is defined and calculated by the following code fragment:
 ::
 
     m.def_partial_process_on_off_input = pyomo.Constraint(
@@ -381,7 +372,17 @@ code for the output changes to:
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_partial_process_on_off_input_rule
    
-**Process On/Off Partial Output Rule**:
+**Process On/Off Partial Output Rule**: This constraint modifies the process output 
+commodity flow :math:`\epsilon_{yvcpt}^\text{out}` when compared to the 
+original partial operation version without the on/off feature in two ways by differentiating 
+between the output **commodity type** :math:`q`. When the **commodity type**
+is not ``Env``, the output remains the same as for the partial operation without the on/off 
+feature. Otherwise, the original output equation is changes depending on the variable process on/off 
+marker :math:`\omicron_{yvpt}`. When the marker is off, the output function
+becomes the product of the variable process throughput :math:`\tau_{yvpt}` and the 
+parameter process partial output ratio :math:`\underline{r}_{ypc}^\text{out}`. When the marker is on,
+the output function for ``Env`` type commodities remains the same as for the partial operation 
+without the on/off feature. The mathematical explanation of this rule is given in :ref:`theory-AP`.
 ::
 
     m.def_partial_process_on_off_output = pyomo.Constraint(

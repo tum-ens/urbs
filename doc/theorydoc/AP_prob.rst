@@ -100,8 +100,8 @@ retain the practical necessity of being turned on and off when this is optimal.
 This feature transforms urbs from a linear problem to a quadratic problem, meaning 
 that it becomes piecewise linear.
 
-The first equation introduces a coupling between :math:`\omicron_{pt}`, the 
-boolean on/off marker of a process and its throughput :math:`\tau_{pt}`, so that 
+Firstly, the following equation introduces a coupling between :math:`\omicron_{pt}`, 
+the boolean on/off marker of a process and its throughput :math:`\tau_{pt}`, so that 
 :math:`\omicron_{pt}` is 1 when the process can produce and 0 when it cannnot or
 is starting.
 
@@ -111,3 +111,58 @@ is starting.
    \tau_{pt}\leq
    \kappa_p\cdot \omicron_{pt}+ \underline{P}_p\cdot \kappa_p\cdot (1 - \omicron_{pt})
 
+Secondly, the following equation describes the alteration of the input equation of a 
+process with on/off and part-load behaviors due to the necessity of having a continuous,
+linear function defined on two intervals. The first interval represents the starting input 
+of a process, while the second one represents the consumed input while also producing.
+
+.. math::
+   &\forall p\in P^{\text{on/off with partload}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{in}_{pct}= 
+   \tau_pt\cdot \r^{\text{in}}_{pc}\cdot (1-\omicron_{pt})\+
+   \Delta t\cdot\left(
+   \frac{\underline{r}^{\text{in}}_{pc}-r^{\text{in}}_{pc}}
+   {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
+   \frac{r^{\text{in}}_{pc}-
+   \underline{P}_p\underline{r}^{\text{in}}_{pc}}
+   {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}\\\\
+In order to ensure the continuity property of the function, the input ratio used 
+for the starting interval has to be the partial one. This is a realistic value, 
+since processes normaly use, percentagewise, more fuel in relationship to the 
+throughput when starting then at higher throughput values.
+
+Thirdly, the following equations differentiate whether an output commodity needs to be 
+produced when a process is starting (e.g. environmental commodities) or not (e.g. electricity):
+
+.. math::
+   &\forall p\in P^{\text{on/off}},~c\in C^{\text\{environmental}},~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\\\\
+   &\forall p\in P^{\text{on/off}},~c\in C^{\text\{non-environmental}},~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\cdot \omicron_{pt}\\\\
+   
+If the process also shows part-load behavior, the previous two equations change to a 
+similarly adapted version of the part-load output equation:
+
+.. math::
+   &\forall p\in P^{\text{on/off with partload}},~c\in C^{\text\{environmental}},~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}= 
+   \tau_pt\cdot \r^{\text{out}}_{pc}\cdot (1-\omicron_{pt})\+
+   \Delta t\cdot\left(
+   \frac{\underline{r}^{\text{out}}_{pc}-r^{\text{out}}_{pc}}
+   {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
+   \frac{r^{\text{out}}_{pc}-
+   \underline{P}_p\underline{r}^{\text{out}}_{pc}}
+   {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}\\\\
+   &\forall p\in P^{\text{on/off}},~c\in C^{\text\{non-environmental}},~t\in T_m:\\\\
+   &\epsilon^{\text{out}}_{pct}=\Delta t\cdot\left(
+   \frac{\underline{r}^{\text{out}}_{pc}-r^{\text{out}}_{pc}}
+   {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
+   \frac{r^{\text{out}}_{pc}-
+   \underline{P}_p\underline{r}^{\text{out}}_{pc}}
+   {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}\\\\
+Here, it is important to notice that the output of the environmental commodities becomes
+a continuous, piecewise linear function defined on two intervals. In order to ensure the 
+continuity property of the function, the output ratio used for the starting interval has
+to be the partial one. This is a realistic value, since processes normaly produce, 
+percentagewise, more CO2 and/or other environmental commodities in relationship to the 
+throughput when starting then at higher throughput values.

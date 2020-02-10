@@ -166,3 +166,7 @@ continuity property of the function, the output ratio used for the starting inte
 to be the partial one. This is a realistic value, since processes normaly produce, 
 percentagewise, more CO2 and/or other environmental commodities in relationship to the 
 throughput when starting then at higher throughput values.
+
+Fourthly, there are some processes which have a different ramping up gradient while starting 
+than while producing. This is usualy defined with the help of a so called "starting time" and
+is caused by the fact that some processes, usualy those which 

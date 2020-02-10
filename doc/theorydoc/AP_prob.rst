@@ -92,3 +92,22 @@ A few restrictions have to be kept in mind when using this feature:
   which they are generated. Otherwise the emissions per unit of input would
   change together with the efficiency, which is typically not the desired
   behavior.
+
+On/off Behavior
+===============
+Some processes are characterised by a minimum or part-load behavior but still 
+retain the practical necessity of being turned on and off when this is optimal.
+This feature transforms urbs from a linear problem to a quadratic problem, meaning 
+that it becomes piecewise linear.
+
+The first equation introduces a coupling between :math:`\omicron_{pt}`, the 
+boolean on/off marker of a process and its throughput :math:`\tau_{pt}`, so that 
+:math:`\omicron_{pt}` is 1 when the process can produce and 0 when it cannnot or
+is starting.
+
+.. math::
+   &\forall p\in P^{\text{on/off}},~t\in T_m:\\\\
+   &\underline{P}_p\cdot \kappa_p\cdot \omicron_{pt}\leq
+   \tau_{pt}\leq
+   \kappa_p\cdot \omicron_{pt}+ \underline{P}_p\cdot \kappa_p\cdot (1 - \omicron_{pt})
+

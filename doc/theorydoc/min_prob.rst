@@ -296,10 +296,12 @@ switching speed of a process can be limited:
    &\forall p\in P,~t\in T_m:\\
    &\tau_{pt}\leq \kappa_{p}\\
    &\tau_{pt}\geq \underline{P}_{p}\kappa_{p}\\
-   &|\tau_{pt}-\tau_{p(t-1)}|\leq \Delta t\overline{PG}_p\kappa_{p},
+   &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^\text{up}\kappa_{p}\\
+   &\tau_{pt}-\tau_{p(t-1)}\leq \-Delta t\overline{PG}_p^\text{down}\kappa_{p}\\,
 
 where :math:`\underline{P}_{p}` is the normalized, minimal operational state of
-the process and :math:`\overline{PG}_p` the normalized, maximal gradient of the
+the process and :math:`\overline{PG}_p^\text{up}` and :math:`\overline{PG}_p^\text{down}`
+are the normalized, maximal ramping up gradient, respectively ramping down gradient of the
 operational state in full capacity per timestep.
 
 Intermittend supply rule
@@ -318,42 +320,5 @@ Here, :math:`s_{ct}` is the time series that governs the exact operation of
 process :math:`p`, leaving only its capacity :math:`\kappa_{p}` as a free
 variable.
 
-Part load behavior
-~~~~~~~~~~~~~~~~~~
-Many processes show a non-trivial part-load behavior. In particular, often a
-nonlinear reaction of the efficiency on the operational state is given.
-Although urbs itself is a linear program this can with some caveats be captured
-in many cases. The reason for this is, that the efficiency of a process is
-itself not modeled but only the ratio between input and output multipliers. It
-is thus possible to use purely linear functions to get a nonlinear behavior of
-the efficiency of the form:
-
-.. math::
-   \eta=\frac{a+b\tau_{pt}}{c+d\tau_{pt}},
-
-where a,b,c and d are some constants. Specifically, the input and output ratios
-can be set to vary linearly between their respective values at full load
-:math:`r^{\text{in,out}}_{pc}` and their values at the minimal allowed
-operational state :math:`\underline{P}_{p}\kappa_p`, which are given by
-:math:`\underline{r}^{\text{in,out}}_{pc}`. This is achieved with the following
-equations:
-
-.. math::
-   &\forall p\in P^{\text{partload}},~c\in C,~t\in T_m:\\\\
-   &\epsilon^{\text{in,out}}_{pct}=\Delta t\cdot\left(
-   \frac{\underline{r}^{\text{in,out}}_{pc}-r^{\text{in,out}}_{pc}}
-   {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
-   \frac{r^{\text{in,out}}_{pc}-
-   \underline{P}_p\underline{r}^{\text{in,out}}_{pc}}
-   {1-\underline{P}_p}\cdot \tau_{pt}\right).
-
-A few restrictions have to be kept in mind when using this feature:
-
-* :math:`\underline{P}_p` has to be set larger than 0 otherwise the feature
-  will work but not have any effect.
-* Environmental output commodities have to mimic the behavior of the inputs by
-  which they are generated. Otherwise the emissions per unit of input would
-  change together with the efficiency, which is typically not the desired
-  behavior.
 
 This concludes the minimal model.

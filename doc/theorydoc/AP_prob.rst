@@ -299,3 +299,27 @@ or by replacing during start the rampiong up constraint which uses the ramping u
    &\overline{SR}_{p}^\text{start}= \frac{\underline{P}_p}{\overline{ST}_{p}^\text{start}
    &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^\text{up}\kappa_{p}\omicron_{p(t-1)}+
    \Delta t\overline{SR}_p^\text{start}\kappa_{p}(1-\omicron_{p(t-1)})
+
+Lastly, for those processes which have a fix start-up cost, it is necessary to identify 
+whether a process has completed its starting phase and begins to produce or not. The following 
+equation does this by turning the boolean variable process start-up marker :math:`\sigma_{pt}`
+to 1 when the process on/off marker switches from 0 to 1:
+
+.. math::
+   &\forall p\in P^{\text{on/off with start cost}},~t\in T_m:\\\\
+   &\sigma_{pt}\geq \omicron_{pt}-\omicron_{p(t-1)}.
+
+The following table shows the possible values of :math:`\sigma_{pt}`:
+.. table:: *Table: Process Start-up Marker Values*
+
+        +----------------------+--------------------------+---------------------+
+	     |:math:`\omicron_{pt}` |:math:`\omicron_{p(t-1)}` |:math:`\sigma_{pt}`  |
+	     +======================+==========================+=====================+
+	     |0                     |0                         |0 or 1 (0 is optimal)|
+	     +----------------------+--------------------------+---------------------+
+        |0                     |1                         |0                    |
+        +----------------------+--------------------------+---------------------+
+        |1                     |0                         |1                    |
+        +----------------------+--------------------------+---------------------+
+        |1                     |1                         |0                    |
+        +----------------------+--------------------------+---------------------+

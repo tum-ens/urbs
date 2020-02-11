@@ -176,15 +176,46 @@ possible cases, each solved with its own output ramping equation, as follows:
 Case I: When
 .. math::
    &\underline{P}_p\geq \overline{PG}_p^\text{up}
-   &\overline{PG}_p^\text{up}| \underline{P}_p,
-where :math:`x|y` means that x divides y. Here, in order to ensure that the process behaves 
+   &\underline{P}_p\ is a multiple of \overline{PG}_p^\text{up}.
+Here, in order to ensure that the process behaves 
 realistically, it is needed to ensure that the process starts producing in the minimum working 
 point, :math:`\underline{P}_p\kappa_p`, and not at a higher value. The following equation ensures
 this:
 
 .. math::
-   &\forall p\in P^{\text{on/off with partload}},~c\in C^{\text\{environmental}},~t\in T_m:\\\\
+   &\forall p\in P^{\text{on/off, case I}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\underline{P}_p\kappa_{p}\r^{\text{out}}_{pc}\\\\
+   
+Case II: When
+.. math::
+   &\underline{P}_{p}>\overline{PG}_p^\text{up}
+   &\underline{P}_p\ is not a multiple of \overline{PG}_p^\text{up}.
+Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
+process starts somewhere in the interval between the minimum working point 
+:math:`\underline{P}_p\kappa_p` and the point of the first multiple of 
+:math:`\overline{PG}_p^\text{up}` greater than :math:`\underline{P}_p\kappa_p`, which is 
+:math:`(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)\cdot \overline{PG}_p`. 
 
+.. math::
+   &\forall p\in P^{\text{on/off, case II}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
+   \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}\\\\
+
+Case III: When
+.. math::
+   &\underline{P}_{p}<\overline{PG}_p^\text{up}.
+Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
+process starts somewhere in the interval between the minimum working point 
+:math:`\underline{P}_p\kappa_p` and the first ramping up point greater than 0, 
+:math:`\overline{PG}_p^\text{up}\kappa_p`. This is done by the following equation:
+
+.. math::
+   &\forall p\in P^{\text{on/off, case III}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\r^{\text{out}}_{pc}\\\\
+   
 Fifthly, there are some processes which have a different ramping up gradient while starting 
 than while producing. This is usualy defined with the help of a so called starting time. The 
 following equations transform the starting time into a starting ramp and implement the starting

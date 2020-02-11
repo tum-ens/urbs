@@ -297,7 +297,7 @@ switching speed of a process can be limited:
    &\tau_{pt}\leq \kappa_{p}\\
    &\tau_{pt}\geq \underline{P}_{p}\kappa_{p}\\
    &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^\text{up}\kappa_{p}\\
-   &\tau_{pt}-\tau_{p(t-1)}\leq \-Delta t\overline{PG}_p^\text{down}\kappa_{p}\\,
+   &\tau_{pt}-\tau_{p(t-1)}\geq \-Delta t\overline{PG}_p^\text{down}\kappa_{p}\\,
 
 where :math:`\underline{P}_{p}` is the normalized, minimal operational state of
 the process and :math:`\overline{PG}_p^\text{up}` and :math:`\overline{PG}_p^\text{down}`

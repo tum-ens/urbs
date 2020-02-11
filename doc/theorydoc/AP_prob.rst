@@ -167,7 +167,11 @@ to be the partial one. This is a realistic value, since processes normaly produc
 percentagewise, more CO2 and/or other environmental commodities in relationship to the 
 throughput when starting then at higher throughput values.
 
-Fourthly, there are some processes which have a different ramping up gradient while starting 
+Fourthly, while ramping up a process which can be turned on and off with a defined ramping up 
+gradient, the following unrealistic situation might occur: Due to the fact that in the minimum 
+working point, the process on/off marker :math:`\omicron_{pt}` can be both 0 and 1.
+
+Fifthly, there are some processes which have a different ramping up gradient while starting 
 than while producing. This is usualy defined with the help of a so called starting time. The 
 following equations transform the starting time into a starting ramp and implement the starting
 ramp only during start, either as the only ramping constraint when no ramp up gradient is defined 

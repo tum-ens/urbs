@@ -26,7 +26,7 @@ class MainView (wx.Frame):
     def __init__(self, controller):
         """The constructor
             """
-            wx.Frame.__init__(self, None, title="urbs gui 1.0")
+        wx.Frame.__init__(self, None, title="urbs gui 1.0")
 
         menubar = wx.MenuBar()
         fileMenu = wx.Menu()

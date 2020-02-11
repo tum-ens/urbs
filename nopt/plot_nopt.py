@@ -1,7 +1,3 @@
-
-
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -60,7 +56,10 @@ def sort_plot_elements(elements):
     return elements_sorted
 
 
-def plot_nopt(prob, figure_basename,figure_size=(16, 12),extensions=None):
+def plot_nopt(prob, stf, com, sit, dt, timesteps, timesteps_plot,
+         power_name='Power', energy_name='Energy',
+         power_unit='MW', energy_unit='MWh', time_unit='h',
+         figure_size=(16, 12)):
     """Plot a stacked timeseries of commodity balance and storage.
 
        Creates a stackplot of the energy balance of a given commodity, together
@@ -68,6 +67,17 @@ def plot_nopt(prob, figure_basename,figure_size=(16, 12),extensions=None):
 
        Args:
            - prob: urbs model instance
+           - stf: support timeframe
+           - com: commodity name to plot
+           - sit: site name to plot
+           - dt: length of each time step (unit: hours)
+           - timesteps: modelled timesteps
+           - timesteps_plot: timesteps to be plotted
+           - power_name: optional string for 'power' label; default: 'Power'
+           - power_unit: optional string for unit; default: 'MW'
+           - energy_name: optional string for 'energy' label; default: 'Energy'
+           - energy_unit: optional string for storage plot; default: 'MWh'
+           - time_unit: optional string for time unit label; default: 'h'
            - figure_size: optional (width, height) tuple in inch; default: (16, 12)
 
        Returns:
@@ -84,71 +94,188 @@ def plot_nopt(prob, figure_basename,figure_size=(16, 12),extensions=None):
     #site list prob.sit.value_list
 
     slack_array=[]
-    cap_array_min=[]
-    cap_array_max=[]
+    cap_array=[]
 
     slack_array.append(0)
-    cap_array_min.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[prob.cap_obj, str(prob.cap_sites), 2020]['Minimum Cost'])
-    cap_array_max.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[
-                             prob.cap_obj, str(prob.cap_sites), 2020]['Minimum Cost'])
+    cap_array.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[prob.cap_obj, str(prob.cap_sites), 2020]['Minimum Cost'])
+
     for slack in prob.cost_slack_list:
         try:
-            cap_array_max.append(
+            cap_array.append(
                 prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[
                     prob.cap_obj, str(prob.cap_sites), 2020]['Max-{}'.format(slack)])
             slack_array.append(slack)
         except:
             pass
         try:
-            cap_array_min.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[prob.cap_obj, str(prob.cap_sites), 2020]['Min-{}'.format(slack)])
-            if not slack in slack_array:
-                slack_array.append(slack)
+            cap_array.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[prob.cap_obj, str(prob.cap_sites), 2020]['Min-{}'.format(slack)])
+            slack_array.append(slack)
         except:
             pass
-
-    slack_array=np.array(slack_array)
-    slack_array=slack_array*100
-    cap_array_min = np.array(cap_array_min)
-    cap_array_max = np.array(cap_array_max)
-
     # FIGURE
     fig = plt.figure(figsize=figure_size)
     all_axes = []
 
     gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2, 1], hspace=0.05)
 
-
-    ax0 = plt.subplot(gs[0])
+    # STACKPLOT
+    ax0 = plt.subplot(gs[1])
 
     all_axes.append(ax0)
 
-    ax0.plot(slack_array, cap_array_max, linewidth=3,marker='o', markerfacecolor= to_color(prob.cap_obj+'marker'), color=to_color(prob.cap_obj),label=prob.cap_obj)
-    ax0.plot(slack_array, cap_array_min, linewidth=3,marker='o', markerfacecolor= to_color(prob.cap_obj+'marker'),
-             color=to_color(prob.cap_obj))
 
+    sp = ax1.stackplot(prob.cost_slack_list,
+                         -consumed.values.T / dt[0],
+                         labels=tuple(consumed.columns),
+                         linewidth=0.15)
+    # color
+    for k, commodity in enumerate(consumed.columns):
+        commodity_color = to_color(commodity)
 
-    ax0.set_title('Maximum and Minimum {} Capacities for Increased Cost'.format(prob.cap_obj))
-    ax0.set_xlabel('{} ({})'.format('Increase in cost', '%'))
-    ax0.set_ylabel('{} Process Capacity ({})'.format(prob.cap_obj, 'MW'))
-    ax0.grid(b=0, linestyle='-', linewidth=0.5)
-    ax0.legend()
-    # if no custom title prefix is specified, use the figure_basename
+        sp00[k].set_facecolor(commodity_color)
+        sp00[k].set_edgecolor((.5, .5, .5))
 
-    new_figure_title = 'Near Optimal Analysis  objected-sites: {} year(s) {} '.format(
-        str(prob.cap_sites).strip('[]'),str(prob.stf_list).strip('[]'))
-    ax0.set_title(new_figure_title)
+    # PLOT CREATED
 
-    if extensions is None:
-        extensions = ['png']
+    # stack plot for created commodities (divided by dt for power)
+    sp0 = ax0.stackplot(hoursteps[1:],
+                        created.values.T / dt[0],
+                        labels=tuple(created.columns),
+                        linewidth=0.15)
 
-    # save plot to files
-    for ext in extensions:
-        fig_filename = '{}-{}-{}-{}.{}'.format(
-            figure_basename,prob.cap_obj, str(prob.cap_sites).strip('[]'),str(prob.stf_list).strip('[]'),''.join(ext))
-        fig.savefig(fig_filename, bbox_inches='tight')
-    plt.close(fig)
+    for k, commodity in enumerate(created.columns):
+        commodity_color = to_color(commodity)
 
+        sp0[k].set_facecolor(commodity_color)
+        sp0[k].set_edgecolor(to_color('Decoration'))
 
+    # label
+    ax0.set_title('Commodity balance of {} in {}'.format(com, ', '.join(sit)))
+    ax0.set_ylabel('{} ({})'.format(power_name, power_unit))
+
+    # legend
+    handles, labels = ax0.get_legend_handles_labels()
+
+    # add "only" consumed commodities to the legend
+    for item in consumed.columns[::-1]:
+        # if item not in created add to legend, except items
+        # from consumed which are all-zeros
+        if item in created.columns or consumed[item].any():
+            pass
+        else:
+            # remove item/commodity is not consumed
+            item_index = labels.index(item)
+            handles.pop(item_index)
+            labels.pop(item_index)
+
+    for item in labels:
+        if labels.count(item) > 1:
+            item_index = labels.index(item)
+            handles.pop(item_index)
+            labels.pop(item_index)
+
+    lg = ax0.legend(handles=handles[::-1],
+                    labels=labels[::-1],
+                    frameon=False,
+                    loc='upper left',
+                    bbox_to_anchor=(1, 1))
+    plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
+             linewidth=0.15)
+    plt.setp(ax0.get_xticklabels(), visible=False)
+
+    # PLOT DEMAND
+    # line plot for demand (unshifted) commodities (divided by dt for power)
+    ax0.plot(hoursteps, original.values / dt[0], linewidth=0.8,  # line plot of dsm unshifted timeseries
+             color=to_color('Unshifted'))
+
+    # line plot for demand (in case of DSM mode: shifted) commodities
+    # (divided by dt for power)
+    ax0.plot(hoursteps[1:], demand.values / dt[0], linewidth=1.0,  # line plot for demand shifted timeseries
+             color=to_color('Shifted'))
+
+    # PLOT STORAGE
+    ax1 = plt.subplot(gs[1], sharex=ax0)
+    all_axes.append(ax1)
+
+    # stack plot for stored commodities
+    try:
+        sp1 = ax1.stackplot(hoursteps, stored.values, linewidth=0.15)
+    except BaseException:
+        stored = pd.Series(0, index=hoursteps)
+        sp1 = ax1.stackplot(hoursteps, stored.values, linewidth=0.15)
+    if plot_dsm:
+        # hide xtick labels only if DSM plot follows
+        plt.setp(ax1.get_xticklabels(), visible=False)
+    else:
+        # else add label for time axis
+        ax1.set_xlabel('Time in year ({})'.format(time_unit))
+
+    # color & labels
+    sp1[0].set_facecolor(to_color('Storage'))
+    sp1[0].set_edgecolor(to_color('Decoration'))
+    ax1.set_ylabel('{} ({})'.format(energy_name, energy_unit))
+
+    # try:
+    # ax1.set_ylim((0, 0.5 + csto.loc[sit, :, com]['C Total'].sum()))
+    # except KeyError:
+    # pass
+
+    # PLOT DEMAND SIDE MANAGEMENT
+    if plot_dsm:
+        ax2 = plt.subplot(gs[2], sharex=ax0)
+        all_axes.append(ax2)
+
+        # bar plot for DSM up-/downshift power (bar width depending on dt)
+        ax2.bar(hoursteps,
+                deltademand.values / dt[0], width=0.8 * dt[0],
+                color=to_color('Delta'),
+                edgecolor='none')
+
+        # labels & y-limits
+        ax2.set_xlabel('Time in year ({})'.format(time_unit))
+        ax2.set_ylabel('{} ({})'.format(power_name, power_unit))
+
+    # make xtick distance duration-dependent
+    if len(timesteps_plot) > 26 * 168 / dt[0]:  # time horizon > half a year
+        steps_between_ticks = int(168 * 4 / dt[0])  # tick every four weeks
+    elif len(timesteps_plot) > 3 * 168 / dt[0]:  # time horizon > three weeks
+        steps_between_ticks = int(168 / dt[0])  # tick every week
+    elif len(timesteps_plot) > 2 * 24 / dt[0]:  # time horizon > two days
+        steps_between_ticks = int(24 / dt[0])  # tick every day
+    elif len(timesteps_plot) > 24 / dt[0]:  # time horizon > a day
+        steps_between_ticks = int(6 / dt[0])  # tick every six hours
+    else:  # time horizon <= a day
+        steps_between_ticks = int(3 / dt[0])  # tick every three hours
+
+    hoursteps_plot_ = hoursteps_plot[(steps_between_ticks - 1):]
+    hoursteps_plot_ = hoursteps_plot_[::steps_between_ticks]  # take hole h's
+    xticks = np.insert(hoursteps_plot_, 0, hoursteps_plot[0])  # add 1st tstep
+
+    # set limits and ticks for all axes
+    for ax in all_axes:
+        ax.set_frame_on(False)
+        ax.set_xlim(hoursteps_plot[0], hoursteps_plot[-1])
+        ax.set_xticks(xticks)
+        ax.xaxis.grid(True, 'major', color=to_color('Grid'),
+                      linestyle='-')
+        ax.yaxis.grid(True, 'major', color=to_color('Grid'),
+                      linestyle='-')
+        ax.xaxis.set_ticks_position('none')
+        ax.yaxis.set_ticks_position('none')
+
+        # group 1,000,000 with commas, but only if maximum or minimum are
+        # sufficiently large. Otherwise, keep default tick labels
+        ymin, ymax = ax.get_ylim()
+        if ymin < -90 or ymax > 90:
+            group_thousands = mpl.ticker.FuncFormatter(
+                lambda x, pos: '{:0,d}'.format(int(x)))
+            ax.yaxis.set_major_formatter(group_thousands)
+        else:
+            skip_lowest = mpl.ticker.FuncFormatter(
+                lambda y, pos: '' if pos == 0 else y)
+            ax.yaxis.set_major_formatter(skip_lowest)
+
+    return fig
 
 
 def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,

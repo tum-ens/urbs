@@ -27,14 +27,4 @@ COLORS = {
     'Revenue': (62, 173, 0),
     'Purchase': (0, 51, 89),
     'Startup': (105, 8, 90),
-    'Variable': (128, 153, 172),
-    #plot markers
-    'Biomass plantmarker': (0, 122, 55),
-    'Coal plantmarker': (100, 100, 100),
-    'Gas plantmarker': (237, 227, 0),
-    'Gud plantmarker': (153, 153, 0),
-    'Hydro plantmarker': (198, 188, 240),
-    'Lignite plantmarker': (116, 66, 65),
-    'Photovoltaicsmarker': (243, 174, 40),
-    'Slack powerplantmarker': (163, 74, 130),
-    'Wind parkmarker': (17, 105, 177)}
+    'Variable': (128, 153, 172)}

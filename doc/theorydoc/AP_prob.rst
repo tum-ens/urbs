@@ -168,5 +168,13 @@ percentagewise, more CO2 and/or other environmental commodities in relationship 
 throughput when starting then at higher throughput values.
 
 Fourthly, there are some processes which have a different ramping up gradient while starting 
-than while producing. This is usualy defined with the help of a so called "starting time" and
-is caused by the fact that some processes, usualy those which 
+than while producing. This is usualy defined with the help of a so called starting time. The 
+following equations transform the starting time into a starting ramp and implement the starting
+ramp only during start, either as the only ramping constraint when no ramp up gradient is defined 
+or by replacing during start the rampiong up constraint which uses the ramping up gradient:
+
+.. math::
+   &\forall p\in P^{\text{on/off with start time}},~t\in T_m:\\\\
+   &\overline{SR}_{p}^\text{start}= \frac{\underline{P}_p}{\overline{ST}_{p}^\text{start}
+   &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^\text{up}\kappa_{p}\omicron_{p(t-1)}+
+   \Delta t\overline{SR}_p^\text{start}\kappa_{p}(1-\omicron_{p(t-1)})

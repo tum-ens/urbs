@@ -160,6 +160,7 @@ similarly adapted version of the part-load output equation:
    \frac{r^{\text{out}}_{pc}-
    \underline{P}_p\underline{r}^{\text{out}}_{pc}}
    {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}\\\\
+   
 Here, it is important to notice that the output of the environmental commodities becomes
 a continuous, piecewise linear function defined on two intervals. In order to ensure the 
 continuity property of the function, the output ratio used for the starting interval has
@@ -179,29 +180,78 @@ Case I: When
    &\underline{P}_p\ is a multiple of \overline{PG}_p^\text{up}.
 Here, in order to ensure that the process behaves 
 realistically, it is needed to ensure that the process starts producing in the minimum working 
-point, :math:`\underline{P}_p\kappa_p`, and not at a higher value. The following equation ensures
-this:
+point, :math:`\underline{P}_p\kappa_p\r^{\text{out}}_{pc}`, and not at a higher value. This is 
+done by the following equation:
 
 .. math::
    &\forall p\in P^{\text{on/off, case I}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
    \Delta t\underline{P}_p\kappa_{p}\r^{\text{out}}_{pc}\\\\
    
+If the process shows a part load behavior, the equation changes to:
+
+.. math::
+   &\forall p\in P^{\text{on/off with partload, case I}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\underline{P}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\\\\
+   
+If the process has a time variable efficiency, the equation changes to:
+
+.. math::
+   &\forall p\in P^{\text{on/off with TimeVarEff, case I}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\underline{P}_p\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+   
+If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
+to:
+
+.. math::
+   &\forall p\in P^{\text{on/off with TimeVarEff, case I}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\underline{P}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+   
 Case II: When
 .. math::
    &\underline{P}_{p}>\overline{PG}_p^\text{up}
    &\underline{P}_p\ is not a multiple of \overline{PG}_p^\text{up}.
+   
 Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
 process starts somewhere in the interval between the minimum working point 
 :math:`\underline{P}_p\kappa_p` and the point of the first multiple of 
 :math:`\overline{PG}_p^\text{up}` greater than :math:`\underline{P}_p\kappa_p`, which is 
-:math:`(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)\cdot \overline{PG}_p`. 
+:math:`(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)\cdot \overline{PG}_p`. This is 
+done by the following equation: 
 
 .. math::
    &\forall p\in P^{\text{on/off, case II}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
    \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
    \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}\\\\
+
+If the process shows a part load behavior, the equation changes to:
+
+.. math::
+   &\forall p\in P^{\text{on/off, case II}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
+   \overline{PG}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\\\\
+   
+If the process has a time variable efficiency, the equation changes to:
+
+.. math::
+   &\forall p\in P^{\text{on/off with TimeVarEff, case II}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
+   \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+
+If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
+to:
+
+.. math::
+   &\forall p\in P^{\text{on/off with partload and TimeVarEff, case II}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
+   \overline{PG}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
 
 Case III: When
 .. math::
@@ -215,6 +265,28 @@ process starts somewhere in the interval between the minimum working point
    &\forall p\in P^{\text{on/off, case III}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
    \Delta t\overline{PG}_p^\text{up}\kappa_{p}\r^{\text{out}}_{pc}\\\\
+
+If the process shows a part load behavior, the equation changes to:
+
+.. math::
+   &\forall p\in P^{\text{on/off, case III}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc}\\\\
+
+If the process has a time variable efficiency, the equation changes to:
+
+.. math::
+   &\forall p\in P^{\text{on/off with TimeVarEff, case III}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+   
+If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
+to:
+
+.. math::
+   &\forall p\in P^{\text{on/off with partload and TimeVarEff, case III}},~c\in C,~t\in T_m:\\\\
+   &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
    
 Fifthly, there are some processes which have a different ramping up gradient while starting 
 than while producing. This is usualy defined with the help of a so called starting time. The 

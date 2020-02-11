@@ -24,7 +24,7 @@ shutil.copy(__file__, result_dir)
 # No site name indicates minimize/maximize total capacity of all sites
 # example objectives [('South','Photovoltaics'),('Photovoltaics'),('South','North','cost')] etc.
 
-objective = [('Photovoltaics')]
+objective = [('South','Photovoltaics'),('Wind park')]
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 

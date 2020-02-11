@@ -169,7 +169,21 @@ throughput when starting then at higher throughput values.
 
 Fourthly, while ramping up a process which can be turned on and off with a defined ramping up 
 gradient, the following unrealistic situation might occur: Due to the fact that in the minimum 
-working point, the process on/off marker :math:`\omicron_{pt}` can be both 0 and 1.
+working point the process on/off marker :math:`\omicron_{pt}` can be both 0 and 1, the output 
+of a process might have unrealistic jumps after the starting process is completed. There are 3 
+possible cases, each solved with its own output ramping equation, as follows:
+
+Case I: When
+.. math::
+   &\underline{P}_p\geq \overline{PG}_p^\text{up}
+   &\overline{PG}_p^\text{up}| \underline{P}_p,
+where :math:`x|y` means that x divides y. Here, in order to ensure that the process behaves 
+realistically, it is needed to ensure that the process starts producing in the minimum working 
+point, :math:`\underline{P}_p\kappa_p`, and not at a higher value. The following equation ensures
+this:
+
+.. math::
+   &\forall p\in P^{\text{on/off with partload}},~c\in C^{\text\{environmental}},~t\in T_m:\\\\
 
 Fifthly, there are some processes which have a different ramping up gradient while starting 
 than while producing. This is usualy defined with the help of a so called starting time. The 

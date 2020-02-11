@@ -460,9 +460,9 @@ column with the header label "start-time" represents the parameters
 The parameter :math:`\overline{SR}_{yvp}^\text{start}` represents the ramp of a process
 :math:`p` at a site :math:`v` in support timeframe :math:`y` while starting.
 The unit of this parameter is 1/h. This parameter is not declared directly in the input,
-being only a derived parameter, calculated as the ratio between the process starting time 
-:math:`\overline{ST}_{yvp}^\text{start}` and the process minimum part load fraction 
-:math:`\underline{P}_{yvp}`.
+being only a derived parameter, calculated as the ratio between the process minimum part 
+load fraction :math:`\underline{P}_{yvp}` and the process starting time 
+:math:`\overline{ST}_{yvp}^\text{start}`.
 
 **Process Minimum Part Load Fraction**, :math:`\underline{P}_{yvp}`,
 ``m.process_dict['min-fraction'][(stf, sit, pro)]``: The parameter

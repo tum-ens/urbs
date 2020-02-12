@@ -6,8 +6,7 @@ from .input_nopt import *
 #import ipdb
 
 
-def create_model(data, dt=1, timesteps=None, objective=[('cost')],
-                 dual=True):
+def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -22,10 +21,6 @@ def create_model(data, dt=1, timesteps=None, objective=[('cost')],
     Returns:
         a pyomo ConcreteModel object
     """
-    if isinstance(objective[0],tuple):
-        objective_pro = objective[0][-1]
-    else:
-        objective_pro = objective[0]
 
     # Optional
     if not timesteps:
@@ -35,6 +30,14 @@ def create_model(data, dt=1, timesteps=None, objective=[('cost')],
 
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
+    if 'cost' in objective_dict.keys() or 'CO2' in objective_dict.keys():
+        m.objective_pro = list(objective_dict.keys())
+        m.objective_dict = objective_dict
+        objective= m.objective_pro[0]
+    else:
+        objective='cost'
+        m.objective_pro = list(objective_dict.keys())
+        m.objective_dict = objective_dict
 
     # Parameters: are constant
 
@@ -56,7 +59,7 @@ def create_model(data, dt=1, timesteps=None, objective=[('cost')],
 
     # import objective function information
     m.obj = pyomo.Param(
-        initialize=objective_pro,
+        initialize=objective,
         doc='Specification of minimized quantity, default: "cost"')
 
     # Sets
@@ -428,7 +431,7 @@ def create_model(data, dt=1, timesteps=None, objective=[('cost')],
             sense=pyomo.minimize,
             doc='minimize total CO2 emissions')
 
-    elif m.obj.value in ['cost' 'CO2' 'Biomass plant','Coal plant','Feed-in','Gas plant', 'Hydro plant', 'Lignite plant','Photovoltaics', 'Purchase', 'Slack powerplant', 'Wind park']:
+    elif m.obj.value in m.pro:
       pass
 
     else:
@@ -841,14 +844,12 @@ def co2_rule(m):
 
 def capacity_rule(m):
     capacity_sum = 0
-    pro= m.cap_obj
-    sites= m.cap_sites
-    if len(sites)==0:
-        sites=m.sit
+    pro_list= m.objective_pro
     stf = max(m.stf)
     #for stf in m.stf:
-    for sit in sites:
-        capacity_sum += def_process_capacity_rule(m, stf, sit, pro)
+    for pro in pro_list:
+        for sit in m.objective_dict[pro] :
+            capacity_sum += def_process_capacity_rule(m, stf, sit, pro)
     return (capacity_sum)
 
 

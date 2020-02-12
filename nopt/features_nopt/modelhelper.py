@@ -31,15 +31,15 @@ def invcost_factor(dep_prd, interest, discount=None, year_built=None,
                     ((1 + interest) ** dep_prd - 1))
     else:
         if interest == 0:
-            return ((1 + discount) ** (1 - (year_built-stf_min)) *
+            return ((1 + discount) ** (1 - (year_built - stf_min)) *
                     ((1 + discount) ** dep_prd - 1) /
                     (dep_prd * discount * (1 + discount) ** dep_prd))
         else:
-            return ((1 + discount) ** (1 - (year_built-stf_min)) *
+            return ((1 + discount) ** (1 - (year_built - stf_min)) *
                     (interest * (1 + interest) ** dep_prd *
-                    ((1 + discount) ** dep_prd - 1)) /
+                     ((1 + discount) ** dep_prd - 1)) /
                     (discount * (1 + discount) ** dep_prd *
-                    ((1+interest) ** dep_prd - 1)))
+                     ((1 + interest) ** dep_prd - 1)))
 
 
 def overpay_factor(dep_prd, interest, discount, year_built, stf_min, stf_end):
@@ -71,9 +71,9 @@ def overpay_factor(dep_prd, interest, discount, year_built, stf_min, stf_end):
         else:
             return ((1 + discount) ** (1 - (year_built - stf_min)) *
                     (interest * (1 + interest) ** dep_prd *
-                    ((1 + discount) ** op_time - 1)) /
+                     ((1 + discount) ** op_time - 1)) /
                     (discount * (1 + discount) ** dep_prd *
-                    ((1 + interest) ** dep_prd - 1)))
+                     ((1 + interest) ** dep_prd - 1)))
 
 
 # Energy related costs
@@ -96,7 +96,7 @@ def discount_factor(stf, m):
     """Discount for any payment made in the year stf
     """
     discount = (m.global_prop.xs('Discount rate', level=1)
-                .loc[m.global_prop.index.min()[0]]['value'])
+        .loc[m.global_prop.index.min()[0]]['value'])
 
     return (1 + discount) ** (1 - (stf - m.global_prop.index.min()[0]))
 
@@ -106,7 +106,7 @@ def effective_distance(dist, m):
     Calculated by repetition of modeled stfs and discount utility.
     """
     discount = (m.global_prop.xs('Discount rate', level=1)
-                .loc[m.global_prop.index.min()[0]]['value'])
+        .loc[m.global_prop.index.min()[0]]['value'])
 
     if discount == 0:
         return dist
@@ -180,11 +180,11 @@ def op_pro_tuples(pro_tuple, m):
             index_helper = sorted_stf.index(stf_later)
             if stf_later == max(sorted_stf):
                 if (stf_later +
-                    m.global_prop.loc[(max(sorted_stf), 'Weight'), 'value'] -
-                    1 <= stf + m.process_dict['depreciation'][
-                                              (stf, sit, pro)]):
+                        m.global_prop.loc[(max(sorted_stf), 'Weight'), 'value'] -
+                        1 <= stf + m.process_dict['depreciation'][
+                            (stf, sit, pro)]):
                     op_pro.append((sit, pro, stf, stf_later))
-            elif (sorted_stf[index_helper+1] <=
+            elif (sorted_stf[index_helper + 1] <=
                   stf + m.process_dict['depreciation'][(stf, sit, pro)] and
                   stf <= stf_later):
                 op_pro.append((sit, pro, stf, stf_later))
@@ -208,42 +208,36 @@ def inst_pro_tuples(m):
             index_helper = sorted_stf.index(stf_later)
             if stf_later == max(m.stf):
                 if (stf_later +
-                   m.global_prop.loc[(max(sorted_stf), 'Weight'), 'value'] -
-                   1 < min(m.stf) + m.process_dict['lifetime'][
-                                                   (stf, sit, pro)]):
+                        m.global_prop.loc[(max(sorted_stf), 'Weight'), 'value'] -
+                        1 < min(m.stf) + m.process_dict['lifetime'][
+                            (stf, sit, pro)]):
                     inst_pro.append((sit, pro, stf_later))
-            elif (sorted_stf[index_helper+1] <=
+            elif (sorted_stf[index_helper + 1] <=
                   min(m.stf) + m.process_dict['lifetime'][(stf, sit, pro)]):
                 inst_pro.append((sit, pro, stf_later))
 
     return inst_pro
 
 
-
 def read_capacity(m, name):
-    objective_arg = m.cap_obj
-    objective_sites = str(m.cap_sites)
-    cpro = get_entities(m, ['cap_pro', 'cap_pro_new'])
+    # objective_arg = m.objective_pro
+    cpro = get_entity(m, 'cap_pro')
     if not cpro.empty:
         cpro.index.names = ['Stf', 'Site', 'Process']
-        cpro.columns = ['Total', 'New']
+        cpro.columns = [name]
         cpro.sort_index(inplace=True)
-    optimized_cap = cpro['Total'][:, :, objective_arg]
-    optimized_cap = pd.concat([optimized_cap], keys=[objective_sites], names=['Objective_Sites'])
-    optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],names=['Objective_Process'])
+    # optimized_cap = cpro['Total'][:, :, objective_arg]
+    # optimized_cap = pd.concat([optimized_cap], keys=[objective_sites], names=['Objective_Sites'])
+    # optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],names=['Objective_Process'])
 
-    optimized_cap = optimized_cap.to_frame(name=name)
+    optimized_cap = cpro.to_frame(name=name)
     return optimized_cap
 
 
-def read_costs (m,name):
-    objective_arg = m.cap_obj
-    objective_sites= str(m.cap_sites)
+def read_costs(m, name):
     costs = get_entity(m, 'costs')
     total_cost = pd.Series(costs.sum(), index=['Total Cost'])
     costs = costs.append([total_cost])
-    costs = pd.concat([costs], keys=[objective_sites], names=['Objective_Sites'])
-    costs = pd.concat([costs], keys=[objective_arg], names=['Objective_Process'])
-
     costs = costs.to_frame(name=name)
+
     return costs

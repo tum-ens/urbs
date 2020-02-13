@@ -280,7 +280,7 @@ These are represented by the set :math:`P_v`. A member :math:`p_{yv}` in set
         initialize=m.process.index,
         doc='Combinations of possible processes, e.g. (2020,North,Coal plant)')
 
-There are three subsets defined for process tuples, which each activate a
+There are several subsets defined for process tuples, which each activate a
 different set of modeling constraints.
 
 The first subset is formed in order to capture all processes that take up a
@@ -296,7 +296,22 @@ tuple set is defined as:
         initialize=m.proc_area.index,
         doc='Processes and Sites with area Restriction')
 	
-The second subset of the process tuples ``pro_minfraction_tuples``
+The second subset is formed in order to capture all processes which have the 
+parameter process new capacity block :math:`{K}_{yvp}^\text{block}` set in 
+the table *Process*, used for building new capacity in blocks. The tuple set 
+is defined as:
+
+::
+
+    m.pro_cap_new_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (s, si, pro) in tuple(m.cap_block_dict.keys())
+                    if process == pro and si == site and s == stf],
+                    doc='Processes with new capacities built in blocks')
+	
+The third subset of the process tuples ``pro_minfraction_tuples``
 :math:`P_{yv}^\text{minfraction}` is formed in order to identify processes
 that have a minimum fraction defined without having partial operation 
 properties and cannot be turned off. Programatically, they are identified by
@@ -316,7 +331,7 @@ AdvancedProcesses.py as:
         doc='Processes with constant efficiency and minimum working load which'
             'cannot be turned off')
 	    
-The third subset of the process tuples ``pro_partial_tuples``
+The fourth subset of the process tuples ``pro_partial_tuples``
 :math:`P_{yv}^\text{partial}` is formed in order to identify processes that
 have partial operation properties and cannot be turned off. Programmatically,
 they are identified by those processes, which have the parameter ``ratio-min``
@@ -336,7 +351,7 @@ defined in AdvancedProcesses.py as:
                     m.process_dict['on-off'][stf, site, process] != 1],
         doc='Processes with partial input/output which cannot be turned off')
 
-The fourth subset of the process tuples ``pro_on_off_tuples`` 
+The fifth subset of the process tuples ``pro_on_off_tuples`` 
 :math:`P_{yv}^\text{on/off}` is formed in order to identify processes that
 have a minimum fraction defined without having partial operation 
 properties and can be turned off. Programatically, they are identified by
@@ -355,7 +370,7 @@ AdvancedProcesses.py as:
                     if stf == st and site == sit and process == pro],
         doc='Processes with minimal fraction which can be turned off')
 	    
-The fifth subset of the process tuples ``pro_on_off_partial_tuples``
+The sixth subset of the process tuples ``pro_on_off_partial_tuples``
 :math:`P_{yv}^\text{partial on/off}` is formed in order to identify processes 
 that have a minimum fraction defined, partial operation 
 properties and can be turned off. Programmatically,

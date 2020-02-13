@@ -57,8 +57,15 @@ separately. The respective constraints read:
 where :math:`\kappa^{\text{c,p}}_{yvs}` are the total installed
 capacity and power, repectively, in year :math:`y` at site :math:`v` of storage
 :math:`s` and :math:`\widehat{\kappa}^{\text{c,p}}_{yvs}` the corresponding
-newly installed storage capacities and powers. Both quantities are then also
-given an upper and a lower bond via:
+newly installed storage capacities and powers. Both newly installed quantities 
+can also be the sum of blocks:
+
+.. math::
+   \widehat{\kappa}^{\text{c,p}}_{yvs}= \{K}_{yvs}^\text{c,p block}\cdot
+   \beta_{yvs}^\text{c,p}
+
+
+Both total installed quantities are then also given an upper and a lower bond via:
 
 .. math::
    &\forall y\in Y,~v\in V,~s\in S:\\

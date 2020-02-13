@@ -297,9 +297,9 @@ tuple set is defined as:
         doc='Processes and Sites with area Restriction')
 	
 The second subset is formed in order to capture all processes which have the 
-parameter process new capacity block :math:`{K}_{yvp}^\text{block}` set in 
-the table *Process*, used for building new capacity in blocks. The tuple set 
-is defined as:
+parameter process new capacity block ``cap-block`` :math:`{K}_{yvp}^\text{block}` 
+set in the table *Process*, used for building new capacity in blocks. The tuple 
+set is defined as:
 
 ::
 

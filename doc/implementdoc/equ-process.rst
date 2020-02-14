@@ -309,9 +309,9 @@ following code fragment:
             'cap_pro * on_off + min-fraction * cap_pro * (1 - on_off)')
             
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
-   :pyobject: res_throughput_by_on_off_lower
+   :pyobject: res_throughput_by_on_off_lower_rule
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
-   :pyobject: res_throughput_by_on_off_upper
+   :pyobject: res_throughput_by_on_off_upper_rule
 
 **Process On/Off Output Rule**: This constraint modifies the process output 
 commodity flow :math:`\epsilon_{yvcpt}^\text{out}` when compared to the 

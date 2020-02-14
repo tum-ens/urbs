@@ -511,7 +511,7 @@ In the script ``storage.py`` this variable is defined by the model variable
 ``cap_sto_p_unit`` and initialized by the following code fragment:
 ::	
 
-m.cap_sto_p_unit = pyomo.Var(
+    m.cap_sto_p_unit = pyomo.Var(
         m.sto_block_p_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New storage power units')

@@ -125,7 +125,8 @@ of a process, while the second one represents the consumed input while also prod
    {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
    \frac{r^{\text{in}}_{pc}-
    \underline{P}_p\underline{r}^{\text{in}}_{pc}}
-   {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}\\\\
+   {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}.
+   
 In order to ensure the continuity property of the function, the input ratio used 
 for the starting interval has to be the partial one. This is a realistic value, 
 since processes normaly use, percentagewise, more fuel in relationship to the 
@@ -175,9 +176,11 @@ of a process might have unrealistic jumps after the starting process is complete
 possible cases, each solved with its own output ramping equation, as follows:
 
 Case I: When
+
 .. math::
    &\underline{P}_p\geq \overline{PG}_p^\text{up}
    &\underline{P}_p\ is a multiple of \overline{PG}_p^\text{up}.
+   
 Here, in order to ensure that the process behaves 
 realistically, it is needed to ensure that the process starts producing in the minimum working 
 point, :math:`\underline{P}_p\kappa_p\r^{\text{out}}_{pc}`, and not at a higher value. This is 
@@ -186,21 +189,21 @@ done by the following equation:
 .. math::
    &\forall p\in P^{\text{on/off, case I}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\underline{P}_p\kappa_{p}\r^{\text{out}}_{pc}\\\\
+   \Delta t\underline{P}_p\kappa_{p}\r^{\text{out}}_{pc}.
    
 If the process shows a part load behavior, the equation changes to:
 
 .. math::
    &\forall p\in P^{\text{on/off with partload, case I}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\underline{P}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\\\\
+   \Delta t\underline{P}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}.
    
 If the process has a time variable efficiency, the equation changes to:
 
 .. math::
    &\forall p\in P^{\text{on/off with TimeVarEff, case I}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\underline{P}_p\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+   \Delta t\underline{P}_p\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}.
    
 If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
 to:
@@ -208,9 +211,10 @@ to:
 .. math::
    &\forall p\in P^{\text{on/off with TimeVarEff, case I}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\underline{P}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
-   
+   \Delta t\underline{P}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}.
+
 Case II: When
+
 .. math::
    &\underline{P}_{p}>\overline{PG}_p^\text{up}
    &\underline{P}_p\ is not a multiple of \overline{PG}_p^\text{up}.
@@ -219,14 +223,14 @@ Here, in order to ensure that the process behaves realistically, it is needed to
 process starts somewhere in the interval between the minimum working point 
 :math:`\underline{P}_p\kappa_p` and the point of the first multiple of 
 :math:`\overline{PG}_p^\text{up}` greater than :math:`\underline{P}_p\kappa_p`, which is 
-:math:`(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)\cdot \overline{PG}_p`. This is 
-done by the following equation: 
+:math:`(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)\cdot \overline{PG}_p`, where ⌊ ⌋ is
+the rounded down number. This is done by the following equation:
 
 .. math::
    &\forall p\in P^{\text{on/off, case II}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
    \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
-   \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}\\\\
+   \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}.
 
 If the process shows a part load behavior, the equation changes to:
 
@@ -234,7 +238,7 @@ If the process shows a part load behavior, the equation changes to:
    &\forall p\in P^{\text{on/off, case II}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
    \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
-   \overline{PG}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\\\\
+   \overline{PG}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}.
    
 If the process has a time variable efficiency, the equation changes to:
 
@@ -242,7 +246,7 @@ If the process has a time variable efficiency, the equation changes to:
    &\forall p\in P^{\text{on/off with TimeVarEff, case II}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
    \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
-   \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+   \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}.
 
 If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
 to:
@@ -251,11 +255,13 @@ to:
    &\forall p\in P^{\text{on/off with partload and TimeVarEff, case II}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
    \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
-   \overline{PG}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+   \overline{PG}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}.
 
 Case III: When
+
 .. math::
    &\underline{P}_{p}<\overline{PG}_p^\text{up}.
+
 Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
 process starts somewhere in the interval between the minimum working point 
 :math:`\underline{P}_p\kappa_p` and the first ramping up point greater than 0, 
@@ -264,29 +270,29 @@ process starts somewhere in the interval between the minimum working point
 .. math::
    &\forall p\in P^{\text{on/off, case III}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\r^{\text{out}}_{pc}\\\\
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\r^{\text{out}}_{pc}.
 
 If the process shows a part load behavior, the equation changes to:
 
 .. math::
    &\forall p\in P^{\text{on/off, case III}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc}\\\\
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc}.
 
 If the process has a time variable efficiency, the equation changes to:
 
 .. math::
    &\forall p\in P^{\text{on/off with TimeVarEff, case III}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
-   
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\r^{\text{out}}_{pc}\f^{\text{out}}_{pt}.
+
 If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
 to:
 
 .. math::
    &\forall p\in P^{\text{on/off with partload and TimeVarEff, case III}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}\\\\
+   \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc}\f^{\text{out}}_{pt}.
    
 Fifthly, there are some processes which have a different ramping up gradient while starting 
 than while producing. This is usualy defined with the help of a so called starting time. The 
@@ -298,7 +304,7 @@ or by replacing during start the rampiong up constraint which uses the ramping u
    &\forall p\in P^{\text{on/off with start time}},~t\in T_m:\\\\
    &\overline{SR}_{p}^\text{start}= \frac{\underline{P}_p}{\overline{ST}_{p}^\text{start}
    &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^\text{up}\kappa_{p}\omicron_{p(t-1)}+
-   \Delta t\overline{SR}_p^\text{start}\kappa_{p}(1-\omicron_{p(t-1)})
+   \Delta t\overline{SR}_p^\text{start}\kappa_{p}(1-\omicron_{p(t-1)}).
 
 Lastly, for those processes which have a fix start-up cost, it is necessary to identify 
 whether a process has completed its starting phase and begins to produce or not. The following 

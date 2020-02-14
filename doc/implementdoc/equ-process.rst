@@ -128,15 +128,15 @@ into 2 parts and defined and calculated by the following code fragments:
         m.tm, m.pro_rampdowngrad_tuples,
         rule=res_process_rampdown_rule,
         doc='throughput may not decrease faster than maximal ramp down gradient')
-    m.res_process_ramp_up = pyomo.Constraint(
-        m.tm, m.pro_rampupgrad_tuples,# - m.pro_rampup_start_tuples,
+    m.res_process_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampupgrad_tuples,
         rule=res_process_rampup_rule,
         doc='throughput may not increase faster than maximal ramp up gradient')
 
 .. literalinclude:: /../urbs/model.py
    :pyobject: res_process_rampdown_rule
 .. literalinclude:: /../urbs/model.py
-   :pyobject: res_process_ramp_up_rule
+   :pyobject: res_process_rampup_rule
 
 **Process Capacity Limit Rule**: The constraint process capacity limit rule
 limits the variable total process capacity :math:`\kappa_{yvp}`. This

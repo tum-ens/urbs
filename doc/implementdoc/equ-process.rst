@@ -198,7 +198,7 @@ constraint is not valid for environmental commodities since these are typically
 linked to an input commodity flow rather than an output commodity flow. The
 mathematical explanation of this rule is given in :ref:`theory-AP`.
 
-In script ``TimeVarEff.py`` the constraint process time variable output rule is
+In script ``AdvancedProcesses.py`` the constraint process time variable output rule is
 defined and calculated by the following code fragment:
 
 ::

@@ -18,8 +18,7 @@ constraints in the form:
 .. math::
    &\forall p \in P^{\text{TimeVarEff}},~c\in C-C^{\text{env}} t\in T_m:\\
    &\epsilon^{\text{out}}_{ypct}=r^{\text{out}}_{ypc}f^{\text{out}}_{ypt}
-   \tau_{ypct}
-   .
+   \tau_{ypct}.
 
 Here, :math:`f^{\text{out}}_{pt}` represents the normalized time series of the
 varying output ratio. This feature can be helpful when modeling, e.g.,
@@ -145,7 +144,7 @@ produced when a process is starting (e.g. environmental commodities) or not (e.g
    &\forall p\in P^{\text{on/off}},~c\in C^{\text\{environmental}},~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\\\\
    &\forall p\in P^{\text{on/off}},~c\in C^{\text\{non-environmental}},~t\in T_m:\\\\
-   &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\cdot \omicron_{pt}\\\\
+   &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\cdot \omicron_{pt}.
    
 If the process also shows part-load behavior, the previous two equations change to a 
 similarly adapted version of the part-load output equation:
@@ -166,7 +165,7 @@ similarly adapted version of the part-load output equation:
    {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
    \frac{r^{\text{out}}_{pc}-
    \underline{P}_p\underline{r}^{\text{out}}_{pc}}
-   {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}\\\\
+   {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}.
    
 Here, it is important to notice that the output of the environmental commodities becomes
 a continuous, piecewise linear function defined on two intervals. In order to ensure the 

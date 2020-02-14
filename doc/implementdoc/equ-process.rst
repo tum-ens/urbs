@@ -208,7 +208,7 @@ defined and calculated by the following code fragment:
         rule=def_pro_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
-.. literalinclude:: /../urbs/features/AdvancedProcess.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_pro_timevar_output_rule
 
 .. _sec-partial-startup-constr:
@@ -221,7 +221,7 @@ only activated if in the input file there is a value set in the column
 **ratio-min** for an **input commodity** or for an **output commodity** in the
 **process-commodity** sheet for the process in question.
 
- It is important to understand that this partial load formulation
+It is important to understand that this partial load formulation
 can only work if its accompanied by a non-zero value for the minimum partial
 load fraction :math:`\underline{P}_{yvp}`.
 
@@ -245,7 +245,7 @@ following code fragment:
         rule=res_throughput_by_capacity_min_rule,
         doc='cap_pro * min-fraction <= tau_pro')
         
-.. literalinclude:: /../urbs/AdvancedProcesses.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: res_throughput_by_capacity_min_rule
 
 **Partial Process Input Rule**: The link between operational state
@@ -266,7 +266,7 @@ input ratio (and analogous for the output ratios):
         doc='e_pro_in = cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
                      '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-.. literalinclude:: /../urbs/AdvancedProcesses.py.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_partial_process_input_rule
 
 In case of a process where also a time variable output efficiency is given the
@@ -278,7 +278,7 @@ code for the output changes to.
         rule=def_pro_partial_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
-.. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_pro_partial_timevar_output_rule
  
  
@@ -297,6 +297,7 @@ mathematical explanation of this rule is given in :ref:`theory-AP`.
 In script ``AdvancedProcesses.py`` this constraint is defined and calculated by the
 following code fragment:
 ::
+
     m.res_throughput_by_on_off_lower = pyomo.Constraint(
         m.tm, m.pro_on_off_tuples | m.pro_partial_on_off_tuples,
         rule=res_throughput_by_on_off_lower_rule,
@@ -307,9 +308,9 @@ following code fragment:
         doc='tau_pro <='
             'cap_pro * on_off + min-fraction * cap_pro * (1 - on_off)')
             
-.. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: res_throughput_by_on_off_lower
-.. literalinclude:: /../urbs/features/AdvancedProcesses.py.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: res_throughput_by_on_off_upper
 
 **Process On/Off Output Rule**: This constraint modifies the process output 
@@ -515,7 +516,7 @@ If the process has partial operation, the code changes to:
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: res_partial_output_minfraction_rampup_rampup_rule
    
- If the process has time variable efficiency, the code changes to:
+If the process has time variable efficiency, the code changes to:
 ::
 
     m.res_timevar_output_minfraction_rampup_rampup = pyomo.Constraint(

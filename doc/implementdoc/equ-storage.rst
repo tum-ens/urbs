@@ -97,6 +97,7 @@ of this rule is given in :ref:`theory-storage`.
 In script ``storage.py`` the constraint storage capacity rule is defined and
 calculated by the following code fragment:
 ::
+
     m.def_new_cap_sto_p = pyomo.Constraint(
         m.sto_block_p_tuples,
         rule=def_new_cap_sto_p_rule,

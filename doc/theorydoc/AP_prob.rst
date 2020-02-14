@@ -2,6 +2,12 @@
 
 .. _theory-AP:
 
+Advanced Processes
+==================
+Several processes have a complicated, sometimes non-linear behavior. Those that 
+can be modelled in urbs are explained here. These are: Time Variable Efficiency, 
+Minimum Load and Part Load Behaviors and On/Off Behavior.
+
 Time Variable Efficieny
 =======================
 It is possible to manipulate the operation of a process by introducing a time

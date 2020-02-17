@@ -222,16 +222,14 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             prob.near_optimal_cost = prob.minimum_cost.join(maximized_cap_costs, how='outer')
             prob.near_optimal_cost = prob.minimum_cost.join(minimized_cap_costs, how='outer')
             #prob.near_optimal_capacities = pd.concat([prob.near_optimal_capacities], keys=[str(list(objective_dict.items())).replace("'","").strip("[]")],names=['Objective_pro'])
-        report(
-            prob,
-            os.path.join(result_dir, '{}-{}.xlsx').format(str(list(objective_dict.items())).strip("[]").replace("'", "")
-                                                          , str(prob.stf_list).strip("[]").replace("'", "")),
-            report_tuples=report_tuples,
-            report_sites_name=report_sites_name)
+        #report(
+         #   prob,
+        #    os.path.join(result_dir, '{}-{}.xlsx').format(str(list(objective_dict.items())).strip("[]").replace("'", "")
+         #                                                 , str(prob.stf_list).strip("[]").replace("'", "")),
+         #   report_tuples=report_tuples,
+          #  report_sites_name=report_sites_name)
 
         plot_nopt(prob,
-                  os.path.join(result_dir,
-                               '{}-{}'.format(str(list(objective_dict.items())).strip("[]").replace("'", ""),
-                                              str(prob.stf_list).strip("[]").replace("'", ""))))
+                  os.path.join(result_dir,'nopt'))
 
     return prob

@@ -77,64 +77,73 @@ def plot_nopt(prob, figure_basename,figure_size=(16, 12),extensions=None):
     import matplotlib as mpl
     #prob.objective_pro
     #prob.objective_dict
-    if m.mode['int']:
+    if prob.mode['int']:
+
         pass
+
     else:
-        # plot minimized-maximized capacities for every site alone and one together
-        #for sit in []
-        slack_array=[]
-        cap_array_min=[]
-        cap_array_max=[]
-        #prob.near_optimal_capacities.loc[(2020, ['Mid', 'North', 'South'], ['Photovoltaics', 'Wind park'])].sum(level=['Stf', 'Site'])loc[2020, 'Mid']
-        slack_array.append(0)
-        cap_array_min.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[prob.cap_obj, str(prob.cap_sites), 2020]['Minimum Cost'])
-        cap_array_max.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[
-                                 prob.cap_obj, str(prob.cap_sites), 2020]['Minimum Cost'])
-        for slack in prob.cost_slack_list:
-            try:
-                cap_array_max.append(
-                    prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[
-                        prob.cap_obj, str(prob.cap_sites), 2020]['Max-{}'.format(slack)])
-                slack_array.append(slack)
-            except:
-                pass
-            try:
-                cap_array_min.append(prob.near_optimal_capacities.sum(level=['Objective_Process', 'Objective_Sites', 'Stf']).loc[prob.cap_obj, str(prob.cap_sites), 2020]['Min-{}'.format(slack)])
-                if not slack in slack_array:
-                    slack_array.append(slack)
-            except:
-                pass
-
-        slack_array=np.array(slack_array)
-        slack_array=slack_array*100
-        cap_array_min = np.array(cap_array_min)
-        cap_array_max = np.array(cap_array_max)
-
         # FIGURE
         fig = plt.figure(figsize=figure_size)
         all_axes = []
-
-        gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[2, 1], hspace=0.05)
-
-
-        ax0 = plt.subplot(gs[0])
-
+        gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[1, 1], hspace=0.05)
+        ax0 = plt.subplot(gs[0]) #plt.subplot(gs[0])
+        ax1 = plt.subplot(gs[1])
         all_axes.append(ax0)
+        #plot for single year, each plot has one graph per site and one graph for all the sites together
+        plot_site_list= list(prob.sit)
+        plot_site_list.append(list(prob.sit))
+        for site in plot_site_list: #print one plot for capacities on each site
+            slack_array = []
+            cap_array_min = []
+            cap_array_max = []
+            slack_array.append(0)
+            cap_array_min.append(sum(prob.near_optimal_capacities['Minimum Cost'][p] for p in prob.pro_tuples if p[2] in prob.objective_pro and p[1] == site or p[1] in site ))
+            cap_array_max.append(sum(prob.near_optimal_capacities['Minimum Cost'][p] for p in prob.pro_tuples if p[2] in prob.objective_pro and p[1] == site or p[1] in site ))
+            for slack in prob.cost_slack_list:
+                try:
+                    cap_array_max.append(sum(prob.near_optimal_capacities['Max-{}'.format(slack)][p] for p in prob.pro_tuples
+                                             if p[2] in prob.objective_pro and p[1] == site or p[1] in site ))
+                    slack_array.append(slack)
+                except:
+                    pass
+                try:
+                    cap_array_min.append(sum(prob.near_optimal_capacities['Min-{}'.format(slack)][p] for p in prob.pro_tuples
+                                             if p[2] in prob.objective_pro and p[1] == site or p[1] in site ))
+                    if not slack in slack_array:
+                        slack_array.append(slack)
+                except:
+                    pass
+            slack_array = np.array(slack_array)
+            slack_array = slack_array * 100
+            cap_array_min = np.array(cap_array_min)
+            cap_array_max = np.array(cap_array_max)
+            if isinstance(site,list):
+                site=str(site)
+                ax1.plot(slack_array, cap_array_max, linewidth=3, marker='o', markerfacecolor='black',
+                         color='black', label=site)
+                ax1.plot(slack_array, cap_array_min, linewidth=3, marker='o', markerfacecolor='black',
+                         color='black')
+            else:
+                ax0.plot(slack_array, cap_array_max, linewidth=3,marker='o', markerfacecolor= to_color(site), color=to_color(site),label=site)
+                ax0.plot(slack_array, cap_array_min, linewidth=3,marker='o', markerfacecolor= to_color(site), color=to_color(site))
 
-        ax0.plot(slack_array, cap_array_max, linewidth=3,marker='o', markerfacecolor= to_color(prob.cap_obj+'marker'), color=to_color(prob.cap_obj),label=prob.cap_obj)
-        ax0.plot(slack_array, cap_array_min, linewidth=3,marker='o', markerfacecolor= to_color(prob.cap_obj+'marker'),
-                 color=to_color(prob.cap_obj))
+        fig_name = str(prob.objective_dict).strip('{}').replace("'", "").replace('[', '').replace(']','').replace(':','_')
 
+       #ax0.set_xlabel('{} ({})'.format('Increase in cost', '%'))
 
-        ax0.set_title('Maximum and Minimum {} Capacities for Increased Cost'.format(prob.cap_obj))
-        ax0.set_xlabel('{} ({})'.format('Increase in cost', '%'))
-        ax0.set_ylabel('{} Process Capacity ({})'.format(prob.cap_obj, 'MW'))
+        ax0.set_ylabel('Process Capacity of {} ({})'.format(str(prob.objective_pro).replace(',','+'), 'MW'))
         ax0.grid(b=0, linestyle='-', linewidth=0.5)
         ax0.legend()
+
+        ax1.set_xlabel('{} ({})'.format('Increase in cost', '%'))
+        ax1.set_ylabel('Process Capacity of {} ({})'.format(str(prob.objective_pro).replace(',','+'), 'MW'))
+        ax1.grid(b=0, linestyle='-', linewidth=0.5)
+        ax1.legend()
+        plt.setp(ax0.get_xticklabels(), visible=False)
+
         # if no custom title prefix is specified, use the figure_basename
 
-        new_figure_title = 'Near Optimal Analysis  objected-sites: {} year(s) {} '.format(
-            str(prob.cap_sites).strip('[]'),str(prob.stf_list).strip('[]'))
+        new_figure_title = 'Near Optimal Analysis objectives: {} year(s) {} '.format(fig_name ,str(prob.stf_list).strip('[]'))
         ax0.set_title(new_figure_title)
 
         if extensions is None:
@@ -142,8 +151,8 @@ def plot_nopt(prob, figure_basename,figure_size=(16, 12),extensions=None):
 
         # save plot to files
         for ext in extensions:
-            fig_filename = '{}-{}-{}-{}.{}'.format(
-                figure_basename,prob.cap_obj, str(prob.cap_sites).strip('[]'),str(prob.stf_list).strip('[]'),''.join(ext))
+            fig_filename = '{}-{}-{}.{}'.format(
+                figure_basename,fig_name,str(prob.stf_list).strip('[]'),''.join(ext))
             fig.savefig(fig_filename, bbox_inches='tight')
         plt.close(fig)
 

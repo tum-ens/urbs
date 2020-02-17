@@ -219,7 +219,7 @@ def purchase_costs(m):
                 m.commodity_dict['price'][c] *
                 m.commodity_dict['cost_factor'][c]
                 for tm in m.tm
-                for c in buy_tuples)
+                for c in buy_tuples if c[1] in m.objective_dict['cost'])
         except KeyError:
             return sum(
                 m.e_co_buy[(tm,) + c] *
@@ -227,7 +227,7 @@ def purchase_costs(m):
                 m.commodity_dict['price'][c] *
                 m.commodity_dict['cost_factor'][c]
                 for tm in m.tm
-                for c in buy_tuples)
+                for c in buy_tuples if c[1] in m.objective_dict['cost'])
     else:
         buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
         try:
@@ -237,7 +237,7 @@ def purchase_costs(m):
                 m.commodity_dict['price'][c] *
                 m.commodity_dict['cost_factor'][c]
                 for tm in m.tm
-                for c in buy_tuples if c[1] in m.objective_dict['cost'])
+                for c in buy_tuples )
         except KeyError:
             return sum(
                 m.e_co_buy[(tm,) + c] *
@@ -245,4 +245,4 @@ def purchase_costs(m):
                 m.commodity_dict['price'][c] *
                 m.commodity_dict['cost_factor'][c]
                 for tm in m.tm
-                for c in buy_tuples if c[1] in m.objective_dict['cost'])
+                for c in buy_tuples )

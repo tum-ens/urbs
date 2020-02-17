@@ -37,4 +37,8 @@ COLORS = {
     'Lignite plantmarker': (116, 66, 65),
     'Photovoltaicsmarker': (243, 174, 40),
     'Slack powerplantmarker': (163, 74, 130),
-    'Wind parkmarker': (17, 105, 177)}
+    'Wind parkmarker': (17, 105, 177),
+    # AREA markers
+    'North': (198, 188, 240),
+    'Mid': (243, 174, 40),
+    'South': (17, 105, 177)}

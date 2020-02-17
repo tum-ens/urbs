@@ -418,7 +418,20 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
             rule=cost_rule,
             sense=pyomo.minimize,
             doc='minimize(cost = sum of all cost types)')
+    elif m.obj.value == 'cost' and 'cost' in objective_dict.keys():
 
+        if m.mode['int']:
+            m.res_global_co2_budget = pyomo.Constraint(
+                rule=res_global_co2_budget_rule,
+                doc='total co2 commodity output <= global.prop CO2 budget')
+        else:
+            m.res_global_co2_limit = pyomo.Constraint( m.stf,
+                rule=res_global_co2_limit_rule,
+                doc='total co2 commodity output <= Global CO2 limit')
+        m.objective_function = pyomo.Objective(
+            rule=cost_rule,
+            sense=pyomo.minimize,
+            doc='minimize(cost = sum of all cost types)')
     elif m.obj.value == 'CO2':
 
         if not m.mode['int']:
@@ -750,77 +763,146 @@ def def_costs_rule(m, cost_type):
     #    capacity.
     #  - Variables costs for usage of processes, storage and transmission.
     #  - Fuel costs for stock commodity purchase.
-
-    if cost_type == 'Invest':
-        cost = \
-            sum(m.cap_pro_new[p] *
-                m.process_dict['inv-cost'][p] *
-                m.process_dict['invcost-factor'][p]
-                for p in m.pro_tuples)
-        if m.mode['int']:
-            cost -= \
+    if m.obj.value =='cost' and 'cost' in m.objective_dict.keys():
+        if cost_type == 'Invest':
+            cost = \
                 sum(m.cap_pro_new[p] *
                     m.process_dict['inv-cost'][p] *
-                    m.process_dict['overpay-factor'][p]
-                    for p in m.pro_tuples)
-        if m.mode['tra']:
-            # transmission_cost is defined in transmission.py
-            cost += transmission_cost(m, cost_type)
-        if m.mode['sto']:
-            # storage_cost is defined in storage.py
-            cost += storage_cost(m, cost_type)
-        return m.costs[cost_type] == cost
+                    m.process_dict['invcost-factor'][p]
+                    for p in m.pro_tuples if p[1] in m.objective_dict['cost'])
+            if m.mode['int']:
+                cost -= \
+                    sum(m.cap_pro_new[p] *
+                        m.process_dict['inv-cost'][p] *
+                        m.process_dict['overpay-factor'][p]
+                        for p in m.pro_tuples if p[1] in m.objective_dict['cost'])
+            if m.mode['tra']:
+                # transmission_cost is defined in transmission.py
+                cost += transmission_cost(m, cost_type)
+            if m.mode['sto']:
+                # storage_cost is defined in storage.py
+                cost += storage_cost(m, cost_type)
+            return m.costs[cost_type] == cost
 
-    elif cost_type == 'Fixed':
-        cost = \
-            sum(m.cap_pro[p] * m.process_dict['fix-cost'][p] *
-                m.process_dict['cost_factor'][p]
-                for p in m.pro_tuples)
-        if m.mode['tra']:
-            cost += transmission_cost(m, cost_type)
-        if m.mode['sto']:
-            cost += storage_cost(m, cost_type)
-        return m.costs[cost_type] == cost
+        elif cost_type == 'Fixed':
+            cost = \
+                sum(m.cap_pro[p] * m.process_dict['fix-cost'][p] *
+                    m.process_dict['cost_factor'][p]
+                    for p in m.pro_tuples if p[1] in m.objective_dict['cost'])
+            if m.mode['tra']:
+                cost += transmission_cost(m, cost_type)
+            if m.mode['sto']:
+                cost += storage_cost(m, cost_type)
+            return m.costs[cost_type] == cost
 
-    elif cost_type == 'Variable':
-        cost = \
-            sum(m.tau_pro[(tm,) + p] * m.weight *
-                m.process_dict['var-cost'][p] *
-                m.process_dict['cost_factor'][p]
+        elif cost_type == 'Variable':
+            cost = \
+                sum(m.tau_pro[(tm,) + p] * m.weight *
+                    m.process_dict['var-cost'][p] *
+                    m.process_dict['cost_factor'][p]
+                    for tm in m.tm
+                    for p in m.pro_tuples if p[1] in m.objective_dict['cost'])
+            if m.mode['tra']:
+                cost += transmission_cost(m, cost_type)
+            if m.mode['sto']:
+                cost += storage_cost(m, cost_type)
+            return m.costs[cost_type] == cost
+
+        elif cost_type == 'Fuel':
+            return m.costs[cost_type] == sum(
+                m.e_co_stock[(tm,) + c] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm for c in m.com_tuples
+                if c[2] in m.com_stock and c[1] in m.objective_dict['cost'])
+
+        elif cost_type == 'Environmental':
+            return m.costs[cost_type] == sum(
+                - commodity_balance(m, tm, stf, sit, com) * m.weight *
+                m.commodity_dict['price'][(stf, sit, com, com_type)] *
+                m.commodity_dict['cost_factor'][(stf, sit, com, com_type)]
                 for tm in m.tm
-                for p in m.pro_tuples)
-        if m.mode['tra']:
-            cost += transmission_cost(m, cost_type)
-        if m.mode['sto']:
-            cost += storage_cost(m, cost_type)
-        return m.costs[cost_type] == cost
+                for stf, sit, com, com_type in m.com_tuples
+                if com in m.com_env and sit in m.objective_dict['cost'])
+        elif cost_type == 'Revenue':
+            return m.costs[cost_type] == revenue_costs(m)
 
-    elif cost_type == 'Fuel':
-        return m.costs[cost_type] == sum(
-            m.e_co_stock[(tm,) + c] * m.weight *
-            m.commodity_dict['price'][c] *
-            m.commodity_dict['cost_factor'][c]
-            for tm in m.tm for c in m.com_tuples
-            if c[2] in m.com_stock)
+        elif cost_type == 'Purchase':
+            return m.costs[cost_type] == purchase_costs(m)
 
-    elif cost_type == 'Environmental':
-        return m.costs[cost_type] == sum(
-            - commodity_balance(m, tm, stf, sit, com) * m.weight *
-            m.commodity_dict['price'][(stf, sit, com, com_type)] *
-            m.commodity_dict['cost_factor'][(stf, sit, com, com_type)]
-            for tm in m.tm
-            for stf, sit, com, com_type in m.com_tuples
-            if com in m.com_env)
-
-    # Revenue and Purchase costs defined in BuySellPrice.py
-    elif cost_type == 'Revenue':
-        return m.costs[cost_type] == revenue_costs(m)
-
-    elif cost_type == 'Purchase':
-        return m.costs[cost_type] == purchase_costs(m)
-
+        else:
+            raise NotImplementedError("Unknown cost type.")
     else:
-        raise NotImplementedError("Unknown cost type.")
+        if cost_type == 'Invest':
+            cost = \
+                sum(m.cap_pro_new[p] *
+                    m.process_dict['inv-cost'][p] *
+                    m.process_dict['invcost-factor'][p]
+                    for p in m.pro_tuples)
+            if m.mode['int']:
+                cost -= \
+                    sum(m.cap_pro_new[p] *
+                        m.process_dict['inv-cost'][p] *
+                        m.process_dict['overpay-factor'][p]
+                        for p in m.pro_tuples)
+            if m.mode['tra']:
+                # transmission_cost is defined in transmission.py
+                cost += transmission_cost(m, cost_type)
+            if m.mode['sto']:
+                # storage_cost is defined in storage.py
+                cost += storage_cost(m, cost_type)
+            return m.costs[cost_type] == cost
+
+        elif cost_type == 'Fixed':
+            cost = \
+                sum(m.cap_pro[p] * m.process_dict['fix-cost'][p] *
+                    m.process_dict['cost_factor'][p]
+                    for p in m.pro_tuples)
+            if m.mode['tra']:
+                cost += transmission_cost(m, cost_type)
+            if m.mode['sto']:
+                cost += storage_cost(m, cost_type)
+            return m.costs[cost_type] == cost
+
+        elif cost_type == 'Variable':
+            cost = \
+                sum(m.tau_pro[(tm,) + p] * m.weight *
+                    m.process_dict['var-cost'][p] *
+                    m.process_dict['cost_factor'][p]
+                    for tm in m.tm
+                    for p in m.pro_tuples)
+            if m.mode['tra']:
+                cost += transmission_cost(m, cost_type)
+            if m.mode['sto']:
+                cost += storage_cost(m, cost_type)
+            return m.costs[cost_type] == cost
+
+        elif cost_type == 'Fuel':
+            return m.costs[cost_type] == sum(
+                m.e_co_stock[(tm,) + c] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm for c in m.com_tuples
+                if c[2] in m.com_stock)
+
+        elif cost_type == 'Environmental':
+            return m.costs[cost_type] == sum(
+                - commodity_balance(m, tm, stf, sit, com) * m.weight *
+                m.commodity_dict['price'][(stf, sit, com, com_type)] *
+                m.commodity_dict['cost_factor'][(stf, sit, com, com_type)]
+                for tm in m.tm
+                for stf, sit, com, com_type in m.com_tuples
+                if com in m.com_env)
+
+        # Revenue and Purchase costs defined in BuySellPrice.py
+        elif cost_type == 'Revenue':
+            return m.costs[cost_type] == revenue_costs(m)
+
+        elif cost_type == 'Purchase':
+            return m.costs[cost_type] == purchase_costs(m)
+
+        else:
+            raise NotImplementedError("Unknown cost type.")
 
 
 def cost_rule(m):
@@ -832,7 +914,7 @@ def co2_rule(m):
     co2_output_sum = 0
     for stf in m.stf:
         for tm in m.tm:
-            for sit in m.sit:
+            for sit in m.objective_dict[m.objective_pro[0]]:
                 if m.mode['int']:
                     co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
                                        m.weight * stf_dist(stf, m))

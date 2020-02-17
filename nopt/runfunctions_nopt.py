@@ -169,7 +169,6 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         # save(prob, os.path.join(result_dir, '{}.h5'.format('cost')))
 
         # del objective_function  component to write real objective
-        prob.del_component(prob.objective_function)
 
         def res_cost_restrict_rule(m):
             assert m.cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
@@ -177,6 +176,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         for slack in prob.cost_slack_list:
             prob.cost_factor = slack
+
+            prob.del_component(prob.objective_function)
 
             if prob.find_component('res_cost_restrict'):
                 prob.del_component('res_cost_restrict')

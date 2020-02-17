@@ -170,40 +170,79 @@ def bsp_surplus(m, tm, stf, sit, com, com_type):
 
 
 def revenue_costs(m):
-    sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
-    try:
-        return -sum(
-            m.e_co_sell[(tm,) + c] *
-            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
-            m.commodity_dict['price'][c] *
-            m.commodity_dict['cost_factor'][c]
-            for tm in m.tm
-            for c in sell_tuples)
-    except KeyError:
-        return -sum(
-            m.e_co_sell[(tm,) + c] *
-            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
-            m.commodity_dict['price'][c] *
-            m.commodity_dict['cost_factor'][c]
-            for tm in m.tm
-            for c in sell_tuples)
+
+    if m.obj.value =='cost' and 'cost' in m.objective_dict.keys():
+        sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
+        try:
+            return -sum(
+                m.e_co_sell[(tm,) + c] *
+                m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in sell_tuples if c[1] in m.objective_dict['cost'])
+        except KeyError:
+            return -sum(
+                m.e_co_sell[(tm,) + c] *
+                m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in sell_tuples if c[1] in m.objective_dict['cost'])
+    else:
+        sell_tuples = commodity_subset(m.com_tuples, m.com_sell)
+        try:
+            return -sum(
+                m.e_co_sell[(tm,) + c] *
+                m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in sell_tuples)
+        except KeyError:
+            return -sum(
+                m.e_co_sell[(tm,) + c] *
+                m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in sell_tuples)
 
 
 def purchase_costs(m):
-    buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
-    try:
-        return sum(
-            m.e_co_buy[(tm,) + c] *
-            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
-            m.commodity_dict['price'][c] *
-            m.commodity_dict['cost_factor'][c]
-            for tm in m.tm
-            for c in buy_tuples)
-    except KeyError:
-        return sum(
-            m.e_co_buy[(tm,) + c] *
-            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
-            m.commodity_dict['price'][c] *
-            m.commodity_dict['cost_factor'][c]
-            for tm in m.tm
-            for c in buy_tuples)
+    if m.obj.value == 'cost' and 'cost' in m.objective_dict.keys():
+        buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
+        try:
+            return sum(
+                m.e_co_buy[(tm,) + c] *
+                m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in buy_tuples)
+        except KeyError:
+            return sum(
+                m.e_co_buy[(tm,) + c] *
+                m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in buy_tuples)
+    else:
+        buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
+        try:
+            return sum(
+                m.e_co_buy[(tm,) + c] *
+                m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in buy_tuples if c[1] in m.objective_dict['cost'])
+        except KeyError:
+            return sum(
+                m.e_co_buy[(tm,) + c] *
+                m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in buy_tuples if c[1] in m.objective_dict['cost'])

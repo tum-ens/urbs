@@ -23,10 +23,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
     costs, cpro, ctra, csto = get_constants(instance)  # finds these values from model instance prob
     # Report new  optimized capacities:
 
-    if instance.cap_obj != 'cost' and instance.cap_obj != 'CO2':
-        costs = instance.minimum_cost
-    else:
+    if 'cost' in instance.objective_dict.keys() or 'CO2' in instance.objective_dict.keys():
         costs = costs.to_frame(name='Costs')
+    else:
+        costs = instance.minimum_cost
     # create spreadsheet writer object
     with pd.ExcelWriter(filename) as writer:
 

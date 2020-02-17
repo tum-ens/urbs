@@ -266,37 +266,70 @@ def storage_balance(m, tm, stf, sit, com):
 # storage costs
 def storage_cost(m, cost_type):
     """returns storage cost function for the different cost types"""
-    if cost_type == 'Invest':
-        cost = sum(m.cap_sto_p_new[s] *
-                   m.storage_dict['inv-cost-p'][s] *
-                   m.storage_dict['invcost-factor'][s] +
-                   m.cap_sto_c_new[s] *
-                   m.storage_dict['inv-cost-c'][s] *
-                   m.storage_dict['invcost-factor'][s]
-                   for s in m.sto_tuples)
-        if m.mode['int']:
-            cost -= sum(m.cap_sto_p_new[s] *
-                        m.storage_dict['inv-cost-p'][s] *
-                        m.storage_dict['overpay-factor'][s] +
-                        m.cap_sto_c_new[s] *
-                        m.storage_dict['inv-cost-c'][s] *
-                        m.storage_dict['overpay-factor'][s]
-                        for s in m.sto_tuples)
-        return cost
-    elif cost_type == 'Fixed':
-        return sum((m.cap_sto_p[s] * m.storage_dict['fix-cost-p'][s] +
-                    m.cap_sto_c[s] * m.storage_dict['fix-cost-c'][s]) *
-                   m.storage_dict['cost_factor'][s]
-                   for s in m.sto_tuples)
-    elif cost_type == 'Variable':
-        return sum(m.e_sto_con[(tm,) + s] * m.weight *
-                   m.storage_dict['var-cost-c'][s] *
-                   m.storage_dict['cost_factor'][s] +
-                   (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
-                   m.weight * m.storage_dict['var-cost-p'][s] *
-                   m.storage_dict['cost_factor'][s]
-                   for tm in m.tm
-                   for s in m.sto_tuples)
+    if m.obj.value =='cost' and 'cost' in m.objective_dict.keys():
+        if cost_type == 'Invest':
+            cost = sum(m.cap_sto_p_new[s] *
+                       m.storage_dict['inv-cost-p'][s] *
+                       m.storage_dict['invcost-factor'][s] +
+                       m.cap_sto_c_new[s] *
+                       m.storage_dict['inv-cost-c'][s] *
+                       m.storage_dict['invcost-factor'][s]
+                       for s in m.sto_tuples if s[1] in m.objective_dict['cost'])
+            if m.mode['int']:
+                cost -= sum(m.cap_sto_p_new[s] *
+                            m.storage_dict['inv-cost-p'][s] *
+                            m.storage_dict['overpay-factor'][s] +
+                            m.cap_sto_c_new[s] *
+                            m.storage_dict['inv-cost-c'][s] *
+                            m.storage_dict['overpay-factor'][s]
+                            for s in m.sto_tuples if s[1] in m.objective_dict['cost'])
+            return cost
+        elif cost_type == 'Fixed':
+            return sum((m.cap_sto_p[s] * m.storage_dict['fix-cost-p'][s] +
+                        m.cap_sto_c[s] * m.storage_dict['fix-cost-c'][s]) *
+                       m.storage_dict['cost_factor'][s]
+                       for s in m.sto_tuples if s[1] in m.objective_dict['cost'])
+        elif cost_type == 'Variable':
+            return sum(m.e_sto_con[(tm,) + s] * m.weight *
+                       m.storage_dict['var-cost-c'][s] *
+                       m.storage_dict['cost_factor'][s] +
+                       (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
+                       m.weight * m.storage_dict['var-cost-p'][s] *
+                       m.storage_dict['cost_factor'][s]
+                       for tm in m.tm
+                       for s in m.sto_tuples if s[1] in m.objective_dict['cost'])
+    else:
+        if cost_type == 'Invest':
+            cost = sum(m.cap_sto_p_new[s] *
+                       m.storage_dict['inv-cost-p'][s] *
+                       m.storage_dict['invcost-factor'][s] +
+                       m.cap_sto_c_new[s] *
+                       m.storage_dict['inv-cost-c'][s] *
+                       m.storage_dict['invcost-factor'][s]
+                       for s in m.sto_tuples)
+            if m.mode['int']:
+                cost -= sum(m.cap_sto_p_new[s] *
+                            m.storage_dict['inv-cost-p'][s] *
+                            m.storage_dict['overpay-factor'][s] +
+                            m.cap_sto_c_new[s] *
+                            m.storage_dict['inv-cost-c'][s] *
+                            m.storage_dict['overpay-factor'][s]
+                            for s in m.sto_tuples)
+            return cost
+        elif cost_type == 'Fixed':
+            return sum((m.cap_sto_p[s] * m.storage_dict['fix-cost-p'][s] +
+                        m.cap_sto_c[s] * m.storage_dict['fix-cost-c'][s]) *
+                       m.storage_dict['cost_factor'][s]
+                       for s in m.sto_tuples)
+        elif cost_type == 'Variable':
+            return sum(m.e_sto_con[(tm,) + s] * m.weight *
+                       m.storage_dict['var-cost-c'][s] *
+                       m.storage_dict['cost_factor'][s] +
+                       (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
+                       m.weight * m.storage_dict['var-cost-p'][s] *
+                       m.storage_dict['cost_factor'][s]
+                       for tm in m.tm
+                       for s in m.sto_tuples)
 
 
 def op_sto_tuples(sto_tuple, m):

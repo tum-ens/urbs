@@ -335,3 +335,24 @@ The following table shows the possible values of :math:`\sigma_{pt}`:
         +----------------------+--------------------------+---------------------+
         |1                     |1                         |0                    |
         +----------------------+--------------------------+---------------------+
+
+Costs
+-----
+The cost function is ammended with one cost type, the start-up cost:
+
+.. math::
+
+   \zeta = \zeta_{\text{inv}} + \zeta_{\text{fix}} + \zeta_{\text{var}} +
+   \zeta_{\text{fuel}} + \zeta_{\text{startup}} + \zeta_{\text{env}}.
+
+Turning on a process requires sometime an additional fix cost besides the fuel 
+used for the starting. As the variable costs, these costs occur when processes 
+are used:
+
+.. math::
+   \zeta_{\text{startup}}=w \Delta t \sum_{t \in T_m\\ p \in P_{\text{on/off}}}
+   {P}_p^\text{start}\sigma_{pt},
+
+where :math:`{P}_p^\text{start}` is the fix start-up cost and :math:`sigma_{pt}`
+is the process start-up marker. This cost type can also be merged into the same 
+class of costs as the variable and fuel costs.

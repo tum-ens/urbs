@@ -16,7 +16,7 @@ process in each given timestep. This introduces an additional set of
 constraints in the form:
 
 .. math::
-   &\forall p \in P^{\text{TimeVarEff}},~c\in C-C^{\text{env}} t\in T_m:\\
+   &\forall p \in P^{\text{TimeVarEff}},~c\in C-C^{\text{env}} t\in T_m:\\\\
    &\epsilon^{\text{out}}_{ypct}=r^{\text{out}}_{ypc}f^{\text{out}}_{ypt}
    \tau_{ypct}.
 
@@ -57,7 +57,7 @@ between the following boundaries:
 .. math::
    &\forall p\in P^{\text{partload}},~c\in C,~t\in T_m:\\\\
    &\underline{P}_p\cdot \kappa_p\cdot \r^{\text{in,out}\leq
-   \epsilon^{\text{in,out}}_{pct}\leq \kappa_p\cdot r^{\text{in,out}\\,
+   \epsilon^{\text{in,out}}_{pct}\leq \kappa_p\cdot r^{\text{in,out},
    
 where :math:`\underline{P}_{p}` is the minimum load fraction, :math:`\kappa_p` the 
 installed capacity and :math:`\r^{\text{in,out}` the input/output ratios.
@@ -124,7 +124,7 @@ of a process, while the second one represents the consumed input while also prod
 .. math::
    &\forall p\in P^{\text{on/off with partload}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{in}_{pct}= 
-   \tau_pt\cdot \r^{\text{in}}_{pc}\cdot (1-\omicron_{pt})\+
+   \tau_pt\cdot \r^{\text{in}}_{pc}\cdot (1-\omicron_{pt})+
    \Delta t\cdot\left(
    \frac{\underline{r}^{\text{in}}_{pc}-r^{\text{in}}_{pc}}
    {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
@@ -142,7 +142,7 @@ produced when a process is starting (e.g. environmental commodities) or not (e.g
 
 .. math::
    &\forall p\in P^{\text{on/off}},~c\in C^{\text\{environmental}},~t\in T_m:\\\\
-   &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\\\\
+   &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\\
    &\forall p\in P^{\text{on/off}},~c\in C^{\text\{non-environmental}},~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}= \tau_pt\cdot \r^{\text{out}}_{pc}\cdot \omicron_{pt}.
    
@@ -152,7 +152,7 @@ similarly adapted version of the part-load output equation:
 .. math::
    &\forall p\in P^{\text{on/off with partload}},~c\in C^{\text\{environmental}},~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}= 
-   \tau_pt\cdot \r^{\text{out}}_{pc}\cdot (1-\omicron_{pt})\+
+   \tau_pt\cdot \r^{\text{out}}_{pc}\cdot (1-\omicron_{pt})+
    \Delta t\cdot\left(
    \frac{\underline{r}^{\text{out}}_{pc}-r^{\text{out}}_{pc}}
    {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
@@ -183,12 +183,12 @@ possible cases, each solved with its own output ramping equation, as follows:
 Case I: When
 
 .. math::
-   &\underline{P}_p\geq \overline{PG}_p^\text{up}
+   &\underline{P}_p\geq \overline{PG}_p^\text{up}\\
    &\underline{P}_p\ is a multiple of \overline{PG}_p^\text{up}.
    
 Here, in order to ensure that the process behaves 
 realistically, it is needed to ensure that the process starts producing in the minimum working 
-point, :math:`\underline{P}_p\kappa_p\r^{\text{out}}_{pc}`, and not at a higher value. This is 
+point, :math:`\underline{P}_p\kappa_p\{r}^{\text{out}}_{pc}`, and not at a higher value. This is 
 done by the following equation:
 
 .. math::
@@ -221,7 +221,7 @@ to:
 Case II: When
 
 .. math::
-   &\underline{P}_{p}>\overline{PG}_p^\text{up}
+   &\underline{P}_{p}>\overline{PG}_p^\text{up}\\
    &\underline{P}_p\ is not a multiple of \overline{PG}_p^\text{up}.
    
 Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
@@ -234,7 +234,7 @@ the rounded down number. This is done by the following equation:
 .. math::
    &\forall p\in P^{\text{on/off, case II}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{text{out}_{pct}-\epsilon^{text{out}_{pc(t-1)}\leq 
-   \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
+   \Delta t\(⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋+1)
    \overline{PG}_p\kappa_{p}\r^{\text{out}}_{pc}.
 
 If the process shows a part load behavior, the equation changes to:
@@ -265,7 +265,7 @@ to:
 Case III: When
 
 .. math::
-   &\underline{P}_{p}<\overline{PG}_p^\text{up}.
+   \underline{P}_{p}<\overline{PG}_p^\text{up}.
 
 Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
 process starts somewhere in the interval between the minimum working point 

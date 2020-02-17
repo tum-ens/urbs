@@ -184,7 +184,7 @@ Case I: When
 
 .. math::
    &\underline{P}_p\geq \overline{PG}_p^\text{up}\\
-   &\underline{P}_p\ is a multiple of \overline{PG}_p^\text{up}.
+   &\underline{P}_p\ is\ a\ multiple\ of\ \overline{PG}_p^\text{up}.
    
 Here, in order to ensure that the process behaves 
 realistically, it is needed to ensure that the process starts producing in the minimum working 
@@ -222,7 +222,7 @@ Case II: When
 
 .. math::
    &\underline{P}_{p}>\overline{PG}_p^\text{up}\\
-   &\underline{P}_p\ is not a multiple of \overline{PG}_p^\text{up}.
+   &\underline{P}_p\ is\ not\ a\ multiple\ of\ \overline{PG}_p^\text{up}.
    
 Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
 process starts somewhere in the interval between the minimum working point 

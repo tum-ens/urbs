@@ -56,9 +56,9 @@ Technical Parameters
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`\overline{PG}_{yvp}^\text{down}`      |1/h |Process Maximal Power Ramp Down Gradient (relative)|
     +---------------------------------------------+----+---------------------------------------------------+
-    |:math:`\overline{ST}_{yvp}^\text{start}`     |h   |Process Starting Time                              |
+    |:math:`\overline{ST}_{yvp}`                  |h   |Process Starting Time                              |
     +---------------------------------------------+----+---------------------------------------------------+
-    |:math:`\overline{SR}_{yvp}^\text{start}`     |1/h |Process Starting Ramp                              |
+    |:math:`\overline{SR}_{yvp}`                  |1/h |Process Starting Ramp                              |
     +---------------------------------------------+----+---------------------------------------------------+
     |:math:`\underline{P}_{yvp}`                  | _  |Process Minimum Part Load Fraction                 |
     +---------------------------------------------+----+---------------------------------------------------+
@@ -445,24 +445,24 @@ column with the header label "ramp-down-grad" represents the parameters
 power ramp down gradient, this parameter can be simply set to a value larger or equal to
 1.
 
-**Process Starting Time**, :math:`\overline{ST}_{yvp}^\text{start}`,
+**Process Starting Time**, :math:`\overline{ST}_{yvp}`,
 ``m.process_dict['start-time'][(stf, sit, pro)]``: The parameter
-:math:`\overline{ST}_{yvp}^\text{start}` represents the time required by a process
+:math:`\overline{ST}_{yvp}` represents the time required by a process
 :math:`p` at a site :math:`v` in support timeframe :math:`y` to start.
 The unit of this parameter is h. The related section for
 this parameter in the spreadsheet can be found under the "Process" sheet. Here
 each row represents another process :math:`p` in a site :math:`v` and the
 column with the header label "start-time" represents the parameters
-:math:`\overline{ST}_{yvp}^\text{start}` of the corresponding process :math:`p` and site
+:math:`\overline{ST}_{yvp}` of the corresponding process :math:`p` and site
 :math:`v` combinations.
 
-**Process Starting Ramp**, :math:`\overline{SR}_{yvp}^\text{start}`:
-The parameter :math:`\overline{SR}_{yvp}^\text{start}` represents the ramp of a process
+**Process Starting Ramp**, :math:`\overline{SR}_{yvp}`:
+The parameter :math:`\overline{SR}_{yvp}` represents the ramp of a process
 :math:`p` at a site :math:`v` in support timeframe :math:`y` while starting.
 The unit of this parameter is 1/h. This parameter is not declared directly in the input,
 being only a derived parameter, calculated as the ratio between the process minimum part 
 load fraction :math:`\underline{P}_{yvp}` and the process starting time 
-:math:`\overline{ST}_{yvp}^\text{start}`.
+:math:`\overline{ST}_{yvp}`.
 
 **Process Minimum Part Load Fraction**, :math:`\underline{P}_{yvp}`,
 ``m.process_dict['min-fraction'][(stf, sit, pro)]``: The parameter

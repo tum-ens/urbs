@@ -46,13 +46,12 @@ sum:
 .. math::
 
    \zeta = \zeta_{\text{inv}} + \zeta_{\text{fix}} + \zeta_{\text{var}} +
-   \zeta_{\text{fuel}} + \zeta_{\text{startup}} + \zeta_{\text{env}},
+   \zeta_{\text{fuel}} + \zeta_{\text{env}},
 
 where :math:`\zeta_{\text{inv}}` are the annualized invest costs,
 :math:`\zeta_{\text{fix}}` the annual fixed costs, :math:`\zeta_{\text{var}}`
 the total variable costs accumulating over one year,
-:math:`\zeta_{\text{fuel}}` the accumulated fuel costs over one year,
-:math:`\zeta_{\text{startup}}` the accumulated start-up costs over one year and
+:math:`\zeta_{\text{fuel}}` the accumulated fuel costs over one year and
 :math:`\zeta_{\text{env}}` the annual penalties for environmental pollution.
 These costs are then calculated in the following way:
 
@@ -141,20 +140,6 @@ the total usage of the fuel (stock) commodities:
 where :math:`k^{\text{fuel}}_{c}` are the specific fuel costs. The distinction
 between variable and fuel costs is introduced for clarity of the results, both
 could in principle be merged into one class of costs.
-
-Annual start-up costs
-~~~~~~~~~~~~~~~~~~~~~
-Turning on a process requires sometime an additional fix cost besides the fuel 
-used for the starting. As the variable costs, these costs occur when processes 
-are used:
-
-.. math::
-   \zeta_{\text{startup}}=w \Delta t \sum_{t \in T_m\\ p \in P_{\text{on/off}}}
-   {P}_p^\text{start}\sigma_{pt},
-
-where :math:`{P}_p^\text{start}` is the fix start-up cost and :math:`sigma_{pt}`
-is the process start-up marker. This cost type can also be merged into the same 
-class of costs as the variable and fuel costs.
 
 Annual environmental costs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

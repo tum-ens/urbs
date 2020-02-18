@@ -9,7 +9,7 @@ can be modelled in urbs are explained here. These are: Time Variable Efficiency,
 Minimum Load and Part Load Behaviors and On/Off Behavior.
 
 Time Variable Efficieny
-=======================
+-----------------------
 It is possible to manipulate the operation of a process by introducing a time
 series, which changes the output ratios and thus the efficiency of a given
 process in each given timestep. This introduces an additional set of
@@ -43,7 +43,7 @@ for the time variable efficiency case takes the form:
    {1-\underline{P}_{yp}}\cdot \tau_{ypt}\right).
 
 Minimum Load and Part Load Behaviors
-====================================
+------------------------------------
 There are some processes which theoretically can be turned on and off, but this 
 does not happen in reality in case of normal operation (e.g. nuclear power plants,
 heat-producing plants during the cold season etc.). These processes can either have
@@ -99,7 +99,7 @@ A few restrictions have to be kept in mind when using this feature:
   behavior.
 
 On/off Behavior
-===============
+---------------
 Some processes are characterised by a minimum or part-load behavior but still 
 retain the practical necessity of being turned on and off when this is optimal.
 This feature transforms urbs from a linear problem to a quadratic problem, meaning 

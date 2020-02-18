@@ -353,6 +353,6 @@ are used:
    \zeta_{\text{startup}}=w \Delta t \sum_{t \in T_m\\ p \in P_{\text{on/off}}}
    {P}_p^\text{start}\sigma_{pt},
 
-where :math:`{P}_p^\text{start}` is the fix start-up cost and :math:`sigma_{pt}`
+where :math:`{P}_p^\text{start}` is the fix start-up cost and :math:`\sigma_{pt}`
 is the process start-up marker. This cost type can also be merged into the same 
 class of costs as the variable and fuel costs.

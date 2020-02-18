@@ -11,8 +11,7 @@ import ipdb
 def read_input(input_files, year):
     """Read Excel input file and prepare URBS input dict.
 
-    Reads the Excel spreadsheets that adheres to the structure shown in
-    mimo-example.xlsx. Column titles in 'Demand' and 'SupIm' are split, so that
+     Column titles in 'Demand' and 'SupIm' are split, so that
     'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
 
     Args:
@@ -22,7 +21,7 @@ def read_input(input_files, year):
     Returns:
         a dict of up to 12 DataFrames
     """
-
+    #if intertemporal(foldername is given as input) real all excel files in the directory specified
     if os.path.isdir(input_files):
         glob_input = os.path.join(input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
@@ -41,12 +40,12 @@ def read_input(input_files, year):
     bsp = []
     ds = []
     ef = []
-
+    #if multi excel files read them in a loop
     for filename in input_files:
         with pd.ExcelFile(filename) as xls:
 
             global_prop = xls.parse('Global').set_index(['Property'])
-            #global_prop.loc['Near optimal status'] = [near_optimal, "activate near optimal solution by giving 'near optimal' as string "]
+
 
             # create support timeframe index
             if ('Support timeframe' in
@@ -56,7 +55,7 @@ def read_input(input_files, year):
                 global_prop = (
                     global_prop.drop(['Support timeframe'])
                     .drop(['description'], axis=1))
-            else:
+            else:   #if single year support timeframe is set to current year
                 support_timeframe = year
             global_prop = pd.concat([global_prop], keys=[support_timeframe],
                                     names=['support_timeframe'])
@@ -222,7 +221,8 @@ def pyomo_model_prep(data, timesteps):
     m.stf_list = m.global_prop.index.levels[0].tolist()
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
-    m.cost_slack_list = [0.01, 0.05, 0.1]
+
+    m.slack_list = [0.01, 0.05, 0.1]
 
 
     # Converting Data frames to dict

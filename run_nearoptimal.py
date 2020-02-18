@@ -24,12 +24,12 @@ shutil.copy(__file__, result_dir)
 # No site name indicates minimize/maximize total capacity of all sites
 # example objectives [('South','Photovoltaics'),('Photovoltaics'),('South','North','cost')] etc.
 
-objective = [('South','Photovoltaics'),('Wind park')]
+objective = [('Wind park')]
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (3500, 24)  # time step selection
+(offset, length) = (8456, 300)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
@@ -43,7 +43,7 @@ report_sites_name = {}
 
 # plotting commodities/sites
 plot_tuples = [
-    (2020, 'South', 'Elec')
+
     ]
 
 # optional: define names for sites in plot_tuples

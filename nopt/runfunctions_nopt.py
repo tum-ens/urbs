@@ -115,8 +115,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     objective_dict = unpack_obj(objective, data)
 
-    # for key ,value in objective_dict.items()
 
+    #if objective is optimal(cost or co2) solve model at one step
     if 'cost' in objective_dict.keys() or 'CO2' in objective_dict.keys():
 
         prob = create_model(data, objective_dict, dt, timesteps)
@@ -140,13 +140,13 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             plot_sites_name=plot_sites_name,
             periods=plot_periods,
             figure_size=(24, 9))
-        # write report to spreadsheet
         report(
             prob,
             os.path.join(result_dir, '{}-{}-{}.xlsx').format(str(prob.stf_list).strip("[]").replace("'", ""),
                                                              objective, sce),
             report_tuples=report_tuples,
             report_sites_name=report_sites_name)
+    #if objective is near optimal solve model first for cost. Then 2 times for each pre-defined cost increase allowances
     else:
 
         # solve cost model and read optimized cost
@@ -168,13 +168,13 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         # save problem solution (and input data) to HDF5 file
         # save(prob, os.path.join(result_dir, '{}.h5'.format('cost')))
 
-        # del objective_function  component to write real objective
+
 
         def res_cost_restrict_rule(m):
             assert m.cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
-            return pyomo.summation(m.costs) == (1 + m.cost_factor) * m.opt_cost_sum
+            return (1 + m.cost_factor) * m.opt_cost_sum == pyomo.summation(m.costs)
 
-        for slack in prob.cost_slack_list:
+        for slack in prob.slack_value:
             prob.cost_factor = slack
 
             prob.del_component(prob.objective_function)
@@ -184,7 +184,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
             prob.res_cost_restrict = pyomo.Constraint(
                 rule=res_cost_restrict_rule,
-                doc='total costs <= Optimum cost *(1+e)')
+                doc='total costs == Optimum cost *(1+e)')
 
             # Minimize
             # log_filename = os.path.join(result_dir, 'minimize.log')

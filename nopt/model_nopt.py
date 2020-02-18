@@ -3,7 +3,7 @@ import pyomo.core as pyomo
 from datetime import datetime
 from .features_nopt import *
 from .input_nopt import *
-#import ipdb
+# import ipdb
 
 
 def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
@@ -11,10 +11,10 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
 
     Args:
         - data: a dict of up to 12
+        - objective_dict: a dict with objectives as keys and corresponding values are selected sites to be objected.
+        If objective is optimal dict is expected to have only one key
         - dt: timestep duration in hours (default: 1)
         - timesteps: optional list of timesteps, default: demand timeseries
-        - objective: Either "cost" or "CO2" for choice of objective function,
-
         - dual: set True to add dual variables to model output
           (marginally slower), default: True
 
@@ -26,7 +26,6 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
     if not timesteps:
         timesteps = data['demand'].index.tolist()
     m = pyomo_model_prep(data, timesteps)  # preparing pyomo model
-    #ipdb.set_trace()
 
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
@@ -128,11 +127,15 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
         initialize=m.cost_type_list,    # this list is hard coded ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental', 'Revenue', 'Purchase']
         doc='Set of cost types (hard-coded)')
 
+    m.slack_value = pyomo.Set(
+        initialize=m.slack_list,
+        doc='Set of percentage cost increases')
+
     # tuple sets
-    #how does a tuple set looks like :
+    # how does a tuple set looks like :
     # sit_tuples : Combinations of support timeframes and sites
-    #Dim=0, Dimen=2, Size=3, Domain=sit_tuples_domain, Ordered=False, Bounds=None
-    #[(2020, 'Mid'), (2020, 'North'), (2020, 'South')]
+    # Dim=0, Dimen=2, Size=3, Domain=sit_tuples_domain, Ordered=False, Bounds=None
+    # [(2020, 'Mid'), (2020, 'North'), (2020, 'South')]
     m.sit_tuples = pyomo.Set(
         within=m.stf * m.sit,
         initialize=tuple(m.site_dict["area"].keys()),
@@ -141,7 +144,6 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
         within=m.stf * m.sit * m.com * m.com_type,
         initialize=tuple(m.commodity_dict["price"].keys()),
         doc='Combinations of defined commodities, e.g. (2018,Mid,Elec,Demand)')
-    #ipdb.set_trace()
     m.pro_tuples = pyomo.Set(
         within=m.stf * m.sit * m.pro,
         initialize=tuple(m.process_dict["inv-cost"].keys()),
@@ -250,6 +252,7 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
+
 
     # commodity
     m.e_co_stock = pyomo.Var(
@@ -387,11 +390,6 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-    #if m.mode['int']:
-        #m.res_global_co2_limit = pyomo.Constraint(
-           # m.stf,
-            #rule=res_global_co2_limit_rule,
-            #doc='total co2 commodity output <= global.prop CO2 limit')
     if m.mode['int']:
         m.res_global_co2_limit = pyomo.Constraint(
             m.stf,
@@ -418,20 +416,7 @@ def create_model(data, objective_dict,dt=1, timesteps=None,  dual=True):
             rule=cost_rule,
             sense=pyomo.minimize,
             doc='minimize(cost = sum of all cost types)')
-    elif m.obj.value == 'cost' and 'cost' in objective_dict.keys():
 
-        if m.mode['int']:
-            m.res_global_co2_budget = pyomo.Constraint(
-                rule=res_global_co2_budget_rule,
-                doc='total co2 commodity output <= global.prop CO2 budget')
-        else:
-            m.res_global_co2_limit = pyomo.Constraint( m.stf,
-                rule=res_global_co2_limit_rule,
-                doc='total co2 commodity output <= Global CO2 limit')
-        m.objective_function = pyomo.Objective(
-            rule=cost_rule,
-            sense=pyomo.minimize,
-            doc='minimize(cost = sum of all cost types)')
     elif m.obj.value == 'CO2':
 
         if not m.mode['int']:
@@ -750,12 +735,18 @@ def res_global_cost_limit_rule(m):
 
 # Costs and emissions
 def def_costs_rule(m, cost_type):
-    #Calculate total costs by cost type.
-    #Sums up process activity and capacity expansions
-    #and sums them in the cost types that are specified in the set
-    #m.cost_type. To change or add cost types, add/change entries
-    #there and modify the if/elif cases in this function accordingly.
-    #Cost types are
+
+    # Calculate total costs by cost type.
+    # Sums up process activity and capacity expansions
+    # if cost is optimal objective: sums only for tuples that includes selected sites.
+    # if objective is near_optimal and cost optimization is preliminary to real objective optimization,
+    # all tuples are included
+    # and sums them in the cost types that are specified in the set
+    # m.cost_type.
+    #
+    # To change or add cost types, add/change entries
+    # there and modify the if/elif cases in this function accordingly.
+    # Cost types are
     #  - Investment costs for process power, storage power and
     #    storage capacity. They are multiplied by the investment
     #    factors. Rest values of units are subtracted.
@@ -763,6 +754,7 @@ def def_costs_rule(m, cost_type):
     #    capacity.
     #  - Variables costs for usage of processes, storage and transmission.
     #  - Fuel costs for stock commodity purchase.
+
     if m.obj.value =='cost' and 'cost' in m.objective_dict.keys():
         if cost_type == 'Invest':
             cost = \
@@ -926,7 +918,7 @@ def co2_rule(m):
 
 def capacity_rule(m):
     capacity_sum = 0
-    pro_list= m.objective_pro
+    pro_list = m.objective_pro
     stf = max(m.stf)
     #for stf in m.stf:
     for pro in pro_list:

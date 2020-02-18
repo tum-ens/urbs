@@ -58,10 +58,12 @@ where :math:`\kappa^{\text{c,p}}_{yvs}` are the total installed
 capacity and power, repectively, in year :math:`y` at site :math:`v` of storage
 :math:`s` and :math:`\widehat{\kappa}^{\text{c,p}}_{yvs}` the corresponding
 newly installed storage capacities and powers. Both newly installed quantities 
-can also be the sum of blocks:
+can also be expressed as the product between the parameter storage new capacity/power
+block :math:`K_{yvs}^\text{c,p block}` and the variable new storage size/power units
+:math:`\beta_{yvs}^\text{c,p}`:
 
 .. math::
-   \widehat{\kappa}^{\text{c,p}}_{yvs}= \{K}_{yvs}^\text{c,p block}\cdot
+   \widehat{\kappa}^{\text{c,p}}_{yvs}= K_{yvs}^\text{c,p block}\cdot
    \beta_{yvs}^\text{c,p}
 
 

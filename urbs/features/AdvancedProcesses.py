@@ -260,95 +260,7 @@ def add_advanced_processes(m):
             within=m.stf * m.sit * m.pro * m.com,
             doc='empty commodities with partial input ratio')
 
-    # Heat output
-    # if m.mode['chp']:
-    #     chp_list = list(m.pro_output_tuples)
-    #     i = 0
-    #     while i < len(chp_list):
-    #         s = 0
-    #         for k in range(len(chp_list)):
-    #             if (chp_list[i][2] == chp_list[k][2] and
-    #                ((chp_list[i][3] == 'Heat' and
-    #                  chp_list[k][3] == 'Elec') or
-    #                 (chp_list[i][3] == 'Elec' and
-    #                  chp_list[k][3] == 'Heat'))):
-    #                 s = 1
-    #         if s != 1:
-    #             del chp_list[i]
-    #             i -= 1
-    #         i += 1
-    #     i = 0
-    #     while i < len(chp_list):
-    #         if chp_list[i][3] == 'Elec':
-    #             del chp_list[i]
-    #         i += 1
-
-    #     m.pro_heat_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         initialize=[(stf, site, process, commodity)
-    #                     for (stf, site, process, commodity) in
-    #                                                         m.pro_output_tuples
-    #                     for (st, si, pro, com) in tuple(chp_list)
-    #                     if stf == st and site == si and process == pro and
-    #                        commodity == com],
-    #         doc='Heat produced by process by site, e.g. (2020,Mid,Coal,Heat)')
-    #     m.pro_minfraction_heat_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         initialize=[(stf, site, process, commodity)
-    #                     for (stf, site, process, commodity) in
-    #                                             m.pro_minfraction_output_tuples
-    #                     for (st, si, pro, com) in tuple(chp_list)
-    #                     if stf == st and site == si and process == pro and
-    #                        commodity == com],
-    #         doc='Heat with minimum working load and NO partial output ratio,'
-    #             'e.g. (2020,Mid,Coal PP,Heat)')
-    #     m.pro_partial_heat_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         initialize=[(stf, site, process, commodity)
-    #                     for (stf, site, process, commodity) in
-    #                                                 m.pro_partial_output_tuples
-    #                     for (st, si, pro, com) in tuple(chp_list)
-    #                     if stf == st and site == si and process == pro and
-    #                        commodity == com],
-    #         doc='Heat with partial output ratio, e.g. (Mid,Coal PP,CO2)')
-    #     m.pro_heat_on_off_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         initialize=[(stf, site, process, commodity)
-    #                     for (stf, site, process, commodity) in
-    #                                          m.pro_on_off_output_tuples
-    #                     for (st, si, pro, com) in tuple(chp_list)
-    #                     if stf == st and site == si and process == pro and
-    #                        commodity == com],
-    #         doc='Heat for on/off output with partial behaviour')
-    #     m.pro_partial_heat_on_off_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         initialize=[(stf, site, process, commodity)
-    #                     for (stf, site, process, commodity) in
-    #                                          m.pro_partial_on_off_output_tuples
-    #                     for (st, si, pro, com) in tuple(chp_list)
-    #                     if stf == st and site == si and process == pro and
-    #                        commodity == com],
-    #         doc='Heat for on/off output with partial behaviour')
-    # else:
-    #     # empty tuples needed for the other constraints
-    #     m.pro_heat_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         doc='Heat produced by process by site, e.g. (2020,Mid,Coal,Heat)')
-    #     m.pro_minfraction_heat_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         doc='Heat with minimum working load and NO partial output ratio,'
-    #             'e.g. (2020,Mid,Coal PP,Heat)')
-    #     m.pro_partial_heat_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         doc='Heat with partial output ratio, e.g. (Mid,Coal PP,CO2)')
-    #     m.pro_heat_on_off_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         doc='Heat for on/off output with partial behaviour')
-    #     m.pro_partial_heat_on_off_output_tuples = pyomo.Set(
-    #         within=m.stf * m.sit * m.pro * m.com,
-    #         doc='Heat for on/off output with partial behaviour')
-
-
+    
     # time variable efficiency rules
     m.def_process_timevar_output = pyomo.Constraint(
         m.tm, m.pro_timevar_output_tuples - m.pro_partial_output_tuples -
@@ -402,27 +314,6 @@ def add_advanced_processes(m):
         rule=res_partial_timevar_output_rampup_rule,
         doc='Output may not increase faster than the ramping up gradient')
 
-    # m.res_process_heat_timevar_output = pyomo.Constraint(
-    #     m.tm, m.pro_heat_output_tuples & m.pro_timevar_output_tuples,
-    #     rule=res_process_heat_timevar_output_rule,
-    #     doc='process output <= process throughput * output ratio')
-    # m.res_partial_process_heat_timevar_output = pyomo.Constraint(
-    #     m.tm, m.pro_partial_heat_output_tuples & m.pro_timevar_output_tuples,
-    #     rule=res_partial_process_heat_timevar_output_rule,
-    #     doc='e_pro_out <= '
-    #         ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
-    #         ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
-    # m.res_process_heat_on_off_timevar_output = pyomo.Constraint(
-    #     m.tm, m.pro_heat_on_off_output_tuples & m.pro_timevar_output_tuples,
-    #     rule=res_process_heat_on_off_timevar_output_rule,
-    #     doc='e_pro_out <= tau_pro * r_out * on_off')
-    # m.res_partial_process_heat_on_off_timevar_output = pyomo.Constraint(
-    #     m.tm, m.pro_partial_heat_on_off_output_tuples &
-    #           m.pro_timevar_output_tuples,
-    #     rule=res_partial_process_heat_on_off_timevar_output_rule,
-    #     doc='e_pro_out <= '
-    #         ' cap_pro * min_fraction * (r - R) / (1 - min_fraction) * on_off'
-    #         '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction) * on_off')
 
     # minfraction rules
     m.res_throughput_by_capacity_min = pyomo.Constraint(
@@ -523,30 +414,6 @@ def add_advanced_processes(m):
         m.tm, m.pro_start_up_tuples,
         rule=res_start_ups_rule,
         doc='start >= on_off(t) - on_off(t-1)')
-
-
-    # CHP constraints
-    # m.res_process_heat_output = pyomo.Constraint(
-    #     m.tm, m.pro_heat_output_tuples - m.pro_timevar_output_tuples,
-    #     rule=res_process_heat_output_rule,
-    #     doc='process heat output <= process throughput * output ratio')
-    # m.res_partial_process_heat_output = pyomo.Constraint(
-    #     m.tm, m.pro_partial_heat_output_tuples - m.pro_timevar_output_tuples,
-    #     rule=res_partial_process_heat_output_rule,
-    #     doc='e_pro_out_heat <= '
-    #         ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
-    #         ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
-    # m.res_process_heat_on_off_output = pyomo.Constraint(
-    #     m.tm, m.pro_heat_on_off_output_tuples - m.pro_timevar_output_tuples,
-    #     rule=res_process_heat_on_off_output_rule,
-    #     doc='e_pro_out_heat <= tau_pro * r_out * on_off')
-    # m.res_partial_process_heat_on_off_output = pyomo.Constraint(
-    #     m.tm, m.pro_partial_heat_on_off_output_tuples -
-    #           m.pro_timevar_output_tuples,
-    #     rule=res_partial_process_heat_on_off_output_rule,
-    #     doc='e_pro_out_heat <= on_off * '
-    #         ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction) '
-    #         '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)) ')
 
     return m
 
@@ -693,43 +560,6 @@ def res_partial_timevar_output_rampup_rule(m, tm, stf, sit, pro, com):
                 m.e_pro_out[tm, stf, sit, pro, com])
     else:
         return pyomo.Constraint.Skip
-
-def res_process_heat_timevar_output_rule(m, tm, stf, sit, pro, com):
-    return (m.e_pro_out[tm, stf, sit, pro, com] <=
-            m.tau_pro[tm, stf, sit, pro] * m.r_out_dict[(stf, pro, com)] *
-            m.eff_factor_dict[(sit, pro)][stf, tm])
-def res_partial_process_heat_timevar_output_rule(m, tm, stf, sit, pro, coo):
-    # input ratio at maximum operation point
-    R = m.r_out_dict[stf, pro, coo]
-    # input ratio at lowest operation point
-    r = m.r_out_min_fraction_dict[stf, pro, coo]
-    min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
-
-    online_factor = min_fraction * (r - R) / (1 - min_fraction)
-    throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_out[tm, stf, sit, pro, coo] <=
-            (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
-            m.tau_pro[tm, stf, sit, pro] * throughput_factor) *
-            m.eff_factor_dict[(sit, pro)][stf, tm])
-def res_process_heat_on_off_timevar_output_rule(m, tm, stf, sit, pro, cmd):
-    r = m.r_out_dict[(stf, pro, cmd)]
-    return (m.e_pro_out[tm, stf, sit, pro, cmd] <=
-            m.tau_pro[tm, stf, sit, pro] * r * m.on_off[tm, stf, sit, pro] *
-            m.eff_factor_dict[(sit, pro)][stf, tm])
-def res_partial_process_heat_on_off_timevar_output_rule(m, tm, stf, sit, pro, coo):
-    # input ratio at maximum operation point
-    R = m.r_out_dict[stf, pro, coo]
-    # input ratio at lowest operation point
-    r = m.r_out_min_fraction_dict[stf, pro, coo]
-    min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
-    on_off = m.on_off[tm, stf, sit, pro]
-
-    online_factor = min_fraction * (r - R) / (1 - min_fraction)
-    throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_out[tm, stf, sit, pro, coo] <=
-            (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
-            m.tau_pro[tm, stf, sit, pro] * throughput_factor) * on_off *
-            m.eff_factor_dict[(sit, pro)][stf, tm])
 
 # minfraction
 def res_throughput_by_capacity_min_rule(m, tm, stf, sit, pro):
@@ -942,36 +772,3 @@ def startup_cost(m, cost_type):
                    m.process_dict['cost_factor'][p]
                    for tm in m.tm
                    for p in m.pro_start_up_tuples)
-
-def res_process_heat_output_rule(m, tm, stf, sit, pro, com):
-    return (m.e_pro_out[tm, stf, sit, pro, com] <=
-            m.tau_pro[tm, stf, sit, pro] * m.r_out_dict[(stf, pro, com)])
-def res_partial_process_heat_output_rule(m, tm, stf, sit, pro, coo):
-    # input ratio at maximum operation point
-    R = m.r_out_dict[stf, pro, coo]
-    # input ratio at lowest operation point
-    r = m.r_out_min_fraction_dict[stf, pro, coo]
-    min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
-
-    online_factor = min_fraction * (r - R) / (1 - min_fraction)
-    throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_out[tm, stf, sit, pro, coo] <=
-            m.dt * m.cap_pro[stf, sit, pro] * online_factor +
-            m.tau_pro[tm, stf, sit, pro] * throughput_factor)
-def res_process_heat_on_off_output_rule(m, tm, stf, sit, pro, cmd):
-    r = m.r_out_dict[(stf, pro, cmd)]
-    return (m.e_pro_out[tm, stf, sit, pro, cmd] <=
-            m.tau_pro[tm, stf, sit, pro] * r * m.on_off[tm, stf, sit, pro])
-def res_partial_process_heat_on_off_output_rule(m, tm, stf, sit, pro, coo):
-    # input ratio at maximum operation point
-    R = m.r_out_dict[stf, pro, coo]
-    # input ratio at lowest operation point
-    r = m.r_out_min_fraction_dict[stf, pro, coo]
-    min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
-    on_off = m.on_off[tm, stf, sit, pro]
-
-    online_factor = min_fraction * (r - R) / (1 - min_fraction)
-    throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_out[tm, stf, sit, pro, coo] <=
-            (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
-            m.tau_pro[tm, stf, sit, pro] * throughput_factor) * on_off)

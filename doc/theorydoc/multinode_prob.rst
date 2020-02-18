@@ -68,7 +68,7 @@ between the parameter transmission capacity block :math:`{K}_{yaf}^\text{block}`
 and the variable new transmission capacity units :math:`\beta_{yaf}`:
 
 .. math::
-   &\widehat{\kappa}_{af}={K}_{yaf}^\text{block}\cdot \beta_{yaf}
+   \widehat{\kappa}_{af}={K}_{yaf}^\text{block}\cdot \beta_{yaf}
 
 Transmission capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

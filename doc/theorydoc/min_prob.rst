@@ -174,11 +174,11 @@ process is simply given by:
 
 where :math:`K_p` is the already installed capacity of process :math:`p`.
 The newly installed capacity can also be an integer, expressed as the product 
-between the parameter process new capacity block :math:`\{K}_p^\text{block}` 
-and the variable new process capacity units :math:`\beta_{yvp}`:
+between the parameter process new capacity block :math:`{K}_p^\text{block}` 
+and the variable new process capacity units :math:`\beta_{p}`:
 
 .. math::
-   \widehat{\kappa}_p= \{K}_p^\text{block}\cdot \beta_p 
+   \widehat{\kappa}_p= {K}_p^\text{block}\cdot \beta_p 
 
 Process capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

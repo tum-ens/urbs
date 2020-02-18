@@ -307,22 +307,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.pro_rampup_start_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro,
             doc='Processes with different starting ramp up gradient')
-        # m.pro_heat_output_tuples = pyomo.Set(
-        #     within=m.stf * m.sit * m.pro * m.com,
-        #     doc='Heat produced by process by site, e.g. (2020,Mid,Coal,Heat)')
-        # m.pro_minfraction_heat_output_tuples = pyomo.Set(
-        #     within=m.stf * m.sit * m.pro * m.com,
-        #     doc='Heat with minimum working load and NO partial output ratio,'
-        #         'e.g. (2020,Mid,Coal PP,Heat)')
-        # m.pro_partial_heat_output_tuples = pyomo.Set(
-        #     within=m.stf * m.sit * m.pro * m.com,
-        #     doc='Heat with partial output ratio, e.g. (Mid,Coal PP,CO2)')
-        # m.pro_heat_on_off_output_tuples = pyomo.Set(
-        #     within=m.stf * m.sit * m.pro * m.com,
-        #     doc='Heat for on/off output with partial behaviour')
-        # m.pro_partial_heat_on_off_output_tuples = pyomo.Set(
-        #     within=m.stf * m.sit * m.pro * m.com,
-        #     doc='Heat for on/off output with partial behaviour')
         m.pro_minfraction_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro,
             doc=' empty processes with constant efficiency and minimum working'

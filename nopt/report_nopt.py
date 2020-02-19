@@ -8,11 +8,11 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
     """Write result summary to a spreadsheet file
 
     Args:
-        - instance: a urbs model instance;
-        - filename: Excel spreadsheet filename, will be overwritten if exists;
-        - report_tuples: (optional) list of (sit, com) tuples for which to
+        :param instance: a urbs model instance;
+        :param filename: Excel spreadsheet filename, will be overwritten if exists;
+        :param report_tuples: (optional) list of (sit, com) tuples for which to
           create detailed timeseries sheets;
-        - report_sites_name: (optional) dict of names for created timeseries
+        :param report_sites_name: (optional) dict of names for created timeseries
           sheets
     """
 
@@ -23,23 +23,28 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
     costs, cpro, ctra, csto = get_constants(instance)  # finds these values from model instance prob
     # Report new  optimized capacities:
 
-    if 'cost' in instance.objective_dict.keys() or 'CO2' in instance.objective_dict.keys():
-        costs = costs.to_frame(name='Costs')
-    else:
-        costs = instance.minimum_cost
+
     # create spreadsheet writer object
     with pd.ExcelWriter(filename) as writer:
+        if 'cost' in instance.objective_dict.keys() or 'CO2' in instance.objective_dict.keys():
+            costs = costs.to_frame(name='Costs')
+            costs = pd.concat([costs],keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
+                                 names=['Objective'])
+            cpro = pd.concat([cpro],keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
+                                 names=['Objective'])
+            cpro.to_excel(writer, 'Process caps')
+            ctra.to_excel(writer, 'Transmission caps')
+            csto.to_excel(writer, 'Storage caps')
+            costs.to_excel(writer, 'Costs')
+        else:
+            costs= pd.concat([instance.near_optimal_cost],keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
+                                 names=['Objective'])
+            nopt_cap = pd.concat([instance.near_optimal_capacities],
+                                 keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
+                                 names=['Objective'])
+            costs.to_excel(writer, 'Costs')
+            nopt_cap.to_excel(writer, 'Near-Optimal Process Capacities')
 
-        # write constants to spreadsheet
-        costs.to_excel(writer, 'Costs')
-        cpro.to_excel(writer, 'Process caps')
-        ctra.to_excel(writer, 'Transmission caps')
-        csto.to_excel(writer, 'Storage caps')
-        try:
-            instance.near_optimal_capacities.to_excel(writer, 'Near-Optimal Process Capacities')
-        except:
-            pass
-        # pd.merge(optimized_cap_pro,instance.cost_optimized_cap_pro, left_on=[''])
         # initialize timeseries tableaus
         energies = []
         timeseries = {}

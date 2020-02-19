@@ -163,7 +163,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         # Record minimum costs for reporting
         prob.near_optimal_capacities = read_capacity(prob, 'Minimum Cost')
-        prob.minimum_cost = read_costs(prob, 'Minimum Cost')
+        prob.near_optimal_cost = read_costs(prob, 'Minimum Cost')
 
         # save problem solution (and input data) to HDF5 file
         # save(prob, os.path.join(result_dir, '{}.h5'.format('cost')))
@@ -174,7 +174,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             assert m.cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
             return (1 + m.cost_factor) * m.opt_cost_sum == pyomo.summation(m.costs)
 
-        for slack in prob.slack_value:
+        prob.slack_list.sort()
+        for slack in prob.slack_list:
             prob.cost_factor = slack
 
             prob.del_component(prob.objective_function)
@@ -219,15 +220,14 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             # store optimized capacities in a data frame
             prob.near_optimal_capacities = prob.near_optimal_capacities.join(maximized_cap_pro, how='outer')
             prob.near_optimal_capacities = prob.near_optimal_capacities.join(minimized_cap_pro, how='outer')
-            prob.near_optimal_cost = prob.minimum_cost.join(maximized_cap_costs, how='outer')
-            prob.near_optimal_cost = prob.minimum_cost.join(minimized_cap_costs, how='outer')
+            prob.near_optimal_cost = prob.near_optimal_cost.join(maximized_cap_costs, how='outer')
+            prob.near_optimal_cost = prob.near_optimal_cost.join(minimized_cap_costs, how='outer')
             #prob.near_optimal_capacities = pd.concat([prob.near_optimal_capacities], keys=[str(list(objective_dict.items())).replace("'","").strip("[]")],names=['Objective_pro'])
-        #report(
-         #   prob,
-        #    os.path.join(result_dir, '{}-{}.xlsx').format(str(list(objective_dict.items())).strip("[]").replace("'", "")
-         #                                                 , str(prob.stf_list).strip("[]").replace("'", "")),
-         #   report_tuples=report_tuples,
-          #  report_sites_name=report_sites_name)
+
+        report(prob,
+            os.path.join(result_dir, 'nopt.xlsx'),
+            report_tuples=report_tuples,
+            report_sites_name=report_sites_name)
 
         plot_nopt(prob,
                   os.path.join(result_dir,'nopt'))

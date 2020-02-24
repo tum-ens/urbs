@@ -230,6 +230,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             report_sites_name=report_sites_name)
 
         plot_nopt(prob,
-                  os.path.join(result_dir,'nopt'))
+                  os.path.join(result_dir, 'line'))
+        stack_plot_capacities(prob, os.path.join(result_dir, 'stack'))
 
     return prob

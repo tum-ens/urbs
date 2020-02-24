@@ -85,6 +85,7 @@ def plot_nopt(prob, figure_basename, figure_size=(16, 12), extensions=None):
         ax0 = plt.subplot(gs[0]) #plt.subplot(gs[0])
         ax1 = plt.subplot(gs[1])
         all_axes.append(ax0)
+        all_axes.append(ax1)
         #plot for single year, each plot has one graph per site and one graph for all the sites together
         plot_site_list= list(prob.sit)
         slack_array = list(prob.slack_list)
@@ -174,6 +175,85 @@ def plot_nopt(prob, figure_basename, figure_size=(16, 12), extensions=None):
             fig.savefig(fig_filename, bbox_inches='tight')
         plt.close(fig)
 
+def stack_plot_capacities(prob, figure_basename,figure_size=(16, 12), extensions=None):
+    slack_array = list(prob.slack_list)
+    slack_array.append(0)
+    slack_array.sort()
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    #fig_stack = plt.figure(figsize=figure_size)
+    #all_axes = []
+    #gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[1, 1], hspace=0.05)
+    #ax0 = plt.subplot(gs[0])  # plt.subplot(gs[0])
+    #ax1 = plt.subplot(gs[1])
+   # all_axes.append(ax0)
+   # all_axes.append(ax1)
+    #slack_array = np.array(slack_array) * 100
+    stack_plot_pro_list = list(prob.pro)
+    stack_plot_pro_list.remove('Slack powerplant')
+    intertemporal_process_cap_min=[]
+    intertemporal_process_cap_max = []
+    for index, stf in enumerate(prob.stf):
+        process_capacities_stack_min= []
+        process_capacities_stack_max=[]
+        for pro in stack_plot_pro_list:
+            pro_cap_min=[]
+            pro_cap_max=[]
+            for slack in slack_array:
+                if slack == 0:
+                    pro_cap_min.append( sum(prob.near_optimal_capacities['Minimum Cost'][p] for p in prob.pro_tuples
+                                      if p[0] == stf and p[2] == pro))
+                    pro_cap_max.append(sum(prob.near_optimal_capacities['Minimum Cost'][p] for p in prob.pro_tuples
+                                      if p[0] == stf and p[2] == pro))
+
+                else:
+                    pro_cap_min.append(sum(prob.near_optimal_capacities['Min-{}'.format(slack)][p] for p in prob.pro_tuples
+                                      if p[0] == stf and p[2] == pro))
+                    pro_cap_max.append(sum(prob.near_optimal_capacities['Max-{}'.format(slack)][p] for p in prob.pro_tuples
+                                      if p[0] == stf and p[2] == pro))
+            process_capacities_stack_min.append(pro_cap_min)
+            process_capacities_stack_max.append(pro_cap_max)
+        intertemporal_process_cap_min.append(process_capacities_stack_min)
+        intertemporal_process_cap_max.append(process_capacities_stack_max)
+        fig_stack=plt.figure(figsize=figure_size)
+        gs = mpl.gridspec.GridSpec(2, 1, height_ratios=[1, 1], hspace=0.05)
+        ax0 = plt.subplot(gs[0])  # plt.subplot(gs[0])
+        ax1 = plt.subplot(gs[1])
+
+        x_array = np.array(slack_array)*100
+
+        sp0 = ax0.stackplot(x_array, np.array(intertemporal_process_cap_min[index]), labels=stack_plot_pro_list)
+        sp1 = ax1.stackplot(x_array, np.array(intertemporal_process_cap_max[index]), labels=stack_plot_pro_list)
+        for k, process in enumerate(stack_plot_pro_list):
+            process_color = to_color(process)
+            sp0[k].set_facecolor(process_color)
+            sp0[k].set_edgecolor(to_color('Decoration'))
+            sp1[k].set_facecolor(process_color)
+            sp1[k].set_edgecolor(to_color('Decoration'))
+
+        for ax in [ax0,ax1]:
+            lg = ax.legend(frameon=False,
+                            loc='upper left',
+                            bbox_to_anchor=(1, 1))
+            plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
+                     linewidth=0.15)
+            ax.set_ylabel('Minimized Process Capacities(MW)')
+
+        plt.setp(ax0.get_xticklabels(), visible=False)
+        ax1.set_xlabel('{} ({})'.format('Increase in cost', '%'))
+        fig_name = str(prob.objective_dict).strip('{}').replace("'", "").replace('[', '').replace(']', '').replace(':','_')
+        new_figure_title = 'Stack Plot of Process Capacities - Objective: {} year(s) {} '.format(fig_name ,str(prob.stf_list).strip('[]'))
+        fig_stack.suptitle(new_figure_title, fontsize=16)
+
+        if extensions is None:
+            extensions = ['png']
+
+        # save plot to files
+        for ext in extensions:
+            fig_filename = '{}-{}-{}.{}'.format(
+                figure_basename,fig_name,str(stf).strip('[]'),''.join(ext))
+            fig_stack.savefig(fig_filename, bbox_inches='tight')
+        plt.close(fig_stack)
 
 
 

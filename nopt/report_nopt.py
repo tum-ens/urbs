@@ -37,7 +37,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
             csto.to_excel(writer, 'Storage caps')
             costs.to_excel(writer, 'Costs')
         else:
-            costs= pd.concat([instance.near_optimal_cost],keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
+            costs = pd.concat([instance.near_optimal_cost],keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
                                  names=['Objective'])
             nopt_cap = pd.concat([instance.near_optimal_capacities],
                                  keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],

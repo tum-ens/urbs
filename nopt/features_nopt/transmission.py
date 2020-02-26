@@ -358,35 +358,35 @@ def transmission_cost(m, cost_type):
             cost = sum(m.cap_tra_new[t] *
                        m.transmission_dict['inv-cost'][t] *
                        m.transmission_dict['invcost-factor'][t]
-                       for t in m.tra_tuples if t[1] in m.objective_dict['cost'] or t[2] in m.objective_dict['cost'])
+                       for t in m.tra_tuples if t[1] in m.objective_dict['cost'])
             if m.mode['int']:
                 cost -= sum(m.cap_tra_new[t] *
                             m.transmission_dict['inv-cost'][t] *
                             m.transmission_dict['overpay-factor'][t]
-                            for t in m.tra_tuples if t[1] in m.objective_dict['cost'] or t[2] in m.objective_dict['cost'])
+                            for t in m.tra_tuples if t[1] in m.objective_dict['cost'])
             return cost
         elif cost_type == 'Fixed':
             return sum(m.cap_tra[t] * m.transmission_dict['fix-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
-                       for t in m.tra_tuples if t[1] in m.objective_dict['cost'] or t[2] in m.objective_dict['cost'])
+                       for t in m.tra_tuples if t[1] in m.objective_dict['cost'])
         elif cost_type == 'Variable':
             if m.mode['dpf']:
                 return sum(m.e_tra_in[(tm,) + t] * m.weight *
                            m.transmission_dict['var-cost'][t] *
                            m.transmission_dict['cost_factor'][t]
                            for tm in m.tm
-                           for t in m.tra_tuples_tp if t[1] in m.objective_dict['cost'] or t[2] in m.objective_dict['cost']) + \
+                           for t in m.tra_tuples_tp if t[1] in m.objective_dict['cost']) + \
                        sum(m.e_tra_abs[(tm,) + t] * m.weight *
                            m.transmission_dict['var-cost'][t] *
                            m.transmission_dict['cost_factor'][t]
                            for tm in m.tm
-                           for t in m.tra_tuples_dc if t[1] in m.objective_dict['cost'] or t[2] in m.objective_dict['cost'])
+                           for t in m.tra_tuples_dc if t[1] in m.objective_dict['cost'])
             else:
                 return sum(m.e_tra_in[(tm,) + t] * m.weight *
                            m.transmission_dict['var-cost'][t] *
                            m.transmission_dict['cost_factor'][t]
                            for tm in m.tm
-                           for t in m.tra_tuples if t[1] in m.objective_dict['cost'] or t[2] in m.objective_dict['cost'])
+                           for t in m.tra_tuples if t[1] in m.objective_dict['cost'] )
 
     else:
         if cost_type == 'Invest':

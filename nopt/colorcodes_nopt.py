@@ -9,6 +9,18 @@ COLORS = {
     'Photovoltaics': (243, 174, 0),
     'Slack powerplant': (163, 74, 130),
     'Wind park': (122, 179, 225),
+    'Onshore wind': (122, 179, 225),
+    'Brennstoffzelle':(0, 255, 0),
+    'Bohrungsanlage':(153, 153, 0),
+    'Elektrolyseur':(255, 0, 0),
+    'Curtailment':(163, 74, 130),
+    'Offshore wind':(0, 0, 139),
+    'Geothermisches Kraftwerk':(255,102,0),
+    'Dummy Gas':(192,192,192),
+    'Biogas':(85,107,47),
+    'Feste Biomasse':(0, 122, 55),
+    'GuD NEU':(139,69,19),
+    'Dummy H2': (128,128,128),
     # hard-coded strings
     'Decoration': (128, 128, 128),   # plot labels
     'Unshifted': (130, 130, 130),    # unshifted demand line
@@ -28,16 +40,6 @@ COLORS = {
     'Purchase': (0, 51, 89),
     'Startup': (105, 8, 90),
     'Variable': (128, 153, 172),
-    #plot markers
-    'Biomass plantmarker': (0, 122, 55),
-    'Coal plantmarker': (100, 100, 100),
-    'Gas plantmarker': (237, 227, 0),
-    'Gud plantmarker': (153, 153, 0),
-    'Hydro plantmarker': (198, 188, 240),
-    'Lignite plantmarker': (116, 66, 65),
-    'Photovoltaicsmarker': (243, 174, 40),
-    'Slack powerplantmarker': (163, 74, 130),
-    'Wind parkmarker': (17, 105, 177),
     # AREA markers
     'North': (135,206,250),
     'Mid': (60, 179, 113),

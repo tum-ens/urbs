@@ -3,7 +3,7 @@ import shutil
 import nopt
 import ipdb
 
-input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
+input_files = '2050inputdatei.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
@@ -24,7 +24,7 @@ shutil.copy(__file__, result_dir)
 # No site name indicates minimize/maximize total capacity of all sites
 # example objectives [('South','Photovoltaics'),('Photovoltaics'),('South','North','cost')] etc.
 
-objective = [('Wind park')]
+objective = [('Onshore wind')]
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 

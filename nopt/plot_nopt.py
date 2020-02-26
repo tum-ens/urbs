@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+import  re
 from random import random
 from .colorcodes_nopt import COLORS
 from .input_nopt import get_input
@@ -187,7 +188,9 @@ def stack_bar_plot_capacities(prob, figure_basename,figure_size=(16, 12), extens
 
     #remove slack powerplant from plot
     stack_plot_pro_list = list(prob.pro)
-    stack_plot_pro_list.remove('Slack powerplant')
+    for process in stack_plot_pro_list:
+        if re.search('slack.*', process, flags=re.IGNORECASE):
+            stack_plot_pro_list.remove(process)
 
     #list for plotting
     intertemporal_process_cap_min = pd.DataFrame()
@@ -237,11 +240,34 @@ def stack_bar_plot_capacities(prob, figure_basename,figure_size=(16, 12), extens
         process_color = to_color(process)
         color_list.append(process_color)
     # Plot
-    intertemporal_process_cap_min.plot(kind='bar',ax=ax0,stacked=True,color=color_list,edgecolor=to_color('Decoration'))
-    intertemporal_process_cap_max.plot(kind='bar',ax=ax1,stacked=True,color=color_list,edgecolor=to_color('Decoration'))
+    intertemporal_process_cap_min.plot(kind='bar',ax=ax0,stacked=True,color=color_list,edgecolor=to_color('Decoration'),legend=False)
+    intertemporal_process_cap_max.plot(kind='bar',ax=ax1,stacked=True,color=color_list,edgecolor=to_color('Decoration'),legend=False)
     # Format axes
     for ax in [ax0,ax1]:
-        lg = ax.legend(frameon=False,
+        # legend
+        handles, labels = ax.get_legend_handles_labels()
+
+        # add "only" consumed commodities to the legend
+        for item in intertemporal_process_cap_min.columns[::-1]:
+            # if item not in created add to legend, except items
+            # from consumed which are all-zeros
+            if (ax==ax0 and intertemporal_process_cap_min[item].sum()!=0) or (ax==ax1 and intertemporal_process_cap_max[item].sum()!=0):
+                pass
+            else:
+                # remove item/commodity is not consumed
+                item_index = labels.index(item)
+                handles.pop(item_index)
+                labels.pop(item_index)
+
+        for item in labels:
+            if labels.count(item) > 1:
+                item_index = labels.index(item)
+                handles.pop(item_index)
+                labels.pop(item_index)
+
+        lg = ax.legend(handles=handles[::-1],
+                        labels=labels[::-1],
+                        frameon=False,
                         loc='upper left',
                         bbox_to_anchor=(1, 1))
         plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
@@ -279,7 +305,9 @@ def stack_area_plot_capacities(prob, figure_basename, figure_size=(16, 12), exte
 
     # remove slack powerplant from plot
     stack_plot_pro_list = list(prob.pro)
-    stack_plot_pro_list.remove('Slack powerplant')
+    for process in stack_plot_pro_list:
+        if re.search('slack.*', process,flags=re.IGNORECASE):
+            stack_plot_pro_list.remove(process)
 
     # list for plotting
     intertemporal_process_cap_min=[]
@@ -328,11 +356,37 @@ def stack_area_plot_capacities(prob, figure_basename, figure_size=(16, 12), exte
             sp1[k].set_edgecolor(to_color('Decoration'))
 
         for ax in [ax0, ax1]:
-            lg = ax.legend(frameon=False,
+            # legend
+            handles, labels = ax.get_legend_handles_labels()
+
+            # add "only" consumed commodities to the legend
+            for i,item in enumerate(stack_plot_pro_list[::-1]):
+                # if item not in created add to legend, except items
+                # from consumed which are all-zeros
+                if (ax == ax0 and all(val==0 for val in intertemporal_process_cap_min[index][::-1][i])) or (
+                        ax == ax1 and all(val==0 for val in intertemporal_process_cap_max[index][::-1][i])):
+                    # remove item/commodity is not consumed
+                    item_index = labels.index(item)
+                    handles.pop(item_index)
+                    labels.pop(item_index)
+
+                else:
+                    pass
+
+            for item in labels:
+                if labels.count(item) > 1:
+                    item_index = labels.index(item)
+                    handles.pop(item_index)
+                    labels.pop(item_index)
+
+            lg = ax.legend(handles=handles[::-1],
+                           labels=labels[::-1],
+                           frameon=False,
                            loc='upper left',
                            bbox_to_anchor=(1, 1))
             plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
                      linewidth=0.15)
+            ax.grid(b=0, linestyle='-', linewidth=0.5)
 
         ax0.set_ylabel('Process Capacities (MW) \n Minimized Objective')
         ax1.set_ylabel('Process Capacities (MW) \n Maximized Objective')

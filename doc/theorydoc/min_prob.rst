@@ -310,7 +310,7 @@ the process and :math:`\overline{PG}_p^\text{up}` and :math:`\overline{PG}_p^\te
 are the normalized, maximal ramping up gradient, respectively ramping down gradient of the
 operational state in full capacity per timestep.
 
-Intermittend supply rule
+Intermittent supply rule
 ~~~~~~~~~~~~~~~~~~~~~~~~
 If the input commodity is of type 'SupIm', which means that it represents an
 operational state rather than a proper material flow, the operational state of

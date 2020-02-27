@@ -107,8 +107,8 @@ or piecewise linear.
 
 Firstly, the following equation introduces a coupling between :math:`\omicron_{pt}`, 
 the boolean on/off marker of a process and its throughput :math:`\tau_{pt}`, so that 
-:math:`\omicron_{pt}` is 1 when the process can produce and 0 when it cannnot or
-is starting.
+:math:`\omicron_{pt}` assumes the value 1 when the process has a non-zero output and 0 
+otherwise.
 
 .. math::
    &\forall p\in P^{\text{on/off}},~t\in T_m:\\\\
@@ -133,9 +133,10 @@ of a process, while the second one represents the consumed input while also prod
    {1-\underline{P}_p}\cdot \tau_{pt}\right)\cdot \omicron_{pt}.
    
 In order to ensure the continuity property of the function, the input ratio used 
-for the starting interval has to be the partial one. This is a realistic value, 
-since processes normaly use, percentagewise, more fuel in relationship to the 
-throughput when starting then at higher throughput values.
+for the starting interval has to be one corresponding to the minimum partial load, 
+:math:`\underline{P}_{p}\kappa_p \underline{r}^{\text{in}}_{pc}`. 
+This is a realistic value, since processes normally use, percentagewise, more fuel 
+in relationship to the throughput when starting than at higher throughput values.
 
 Thirdly, the following equations differentiate whether an output commodity needs to be 
 produced when a process is starting (e.g. environmental commodities) or not (e.g. electricity):

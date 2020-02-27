@@ -4,19 +4,19 @@
 
 Advanced Processes
 ==================
-Several processes have a complicated, sometimes non-linear behavior. Those that 
+Several processes have a complicated, non-linear behavior. Those that 
 can be modelled in urbs are explained here. These are: Time Variable Efficiency, 
 Minimum Load and Part Load Behaviors and On/Off Behavior.
 
-Time Variable Efficieny
+Time Variable Efficiency
 -----------------------
-It is possible to manipulate the operation of a process by introducing a time
+It is possible to exogenously manipulate the output of a process by introducing a time
 series, which changes the output ratios and thus the efficiency of a given
 process in each given timestep. This introduces an additional set of
 constraints in the form:
 
 .. math::
-   &\forall p \in P^{\text{TimeVarEff}},~c\in C-C^{\text{env}} t\in T_m:\\\\
+   &\forall p \in P^{\text{TimeVarEff}},~c\in C-C^{\text{env}}, t\in T_m:\\\\
    &\epsilon^{\text{out}}_{ypct}=r^{\text{out}}_{ypc}f^{\text{out}}_{ypt}
    \tau_{ypct}.
 
@@ -26,11 +26,11 @@ temperature dependent effects or maintenance intervals. Environmental
 commodities are intentionally excluded from the output manipulation. The reason
 for this is that they are typically directly linked to inputs as, e.g., CO2
 emissions are linked to the fossil inputs. A manipulation of the output for
-environmental commodities would thus screw up the mass balance of carbon in
-this case.
+environmental commodities would thus violate the mass balance of carbon in
+this case (e.g. coal).
 
 When the process in question is a process with part load behavior the equation
-for the time variable efficiency case takes the form:
+for the time variable efficiency case takes the following form:
 
 .. math::
    &\forall p\in P^{\text{partload}}~\text{and}~ p \in P^{\text{TimeVarEff}},
@@ -44,14 +44,14 @@ for the time variable efficiency case takes the form:
 
 Minimum Load and Part Load Behaviors
 ------------------------------------
-There are some processes which theoretically can be turned on and off, but this 
-does not happen in reality in case of normal operation (e.g. nuclear power plants,
+There are some processes which theoretically can be turned on and off, while others
+tipically operate as must-run units (e.g. nuclear power plants,
 heat-producing plants during the cold season etc.). These processes can either have
 a constant and load independent efficiency or a part-load behavior.
 
 In the case of a minimum load behavior with a constant, load independent efficiency,
 the values of the input and of the output of a process remain unchanged when compared 
-except for the fact that there values, together with the value of the throughput, stay 
+except for the fact that their values, together with the value of the throughput, stay 
 between the following boundaries:
 
 .. math::
@@ -66,9 +66,9 @@ Many processes show a non-trivial part-load behavior. In particular, often a
 nonlinear reaction of the efficiency on the operational state is given.
 Although urbs itself is a linear program this can with some caveats be captured
 in many cases. The reason for this is, that the efficiency of a process is
-itself not modeled but only the ratio between input and output multipliers. It
-is thus possible to use purely linear functions to get a nonlinear behavior of
-the efficiency of the form:
+itself not given as a parameter, but is merely the ratio between input and output 
+multipliers. It is thus possible to use purely linear functions to get a nonlinear 
+behavior of the efficiency of the form:
 
 .. math::
    \eta=\frac{a+b\tau_{pt}}{c+d\tau_{pt}},
@@ -101,9 +101,9 @@ A few restrictions have to be kept in mind when using this feature:
 On/off Behavior
 ---------------
 Some processes are characterised by a minimum or part-load behavior but still 
-retain the practical necessity of being turned on and off when this is optimal.
-This feature transforms urbs from a linear problem to a quadratic problem, meaning 
-that it becomes piecewise linear.
+retain the practical necessity of being turned on and off if this is optimal.
+This feature transforms urbs from a linear problem to a quadratic integer problem, 
+or piecewise linear.
 
 Firstly, the following equation introduces a coupling between :math:`\omicron_{pt}`, 
 the boolean on/off marker of a process and its throughput :math:`\tau_{pt}`, so that 

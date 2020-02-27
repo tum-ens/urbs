@@ -64,7 +64,7 @@ capacity is then calculated similar to process capacities in the minimal model:
 where :math:`K_{af}` represents the already installed and
 :math:`\widehat{\kappa}_{af}` the new capacity of transmission :math:`f`
 installed in arc :math:`a`. The new capacity can also be expressed as the product
-between the parameter transmission capacity block :math:`{K}_{yaf}^\text{block}` 
+of the parameter transmission capacity block :math:`{K}_{yaf}^\text{block}` 
 and the variable new transmission capacity units :math:`\beta_{yaf}`:
 
 .. math::

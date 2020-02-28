@@ -134,9 +134,9 @@ of a process, while the second one represents the consumed input while also prod
    
 In order to ensure the continuity property of the function, the input ratio used 
 for the starting interval has to be one corresponding to the minimum partial load, 
-:math:`\underline{P}_{p}\kappa_p \underline{r}^{\text{in}}_{pc}`. 
-This is a realistic value, since processes normally use, percentagewise, more fuel 
-in relationship to the throughput when starting than at higher throughput values.
+:math:`\underline{r}^{\text{in}}_{pc}`. This is a realistic value, since processes 
+normally use, percentagewise, more fuel in relationship to the throughput when 
+starting than at higher throughput values.
 
 Thirdly, the following equations differentiate whether an output commodity needs to be 
 produced when a process is starting (e.g. environmental commodities) or not (e.g. electricity):
@@ -171,9 +171,9 @@ similarly adapted version of the part-load output equation:
 Here, it is important to notice that the output of the environmental commodities becomes
 a continuous, piecewise linear function defined on two intervals. In order to ensure the 
 continuity property of the function, the output ratio used for the starting interval has
-to be the partial one. This is a realistic value, since processes normaly produce, 
-percentagewise, more CO2 and/or other environmental commodities in relationship to the 
-throughput when starting then at higher throughput values.
+to be the partial one, :math:`\underline{r}^{\text{in}}_{pc}`. This is a realistic value,
+since processes normaly produce, percentagewise, more CO2 and/or other environmental 
+commodities in relationship to the throughput when starting then at higher throughput values.
 
 Fourthly, while ramping up a process which can be turned on and off with a defined ramping up 
 gradient, the following unrealistic situation might occur: Due to the fact that in the minimum 
@@ -185,7 +185,7 @@ Case I: When
 
 .. math::
    &\underline{P}_p\geq \overline{PG}_p^{\text{up}}\\
-   &\underline{P}_p\ is\ a\ multiple\ of\ \overline{PG}_p^\text{up}.
+   &\underline{P}_p\ \text{is a multiple of} \overline{PG}_p^\text{up}.
    
 Here, in order to ensure that the process behaves 
 realistically, it is needed to ensure that the process starts producing in the minimum working 
@@ -211,7 +211,7 @@ If the process has a time variable efficiency, the equation changes to:
    &\epsilon^{out}_{pct}-\epsilon^{out}_{pc(t-1)}\leq 
    \Delta t\underline{P}_p\kappa_{p} r^{\text{out}}_{pc} f^{\text{out}}_{pt}.
    
-If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
+If the process has both a part load behavior and a time variable efficiency, the equation changes 
 to:
 
 .. math::
@@ -223,7 +223,7 @@ Case II: When
 
 .. math::
    &\underline{P}_{p}>\overline{PG}_p^\text{up}\\
-   &\underline{P}_p\ is\ not\ a\ multiple\ of\ \overline{PG}_p^\text{up}.
+   &\underline{P}_p\ \text{is not a multiple of} \overline{PG}_p^\text{up}.
    
 Here, in order to ensure that the process behaves realistically, it is needed to ensure that the 
 process starts somewhere in the interval between the minimum working point 
@@ -254,7 +254,7 @@ If the process has a time variable efficiency, the equation changes to:
    \Delta t (⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
    \overline{PG}_p\kappa_{p} r^{\text{out}}_{pc} f^{\text{out}}_{pt}.
 
-If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
+If the process has both a part load behavior and a time variable efficiency, the equation changes 
 to:
 
 .. math::
@@ -292,7 +292,7 @@ If the process has a time variable efficiency, the equation changes to:
    &\epsilon^{out}_{pct}-\epsilon^{out}_{pc(t-1)}\leq 
    \Delta t\overline{PG}_p^\text{up}\kappa_{p} r^{\text{out}}_{pc}\ f^{\text{out}}_{pt}.
 
-If the proces has both a part load behavior and a time variavle efficiency, the equation changes 
+If the process has both a part load behavior and a time variable efficiency, the equation changes 
 to:
 
 .. math::
@@ -301,7 +301,7 @@ to:
    \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc} f^{\text{out}}_{pt}.
    
 Fifthly, there are some processes which have a different ramping up gradient while starting 
-than while producing. This is usualy defined with the help of a so called starting time. The 
+than while producing. This is usually defined with the help of a so called starting time. The 
 following equations transform the starting time into a starting ramp and implement the starting
 ramp only during start, either as the only ramping constraint when no ramp up gradient is defined 
 or by replacing during start the rampiong up constraint which uses the ramping up gradient:

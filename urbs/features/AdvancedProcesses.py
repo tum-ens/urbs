@@ -87,7 +87,7 @@ def add_advanced_processes(m):
                             # and
                             # m.process_dict['starting-ramp'][stf, sit, pro]
                             # < m.process_dict['ramp-up-grad'][stf, sit, pro]],
-            doc='Proceses with different starting ramp up gradient')
+            doc='Processes with different starting ramp up gradient')
 
         m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,

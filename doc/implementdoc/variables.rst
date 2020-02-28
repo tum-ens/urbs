@@ -212,7 +212,7 @@ fragment: ::
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
 	
-**New Process Capacity Units**, :math:`\beta_{yvp}`, ``cap_unit``: The
+**New Process Capacity Units**, :math:`\beta_{yvp}`, ``pro_cap_unit``: The
 variable :math:`\beta_{yvp}` represents the number of capacity blocks of a
 process tuple :math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V`) that
 needs to be installed additionally to the energy system in support timeframe
@@ -220,7 +220,7 @@ needs to be installed additionally to the energy system in support timeframe
 script ``model.py`` this variable is defined by the model variable
 ``cap_pro_new`` and initialized by the following code fragment: ::  
 
-    m.cap_unit = pyomo.Var(
+    m.pro_cap_unit = pyomo.Var(
         m.pro_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='Number of newly installed capacity units')
@@ -283,11 +283,10 @@ minimum fraction :math:`\underline{P}_{yvp}`.
 In the script ``AdvancedProcesses.py``, this variable is defined by the model 
 variable ``on_off`` and initialized by the following code fragment: ::
 
-   m.on_off = pyomo.Var(
-        m.on_off = pyomo.Var(
-            m.t, m.pro_on_off_tuples,
-            within=pyomo.Boolean,
-            doc='Turn on/off a process with minimum working load')
+    m.on_off = pyomo.Var(
+        m.t, m.pro_on_off_tuples,
+        within=pyomo.Boolean,
+        doc='Turn on/off a process with minimum working load')
 	    
 **Process Start-up Marker**, :math:`\sigma_{yvpt}`, ``start_ups``: The boolean
 variable :math:`\sigma_{yvpt}` marks whether process tuple :math:`p_{yv}` 
@@ -298,7 +297,7 @@ at a timestep :math:`t`. The process is considered to start when its output
 In the script ``AdvancedProcesses.py``, this variable is defined by the model 
 variable ``start_ups`` and initialized by the following code fragment: ::
 
-    m.start_ups = pyomo.Var(
+    m.start_up = pyomo.Var(
             m.tm, m.pro_start_up_tuples,
             within=pyomo.Boolean,
             doc='Start-up marker')
@@ -334,7 +333,7 @@ In script ``transmission.py`` this variable is defined by the model variable
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
 
-**New Transmission Capacity Units**, :math:`\beta_{yaf}`, ``cap_unit_tra``: The
+**New Transmission Capacity Units**, :math:`\beta_{yaf}`, ``tra_cap_unit``: The
 variable :math:`\beta_{yaf}` represents the number of additional capacity blocks
 of a transmission tuple :math:`f_{yca}` that need to be installed , where 
 :math:`a` represents the arc from an origin site :math:`v_\text{out}` to a 
@@ -342,7 +341,7 @@ destination site :math:`v_\text{in}`. In script ``transmission.py`` this variabl
 is defined by the model variable ``cap_tra_new`` and initialized by the following 
 code fragment: ::
 
-    m.cap_unit_tra =pyomo.Var(
+    m.tra_cap_unit =pyomo.Var(
         m.tra_block_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New transmission capacity blocks')
@@ -463,14 +462,14 @@ following code fragment: ::
         within=pyomo.NonNegativeReals,
         doc='New storage size (MWh)')
 
-**New Storage Size Units**, :math:`\beta_{yvs}^\text{c}`, ``cap_sto_c_new``:
+**New Storage Size Units**, :math:`\beta_{yvs}^\text{c}`, ``sto_cap_c_unit``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the number of
 additional storage load capacity blocks of a storage tuple :math:`s_{vc}` that
 needs to be installed to the energy system in order to provide the optimal solution. 
 In script ``storage.py`` this variable is defined by the model variable ``cap_sto_c_unit``
 and initialized by the following code fragment: ::
 
-    m.cap_sto_c_unit = pyomo.Var(
+    m.sto_cap_c_unit = pyomo.Var(
         m.sto_block_c_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New storage size units')
@@ -503,15 +502,15 @@ following code fragment:
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
 
-**New Storage Power Units**, :math:`\beta_{yvs}^\text{c}`, ``cap_sto_p_unit``:
+**New Storage Power Units**, :math:`\beta_{yvs}^\text{c}`, ``sto_cap_p_unit``:
 The variable :math:`\beta_{yvs}^\text{c}` represents the number of additional
 potential discharge power blocks of a storage tuple :math:`s_{vc}` that needs 
 to be installed to the energy system in order to provide the optimal solution. 
 In the script ``storage.py`` this variable is defined by the model variable
-``cap_sto_p_unit`` and initialized by the following code fragment:
+``sto_cap_p_unit`` and initialized by the following code fragment:
 ::	
 
-    m.cap_sto_p_unit = pyomo.Var(
+    m.sto_cap_p_unit = pyomo.Var(
         m.sto_block_p_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New storage power units')

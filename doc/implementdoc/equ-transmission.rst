@@ -37,7 +37,7 @@ defined and calculated by the following code fragment:
         doc='cap_tra_new = tra-block * cap_tra_new')
 
 .. literalinclude:: /../urbs/features/transmission.py
-   :pyobject: def_transmission_output_rule
+   :pyobject: def_cap_tra_new_rule
    
 **Transmission Output Rule**: The constraint transmission output rule defines
 the variable transmission output commodity flow :math:`\pi_{yaft}^\text{out}`.

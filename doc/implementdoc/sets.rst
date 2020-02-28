@@ -426,7 +426,7 @@ as:
                         for (stf, sit, pro) in m.pro_on_off_tuples
                         if m.process_dict['start-time'][stf, sit, pro]
                                                             > 1.0 / m.dt],
-            doc='Proceses with different starting ramp up gradient')
+            doc='Processes with different starting ramp up gradient')
 
 Transmission Tuples
 ^^^^^^^^^^^^^^^^^^^
@@ -708,7 +708,7 @@ in AdvancedProcesses.py:
 
 Fourth, the processes in the tuple sets ``pro_on_off_tuples`` and
 ``pro_partial_on_off_tuples`` require another constraint to limit the 
-excesive growth of the output of a process. This is required due to the
+excessive growth of the output of a process. This is required due to the
 fact that in the point of minimum load, without these limiting constraints,
 the process on/off marker :math:`\omicron_{yvpt}` can be both on and off.
 There are three cases to be considered:

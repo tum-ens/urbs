@@ -68,11 +68,11 @@ def add_storage(m):
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
 
-    m.cap_sto_c_unit = pyomo.Var(
+    m.sto_cap_c_unit = pyomo.Var(
         m.sto_block_c_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New storage size units')
-    m.cap_sto_p_unit = pyomo.Var(
+    m.sto_cap_p_unit = pyomo.Var(
         m.sto_block_p_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New storage power units')
@@ -104,11 +104,11 @@ def add_storage(m):
     m.def_new_cap_sto_c = pyomo.Constraint(
         m.sto_block_c_tuples,
         rule=def_new_cap_sto_c_rule,
-        doc='cap_sto_c_new = cap_sto_c_unit * c-block')
+        doc='cap_sto_c_new = sto_cap_c_unit * c-block')
     m.def_new_cap_sto_p = pyomo.Constraint(
         m.sto_block_p_tuples,
         rule=def_new_cap_sto_p_rule,
-        doc='cap_sto_p_new = cap_sto_p_unit * p-block')
+        doc='cap_sto_p_new = sto_cap_p_unit * p-block')
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
@@ -229,14 +229,14 @@ def def_storage_power_rule(m, stf, sit, sto, com):
 
 def def_new_cap_sto_c_rule(m, stf, sit, sto, com):
     return (m.cap_sto_c_new[stf, sit, sto, com] ==
-            m.cap_sto_c_unit[stf, sit, sto, com] *
+            m.sto_cap_c_unit[stf, sit, sto, com] *
             m.sto_block_c_dict[stf, sit, sto, com])
 
 # new storage power
 
 def def_new_cap_sto_p_rule(m, stf, sit, sto, com):
     return (m.cap_sto_p_new[stf, sit, sto, com] ==
-            m.cap_sto_p_unit[stf, sit, sto, com] *
+            m.sto_cap_p_unit[stf, sit, sto, com] *
             m.sto_block_p_dict[stf, sit, sto, com])
 
 

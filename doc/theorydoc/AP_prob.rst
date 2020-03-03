@@ -105,7 +105,8 @@ retain the practical necessity of being turned on and off if this is optimal.
 This feature transforms urbs from a linear problem to a quadratic integer problem, 
 or piecewise linear.
 
-Firstly, the following equation introduces a coupling between :math:`\omicron_{pt}`, 
+**Coupling the throughput ant the on/off marker**
+The following equation introduces a coupling between :math:`\omicron_{pt}`, 
 the boolean on/off marker of a process and its throughput :math:`\tau_{pt}`, so that 
 :math:`\omicron_{pt}` assumes the value 1 when the process has a non-zero output and 0 
 otherwise.
@@ -116,7 +117,8 @@ otherwise.
    \tau_{pt}\leq
    \kappa_p\cdot \omicron_{pt}+ \underline{P}_p\cdot \kappa_p\cdot (1 - \omicron_{pt})
 
-Secondly, the following equation describes the alteration of the input equation of a 
+**Input**
+The following equation describes the alteration of the input equation of a 
 process with on/off and part-load behaviors due to the necessity of having a continuous,
 linear function defined on two intervals. The first interval represents the starting input 
 of a process, while the second one represents the consumed input while also producing.
@@ -134,11 +136,12 @@ of a process, while the second one represents the consumed input while also prod
    
 In order to ensure the continuity property of the function, the input ratio used 
 for the starting interval has to be one corresponding to the minimum partial load, 
-:math:`\underline{r}^{\text{in}}_{pc}`. This is a realistic value, since processes 
+using :math:`\underline{r}^{\text{in}}_{pc}`. This is a realistic value, since processes 
 normally use, percentagewise, more fuel in relationship to the throughput when 
 starting than at higher throughput values.
 
-Thirdly, the following equations differentiate whether an output commodity needs to be 
+**Output differentiation**
+The following equations differentiate whether an output commodity needs to be 
 produced when a process is starting (e.g. environmental commodities) or not (e.g. electricity):
 
 .. math::
@@ -175,7 +178,8 @@ to be the partial one, :math:`\underline{r}^{\text{in}}_{pc}`. This is a realist
 since processes normaly produce, percentagewise, more CO2 and/or other environmental 
 commodities in relationship to the throughput when starting then at higher throughput values.
 
-Fourthly, while ramping up a process which can be turned on and off with a defined ramping up 
+**Output Ramping-up Limit**
+While ramping up a process which can be turned on and off with a defined ramping up 
 gradient, the following unrealistic situation might occur: Due to the fact that in the minimum 
 working point the process on/off marker :math:`\omicron_{pt}` can be both 0 and 1, the output 
 of a process might have unrealistic jumps after the starting process is completed. There are 3 
@@ -300,7 +304,8 @@ to:
    &\epsilon^{out}_{pct}-\epsilon^{out}_{pc(t-1)}\leq 
    \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc} f^{\text{out}}_{pt}.
    
-Fifthly, there are some processes which have a different ramping up gradient while starting 
+**Starting Ramp-up**
+There are some processes which have a different ramping up gradient while starting 
 than while producing. This is usually defined with the help of a so called starting time. The 
 following equations transform the starting time into a starting ramp and implement the starting
 ramp only during start, either as the only ramping constraint when no ramp up gradient is defined 
@@ -312,8 +317,8 @@ or by replacing during start the rampiong up constraint which uses the ramping u
    &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^{\text{up}}\kappa_{p}\omicron_{p(t-1)}+
    \Delta t\ SR_p \kappa_{p}(1-\omicron_{p(t-1)}).
    
-
-Lastly, for those processes which have a fix start-up cost, it is necessary to identify 
+**Start-up costs**
+For those processes which have a fix start-up cost, it is necessary to identify 
 whether a process has completed its starting phase and begins to produce or not. The following 
 equation does this by turning the boolean variable process start-up marker :math:`\sigma_{pt}`
 to 1 when the process on/off marker switches from 0 to 1:

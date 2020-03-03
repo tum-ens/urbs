@@ -443,47 +443,47 @@ def def_pro_partial_timevar_output_rule(m, tm, stf, sit, pro, com):
              m.tau_pro[tm, stf, sit, pro] * throughput_factor) *
              m.eff_factor_dict[(sit, pro)][stf, tm])
 
-def def_process_on_off_timevar_output_rule(m, tm, stf, sit, pro, cmd):
-    return (m.e_pro_out[tm, stf, sit, pro, cmd] ==
-            m.tau_pro[tm, stf, sit, pro] * m.r_out_dict[(stf, pro, cmd)] *
+def def_process_on_off_timevar_output_rule(m, tm, stf, sit, pro, com):
+    return (m.e_pro_out[tm, stf, sit, pro, com] ==
+            m.tau_pro[tm, stf, sit, pro] * m.r_out_dict[(stf, pro, com)] *
             m.on_off[tm, stf, sit, pro] *
             m.eff_factor_dict[(sit, pro)][stf, tm])
 
-def def_pro_partial_on_off_timevar_output_rule(m, tm, stf, sit, pro, coo):
+def def_pro_partial_on_off_timevar_output_rule(m, tm, stf, sit, pro, com):
     # input ratio at maximum operation point
-    R = m.r_out_dict[stf, pro, coo]
+    R = m.r_out_dict[stf, pro, com]
     # input ratio at lowest operation point
-    r = m.r_out_min_fraction_dict[stf, pro, coo]
+    r = m.r_out_min_fraction_dict[stf, pro, com]
     min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_out[tm, stf, sit, pro, coo] ==
+    return (m.e_pro_out[tm, stf, sit, pro, com] ==
             (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
              m.tau_pro[tm, stf, sit, pro] * throughput_factor) *
              m.on_off[tm, stf, sit, pro] *
              m.eff_factor_dict[(sit, pro)][stf, tm])
 
-def res_process_on_off_timevar_output_lower_rule(m, tm, stf, sit, pro, cmd):
-    return (m.e_pro_out[tm, stf, sit, pro, cmd] >=
+def res_process_on_off_timevar_output_lower_rule(m, tm, stf, sit, pro, com):
+    return (m.e_pro_out[tm, stf, sit, pro, com] >=
             m.on_off[tm, stf, sit, pro] *
             m.process_dict['min-fraction'][stf, sit, pro] *
-            m.r_out_dict[stf, pro, cmd] * m.dt *
+            m.r_out_dict[stf, pro, com] * m.dt *
             m.cap_pro[stf, sit, pro] *
             m.eff_factor_dict[(sit, pro)][stf, tm])
 
-def res_partial_process_on_off_timevar_output_lower_rule(m, tm, stf, sit, pro, cmd):
-    return (m.e_pro_out[tm, stf, sit, pro, cmd] >=
+def res_partial_process_on_off_timevar_output_lower_rule(m, tm, stf, sit, pro, com):
+    return (m.e_pro_out[tm, stf, sit, pro, com] >=
             m.on_off[tm, stf, sit, pro] *
             m.process_dict['min-fraction'][stf, sit, pro] *
-            m.r_out_min_fraction_dict[stf, pro, cmd] * m.dt *
+            m.r_out_min_fraction_dict[stf, pro, com] * m.dt *
             m.cap_pro[stf, sit, pro] *
             m.eff_factor_dict[(sit, pro)][stf, tm])
 
-def res_process_on_off_timevar_output_upper_rule(m, tm, stf, sit, pro, cmd):
-    return (m.e_pro_out[tm, stf, sit, pro, cmd] <=
+def res_process_on_off_timevar_output_upper_rule(m, tm, stf, sit, pro, com):
+    return (m.e_pro_out[tm, stf, sit, pro, com] <=
             m.on_off[tm, stf, sit, pro] *
-            m.r_out_dict[stf, pro, cmd] * m.dt *
+            m.r_out_dict[stf, pro, com] * m.dt *
             m.cap_pro[stf, sit, pro] *
             m.eff_factor_dict[(sit, pro)][stf, tm])
 
@@ -567,29 +567,29 @@ def res_throughput_by_capacity_min_rule(m, tm, stf, sit, pro):
             m.cap_pro[stf, sit, pro] *
             m.process_dict['min-fraction'][(stf, sit, pro)] * m.dt)
 
-def def_partial_process_input_rule(m, tm, stf, sit, pro, coin):
+def def_partial_process_input_rule(m, tm, stf, sit, pro, com):
     # input ratio at maximum operation point
-    R = m.r_in_dict[(stf, pro, coin)]
+    R = m.r_in_dict[(stf, pro, com)]
     # input ratio at lowest operation point
-    r = m.r_in_min_fraction_dict[stf, pro, coin]
+    r = m.r_in_min_fraction_dict[stf, pro, com]
     min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_in[tm, stf, sit, pro, coin] ==
+    return (m.e_pro_in[tm, stf, sit, pro, com] ==
             m.dt * m.cap_pro[stf, sit, pro] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
-def def_partial_process_output_rule(m, tm, stf, sit, pro, coo):
+def def_partial_process_output_rule(m, tm, stf, sit, pro, com):
     # input ratio at maximum operation point
-    R = m.r_out_dict[stf, pro, coo]
+    R = m.r_out_dict[stf, pro, com]
     # input ratio at lowest operation point
-    r = m.r_out_min_fraction_dict[stf, pro, coo]
+    r = m.r_out_min_fraction_dict[stf, pro, com]
     min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_out[tm, stf, sit, pro, coo] ==
+    return (m.e_pro_out[tm, stf, sit, pro, com] ==
             m.dt * m.cap_pro[stf, sit, pro] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
@@ -605,79 +605,79 @@ def res_throughput_by_on_off_upper_rule(m, tm, stf, sit, pro):
             m.min_fraction_dict[stf, sit, pro] * m.cap_pro[stf, sit, pro] *
             m.dt * (1 - m.on_off[tm, stf, sit, pro]))
 
-def def_process_on_off_input_rule(m, tm, stf, sit, pro, cod):
-    return (m.e_pro_in[tm, stf, sit, pro, cod] ==
-            m.tau_pro[tm, stf, sit, pro] * m.r_in_dict[(stf, pro, cod)])
-def def_process_on_off_output_rule(m, tm, stf, sit, pro, cmd):
-    r = m.r_out_dict[(stf, pro, cmd)]
+def def_process_on_off_input_rule(m, tm, stf, sit, pro, com):
+    return (m.e_pro_in[tm, stf, sit, pro, com] ==
+            m.tau_pro[tm, stf, sit, pro] * m.r_in_dict[(stf, pro, com)])
+def def_process_on_off_output_rule(m, tm, stf, sit, pro, com):
+    r = m.r_out_dict[(stf, pro, com)]
     if cmd in m.com_env:
-        return (m.e_pro_out[tm, stf, sit, pro, cmd] ==
+        return (m.e_pro_out[tm, stf, sit, pro, com] ==
                 m.tau_pro[tm, stf, sit, pro] * r)
     else:
-        return (m.e_pro_out[tm, stf, sit, pro, cmd] ==
+        return (m.e_pro_out[tm, stf, sit, pro, com] ==
                 m.tau_pro[tm, stf, sit, pro] * r * m.on_off[tm, stf, sit, pro])
 
-def def_partial_process_on_off_input_rule(m, tm, stf, sit, pro, coin):
+def def_partial_process_on_off_input_rule(m, tm, stf, sit, pro, com):
     # input ratio at maximum operation point
-    R = m.r_in_dict[(stf, pro, coin)]
+    R = m.r_in_dict[(stf, pro, com)]
     # input ratio at lowest operation point
-    r = m.r_in_min_fraction_dict[stf, pro, coin]
+    r = m.r_in_min_fraction_dict[stf, pro, com]
     min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    return (m.e_pro_in[tm, stf, sit, pro, coin] ==
+    return (m.e_pro_in[tm, stf, sit, pro, com] ==
             (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
               m.tau_pro[tm, stf, sit, pro] * throughput_factor) *
               m.on_off[tm, stf, sit, pro] +
               m.tau_pro[tm, stf, sit, pro] * r *
               (1 - m.on_off[tm, stf, sit, pro]))
-def def_partial_process_on_off_output_rule(m, tm, stf, sit, pro, coo):
+def def_partial_process_on_off_output_rule(m, tm, stf, sit, pro, com):
     # input ratio at maximum operation point
-    R = m.r_out_dict[stf, pro, coo]
+    R = m.r_out_dict[stf, pro, com]
     # input ratio at lowest operation point
-    r = m.r_out_min_fraction_dict[stf, pro, coo]
+    r = m.r_out_min_fraction_dict[stf, pro, com]
     min_fraction = m.process_dict['min-fraction'][(stf, sit, pro)]
     on_off = m.on_off[tm, stf, sit, pro]
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
     if coo in m.com_env:
-        return(m.e_pro_out[tm, stf, sit, pro, coo] ==
+        return(m.e_pro_out[tm, stf, sit, pro, com] ==
                (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
                m.tau_pro[tm, stf, sit, pro] * throughput_factor) * on_off +
                m.tau_pro[tm, stf, sit, pro] * r *
                (1 - on_off))
     else:
-        return (m.e_pro_out[tm, stf, sit, pro, coo] ==
+        return (m.e_pro_out[tm, stf, sit, pro, com] ==
                 (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
                 m.tau_pro[tm, stf, sit, pro] * throughput_factor) * on_off)
 
-def res_process_on_off_output_lower_rule(m, tm, stf, sit, pro, cmd):
+def res_process_on_off_output_lower_rule(m, tm, stf, sit, pro, com):
     if cmd in m.com_env:
         return pyomo.Constraint.Skip
     else:
-        return (m.e_pro_out[tm, stf, sit, pro, cmd] >=
+        return (m.e_pro_out[tm, stf, sit, pro, com] >=
                 m.on_off[tm, stf, sit, pro] *
                 m.process_dict['min-fraction'][stf, sit, pro] *
-                m.r_out_dict[stf, pro, cmd] * m.dt *
+                m.r_out_dict[stf, pro, com] * m.dt *
                 m.cap_pro[stf, sit, pro])
-def res_partial_process_on_off_output_lower_rule(m, tm, stf, sit, pro, cmd):
+def res_partial_process_on_off_output_lower_rule(m, tm, stf, sit, pro, com):
     if cmd in m.com_env:
         return pyomo.Constraint.Skip
     else:
-        return (m.e_pro_out[tm, stf, sit, pro, cmd] >=
+        return (m.e_pro_out[tm, stf, sit, pro, com] >=
                 m.on_off[tm, stf, sit, pro] *
                 m.process_dict['min-fraction'][stf, sit, pro] *
-                m.r_out_min_fraction_dict[stf, pro, cmd] * m.dt *
+                m.r_out_min_fraction_dict[stf, pro, com] * m.dt *
                 m.cap_pro[stf, sit, pro])
-def res_process_on_off_output_upper_rule(m, tm, stf, sit, pro, cmd):
+def res_process_on_off_output_upper_rule(m, tm, stf, sit, pro, com):
     if cmd in m.com_env:
         return pyomo.Constraint.Skip
     else:
-        return (m.e_pro_out[tm, stf, sit, pro, cmd] <=
+        return (m.e_pro_out[tm, stf, sit, pro, com] <=
                 m.on_off[tm, stf, sit, pro] *
-                m.r_out_dict[stf, pro, cmd] * m.dt *
+                m.r_out_dict[stf, pro, com] * m.dt *
                 m.cap_pro[stf, sit, pro])
 
 def res_starting_rampup_rule(m, t, stf, sit, pro):

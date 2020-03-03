@@ -146,7 +146,7 @@ def add_advanced_processes(m):
             doc='Turn on/off a process with minimum working load')
     
         # number of start-ups
-        m.start_ups = pyomo.Var(
+        m.start_up = pyomo.Var(
             m.tm, m.pro_start_up_tuples,
             within=pyomo.Boolean,
             doc='Number of start-ups')
@@ -410,9 +410,9 @@ def add_advanced_processes(m):
         rule=res_partial_output_rampup_rule,
         doc='Output may not increase faster than the ramping up gradient')
 
-    m.res_start_ups = pyomo.Constraint(
+    m.res_start_up = pyomo.Constraint(
         m.tm, m.pro_start_up_tuples,
-        rule=res_start_ups_rule,
+        rule=res_start_up_rule,
         doc='start >= on_off(t) - on_off(t-1)')
 
     return m
@@ -759,15 +759,15 @@ def res_partial_output_rampup_rule(m, tm, stf, sit, pro, com):
         return pyomo.Constraint.Skip
 
 # start-ups
-def res_start_ups_rule(m, t, stf, sit, pro):
-    return (m.start_ups[t, stf, sit, pro] >= m.on_off[t, stf, sit, pro] -
+def res_start_up_rule(m, t, stf, sit, pro):
+    return (m.start_up[t, stf, sit, pro] >= m.on_off[t, stf, sit, pro] -
                                              m.on_off[t - 1, stf, sit, pro])
 
 # Start-up costs
 def startup_cost(m, cost_type):
     """returns start-up cost function"""
     if cost_type == 'Start-up':
-        return sum(m.start_ups[(tm,) + p] * m.weight *
+        return sum(m.start_up[(tm,) + p] * m.weight *
                    m.start_price_dict[p] * m.cap_pro[p] *
                    m.process_dict['cost_factor'][p]
                    for tm in m.tm

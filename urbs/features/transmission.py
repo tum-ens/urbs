@@ -70,7 +70,7 @@ def add_transmission(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
-    m.cap_unit_tra =pyomo.Var(
+    m.tra_cap_unit =pyomo.Var(
         m.tra_block_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New transmission capacity blocks')
@@ -180,7 +180,7 @@ def add_transmission_dc(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
-    m.cap_unit_tra =pyomo.Var(
+    m.tra_cap_unit =pyomo.Var(
         m.tra_block_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='New transmission capacity blocks')
@@ -294,7 +294,7 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 # new capacity built in blocks
 def def_cap_tra_new_rule(m, stf, sin, sout, tra, com):
     return(m.cap_tra_new[stf, sin, sout, tra, com] ==
-           m.cap_unit_tra[stf, sin, sout, tra, com] *
+           m.tra_cap_unit[stf, sin, sout, tra, com] *
            m.transmission_dict['tra-block'][(stf, sin, sout, tra, com)])
 
 # transmission output == transmission input * efficiency

@@ -257,7 +257,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='Power flow out of process (MW) per timestep')
 
     # process new capacity expansion unit
-    m.cap_unit = pyomo.Var(
+    m.pro_cap_unit = pyomo.Var(
         m.pro_tuples,
         within=pyomo.NonNegativeIntegers,
         doc='Number of newly installed capacity units')
@@ -396,7 +396,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.def_new_capacity_units = pyomo.Constraint(
         m.pro_cap_new_block_tuples,
         rule=def_new_capacity_units_rule,
-        doc='cap_pro_new = cap_unit * cap-block')
+        doc='cap_pro_new = pro_cap_unit * cap-block')
 
 
     if m.mode['int']:
@@ -650,7 +650,7 @@ def res_area_rule(m, stf, sit):
 
 # new capacity blocks
 def def_new_capacity_units_rule(m, stf, sit, pro):
-    return (m.cap_pro_new[stf, sit, pro] == m.cap_unit[stf, sit, pro] *
+    return (m.cap_pro_new[stf, sit, pro] == m.pro_cap_unit[stf, sit, pro] *
             m.cap_block_dict[stf, sit, pro])
 
 # total CO2 output <= Global CO2 limit

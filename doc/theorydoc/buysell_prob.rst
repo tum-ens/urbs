@@ -9,7 +9,7 @@ new commodity types, buy and sell commodities, are introduced. For each a time
 series representing the momentary cost at each timestep is given. This time
 series is of course known to the model in advance, which has two implications.
 First, the modeled system is considered too small to influence the external
-market and any possible influence is not captured by th model, and, second, the
+market and any possible influence is not captured by the model, and, second, the
 perfect price foresight can distort the results when compared to a realistic
 trader in a market. For models with buy and sell commodities the variable
 vector takes the following form: 

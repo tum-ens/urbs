@@ -13,7 +13,7 @@ intertemporal behavior, the second time slice is approximated by a number of
 support timeframes (years) :math:`Y=(y_1,...,y_n)`, which is in general smaller
 than the total model horizon. Each modeled timeframe is then essentially a
 minimal (or multinode-) model in its own right. The basic approximative
-assumption linking the modeled timeframes are then given by:
+assumptions linking the modeled timeframes are then given by:
 
 * Each modeled year is repeated :math:`k` times if the next modeled year is
   :math:`k` years later. The last year is repeated a user specified number of

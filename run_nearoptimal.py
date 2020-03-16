@@ -24,12 +24,12 @@ shutil.copy(__file__, result_dir)
 # No site name indicates minimize/maximize total capacity of all sites
 # example objectives [('South','Photovoltaics'),('Photovoltaics'),('South','North','cost')] etc.
 
-objective = [('Onshore wind')]
+objective = [('Onshore wind'),('Offshore wind')]
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (8456, 24)  # time step selection
+(offset, length) = (300, 24)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 

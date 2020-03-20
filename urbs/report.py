@@ -53,7 +53,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
                 report_sites_name[sit] = str(sit)
 
             for lv in help_sit:
-                (created, tau, consumed, stored, imported, exported,
+                (created, consumed, stored, imported, exported,
                  dsm, voltage_angle) = get_timeseries(instance, stf, com, lv)
 
                 overprod = pd.DataFrame(
@@ -63,10 +63,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
                     stored['Retrieved'] - stored['Stored'])
 
                 tableau = pd.concat(
-                    [created, tau, consumed, stored, imported, exported, overprod,
+                    [created, consumed, stored, imported, exported, overprod,
                      dsm, voltage_angle],
                     axis=1,
-                    keys=['Created', 'Throughput', 'Consumed', 'Storage',
+                    keys=['Created', 'Consumed', 'Storage',
                           'Import from', 'Export to', 'Balance', 'DSM',
                           'Voltage Angle'])
                 help_ts[(stf, lv, com)] = tableau.copy()

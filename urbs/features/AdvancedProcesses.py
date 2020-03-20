@@ -642,7 +642,7 @@ def def_partial_process_on_off_output_rule(m, tm, stf, sit, pro, com):
 
     online_factor = min_fraction * (r - R) / (1 - min_fraction)
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
-    if coo in m.com_env:
+    if com in m.com_env:
         return(m.e_pro_out[tm, stf, sit, pro, com] ==
                (m.dt * m.cap_pro[stf, sit, pro] * online_factor +
                m.tau_pro[tm, stf, sit, pro] * throughput_factor) * on_off +

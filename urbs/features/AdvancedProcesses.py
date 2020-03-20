@@ -610,7 +610,7 @@ def def_process_on_off_input_rule(m, tm, stf, sit, pro, com):
             m.tau_pro[tm, stf, sit, pro] * m.r_in_dict[(stf, pro, com)])
 def def_process_on_off_output_rule(m, tm, stf, sit, pro, com):
     r = m.r_out_dict[(stf, pro, com)]
-    if cmd in m.com_env:
+    if com in m.com_env:
         return (m.e_pro_out[tm, stf, sit, pro, com] ==
                 m.tau_pro[tm, stf, sit, pro] * r)
     else:
@@ -654,7 +654,7 @@ def def_partial_process_on_off_output_rule(m, tm, stf, sit, pro, com):
                 m.tau_pro[tm, stf, sit, pro] * throughput_factor) * on_off)
 
 def res_process_on_off_output_lower_rule(m, tm, stf, sit, pro, com):
-    if cmd in m.com_env:
+    if com in m.com_env:
         return pyomo.Constraint.Skip
     else:
         return (m.e_pro_out[tm, stf, sit, pro, com] >=
@@ -663,7 +663,7 @@ def res_process_on_off_output_lower_rule(m, tm, stf, sit, pro, com):
                 m.r_out_dict[stf, pro, com] * m.dt *
                 m.cap_pro[stf, sit, pro])
 def res_partial_process_on_off_output_lower_rule(m, tm, stf, sit, pro, com):
-    if cmd in m.com_env:
+    if com in m.com_env:
         return pyomo.Constraint.Skip
     else:
         return (m.e_pro_out[tm, stf, sit, pro, com] >=
@@ -672,7 +672,7 @@ def res_partial_process_on_off_output_lower_rule(m, tm, stf, sit, pro, com):
                 m.r_out_min_fraction_dict[stf, pro, com] * m.dt *
                 m.cap_pro[stf, sit, pro])
 def res_process_on_off_output_upper_rule(m, tm, stf, sit, pro, com):
-    if cmd in m.com_env:
+    if com in m.com_env:
         return pyomo.Constraint.Skip
     else:
         return (m.e_pro_out[tm, stf, sit, pro, com] <=

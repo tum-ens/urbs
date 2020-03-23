@@ -3,6 +3,7 @@
 
 
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import os
 import pandas as pd
@@ -13,6 +14,11 @@ from .input_nopt import get_input
 from .output_nopt import get_constants, get_timeseries
 from .pyomoio_nopt import get_entity
 from .util_nopt import is_string
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+import seaborn as sns
+from matplotlib import dates as mdates
+from matplotlib.dates import DateFormatter
 
 
 def sort_plot_elements(elements):
@@ -59,9 +65,20 @@ def sort_plot_elements(elements):
     elements_sorted = elements[new_columns][:-1]
 
     return elements_sorted
-
-
+def tidy_data (df):
+    data_set = df.copy(deep=True)
+    data_set = data_set.reset_index()
+    data_set = data_set.melt(id_vars=["Stf", "Site", "Process"], var_name=["Optimization"], value_name="Capacities")
+    data_set.loc[(data_set.Optimization == 'Minimum Cost'), 'Optimization'] = 'Min-0.0'
+    data_set[['Objective', 'Slack']] = data_set.Optimization.str.split("-", expand=True)
+    data_set.drop(columns='Optimization', inplace=True)
+    data_set['Slack'] = data_set.Slack.astype(float)
+    data_set['Slack'] = data_set['Slack'] * 100
+    return data_set
 def line_plot_capacities(prob, figure_basename, figure_size=(16, 12), extensions=None):
+    plot_data_set=tidy_data(prob.near_optimal_capacities)
+    #df[['Objective','Slack']] = data_set.Optimization.str.split("-",expand=True,)
+    #data_set.loc[data_set.Objective=='CostMin']
     """Plot near-optimal capacities of objected processes and regions for different slack numbers and years.
        Args:
            - prob: urbs model instance
@@ -75,9 +92,22 @@ def line_plot_capacities(prob, figure_basename, figure_size=(16, 12), extensions
     # prob.objective_pro
     # prob.objective_dict
     if prob.mode['int']:
+        fig = plt.figure()
+        n = len(prob.objective_pro)
+        fig, axes = plt.subplots(nrows=n, ncols=1, figsize=(16, 16))
+        fig.subplots_adjust(hspace=0.25, wspace=0.12)
 
-        pass
+        slack_array = list(prob.slack_list)
+        slack_array.append(0)
+        slack_array.sort()
+        slackOrder = list(np.array(slack_array)*100)
 
+        #slackOrder[1:] except 0
+        for i,process in enumerate(prob.objective_pro):
+            ax1 = sns.pointplot(x="Stf", y="Capacities", hue="Slack", hue_order=slackOrder, data=plot_data_set[plot_data_set=='Min'],
+                                palette='Paired', ax=axes[i])
+            ax1.set(xlabel='Hour Of The Day', ylabel='Average Count (continuous line )',
+                    title="Average Bicycle Count By Hour Of The Day Across Season", label='big')
     else:
         # FIGURE
         fig = plt.figure(figsize=figure_size)

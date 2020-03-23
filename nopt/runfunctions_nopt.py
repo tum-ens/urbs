@@ -66,10 +66,7 @@ def unpack_obj(objective, data):
             objective_dict[objective_pro] = objective_sites
         else:
             objective_pro = objective[k]
-            objective_sites = []
-            site_dict = data['site'].to_dict()
-            for key in site_dict['area']:
-                objective_sites.append(key[1])
+            objective_sites = list(set(data['site'].index.get_level_values(1)))
             objective_dict[objective_pro] = objective_sites
     return objective_dict
 
@@ -166,7 +163,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         prob.near_optimal_cost = read_costs(prob, 'Minimum Cost')
 
         # save problem solution (and input data) to HDF5 file
-        # save(prob, os.path.join(result_dir, '{}.h5'.format('cost')))
+        save(prob, os.path.join(result_dir, '{}.h5'.format('cost')))
 
 
 

@@ -19,7 +19,7 @@ register_matplotlib_converters()
 import seaborn as sns
 from matplotlib import dates as mdates
 from matplotlib.dates import DateFormatter
-
+sns.set_context("talk")
 
 def sort_plot_elements(elements):
     """Sort timeseries for plotting
@@ -92,7 +92,6 @@ def line_plot_capacities(prob, figure_basename, figure_size=(16, 12), extensions
     # prob.objective_pro
     # prob.objective_dict
     if prob.mode['int']:
-        fig = plt.figure()
         n = len(prob.objective_pro)
         fig, axes = plt.subplots(nrows=n, ncols=1, figsize=(16, 16))
         fig.subplots_adjust(hspace=0.25, wspace=0.12)
@@ -104,10 +103,40 @@ def line_plot_capacities(prob, figure_basename, figure_size=(16, 12), extensions
 
         #slackOrder[1:] except 0
         for i,process in enumerate(prob.objective_pro):
-            ax1 = sns.pointplot(x="Stf", y="Capacities", hue="Slack", hue_order=slackOrder, data=plot_data_set[plot_data_set=='Min'],
-                                palette='Paired', ax=axes[i])
-            ax1.set(xlabel='Hour Of The Day', ylabel='Average Count (continuous line )',
-                    title="Average Bicycle Count By Hour Of The Day Across Season", label='big')
+            ax1 = sns.pointplot(x="Stf", y="Capacities", hue="Slack", hue_order=slackOrder, data=plot_data_set[(plot_data_set.Objective=='Min')&(plot_data_set.Process==process)],
+                                palette='Paired', ax=axes[i],estimator=np.sum, ci=None)
+            ax1 = sns.pointplot(x="Stf", y="Capacities", hue="Slack", hue_order=slackOrder, data=plot_data_set[(plot_data_set.Objective=='Max')&(plot_data_set.Process==process)],
+                                palette='Paired', ax=axes[i],estimator=np.sum, ci=None)
+            ax1.set_title("Change in {} capacity with different cost increase allowences and years".format(process),
+                          fontsize=16)
+            ax1.set_xlabel('Modelled Year', fontsize=12)
+            ax1.set_ylabel('Total {} Capacity (MW)'.format(process), fontsize=12)
+
+        for ax in axes:
+            handles, labels = ax.get_legend_handles_labels()
+            by_label = dict(zip(labels, handles))
+            lg = ax.legend(by_label.values(),by_label.keys(),
+                           title='Allowed \n Cost \n Increase (%)',
+                           frameon=False,
+                           loc='upper left',
+                           bbox_to_anchor=(1, 1),
+                          fontsize='large',title_fontsize='large')
+            plt.setp(lg.get_patches(), edgecolor=to_color('Decoration'),
+                     linewidth=0.15)
+        fig_name = str(prob.objective_dict).strip('{}').replace("'", "").replace('[', '').replace(']', '').replace(':',
+                '_')
+        new_figure_title = 'Objectives: {} years {} '.format(fig_name ,str(prob.stf_list).strip('[]'))
+        fig.suptitle(new_figure_title, fontsize=16)
+
+        if extensions is None:
+            extensions = ['png']
+
+        # save plot to files
+        for ext in extensions:
+            fig_filename = '{}-{}-{}.{}'.format(
+                figure_basename,fig_name,str(prob.stf_list).strip('[]'),''.join(ext))
+            fig.savefig(fig_filename, bbox_inches='tight')
+        plt.close(fig)
     else:
         # FIGURE
         fig = plt.figure(figsize=figure_size)

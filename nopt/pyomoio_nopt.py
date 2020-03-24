@@ -14,7 +14,7 @@ def get_entity(instance, name):
         entity name. For constraints, it retrieves the dual values
     """
     # magic: short-circuit if problem contains a result cache
-    if hasattr(instance, '_result') and name in instance._result:
+    if hasattr(instance, '_result') and name in instance._result and ('cost' in instance.objective_dict.keys() or 'CO2' in instance.objective_dict.keys()):
         return instance._result[name].copy(deep=True)
 
     # retrieve entity, its type and its onset names

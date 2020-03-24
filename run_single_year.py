@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 
-input_files = '2050inputdatei.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
@@ -25,14 +25,12 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (3500, 24)  # time step selection
+(offset, length) = (300, 24)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
-report_tuples = [(2050, 'South', 'Elec'),
-
-
+report_tuples = [
     ]
 
 # optional: define names for sites in report_tuples
@@ -41,13 +39,13 @@ report_sites_name = {('North', 'Mid', 'South'): 'All'}
 # plotting commodities/sites
 plot_tuples = [
 
-    (2050, 'South', 'Elec'),
+
 
 
     ]
 
 # optional: define names for sites in plot_tuples
-plot_sites_name = {('North', 'Mid', 'South'): 'All'}
+plot_sites_name = {}
 
 # plotting timesteps
 plot_periods = {

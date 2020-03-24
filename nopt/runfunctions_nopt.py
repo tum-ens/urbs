@@ -189,10 +189,11 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             prob.objective_function = pyomo.Objective(
                 rule=capacity_rule,
                 sense=pyomo.minimize,
-                doc='minimize objective process capacity')
+                doc='minimize (process capacity= sum of objective process capacities at defined nodes for esch capacity)')
             optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
             optim = setup_solver(optim, logfile=log_filename)
             result_min = optim.solve(prob, tee=True)
+            prob._result = create_result_cache(prob)
             assert str(result_min.solver.termination_condition) == 'optimal'
             # read minimized capacities from instance
             minimized_cap_pro = read_capacity(prob, 'Min' + '-' + str(slack))
@@ -209,6 +210,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
             optim = setup_solver(optim, logfile=log_filename)
             result_max = optim.solve(prob, tee=True)
+            prob._result = create_result_cache(prob)
             assert str(result_max.solver.termination_condition) == 'optimal'
             # read maximized capacities from instance
             maximized_cap_pro = read_capacity(prob, 'Max' + '-' + str(slack))
@@ -226,8 +228,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             report_tuples=report_tuples,
             report_sites_name=report_sites_name)
 
-        line_plot_capacities(prob, os.path.join(result_dir, 'line'))
-        stack_bar_plot_capacities(prob, os.path.join(result_dir, 'stack_bar'))
+        #line_plot_capacities(prob, os.path.join(result_dir, 'line'))
+        #stack_bar_plot_capacities(prob, os.path.join(result_dir, 'stack_bar'))
         #stack_area_plot_capacities(prob, os.path.join(result_dir, 'stack_area'))
 
     return prob

@@ -27,7 +27,7 @@ referencing to the corresponding upshift with the first index :math:`t` and the
 timesteps they actually occur via the second time index :math:`tt`. The latter
 is then restricted to an interval around the reference upshift since loads
 cannot in general be shifted indefinitely. As it is modeled in urbs, DSM does
-not introduce any costs. to clarify the terms used for the DSM feature the
+not introduce any costs. To clarify the terms used for the DSM feature the
 following illustrative example is helpful.
 
 Example of a DSM process
@@ -155,7 +155,7 @@ of shifts is also limited in an urbs model via:
 
 DSM recovery
 ------------
-Assuming that DSm is linked to some real physical devices, it is necessary to
+Assuming that DSM is linked to some real physical devices, it is necessary to
 allow these devices to have some minimal time between DSM events, where, e.g.,
 the ability to perform DSM is recovered. This is modeled in the following way:
 

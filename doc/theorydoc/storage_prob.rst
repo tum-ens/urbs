@@ -58,7 +58,7 @@ where :math:`\kappa^{\text{c,p}}_{yvs}` are the total installed
 capacity and power, repectively, in year :math:`y` at site :math:`v` of storage
 :math:`s` and :math:`\widehat{\kappa}^{\text{c,p}}_{yvs}` the corresponding
 newly installed storage capacities and powers. Both quantities are then also
-given an upper and a lower bond via:
+given an upper and a lower bound via:
 
 .. math::
    &\forall y\in Y,~v\in V,~s\in S:\\

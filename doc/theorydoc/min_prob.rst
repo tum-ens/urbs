@@ -176,7 +176,7 @@ where :math:`K_p` is the already installed capacity of process :math:`p`.
 
 Process capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The capacity pf each process :math:`p` is limited by a maximal and minimal
+The capacity of each process :math:`p` is limited by a maximal and minimal
 capacity, :math:`\overline{K}_p` and :math:`\underline{K}_p`, respectively,
 which are both given to the model as parameters:
 
@@ -266,7 +266,7 @@ Process dispatch constraints
 So far, apart from the commodity balance function, the interaction between
 processes and commodities have not been discussed. It is perhaps in order to
 start with the general idea behind the modeling of the process operation. In
-urbs all processes are mimo-processes, i.e., in general they in take in
+urbs all processes are mimo-processes, i.e., in general they take in
 multiple commodities as inputs and give out multiple commodities as outputs.
 The respective ratios between the respective commodity flows remain normally
 fixed. The operational state of the process is then captured in just one
@@ -302,7 +302,7 @@ where :math:`\underline{P}_{p}` is the normalized, minimal operational state of
 the process and :math:`\overline{PG}_p` the normalized, maximal gradient of the
 operational state in full capacity per timestep.
 
-Intermittend supply rule
+Intermittent supply rule
 ~~~~~~~~~~~~~~~~~~~~~~~~
 If the input commodity is of type 'SupIm', which means that it represents an
 operational state rather than a proper material flow, the operational state of

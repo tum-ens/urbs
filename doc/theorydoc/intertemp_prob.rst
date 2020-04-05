@@ -2,7 +2,7 @@
 
 .. _theory-intertemp:
 
-Intertemporal optimization model
+Intertemporal Optimization Model
 ================================
 Intertemporal models are a more general type of model than the minimal case.
 For such models a second time domain is introduced to capture the behavior of
@@ -103,7 +103,7 @@ are given by:
 if :math:`\zeta_{\text{var}}^m` is the sum of all variable costs accumulated by
 the use of units in the year :math:`m` alone by the model.
 
-Intertemporal calculation of invest costs
+Intertemporal Calculation of Invest Costs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In the intertemporal model, invest costs are calculated using the annuity
 method. This directly entails that there are no rest values of any units built
@@ -154,7 +154,7 @@ In any case the total invest costs are then given by:
    \zeta_{\text{inv}}=\sum_{y\in Y\\p\in P}C^{\text{total}}_{\text{m}}=
    \sum_{y\in  Y\\p\in P}I_{\text{y}}k^{\text{inv}}_{yp} \widehat{\kappa}_{yp}
 
-Unit expansion constraints
+Unit Expansion Constraints
 --------------------------
 Apart from the costs there are also changes in the unit expansion constraints
 for an intertemporal model. These changes mostly concern how the amount of
@@ -198,7 +198,7 @@ capacity constraint
 is valid, the set constraints can have effects across years and especially the
 modeller has to be careful not to set infeasible constraints.
 
-Commodity dispatch constraints
+Commodity Dispatch Constraints
 ------------------------------
 While in an intertemporal model all commodity constraints within one modeled
 year remain valid one addition is possible concerning CO2 emissions. Here, a

@@ -2,7 +2,7 @@
 
 .. _theory-TVE:
 
-Time variable efficiency
+Time Variable Efficiency
 ========================
 It is possible to manipulate the operation of a process by introducing a time
 series, which changes the output ratios and thus the efficiency of a given

@@ -2,7 +2,7 @@
 
 .. _theory-min:
 
-Minimal optimization model
+Minimal Optimization Model
 ==========================
 The minimal model in urbs is a simple expansion and dispatch model with only
 processes being able to fulfill the given demands. All spatial information is
@@ -55,7 +55,7 @@ the total variable costs accumulating over one year,
 :math:`\zeta_{\text{env}}` the annual penalties for environmental pollution.
 These costs are then calculated in the following way:
 
-Annualized invest costs
+Annualized Invest Costs
 ~~~~~~~~~~~~~~~~~~~~~~~
 Investments are typically depreciated over a longer period of time than the
 standard modeling horizon of one year. To overcome distortions in the overall
@@ -99,7 +99,7 @@ where :math:`k^{\text{inv}}_p` signifies the specific invest costs of process
 :math:`p` per unit capacity and :math:`P_{\text{exp}}` is the subset of all
 processes that are actually expanded. 
 
-Annual fixed costs
+Annual Fixed Costs
 ~~~~~~~~~~~~~~~~~~
 The annual fixed costs represent maintenance and staff payments the processes
 used. They are playing a role for unit expansion only and are given as
@@ -112,7 +112,7 @@ parameters for all allowed processes. Fixed costs scale with the capacity
 where :math:`k^{\text{fix}}_p` represents the specific annual fix costs for
 process :math:`p`.
 
-Annual variable costs
+Annual Variable Costs
 ~~~~~~~~~~~~~~~~~~~~~
 Variable costs represent both, additional maintenance requirements due to usage
 of processes and taxes or tariffs. They scale with the utilization of
@@ -127,7 +127,7 @@ integrated process usage, and :math:`w` and :math:`\Delta t` are a weight
 factor that extrapolates the actual modeled time horizon to one year and the
 timestep length in hours, respectively.
 
-Annual fuel costs
+Annual Fuel Costs
 ~~~~~~~~~~~~~~~~~
 The usage of fuel adds an additional cost factor to the total costs. As with
 variable costs these costs occur when processes are used and are dependent on
@@ -141,7 +141,7 @@ where :math:`k^{\text{fuel}}_{c}` are the specific fuel costs. The distinction
 between variable and fuel costs is introduced for clarity of the results, both
 could in principle be merged into one class of costs.
 
-Annual environmental costs
+Annual Environmental Costs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Environmental costs occur when the emission of an environmental commodity is
 penalized by a fine. Environmental commodities do not have to be balanced but
@@ -161,7 +161,7 @@ takes in a unit of a commodity.
 After this discussion of the individual cost terms the constraints making up
 the matrices :math:`A` and :math:`B` are discussed now.
 
-Process expansion constraints
+Process Expansion Constraints
 -----------------------------
 The unit expansion constraints are independent of the modeled time. In case of
 the minimal model the are restricted to two constraints only limiting the
@@ -174,7 +174,7 @@ process is simply given by:
 
 where :math:`K_p` is the already installed capacity of process :math:`p`.
 
-Process capacity limit rule
+Process Capacity Limit Rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The capacity of each process :math:`p` is limited by a maximal and minimal
 capacity, :math:`\overline{K}_p` and :math:`\underline{K}_p`, respectively,
@@ -188,11 +188,11 @@ All further constraints are time dependent and are determinants of the unit
 commitment, i.e. the time series of operation of all processes and commodity
 flows.
 
-Commodity dispatch constraints
+Commodity Dispatch Constraints
 ------------------------------
 In this part the rules governing the commodity flow timeseries are shown.  
 
-Vertex rule ("Kirchhoff's current law")
+Vertex Rule ("Kirchhoff's Current Law")
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This rule is the central rule for the commodity flows and states that all
 commodity flows, (except for those of environmental commodities) have to be
@@ -228,7 +228,7 @@ where :math:`C_{\text{dem}}` is the set of demand commodities and
 consumed at any time in any process must be taken from the stock and that all
 demands have to be fulfilled at each time step.
 
-Stock commodity limitations
+Stock Commodity Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There are two rules that govern the retrieval of stock commodities from stock:
 The total stock and the stock per hour rule. The former limits the total amount
@@ -245,7 +245,7 @@ where :math:`\overline{L}_c` and :math:`\overline{l}_c` are the totally allowed
 annual and hourly retrieval of commodity :math:`c` from the stock,
 respectively.
 
-Environmental commodity limitations
+Environmental Commodity Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Similar to stock commodities, environmental commodities can also be limited
 per hour or per year. Both properties are assured by the following two
@@ -261,7 +261,7 @@ where :math:`\overline{M}_c` and :math:`\overline{m}_c` are the totally allowed
 annual and hourly emissions of environmental commodity :math:`c` to the
 atmosphere, respectively.
 
-Process dispatch constraints
+Process Dispatch Constraints
 ----------------------------
 So far, apart from the commodity balance function, the interaction between
 processes and commodities have not been discussed. It is perhaps in order to
@@ -286,7 +286,7 @@ process :math:`p` for the conversion of commodity :math:`c_1` into commodity
 .. math::
    \eta=\frac{r^{\text{out}}_{pc_2}}{r^{\text{in}}_{pc_1}}.
 
-Basic process throughput rules
+Basic Process Throughput Rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The throughput :math:`\tau_{pt}` of a process is limited by its installed
 capacity and the specified minimal operational state. Furthermore, the
@@ -302,7 +302,7 @@ where :math:`\underline{P}_{p}` is the normalized, minimal operational state of
 the process and :math:`\overline{PG}_p` the normalized, maximal gradient of the
 operational state in full capacity per timestep.
 
-Intermittent supply rule
+Intermittent Supply Rule
 ~~~~~~~~~~~~~~~~~~~~~~~~
 If the input commodity is of type 'SupIm', which means that it represents an
 operational state rather than a proper material flow, the operational state of
@@ -318,7 +318,7 @@ Here, :math:`s_{ct}` is the time series that governs the exact operation of
 process :math:`p`, leaving only its capacity :math:`\kappa_{p}` as a free
 variable.
 
-Part load behavior
+Part Load Behavior
 ~~~~~~~~~~~~~~~~~~
 Many processes show a non-trivial part-load behavior. In particular, often a
 nonlinear reaction of the efficiency on the operational state is given.

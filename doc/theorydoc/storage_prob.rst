@@ -42,7 +42,7 @@ costs are now summed over the storage capacities, powers and the total amount
 of charged and discharged commodity in addition to the process indices. As in
 the case of transmissions there are no qualitative changes to the costs.
 
-Storage expansion constraints
+Storage Expansion Constraints
 -----------------------------
 Storages are expanded in their capacity and charging and discharging power
 separately. The respective constraints read:
@@ -67,12 +67,12 @@ given an upper and a lower bound via:
    &\underline{K}^{\text{p}}_{yvs}\leq \kappa^{\text{p}}_{yvs}\leq
    \overline{K}^{\text{p}}_{yvs}
 
-Commodity dispatch constraints
+Commodity Dispatch Constraints
 ------------------------------
 The commodity unit utilization constraints are expanded by the use of
 storages.
 
-Amendments to the Vertex rule
+Amendments to the Vertex Rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The vertex rule is changed, since additional commodity flows into and out of
 the storages can occur. The commodity balance function is thus changed to:
@@ -92,7 +92,7 @@ inputs and outputs in year :math:`y` at vertex :math:`v` of commodity :math:`c`
 into storage :math:`s`. The variables :math:`\epsilon^{\text{in,out}}_{yvst}`
 are then the inputs and outputs of commodities to and from storages.
 
-Storage dispatch constraints
+Storage Dispatch Constraints
 ----------------------------
 In a storage the energy content :math:`\epsilon^{\text{con}}_{yvst}` has to be
 calculated. This is achieved by simply adding all inputs to and subtracting all
@@ -109,7 +109,7 @@ Here, :math:`e^{\text{in,out}}_{yvs}` are the efficiencies for charging and
 discharging, respectively, and :math:`d_{yvs}` is the hourly self discharge
 rate.
 
-Basic storage dispatch rules
+Basic Storage Dispatch Rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Similar to processes and transmission lines, inputs and outputs are limited by
 the power capacity of the storage:
@@ -125,7 +125,7 @@ capacity:
    &\forall y\in Y,~v\in V,~s\in S,~t\in T_m:\\
    &\epsilon^{\text{con}}_{yvst}\leq\kappa^{\text{c}}_{yvs}.
 
-Initial and final state
+Initial and Final State
 ~~~~~~~~~~~~~~~~~~~~~~~
 In order to avoid windfall profits for the optimization by, e.g., emptying a
 storage over the model horizon, the initial and final storage content are
@@ -151,7 +151,7 @@ storage content via:
 where :math:`I_{yvs}` is the fraction of the total storage capacity that is
 filled at the beginning of the modeling period.
 
-Fixed energy/power ratio
+Fixed Energy/Power Ratio
 ~~~~~~~~~~~~~~~~~~~~~~~~
 It is sometimes desirable to fix the ratio between energy capacity and
 charging/discharging power for a given storage. This is modeled by the

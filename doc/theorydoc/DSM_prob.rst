@@ -2,7 +2,7 @@
 
 .. _theory-dsm:
 
-Demand side management
+Demand Side Management
 ======================
 Demand side management allows for the shifting of demands in time. It thus
 gives the model the possibility to divert from the strict restriction that all
@@ -30,7 +30,7 @@ cannot in general be shifted indefinitely. As it is modeled in urbs, DSM does
 not introduce any costs. To clarify the terms used for the DSM feature the
 following illustrative example is helpful.
 
-Example of a DSM process
+Example of a DSM Process
 ~~~~~~~~~~~~~~~~~~~~~~~~
 An example scenario with parameters below can be used to clarify the
 mathematical structure of a DSM process.
@@ -86,7 +86,7 @@ the total DSM downshifts is given by the sum of all column elements for every
 index :math:`tt`. This sum may not exceed 2000 as well, due to given
 parameters.  
 
-Commodity dispatch constraints
+Commodity Dispatch Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Demand side management changes the vertex rule. Every upshift
 :math:`\delta^{\text{up}}_{yvct}` leads to an additional demand, i.e., to an
@@ -106,7 +106,7 @@ different upshifts, which in the notation above occur at times :math:`tt`. All
 downshift contributions within the delay time :math:`y_{yvc}` of their
 respective upshifts are then summed up.   
 
-DSM variables rule
+DSM Variables Rule
 ------------------
 This central constraint rule for DSM in urbs links the up- and down shifts of
 DSM events. An upshift (multiplied with the DSM efficiency) at time :math:`t`
@@ -129,7 +129,7 @@ over the timesteps where the downshifts are occurring as opposed to the vertex
 rule above, where the summation is over the timesteps of the corresponding
 upshifts.
 
-DSM shift limitations
+DSM Shift Limitations
 ---------------------
 DSM shifts are limited in size in both directions. This is modeled by
 
@@ -153,7 +153,7 @@ of shifts is also limited in an urbs model via:
    \text{max}
    \{\overline{K}^{\text{up}}_{yvc},\overline{K}^{\text{down}}_{yvc}\}.
 
-DSM recovery
+DSM Recovery
 ------------
 Assuming that DSM is linked to some real physical devices, it is necessary to
 allow these devices to have some minimal time between DSM events, where, e.g.,

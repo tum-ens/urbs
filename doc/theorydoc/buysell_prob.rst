@@ -2,7 +2,7 @@
 
 .. _theory-buysell:
 
-Trading with an external market
+Trading with an External Market
 ===============================
 In urbs it is possible to model the trade with an external market. For this two
 new commodity types, buy and sell commodities, are introduced. For each a time
@@ -51,7 +51,7 @@ The two new cost types are then specified by the following equations:
 where :math:`k^{\text{bs}}_{yvct}` represents the time series of the given
 buy and sell commodity prices.
 
-Commodity dispatch constraints
+Commodity Dispatch Constraints
 ------------------------------
 Buy and sell commodities change the vertex rule (Kirchhoff's current law), by
 adding a new way for in- an output flows of commodities. The rule is thus
@@ -68,7 +68,7 @@ amount of energy sold needs to be provided to (negative CB) the system via
 processes, storages or transmission lines, while buy commodity consumed by
 processes, storages or transmission lines in the system has to be replenished. 
 
-Buy/sell commodity limitations
+Buy/Sell Commodity Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The trade with the market in each modeled year and each vertex can be limited
 per time step and for an entire year. This introduces the following constraints:

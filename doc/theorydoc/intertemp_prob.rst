@@ -37,7 +37,7 @@ time domain is entering the index. It now reads:
    \epsilon^{\text{out}}_{ycpt}}_{\text{process variables}}).
 
 Here, :math:`\zeta` represents the total discounted system costs over the
-entire modeling horizon, :math:`\rho_yct` the amount of commodities :math:`c`
+entire modeling horizon, :math:`\rho_{yct}` the amount of commodities :math:`c`
 taken from a virtual, infinite stock in year :math:`y` at time :math:`t`,
 :math:`\kappa_{yp}` and :math:`\widehat{\kappa}_{yp}` the total
 and the newly installed process capacities in year :math:`y` of processes

@@ -16,7 +16,7 @@ output (mimo) and the variable vector takes the following form:
    \epsilon^{\text{in}}_{cpt},
    \epsilon^{\text{out}}_{cpt}}_{\text{process variables}}).
 
-Here, :math:`\zeta` represents the total annualized system cost, :math:`\rho_ct`
+Here, :math:`\zeta` represents the total annualized system cost, :math:`\rho_{ct}`
 the amount of commodities :math:`c` taken from a virtual, infinite stock at
 time :math:`t`, :math:`\kappa_{p}` and :math:`\widehat{\kappa}_{p}` the total
 and the newly installed process capacities of processes :math:`p`,
@@ -27,7 +27,7 @@ and the newly installed process capacities of processes :math:`p`,
 
 Objective
 ---------
-For any urbs problem as the objective function either the total system costs or
+For any urbs problem, as the objective function, either the total system costs or
 the total emissions of CO2 can be chosen. In the former (standard) case this
 leads to an objective vector of:
 
@@ -59,7 +59,7 @@ Annualized invest costs
 ~~~~~~~~~~~~~~~~~~~~~~~
 Investments are typically depreciated over a longer period of time than the
 standard modeling horizon of one year. To overcome distortions in the overall
-cost function urbs uses the annual cash flow (CAPEX) for the calculation of the
+cost function, urbs uses the annual cash flow (CAPEX) for the calculation of the
 investment costs in the cost function. This is captured by multiplying the
 total invest costs for a given process :math:`C_p` with the so-called annuity
 factor :math:`f_p`, i.e.:
@@ -192,8 +192,8 @@ Commodity dispatch constraints
 ------------------------------
 In this part the rules governing the commodity flow timeseries are shown.  
 
-Vertex rule ("Kirchhoffs current law")
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vertex rule ("Kirchhoff's current law")
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This rule is the central rule for the commodity flows and states that all
 commodity flows, (except for those of environmental commodities) have to be
 balanced in each time step. As a helper function the already mentioned
@@ -230,7 +230,7 @@ demands have to be fulfilled at each time step.
 
 Stock commodity limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-There are two rule that govern the retrieval of stock commodities from stock:
+There are two rules that govern the retrieval of stock commodities from stock:
 The total stock and the stock per hour rule. The former limits the total amount
 of stock commodity that can be retrieved annually and the latter limits the
 same quantity per timestep. the two rules take the following form:
@@ -239,7 +239,7 @@ same quantity per timestep. the two rules take the following form:
    &\forall c \in C_{\text{st}}:\\
    &w \sum_{t\in T_{m}}\rho_{ct}\leq \overline{L}_c\\\\
    &\forall c \in C_{\text{st}},~t\in T_m:\\
-   &\rho_ct\leq \overline{l}_{c},
+   &\rho_{ct}\leq \Delta t \cdot \overline{l}_{c}
 
 where :math:`\overline{L}_c` and :math:`\overline{l}_c` are the totally allowed
 annual and hourly retrieval of commodity :math:`c` from the stock,
@@ -270,7 +270,7 @@ urbs all processes are mimo-processes, i.e., in general they take in
 multiple commodities as inputs and give out multiple commodities as outputs.
 The respective ratios between the respective commodity flows remain normally
 fixed. The operational state of the process is then captured in just one
-variable, the process throughput :math:`\tau_{pt}` and is is linked to the
+variable, the process throughput :math:`\tau_{pt}` and is linked to the
 commodity flows via the following two rules:
 
 .. math::
@@ -294,8 +294,8 @@ switching speed of a process can be limited:
 
 .. math::
    &\forall p\in P,~t\in T_m:\\
-   &\tau_{pt}\leq \kappa_{p}\\
-   &\tau_{pt}\geq \underline{P}_{p}\kappa_{p}\\
+   &\tau_{pt}\leq \Delta t  \kappa_{p}\\
+   &\tau_{pt}\geq \Delta t  \underline{P}_{p}\kappa_{p}\\
    &|\tau_{pt}-\tau_{p(t-1)}|\leq \Delta t\overline{PG}_p\kappa_{p},
 
 where :math:`\underline{P}_{p}` is the normalized, minimal operational state of
@@ -312,7 +312,7 @@ a given process is desired
 
 .. math::
    &\forall p\in P,~c\in C_{\text{sup}},~t\in T_m:\\
-   &\epsilon^{\text{in}}_{cpt}=s_{ct}\kappa_{p}.
+   &\epsilon^{\text{in}}_{cpt}= \Delta t s_{ct}\kappa_{p}.
 
 Here, :math:`s_{ct}` is the time series that governs the exact operation of
 process :math:`p`, leaving only its capacity :math:`\kappa_{p}` as a free

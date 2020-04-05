@@ -2,15 +2,15 @@
 
 .. _theory-TVE:
 
-Time Variable efficieny
-=======================
+Time variable efficiency
+========================
 It is possible to manipulate the operation of a process by introducing a time
 series, which changes the output ratios and thus the efficiency of a given
 process in each given timestep. This introduces an additional set of
 constraints in the form:
 
 .. math::
-   &\forall p \in P^{\text{TimeVarEff}},~c\in C-C^{\text{env}} t\in T_m:\\
+   &\forall p \in P^{\text{TimeVarEff}},~c\in C \setminus C^{\text{env}} t\in T_m:\\
    &\epsilon^{\text{out}}_{ypct}=r^{\text{out}}_{ypc}f^{\text{out}}_{ypt}
    \tau_{ypct}
    .
@@ -34,5 +34,5 @@ for the time variable efficiency case takes the form:
    \left(\frac{\underline{r}^{\text{out}}_{ypc}-r^{\text{out}}_{ypc}}
    {1-\underline{P}_{yp}}\cdot \underline{P}_{yp}\cdot \kappa_{yp}+
    \frac{r^{\text{out}}_{ypc}-
-   \underline{P}_p\underline{r}^{\text{out}}_{ypc}}
+   \underline{P}_{yp}\underline{r}^{\text{out}}_{ypc}}
    {1-\underline{P}_{yp}}\cdot \tau_{ypt}\right).

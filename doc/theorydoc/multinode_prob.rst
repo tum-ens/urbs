@@ -121,7 +121,7 @@ arc :math:`a` on transmission line :math:`f` to the total capacity of the line:
 
 .. math::
    &\forall a\in V\times V\times C,~f\in F,~t\in T_m:\\
-   & \pi^{\text{in}}_{aft}\leq \kappa_{af}.
+   & \pi^{\text{in}}_{aft}\leq \Delta t \cdot \kappa_{af}.
 
 Here, the input into the arc :math:`\pi^{\text{in}}_{aft}` is taken as a
 reference for the total capacity. The output of the arc in the target site is

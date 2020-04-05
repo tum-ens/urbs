@@ -77,7 +77,7 @@ per time step and for an entire year. This introduces the following constraints:
    &\forall y\in Y,~v\in V,~c \in C_{\text{sell}}:\\
    &w\sum_{t\in T_{m}}\varrho_{ct}\leq \overline{G}_{yvc}\\\\
    &\forall y\in Y,~v\in V,~c \in C_{\text{sell}},~t\in T_m:\\
-   & \varrho_{yvct}\leq \overline{g}_{yvc}
+   & \varrho_{yvct}\leq \Delta t \cdot \overline{g}_{yvc}
 
 and
 
@@ -85,7 +85,7 @@ and
    &\forall y\in Y,~v\in V,~c \in C_{\text{buy}}:\\
    &w \sum_{t\in T_{m}}\psi_{ct}\leq \overline{B}_{yvc}\\\\
    &\forall y\in Y,~v\in V,~c \in C_{\text{buy}},~t\in T_m:\\
-   & \varrho_{yvct}\leq \overline{b}_{yvc}.
+   & \psi_{yvct}\leq \Delta t \cdot \overline{b}_{yvc}.
 
 Here, the parameters :math:`\overline{b}_{yvc}` and :math:`\overline{B}_{yvc}`
 limit the hourly and yearly maximums of buy from and :math:`\overline{g}_{yvc}`

@@ -255,7 +255,7 @@ rules:
    &\forall c \in C_{\text{env}}:\\
    &-w \sum_{t\in T_{m}}\text{CB}(c,t)\leq \overline{M}_c\\\\
    &\forall c \in C_{\text{env}},~t\in T_m:\\
-   & -\text{CB}(c,t)\leq \overline{m}_{c},
+   & -\text{CB}(c,t)\leq \Delta t \cdot  \overline{m}_{c},
 
 where :math:`\overline{M}_c` and :math:`\overline{m}_c` are the totally allowed
 annual and hourly emissions of environmental commodity :math:`c` to the

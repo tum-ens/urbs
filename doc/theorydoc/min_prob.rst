@@ -57,11 +57,11 @@ These costs are then calculated in the following way:
 
 Annualized Investment Costs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Investments are typically depreciated over a longer period of time than the
-standard modeling horizon of one year. To overcome distortions in the overall
+Investments' values are typically depreciated with time. This devaluation happens in general
+longer time horizons than our model's standard of one year. However to overcome distortions in the overall
 cost function, urbs uses the annual cash flow (CAPEX) for the calculation of the
 investment costs in the cost function. This is captured by multiplying the
-total invest costs for a given process :math:`C_p` with the so-called annuity
+total invest costs for a given process :math:`C_p` with the annuity
 factor :math:`f_p`, i.e.:
 
 .. math::

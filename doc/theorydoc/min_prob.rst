@@ -131,7 +131,7 @@ Annual Fuel Costs
 ~~~~~~~~~~~~~~~~~
 The usage of fuel adds an additional cost factor to the total costs. As with
 variable costs these costs occur when processes are used and are dependent on
-the total usage of the fuel (stock) commodities:
+the total usage of the fuel (:ref:`Stock <stock-commodity-def>`) commodities:
 
 .. math::
    \zeta_{\text{fuel}}=w \Delta t \sum_{t \in T_m\\ c \in C_{\text{stock}}}
@@ -230,7 +230,7 @@ demands have to be fulfilled at each time step.
 
 Stock Commodity Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-There are two rules that govern the retrieval of stock commodities from stock:
+There are two rules that govern the retrieval of :ref:`stock <stock-commodity-def>` commodities from stock:
 The total stock and the stock per hour rule. The former limits the total amount
 of stock commodity that can be retrieved annually and the latter limits the
 same quantity per timestep. the two rules take the following form:
@@ -247,7 +247,7 @@ respectively.
 
 Environmental Commodity Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Similar to stock commodities, environmental commodities can also be limited
+Similar to stock commodities, :ref:`environmental commodities<env-commodity-def>` can also be limited
 per hour or per year. Both properties are assured by the following two
 rules:
 

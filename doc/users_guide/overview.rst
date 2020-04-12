@@ -13,23 +13,26 @@ Commodities are goods that can be generated, stored, transmitted and consumed.
 By convention, they are represented by their energy content (in MWh), but can
 be changed (to J, kW, t, kg) by simply using different (consistent) units for
 all input data. Each commodity must be exactly one of the following six types:
+  .. _stock-commodity-def:
 
-  * Stock: Buyable at any time for a given price. Supply can be limited
+  * **Stock**: Buyable at any time for a given price. Supply can be limited
     per timestep or for a whole year. Examples are coal, gas, uranium
     or biomass.
-  * SupIm: Supply intermittent stands for fluctuating resources like
+  * **SupIm**: Supply intermittent stands for fluctuating resources like
     solar radiation and wind energy, which are available according to 
     a timeseries of values, which could be derived from weather data.
-  * Demand: These commodities have a timeseries for the requirement
+  * **Demand**: These commodities have a timeseries for the requirement
     associated and must be provided by output from other process or 
     from storage. Usually, there is only one demand commodity called 
     electricity (abbreviated to Elec), but multiple (e.g. electricity, space 
     heating, process heat, space cooling) demands can be specified.
-  * Env: The special commodity CO2 is of this type and represents the
+  .. _env-commodity-def:
+
+  * **Env**: The special commodity CO2 is of this type and represents the
     amount (in tons) of greenhouse gas emissions from processes. Its
     total amount can be limited, to investigate the effect of policies
     on the model.
-  * Buy/Sell: Commodities of these two types can be traded with an external
+  * **Buy/Sell**: Commodities of these two types can be traded with an external
     market. Similar to Stock commodities they can be limited per hour or per
     year. As opposed to Stock commodities the price at which they can be traded
     is not fixed but follows a user defined time series.    

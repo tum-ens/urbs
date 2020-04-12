@@ -32,7 +32,7 @@ vertex :math:`v` and time :math:`t`, :math:`\epsilon^{\text{in}}_{vcpt}` and
 :math:`\epsilon^{\text{out}}_{vcpt}` the total inputs and outputs of
 commodities :math:`c` to and from process :math:`p` at vertex :math:`v` and
 time :math:`t`, :math:`\kappa_{af}` and :math:`\widehat{\kappa}_{af}` the
-installed and new capacities of a transmission line :math:`f` linking two
+total and newly installed capacities of a transmission line :math:`f` linking two
 vertices with the arc :math:`a` and :math:`\pi^{\text{in}}_{aft}` and
 :math:`\pi^{\text{out}}_{aft}` the in- and outflows into arc :math:`a` via
 transmission line :math:`f` at time :math:`t`.

@@ -656,7 +656,9 @@ For intertemporal optimization the operational state of units in a support
 timeframe `y` has to be calculated from both the initially installed units and
 their remaining lifetime and the units installed in a previous support
 timeframe which are still operational in `y`. This is achieved via 6 tuple sets
-two each for processes, transmissions and storages.
+two each for processes, transmissions and storages. For the mathematical description please refer to :ref:`operational-state-tuple`.
+
+.. _initially-installed-units:
 
 Intially installed units
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -713,6 +715,8 @@ where the following function is utilized:
 
 .. literalinclude:: /../urbs/features/storage.py
    :pyobject: inst_sto_tuples
+
+.. _installation-in-earlier:
 
 Installation in earlier support timeframe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -154,6 +154,8 @@ In any case the total invest costs are then given by:
    \zeta_{\text{inv}}=\sum_{y\in Y\\p\in P}C^{\text{total}}_{\text{m}}=
    \sum_{y\in  Y\\p\in P}I_{\text{y}}k^{\text{inv}}_{yp} \widehat{\kappa}_{yp}
 
+.. _operational-state-tuple: 
+
 Unit Expansion Constraints
 --------------------------
 Apart from the costs there are also changes in the unit expansion constraints
@@ -175,7 +177,9 @@ where :math:`L_p` is the lifetime of processes :math:`p`, :math:`P_0` the
 subset of processes that are already installed in the first modeled year
 :math:`y_0` and :math:`T_{p}` the rest lifetime of already installed processes.
 If :math:`y_j` is the last modeled year, :math:`y_{j+1}` stands for the end of
-the model horizon.   
+the model horizon. The set :math:`O_{\text{inst}}` can be found in the model implementation as :ref:`initially-installed-units`. 
+This is the set of units, that are already installed in the beginning of the model. 
+The set :math:`O` describes the set of those units, that are installed during the model and its implementation can be found at :ref:`installation-in-earlier`
 
 With these two sets the installed process capacity in a given year is then
 given by:

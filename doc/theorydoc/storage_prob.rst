@@ -80,12 +80,12 @@ the storages can occur. The commodity balance function is thus changed to:
 .. math::
    &\forall y\in Y,~v\in V,~c \in C,~t\in T_m:\\\\
    \text{CB}(y,v,c,t)=&
-   \sum_{(y,v,c,p)\in C^{\text{in}}_{y,v,c,p}}\epsilon^{\text{in}}_{yvcpt}+
+   \Bigg( \sum_{(y,v,c,p)\in C^{\text{in}}_{y,v,c,p}}\epsilon^{\text{in}}_{yvcpt}+
    \sum_{(y,v,s,c)\in C^{\text{in}}_{y,v,s,c}}\epsilon^{\text{in}}_{yvst}+
-   \sum_{(y,a,f)\in A^{\text{in}}_{v}}\pi^{\text{in}}_{yaft}-\\\\
+   \sum_{(y,a,f)\in A^{\text{in}}_{v}}\pi^{\text{in}}_{yaft}\\\\
    &-\sum_{(y,v,c,p)\in C^{\text{out}}_{yvcp}}\epsilon^{\text{out}}_{vcpt}-
    \sum_{(y,v,s,c)\in C^{out}_{y,v,s,c}}\epsilon^{\text{out}}_{yvst}-
-   \sum_{(y,a,f)\in A^{\text{out}}_{v}}\pi^{\text{out}}_{yaft}.
+   \sum_{(y,a,f)\in A^{\text{out}}_{v}}\pi^{\text{out}}_{yaft} \Bigg)
 
 Here, the new tuple sets :math:`C^{\text{in,out}}_{y,v,s,c}` represent all
 inputs and outputs in year :math:`y` at vertex :math:`v` of commodity :math:`c`

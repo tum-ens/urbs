@@ -164,7 +164,7 @@ the matrices :math:`A` and :math:`B` are discussed now.
 Process Expansion Constraints
 -----------------------------
 The unit expansion constraints are independent of the modeled time. In case of
-the minimal model the are restricted to two constraints only limiting the
+the minimal model they are restricted to two constraints only limiting the
 allowed capacity expansion for each process. The total capacity of a given
 process is simply given by:
 

@@ -39,3 +39,6 @@ out of the following entities:
   modeled spatial vertices.
 * Storages, which allow the storage of a single type of commodity.
 * DSM potentials, which make the time shifting of demands possible.
+
+In the documentation the greek letters are used exclusively for the variables. For the parameters latin letters
+are used. 

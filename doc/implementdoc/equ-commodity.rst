@@ -209,7 +209,7 @@ calculated by the following code fragment:
 
 
 **Environmental Output Per Step Rule**: The constraint environmental output per
-step rule applies only for commodities of type "Env"
+step rule applies only for commodities of type ":ref:`Env <env-commodity-def>`"
 (:math:`c \in C_\text{env}`). This constraint limits the amount of
 environmental commodity :math:`c \in C_\text{env}`, that can be released to
 environment by the energy system in the site :math:`v` in support timeframe

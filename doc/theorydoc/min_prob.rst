@@ -32,8 +32,8 @@ the total emissions of CO2 can be chosen. In the former (standard) case this
 leads to an objective vector of:
 
 .. math::
-
-   c=(1,0,0,0,0,0,0),
+   c^{\text{T}}x = (\zeta,0,0,0,0,0,0)   
+   \text{  with  } c^{\text{T}}=(1,0,0,0,0,0,0),
 
 where only the costs are part of the objective function. For the latter choice
 of objective no such simple structure can be written.

@@ -304,7 +304,7 @@ operational state in full capacity per timestep.
 
 Intermittent Supply Rule
 ~~~~~~~~~~~~~~~~~~~~~~~~
-If the input commodity is of type 'SupIm', which means that it represents an
+If the input commodity is of type :ref:`SupIm <supply-intermmittent-def>`, which means that it represents an
 operational state rather than a proper material flow, the operational state of
 the process is governed by this alone. This feature is typically used for
 renewable energies but can be used whenever a certain operation time series of

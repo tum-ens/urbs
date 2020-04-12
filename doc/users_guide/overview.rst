@@ -18,6 +18,8 @@ all input data. Each commodity must be exactly one of the following six types:
   * **Stock**: Buyable at any time for a given price. Supply can be limited
     per timestep or for a whole year. Examples are coal, gas, uranium
     or biomass.
+  .. _supply-intermmittent-def:
+  
   * **SupIm**: Supply intermittent stands for fluctuating resources like
     solar radiation and wind energy, which are available according to 
     a timeseries of values, which could be derived from weather data.

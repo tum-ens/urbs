@@ -55,8 +55,8 @@ the total variable costs accumulating over one year,
 :math:`\zeta_{\text{env}}` the annual penalties for environmental pollution.
 These costs are then calculated in the following way:
 
-Annualized Invest Costs
-~~~~~~~~~~~~~~~~~~~~~~~
+Annualized Investment Costs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Investments are typically depreciated over a longer period of time than the
 standard modeling horizon of one year. To overcome distortions in the overall
 cost function, urbs uses the annual cash flow (CAPEX) for the calculation of the

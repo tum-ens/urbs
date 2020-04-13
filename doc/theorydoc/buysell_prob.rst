@@ -5,7 +5,7 @@
 Trading with an External Market
 ===============================
 In urbs it is possible to model the trade with an external market. For this two
-new commodity types, buy and sell commodities, are introduced. For each a time
+new commodity types, :ref:`buy and sell commodities<buy-sell-commodity-def>` are introduced. For each a time
 series representing the momentary cost at each timestep is given. This time
 series is of course known to the model in advance, which has two implications.
 First, the modeled system is considered too small to influence the external
@@ -44,12 +44,12 @@ The two new cost types are then specified by the following equations:
 .. math::
    \zeta_{\text{rev}}=&-w\Delta t
    \sum_{y\in Y\\v\in V\\c\in C_{sell}\\ t\in T_m}D_{m}\cdot
-   k^{\text{bs}}_{yvct}\cdot \varrho_{yvct}\\\\
+   k^{\text{s}}_{yvct}\cdot \varrho_{yvct}\\\\
    \zeta_{\text{pur}}=&w\Delta t\sum_{y\in Y\\v\in V\\c\in C_{buy}\\ t\in T_m}
-   D_{m}\cdot k^{\text{bs}}_{yvct}\cdot \psi_{yvct},
+   D_{m}\cdot k^{\text{b}}_{yvct}\cdot \psi_{yvct},
 
-where :math:`k^{\text{bs}}_{yvct}` represents the time series of the given
-buy and sell commodity prices.
+where :math:`k^{\text{b}}_{yvct}` and :math:`k^{\text{s}}_{yvct}` represents the time series of the given
+buy and sell commodity prices respectively.
 
 Commodity Dispatch Constraints
 ------------------------------

@@ -34,6 +34,8 @@ all input data. Each commodity must be exactly one of the following six types:
     amount (in tons) of greenhouse gas emissions from processes. Its
     total amount can be limited, to investigate the effect of policies
     on the model.
+  .. _buy-sell-commodity-def:
+  
   * **Buy/Sell**: Commodities of these two types can be traded with an external
     market. Similar to Stock commodities they can be limited per hour or per
     year. As opposed to Stock commodities the price at which they can be traded

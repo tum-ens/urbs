@@ -18,7 +18,7 @@ Elementary sets
 ---------------
 
 .. table:: *Table: Model Sets*
-	
+
 	======================== =====================
 	Set                      Description
 	======================== =====================
@@ -43,7 +43,7 @@ viewed as a discrete variable, which means values of variables are viewed as
 occurring only at distinct timesteps. The set of **time steps**
 :math:`T = \{t_0,\dots,t_N\}` for :math:`N` in :math:`\mathbb{N}` represents
 Time. This set contains :math:`N+1` sequential time steps with equal spaces.
-Each time step represents another point in time. At the initialisation of the
+Each time step represents another point in time. At the initialization of the
 model this set is fixed by the user by setting the variable ``timesteps`` in
 script ``runme.py``. Duration of space between timesteps
 :math:`\Delta t = t_{x+1} - t_x`, length of simulation :math:`\Delta t \cdot N`
@@ -57,7 +57,7 @@ section:
         initialize=m.timesteps,
         ordered=True,
         doc='Set of timesteps')
-		
+
 Where:
 
 * `Initialize`: A function that receives the set indices and model to return
@@ -72,7 +72,7 @@ The Set, **modelled timesteps**, is a subset of the time steps set. The only
 difference between modelled timesteps set and the timesteps set is that the
 initial timestep :math:`t_0` is not included. All other features of the set
 time steps also apply to the set of modelled timesteps. This set is the main
-time set used in the model. The distinction with the set **timesteps** is only 
+time set used in the model. The distinction with the set **timesteps** is only
 required to facilitate the definition of the storage state equation. In script
 ``model.py`` this set is defined by the set ``tm`` and initialized by the code
 fragment:
@@ -84,7 +84,7 @@ fragment:
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of modelled timesteps')
-		
+
 Where:
 
 * `Within`: The option that supports the validation of a set array.
@@ -121,7 +121,7 @@ this set is defined by ``sit`` and initialized by the code fragment:
     m.sit = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Site').unique(),
         doc='Set of sites')
-		
+
 Commodities
 ^^^^^^^^^^^
 
@@ -140,7 +140,7 @@ this set is defined by ``com`` and initialized by the code fragment:
     m.com = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Commodity').unique(),
         doc='Set of commodities')
-		
+
 Commodity Types
 ^^^^^^^^^^^^^^^
 Commodities differ in their usage purposes, consequently **commodity types**
@@ -154,7 +154,7 @@ code fragment:
     m.com_type = pyomo.Set(
         initialize=m.commodity.index.get_level_values('Type').unique(),
         doc='Set of commodity types')
-		
+
 
 Processes
 ^^^^^^^^^
@@ -176,7 +176,7 @@ fragment:
         initialize=m.process.index.get_level_values('Process').unique(),
         doc='Set of conversion processes')
 
-        
+
 Storages
 ^^^^^^^^
 
@@ -194,7 +194,7 @@ initialized by the code fragment:
     m.sto = pyomo.Set(
         initialize=m.storage.index.get_level_values('Storage').unique(),
         doc='Set of storage technologies')
-		
+
 Transmissions
 ^^^^^^^^^^^^^
 
@@ -210,9 +210,9 @@ fragment:
     m.tra = pyomo.Set(
         initialize=m.transmission.index.get_level_values('Transmission').unique(),
         doc='Set of transmission technologies')
-		
+
 .. _sec-cost-types:
-        
+
 Cost Types
 ^^^^^^^^^^
 
@@ -231,7 +231,7 @@ initialized by the code fragment:
     m.cost_type = pyomo.Set(
         initialize=['Inv', 'Fix', 'Var', 'Fuel','Revenue','Purchase','Startup'],
         doc='Set of cost types (hard-coded)')
-		
+
 
 Tuple Sets
 ----------
@@ -261,7 +261,7 @@ the code fragment:
         within=m.stf*m.sit*m.com*m.com_type,
         initialize=m.commodity.index,
         doc='Combinations of defined commodities, e.g. (2020,Mid,Elec,Demand)')
-		
+
 
 Process Tuples
 ^^^^^^^^^^^^^^
@@ -288,7 +288,7 @@ The first subset of the process tuples ``pro_partial_tuples``
 have partial operation properties. Programmatically, they are identified by
 those processes, which have the parameter ``ratio-min`` set for one of their
 input commodities in table *Process-Commodity*. The tuple set is defined as:
-        
+
 ::
 
     m.pro_partial_tuples = pyomo.Set(
@@ -297,14 +297,14 @@ input commodities in table *Process-Commodity*. The tuple set is defined as:
                     for (stf, site, process) in m.pro_tuples
                     for (s, pro, _) in m.r_in_min_fraction.index
                     if process == pro and s == stf],
-        doc='Processes with partial input')        
+        doc='Processes with partial input')
 
 The second subset is formed in order to capture all processes that take up a
 certain area and are thus subject to the area constraint at the given site.
 These processes are identified by the parameter ``area-per-cap`` set in table
 *Process*, if at the same time a value for ``area`` is set in table *Site*. The
 tuple set is defined as:
-  
+
 ::
 
     m.pro_area_tuples = pyomo.Set(
@@ -407,7 +407,7 @@ In a first subset of the storage tuples are all storages that have a user
 defined fixed value for the initial state are collected.
 
 ::
-    
+
     m.sto_init_bound_tuples = pyomo.Set(
         within=m.stf*m.sit*m.sto*m.com,
         initialize=m.stor_init_bound.index,
@@ -417,7 +417,7 @@ A second subset is defined for all storages that have a fixed ratio between
 charging/discharging power and storage content.
 
 ::
-    
+
     m.sto_ep_ratio_tuples = pyomo.Set(
         within=m.stf*m.sit*m.sto*m.com,
         initialize=tuple(m.sto_ep_ratio_dict.keys()),
@@ -455,7 +455,7 @@ respect to the standard case without partial operation. It is defined by the
 following code fragment:
 
 ::
-        
+
     m.pro_partial_input_tuples = pyomo.Set(
         within=m.stf*m.sit*m.pro*m.com,
         initialize=[(stf, site, process, commodity)
@@ -486,7 +486,7 @@ fragment:
                     for (s, pro, commodity) in m.r_out.index
                     if process == pro and s == stf],
         doc='Commodities produced by process by site, e.g. (2020,Mid,PV,Elec)')
-		
+
 Where: ``r_out`` represents the process output ratio as set in the input.
 
 There are two alternative tuple sets that are active whenever their respective
@@ -499,7 +499,7 @@ respect to the standard case without partial operation. It is defined by the
 following code fragment:
 
 ::
-        
+
     m.pro_partial_output_tuples = pyomo.Set(
         within=m.stf*m.sit*m.pro*m.com,
         initialize=[(stf, site, process, commodity)
@@ -536,7 +536,7 @@ commodity :math:`c` of the DSM sheet. It is given by the code fragment:
         within=m.stf*m.sit*m.com,
         initialize=m.dsm.index,
         doc='Combinations of possible dsm by site, e.g. (2020, Mid, Elec)')
-        
+
 The second kind :math:`D_{t,tt,yvc}^\text{down}` refers to all possible DSM
 downshift possibilities. It is defined to overcome the difficulty caused by the
 two time indices of the DSM downshift variable. Dependend on support timeframe
@@ -647,7 +647,7 @@ Where:
 
   :return: The set (unique elements/list) of commodity names of the desired
            commodity type.
-  
+
 
 Operational state tuples
 ------------------------

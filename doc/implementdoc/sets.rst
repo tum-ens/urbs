@@ -4,7 +4,7 @@ Sets
 ====
 
 Since urbs is a linear optimization model with many objects
-(e.g variables, parameters), it is reasonable to use sets to define the groups
+(e.g. variables, parameters), it is reasonable to use sets to define the groups
 of objects. With the usage of sets, many facilities are provided, such as
 understanding the main concepts of the model. Many objects are represented by
 various sets, therefore sets can be easily used to check whether some object
@@ -14,7 +14,7 @@ uppercase letters, and their members are usually expressed with the same
 lowercase letters. Main sets, tuple sets and subsets will be introduced in this
 respective order.
 
-Elementary sets
+Elementary Sets
 ---------------
 
 .. table:: *Table: Model Sets*
@@ -24,7 +24,7 @@ Elementary sets
 	======================== =====================
 	:math:`t \in T`          Timesteps
 	:math:`t \in T_\text{m}` Modelled Timesteps
-	:math:`y \in Y`          Support timeframes
+	:math:`y \in Y`          Support Timeframes
 	:math:`v \in V`          Sites
 	:math:`c \in C`          Commodities
 	:math:`q \in Q`          Commodity Types
@@ -34,15 +34,15 @@ Elementary sets
 	:math:`r \in R`          Cost Types
 	======================== =====================
 
-Time Steps
+Timesteps
 ^^^^^^^^^^
 
 The model urbs is considered to observe a energy system model and calculate the
 optimal solution within a limited span of time. This limited span of time is
 viewed as a discrete variable, which means values of variables are viewed as
-occurring only at distinct timesteps. The set of **time steps**
+occurring only at distinct timesteps. The set of **timesteps**
 :math:`T = \{t_0,\dots,t_N\}` for :math:`N` in :math:`\mathbb{N}` represents
-Time. This set contains :math:`N+1` sequential time steps with equal spaces.
+time. This set contains :math:`N+1` sequential time steps with equal spaces.
 Each time step represents another point in time. At the initialization of the
 model this set is fixed by the user by setting the variable ``timesteps`` in
 script ``runme.py``. Duration of space between timesteps
@@ -68,7 +68,7 @@ Where:
 Modelled Timesteps
 ^^^^^^^^^^^^^^^^^^
 
-The Set, **modelled timesteps**, is a subset of the time steps set. The only
+The set, **modelled timesteps**, is a subset of the time steps set. The only
 difference between modelled timesteps set and the timesteps set is that the
 initial timestep :math:`t_0` is not included. All other features of the set
 time steps also apply to the set of modelled timesteps. This set is the main
@@ -91,7 +91,7 @@ Where:
 * ``m.timesteps[1:]`` represents the timesteps set starting from the second
   element, excluding the first timestep :math:`t_0`
 
-Support timeframes
+Support Timeframes
 ^^^^^^^^^^^^^^^^^^
 
 **Support timeframes** are represented by the set :math:`Y`. They represent the
@@ -108,12 +108,12 @@ In script ``model.py`` the set is defined as:
 Sites
 ^^^^^
 
-**Sites** are represented by the set :math:`V`. A Site :math:`v` can be any
-distinct location, a place of settlement or activity (e.g `process`,
-`transmission`, `storage`).A site is for example an individual building,
-region, country or even continent. Sites can be imagined as nodes(vertices) on
+**Sites** are represented by the set :math:`V`. A site :math:`v` can be any
+distinct location, a place of settlement or activity (e.g. `process`,
+`transmission`, `storage`). A site is for example an individual building,
+region, country or even continent. Sites can be imagined as nodes (vertices) on
 a graph of locations, connected by edges. Index of this set are the
-descriptions of the Sites (e.g north, middle, south). In script ``model.py``
+descriptions of the sites (e.g. north, middle, south). In script ``model.py``
 this set is defined by ``sit`` and initialized by the code fragment:
 
 ::
@@ -125,14 +125,14 @@ this set is defined by ``sit`` and initialized by the code fragment:
 Commodities
 ^^^^^^^^^^^
 
-As explained in the Overview section, **commodities** are goods that can be
-generated, stored, transmitted or consumed. The set of Commodities represents
+As explained in the :ref:`overview <commodity-def-at-overview>` section, **commodities** are goods that can be
+generated, stored, transmitted or consumed. The set of commodities represents
 all goods that are relevant to the modelled energy system, such as all energy
 carriers, inputs, outputs, intermediate substances. (e.g Coal, CO2, Electric,
 Wind) By default, commodities are given by their energy content (MWh). Usage of
 some commodities are limited by a maximum value or maximum value per timestep
 due to their availability or restrictions, also some commodities have a price
-that needs to be compensated..(e.g coal, wind, solar).In script ``model.py``
+that needs to be compensated..(e.g. coal, wind, solar). In script ``model.py``
 this set is defined by ``com`` and initialized by the code fragment:
 
 ::
@@ -143,8 +143,8 @@ this set is defined by ``com`` and initialized by the code fragment:
 
 Commodity Types
 ^^^^^^^^^^^^^^^
-Commodities differ in their usage purposes, consequently **commodity types**
-are introduced to subdivide commodities by their features. These Types are hard
+Commodities differ in their usage purposes, consequently :ref:`commodity types <commodity-def-at-overview>`
+are introduced to subdivide commodities by their features. These types are hard
 coded as ``SupIm``, ``Stock``, ``Demand``, ``Env``, ``Buy``, ``Sell``. In
 script ``model.py`` this set is defined as ``com_type`` and initialized by the
 code fragment:
@@ -159,14 +159,14 @@ code fragment:
 Processes
 ^^^^^^^^^
 
-One of the most important elements of an energy system is the **process**. A
+One of the most important elements of an energy system is the :ref:`process <process-def-userguide>`. A
 process :math:`p` can be defined by the action of changing one or more forms of
 energy, i.e. commodities, to others. In our modelled energy system, processes
 convert input commodities into output commodities. Process technologies are
 represented by the set processes :math:`P`. Different processes technologies
 have fixed input and output commodities. These input and output commodities can
 be either single or multiple regardless of each other. Some example members of
-this set can be: `Wind Turbine`,`Gas Plant`, `Photovoltaics`. In script
+this set can be: *Wind Turbine*, *Gas Plant*, *Photovoltaics*. In script
 ``model.py`` this set is defined as ``pro`` and initialized by the code
 fragment:
 
@@ -180,12 +180,12 @@ fragment:
 Storages
 ^^^^^^^^
 
-Energy **Storage** is provided by technical facilities that store energy to
+Energy :ref:`storage <storage-def-userguide>` is provided by technical facilities that store energy to
 generate a commodity at a later time for the purpose of meeting the demand.
 Occasionally, on-hand commodities may not be able to satisfy the required
 amount of energy to meet the demand, or the available amount of energy may be
-much more than required.Storage technologies play a major role in such
-circumstances. The Set :math:`S` represents all storage technologies (e.g
+much more than required. Storage technologies play a major role in such
+circumstances. The Set :math:`S` represents all storage technologies (e.g.
 `Pump storage`). In script ``model.py`` this set is defined as ``sto`` and
 initialized by the code fragment:
 
@@ -198,10 +198,10 @@ initialized by the code fragment:
 Transmissions
 ^^^^^^^^^^^^^
 
-**Transmissions** :math:`f \in F` represent possible conveyances of commodities
+:ref:`Transmissions <transmission-def-userguide>` :math:`f \in F` represent possible conveyances of commodities
 between sites. Transmission process technologies can vary between different
 commodities, due to distinct physical attributes and forms of commodities. Some
-examples for Transmission technologies are: `hvac`, `hvdc`, `pipeline`) In
+examples for transmission technologies are: `hvac`, `hvdc`, `pipeline`. In
 script ``model.py`` this set is defined as ``tra`` and initialized by the code
 fragment:
 
@@ -220,7 +220,7 @@ One of the major goals of the model is to calculate the costs of a simulated
 energy system. There are 6 different types of costs. Each one has different
 features and are defined for different instances. Set of **cost types** is
 hardcoded, which means they are not considered to be fixed or changed  by the
-user. The Set :math:`R` defines the Cost Types, each member :math:`r` of this
+user. The set :math:`R` defines the cost types, each member :math:`r` of this
 set :math:`R` represents a unique cost type name. The cost types are hard coded
 as: ``Investment``, ``Fix``, ``Variable``, ``Fuel``, ``Revenue``, ``Purchase``,
 ``Startup``. In script ``model.py`` this set is defined as ``cost_type`` and
@@ -267,7 +267,7 @@ Process Tuples
 ^^^^^^^^^^^^^^
 
 Process tuples represent possible placements of processes within the model.
-These are represented by the set :math:`P_v`. A member :math:`p_{yv}` in set
+These are represented by the set :math:`P_{yv}`. A member :math:`p_{yv}` in set
 :math:`P_{yv}` is a process :math:`p` in support timeframe :math:`y` and site
 :math:`v`. For example, `(2020, North, Coal Plant)` is interpreted as process
 `Coal Plant` in site `North` in the year `2020`. This set is defined as
@@ -331,7 +331,7 @@ Transmission Tuples
 Transmission tuples represent possible transmissions. These are represented by
 the set :math:`F_{yc{v_\text{out}}{v_\text{in}}}`. A member
 :math:`f_{yc{v_\text{out}}{v_\text{in}}}` in set
-:math:`F_{yc{v_\text{out}}{v_\text{in}}}` is a transmission :math:`f`,that is
+:math:`F_{yc{v_\text{out}}{v_\text{in}}}` is a transmission :math:`f`, that is
 directed from an origin site :math:`v_\text{out}` to a destination site
 :math:`v_{in}` and carrying the commodity :math:`c` in support timeframe
 :math:`y`. The term "\ `directed from an origin site` :math:`v_\text{out}`
@@ -388,7 +388,7 @@ Storage Tuples
 ^^^^^^^^^^^^^^
 Storage tuples label storages. They are represented by the set :math:`S_{yvc}`.
 A member :math:`s_{yvc}` in set :math:`S_{yvc}` is a storage :math:`s` of
-commodity :math:`c` in site :math:`v` and support timeframe :math:`y` For
+commodity :math:`c` in site :math:`v` and support timeframe :math:`y` for
 example, `(2020, Mid, Bat, Elec)` is interpreted as storage `Bat` for commodity
 `Elec` in site `Mid` in the year `2020`. This set is defined as ``sto_tuples``
 and given by the code fragment:
@@ -428,7 +428,7 @@ Process Input Tuples
 ^^^^^^^^^^^^^^^^^^^^
 Process input tuples represent commodities consumed by processes. These are
 represented by the set :math:`C_{yvp}^\text{in}`. A member
-:math:`c_{yvp}^\text{in}` in set :math:`C_{vp}^\text{in}` is a commodity
+:math:`c_{yvp}^\text{in}` in set :math:`C_{yvp}^\text{in}` is a commodity
 :math:`c` consumed by the process :math:`p` in site :math:`v` in support
 timeframe :math:`y`. For example, `(2020, Mid, PV, Solar)` is interpreted as
 commodity `Solar` consumed by the process `PV` in the site `Mid` in the year
@@ -543,7 +543,7 @@ two time indices of the DSM downshift variable. Dependend on support timeframe
 :math:`y`, site :math:`v` and commodity :math:`c` the tuples contain two time
 indices. For example `(5001, 5003, 2020, Mid, Elec)` is intepreted as the
 downshift in timestep `5003`, which was caused by the upshift of timestep
-`5001` in year `2020 and `site `Mid` for commodity `Elec`. The tuples are given
+`5001` in year `2020` at site `Mid` for commodity `Elec`. The tuples are given
 by the following code fragment:
 
 ::
@@ -567,47 +567,47 @@ where the following function is utilized:
 Commodity Type Subsets
 ----------------------
 
-Commodity Type Subsets represent the commodity tuples only from a given
-commodity type. Commodity Type Subsets are subsets of the sets commodity tuples
+Commodity type subsets represent the commodity tuples only from a given
+commodity type. Commodity type subsets are subsets of the sets commodity tuples.
 These subsets can be obtained by fixing the commodity type :math:`q` to a
-desired commodity type (e.g SupIm, Stock) in the set commodity tuples
+desired commodity type (e.g. :ref:`SupIm <supply-intermmittent-def>`, :ref:`Stock <stock-commodity-def>`) in the set commodity tuples
 :math:`C_{vq}`. Since there are 6 types of commodity types, there are also 6
-commodity type subsets. Commodity type subsets are;
+commodity type subsets. Commodity type subsets are:
 
 **Supply Intermittent Commodities** (``SupIm``): The set :math:`C_\text{sup}`
 represents all commodities :math:`c` of commodity type ``SupIm``. Commodities
 of this type have intermittent timeseries, in other words, availability of
 these commodities are not constant. These commodities might have various energy
-content for every timestep :math:`t`. For example solar radiation is contingent
+content for every timestep :math:`t`. For example, solar radiation is contingent
 on many factors such as sun position, weather and varies permanently.
 
 **Stock Commodities** (``Stock``): The set :math:`C_\text{st}` represents all
 commodities :math:`c` of commodity type ``Stock``. Commodities of this type can
-be purchased at any time for a given price( :math:`k_{vc}^\text{fuel}`).
+be purchased at any time for a given price (:math:`k_{vc}^\text{fuel}`).
 
 **Sell Commodities** (``Sell``): The set :math:`C_\text{sell}` represents all
 commodities :math:`c` of commodity type ``Sell``. Commodities that can be sold.
-These Commodities have a sell price ( :math:`k_{vct}^\text{bs}` ) that may vary
+These commodities have a sell price ( :math:`k_{vct}^\text{s}` ) that may vary
 with the given timestep :math:`t`.
 
 **Buy Commodities** (``Buy``): The set :math:`C_\text{buy}` represents all
 commodities :math:`c` of commodity type ``Buy``. Commodities that can be
-purchased. These Commodities have a buy price ( :math:`k_{vc}^\text{bs}` ) that
+purchased. These commodities have a buy price ( :math:`k_{vc}^\text{b}` ) that
 may vary with the given timestep :math:`t`.
 
 **Demand Commodities** (``Demand``): The set :math:`C_\text{dem}` represents
 all commodities :math:`c` of commodity type ``Demand``. Commodities of this
 type are the requested commodities of the energy system. They are usually the
-end product of the model (e.g Electricity:Elec).
+end product of the model (e.g. Electricity:Elec).
 
 **Environmental Commodities** (``Env``): The set :math:`C_\text{env}`
 represents all commodities :math:`c` of commodity type ``Env``. Commodities of
 this type are usually the undesired byproducts of processes that might be
 harmful for environment, optional maximum creation limits can be set to control
 the generation of these commodities
-(e.g Greenhouse Gas Emissions: :math:`\text{CO}_2`).
+(e.g. Greenhouse Gas Emissions: :math:`\text{CO}_2`).
 
-Commodity Type Subsets are given by the code fragment:
+Commodity type subsets are given by the code fragment:
 ::
 
     m.com_supim = pyomo.Set(
@@ -649,7 +649,7 @@ Where:
            commodity type.
 
 
-Operational state tuples
+Operational State Tuples
 ------------------------
 
 For intertemporal optimization the operational state of units in a support
@@ -660,8 +660,8 @@ two each for processes, transmissions and storages. For the mathematical descrip
 
 .. _initially-installed-units:
 
-Intially installed units
-^^^^^^^^^^^^^^^^^^^^^^^^
+Initially Installed Units
+^^^^^^^^^^^^^^^^^^^^^^^^^
 Processes which are already installed at the beginning of the modeled time
 horizon and still operational in support timeframe `stf` are collected in the
 following tuple set:
@@ -718,7 +718,7 @@ where the following function is utilized:
 
 .. _installation-in-earlier:
 
-Installation in earlier support timeframe
+Installation in Earlier Support Timeframe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Processes installed in an earlier support timeframe `stf` and still usable in
 support timeframe `stf_later` are collected in the following tuple set:

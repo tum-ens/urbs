@@ -4,7 +4,9 @@ urbs is a generator for linear energy system optimization models.
 
 urbs consists of several **model entities**. These are commodities, processes,
 transmission and storage. Demand and intermittent commodity supply through are 
-modelled through time series datasets.
+modelled through time series datasets. 
+
+.. _commodity-def-at-overview:
 
 Commodity
 ^^^^^^^^^
@@ -23,6 +25,8 @@ all input data. Each commodity must be exactly one of the following six types:
   * **SupIm**: Supply intermittent stands for fluctuating resources like
     solar radiation and wind energy, which are available according to 
     a timeseries of values, which could be derived from weather data.
+  .. _demand-commodity-def:
+
   * **Demand**: These commodities have a timeseries for the requirement
     associated and must be provided by output from other process or 
     from storage. Usually, there is only one demand commodity called 
@@ -51,6 +55,8 @@ example ``(2020, 'Norway', 'Wind', 'SupIm')`` for wind in Norway with a time
 series or  ``(2020, 'Iceland', 'Electricity', 'Demand')`` for an electricity
 demand time series in  Iceland.
 
+.. _process-def-userguide:
+
 Process
 ^^^^^^^
 Processes describe conversion technologies from one commodity to another. They
@@ -69,6 +75,7 @@ specifies the inputs and outputs for that process. For example,
 ``Turbine`` has a single input ``Geothermal`` and the single output
 ``Electricity``.
 
+.. _transmission-def-userguide:
 
 Transmission
 ^^^^^^^^^^^^
@@ -78,6 +85,8 @@ Transmission is defined over the tuple
 ``(year, site in, site out, transmission, commodity)``. For example,
 ``(2030, 'Iceland', 'Norway', 'Undersea cable', 'Electricity')`` would
 represent an undersea cable for electricity between Iceland and Norway.
+
+.. _storage-def-userguide:
 
 Storage
 ^^^^^^^

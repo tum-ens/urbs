@@ -7,8 +7,8 @@ solution will be listed and defined in this section. A variable is a numerical
 value that is determined during optimization. Variables can denote a single,
 independent value, or an array of values. Variables define the search space for
 optimization. Variables of this optimization model can be separated into
-sections by their area of use. These Sections are Cost, Commodity, Process,
-Transmission, Storage and demand side management.
+sections by their area of use. These sections are Cost, Commodity, Process,
+Transmission, Storage and Demand Side Management.
 
 .. table:: *Table: Model Variables*
     
@@ -30,6 +30,8 @@ Transmission, Storage and demand side management.
     | :math:`\zeta_\text{rev}`               | €    | Revenue Costs                     |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\zeta_\text{pur}`               | €    | Purchase Costs                    |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{env}`               | €    | Pollution/Environmental Costs     |
     +----------------------------------------+------+-----------------------------------+
     | **Commodity Variables**                                                           |
     +----------------------------------------+------+-----------------------------------+

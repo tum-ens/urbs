@@ -188,7 +188,7 @@ In script ``model.py`` this variable is defined by the model variable
 
 **New Process Capacity**, :math:`\hat{\kappa}_{yvp}`, ``cap_pro_new``: The
 variable :math:`\hat{\kappa}_{yvp}` represents the capacity of a process tuple
-:math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V`) that needs to be
+:math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V, \forall y \in Y`) that needs to be
 installed additionally to the energy system in support timeframe :math:`y` in
 site :math:`v` in order to provide the optimal solution. This variable is
 expressed in the unit MW. In script ``model.py`` this variable is defined by
@@ -200,7 +200,7 @@ fragment: ::
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
 
-**Process Throughput**, :math:`\tau_{yvpt}`, ``tau_pro`` : The variable
+**Process Throughput**, :math:`\tau_{yvpt}`, ``tau_pro``: The variable
 :math:`\tau_{yvpt}` represents the measure of (energetic) activity of a process
 tuple :math:`p_{yv}`
 (:math:`\forall p \in P, \forall v \in V, \forall y \in Y`) at a timestep
@@ -295,7 +295,7 @@ the model variable ``e_tra_in`` and initialized by the following code fragment:
 
 **Transmission Output Commodity Flow**, :math:`\pi_{yaft}^\text{out}`,
 ``e_tra_out``: The variable :math:`\pi_{yaft}^\text{out}` represents the
-commodity flow output out of a transmission tuple :math:`f_{ca}` at a timestep
+commodity flow output out of a transmission tuple :math:`f_{yca}` at a timestep
 :math:`t`, where :math:`a` represents the arc from an origin site
 :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
 is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
@@ -384,7 +384,7 @@ script ``model.py`` this variable is defined by the model variable
 
 **New Storage Size**, :math:`\hat{\kappa}_{yvs}^\text{c}`, ``cap_sto_c_new``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the additional
-storage load capacity of a storage tuple :math:`s_{vc}` that needs to be
+storage load capacity of a storage tuple :math:`s_{yvc}` that needs to be
 installed to the energy system in order to provide the optimal solution. This
 variable is expressed in the unit MWh. In script ``model.py`` this variable is
 defined by the model variable ``cap_sto_c_new`` and initialized by the
@@ -397,7 +397,7 @@ following code fragment: ::
 
 **Total Storage Power**, :math:`\kappa_{yvs}^\text{p}`, ``cap_sto_p``: The
 variable :math:`\kappa_{yvs}^\text{p}` represents the total potential discharge
-power of a storage tuple :math:`s_{vc}`. The total storage power includes both
+power of a storage tuple :math:`s_{yvc}`. The total storage power includes both
 the already installed storage power and the additional new storage power that
 needs to be installed. This variable is expressed in the unit MW. In script
 ``model.py`` this variable is defined by the model variable ``cap_sto_p`` and
@@ -411,7 +411,7 @@ initialized by the following code fragment:
 
 **New Storage Power**, :math:`\hat{\kappa}_{yvs}^\text{p}`, ``cap_sto_p_new``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{p}` represents the additional
-potential discharge power of a storage tuple :math:`s_{vc}` that needs to be
+potential discharge power of a storage tuple :math:`s_{yvc}` that needs to be
 installed to the energy system in order to provide the optimal solution. This
 variable is expressed in the unit MW. In script ``model.py`` this variable is
 defined by the model variable ``cap_sto_p_new`` and initialized by the
@@ -453,7 +453,7 @@ In script ``model.py`` this variable is defined by the model variable
 
 **Storage Energy Content**, :math:`\epsilon_{yvst}^\text{con}`, ``e_sto_con``:
 The variable :math:`\epsilon_{yvst}^\text{con}` represents the energy amount
-that is loaded in a storage tuple :math:`s_{vc}` at a timestep :math:`t`. This
+that is loaded in a storage tuple :math:`s_{yvc}` at a timestep :math:`t`. This
 variable is expressed in the unit MWh. In script ``urbs.py`` this variable is
 defined by the model variable ``e_sto_out`` and initialized by the following
 code fragment:

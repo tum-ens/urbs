@@ -161,7 +161,7 @@ The user can set the paramteter in script ``runme.py`` in the line:
 
     dt = 1  # length of each time step (unit: hours)
 
-**Weight of last modeled support timeframe**, :math:`W`,
+**Weight of Last Modeled Support Timeframe**, :math:`W`,
 ``m.global_prop.loc[(min(m.stf), 'Cost budget'), 'value']``: This parameter
 specifies how long the time interval represented by the last support timeframe
 is. The unit of this parameter is years. By extension it also specifies the end
@@ -337,7 +337,7 @@ under the sheet "Global". Here the the cell where the "CO2 limit" row and
 :math:`\overline{L}_{CO_2,y}`. If the user wants to disable this parameter and
 restriction it provides, this cell can be set to "inf" or simply be deleted.
 
-**CO**:math:`_\textbf{2}`** emission budget **Total Emission budget**,
+**CO**:math:`_\textbf{2}` **Total Emission budget**,
 :math:`\overline{\overline{L}}_{CO_2}`,
 ``m.global_prop.loc[min(m.stf), 'CO2 budget']['value']``: The parameter
 :math:`\overline{\overline{L}}_{CO_2}` represents the maximum total amount of
@@ -397,7 +397,7 @@ site :math:`v` in support timeframe :math:`y`. If there is no desired maximum
 limit for the process capacities, both input parameters can be simply set to
 "inf".
 
-**Remaining lifetime of installed processes**, :math:`T_{vp}`,
+**Remaining Lifetime of Installed Processes**, :math:`T_{vp}`,
 ``m.process.loc[(min(m.stf), sit, pro), 'lifetime']``: The parameter
 :math:`T_{vp}` represents the remaining lifetime of already installed units. It
 is used to determine the set `m.inst_pro_tuples`, i.e. to identify for which
@@ -643,7 +643,7 @@ represents the parameters :math:`\overline{K}_{yvs}^\text{p}` for corresponding
 storage tuples. If there is no desired maximum limit for the storage energy
 content capacities, this parameter can be simply set to ""inf"".
 
-**Remaining lifetime of installed storages**, :math:`T_{vs}`,
+**Remaining Lifetime of Installed Storages**, :math:`T_{vs}`,
 ``m.storage.loc[(min(m.stf), sit, pro), 'lifetime']``: The parameter
 :math:`T_{vs}` represents the remaining lifetime of already installed units. It
 is used to determine the set `m.inst_sto_tuples`, i.e. to identify for which
@@ -719,7 +719,7 @@ arc :math:`a` combination. The column with the header label "cap-up" represents
 the parameters :math:`\overline{K}_{yaf}` of the corresponding transmission
 tuples.
 
-**Remaining lifetime of installed transmission**, :math:`T_{af}`,
+**Remaining Lifetime of Installed Transmission**, :math:`T_{af}`,
 ``m.transmission.loc[(min(m.stf), sitin, sitout, tra, com), 'lifetime']``: The
 parameter :math:`T_{af}` represents the remaining lifetime of already installed
 units. It is used to determine the set `m.inst_tra_tuples`, i.e. to identify

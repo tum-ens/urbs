@@ -10,11 +10,11 @@ Technical Parameters
     +=============================================+====+============================================+
     |**General Technical Parameters**                                                               |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`w`                                    | _  |Fraction of 1 year of modeled timesteps     |
+    |:math:`w`                                    | _  |Fraction of One Year of Modeled Timesteps   |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\Delta t`                             | h  |Timestep Size                               |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`W`                                    | a  |Weight of last support timeframe            |
+    |:math:`W`                                    | a  |Weight of Last Support Timeframe            |
     +---------------------------------------------+----+--------------------------------------------+
     |**Commodity Technical Parameters**                                                             |
     +---------------------------------------------+----+--------------------------------------------+
@@ -40,7 +40,7 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{L}_{\text{CO}_2,y}`         | t  |Maximum Global Annual CO2 Emission Limit    |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{\overline{L}}_{\text{CO}_2}`| t  |CO2 Emission Budget for modeling horizon    |
+    |:math:`\overline{\overline{L}}_{\text{CO}_2}`| t  |CO2 Emission Budget for Modeling Horizon    |
     +---------------------------------------------+----+--------------------------------------------+
     |**Process Technical Parameters**                                                               |
     +---------------------------------------------+----+--------------------------------------------+
@@ -50,13 +50,13 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{K}_{yvp}`                   |MW  |Process Capacity Upper Bound                |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{vp}`                               |MW  |Remaining lifetime of installed processes   |
+    |:math:`T_{vp}`                               |MW  |Remaining Lifetime of Installed Processes   |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{PG}_{yvp}`                  |1/h |Process Maximal Power Gradient (relative)   |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\underline{P}_{yvp}`                  | _  |Process Minimum Part Load Fraction          |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`f_{yvpt}^\text{out}`                  | _  |Process Output Ratio multiplyer             |
+    |:math:`f_{yvpt}^\text{out}`                  | _  |Process Output Ratio Multiplyer             |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`r_{ypc}^\text{in}`                    | _  |Process Input Ratio                         |
     +---------------------------------------------+----+--------------------------------------------+
@@ -88,7 +88,7 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{K}_{yvs}^\text{p}`          |MW  |Storage Power Upper Bound                   |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{vs}`                               |MW  |Remaining lifetime of installed storages    |
+    |:math:`T_{vs}`                               |MW  |Remaining Lifetime of Installed Storages    |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`k_{yvs}^\text{E/P}`                   |h   |Storage Energy to Power Ratio               |    
     +---------------------------------------------+----+--------------------------------------------+
@@ -102,7 +102,7 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{K}_{yaf}`                   |MW  |Transmission Capacity Upper Bound           |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{af}`                               |MW  |Remaining lifetime of installed transmission|
+    |:math:`T_{af}`                               |MW  |Remaining Lifetime of Installed Transmission|
     +---------------------------------------------+----+--------------------------------------------+
     |**DCPF Transmission Technical Parameters**                                                     |
     +---------------------------------------------+----+--------------------------------------------+

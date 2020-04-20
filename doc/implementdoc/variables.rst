@@ -438,7 +438,7 @@ and initialized by the following code fragment:
         doc='Commodity flow into storage (MWh) at a given timestep')
 
 **Storage Output Commodity Flow**, :math:`\epsilon_{yvst}^\text{out}`,
-``e_sto_out``:  The variable :math:`\epsilon_{vst}^\text{out}` represents the
+``e_sto_out``:  The variable :math:`\epsilon_{yvst}^\text{out}` represents the
 output commodity flow out of a storage tuple :math:`s_{yvc}` at a timestep
 :math:`t`. Output commodity flow out of a storage tuple can also be defined as
 the discharge of a storage tuple. This variable is expressed in the unit MWh.

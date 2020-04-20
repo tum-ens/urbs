@@ -21,7 +21,7 @@ Transmission, Storage and Demand Side Management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\zeta_\text{inv}`               | €    | Investment Costs                  |
     +----------------------------------------+------+-----------------------------------+
-    | :math:`\zeta_\text{fix}`               | €    | Fix Costs                         |
+    | :math:`\zeta_\text{fix}`               | €    | Fixed Costs                         |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\zeta_\text{var}`               | €    | Variable Costs                    |
     +----------------------------------------+------+-----------------------------------+
@@ -55,7 +55,7 @@ Transmission, Storage and Demand Side Management.
     +----------------------------------------+------+-----------------------------------+
     | **Transmission Variables**                                                        |
     +----------------------------------------+------+-----------------------------------+
-    | :math:`\kappa_{yaf}`                   | MW   | Total transmission Capacity       |
+    | :math:`\kappa_{yaf}`                   | MW   | Total Transmission Capacity       |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yaf}`             | MW   | New Transmission Capacity         |
     +----------------------------------------+------+-----------------------------------+
@@ -95,12 +95,12 @@ Transmission, Storage and Demand Side Management.
 	
 Cost Variables
 ^^^^^^^^^^^^^^
-**Total System Cost**, :math:`\zeta` : the variable :math:`\zeta` represents
+**Total System Cost**, :math:`\zeta`: the variable :math:`\zeta` represents
 the *total expense incurred* in reaching the satisfaction of the given energy
 demand in the entire modeling horizon. If only a fraction of a year is modeled
 in each support timeframe, the costs are scaled to the annual expenditures. The
 total cost is calculated by the sum total of all costs by
-type(:math:`\zeta_r`, :math:`\forall r \in R`) and defined as ``costs`` by the
+type (:math:`\zeta_r`, :math:`\forall r \in R`) and defined as ``costs`` by the
 following code fragment:
 
 ::
@@ -110,8 +110,8 @@ following code fragment:
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
 
-System costs are divided into the 7 cost types invest, fix, variable, fuel,
-purchase, sell and environmental. The separation of costs by type, facilitates
+System costs are divided into the 7 cost types invest, fixed, variable, fuel,
+purchase, revenue and environmental. The separation of costs by type, facilitates
 business planning and provides calculation accuracy. These cost types are
 hardcoded, which means they are not considered to be fixed or changed by the
 user.

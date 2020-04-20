@@ -111,7 +111,7 @@ following code fragment:
         doc='Costs by type (EUR/a)')
 
 System costs are divided into the 7 cost types invest, fixed, variable, fuel,
-purchase, revenue and environmental. The separation of costs by type, facilitates
+purchase, revenue and environmental. The separation of costs by type facilitates
 business planning and provides calculation accuracy. These cost types are
 hardcoded, which means they are not considered to be fixed or changed by the
 user.
@@ -122,7 +122,7 @@ For more information on the definition of these variables see section
 Commodity Variables
 ^^^^^^^^^^^^^^^^^^^
 
-**Stock Commodity Source Term**, :math:`\rho_{yvct}`, ``e_co_stock``, MWh : The
+**Stock Commodity Source Term**, :math:`\rho_{yvct}`, ``e_co_stock``, MWh: The
 variable :math:`\rho_{yvct}` represents the energy amount in [MWh] that is
 being used by the system of commodity :math:`c` from type stock
 (:math:`\forall c \in C_\text{stock}`) in support timeframe :math:`y`
@@ -170,14 +170,14 @@ Process Variables
 **Total Process Capacity**, :math:`\kappa_{yvp}`, ``cap_pro``: The variable
 :math:`\kappa_{yvp}` represents the total potential throughput (capacity) of a
 process tuple :math:`p_{yv}`
-(:math:`\forall p \in P, \forall v \in V`, \forall y \in Y`), that is required
+(:math:`\forall p \in P, \forall v \in V, \forall y \in Y`), that is required
 in the energy system. The total process capacity includes both the already
 installed process capacity and the additional new process capacity that needs
 to be installed. Since the costs of the process technologies are mostly
 directly proportional to the maximum possible output (and correspondingly to
 the capacity) of processes, this variable acts as a scale factor of process
 technologies. For further information see Process Capacity Rule. This variable
-is expressed in the unit (MW).
+is expressed in the unit Megawatts [MW].
 In script ``model.py`` this variable is defined by the model variable
 ``cap_pro`` and initialized by the following code fragment: ::
 

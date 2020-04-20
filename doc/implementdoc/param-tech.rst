@@ -146,8 +146,8 @@ fragment:
 represents the duration between two sequential timesteps :math:`t_x` and
 :math:`t_{x+1}`. This is calculated by the subtraction of smaller one from the
 bigger of the two sequential timesteps :math:`\Delta t = t_{x+1} - t_x`. This
-parameter is the unit of time for the optimization model, is expressed in the
-unit h and by default the value is set to ``1``. In script ``model.py`` this
+parameter is the unit of time for the optimization model and is expressed in the
+unit h. Its default value is set to ``1``. In script ``model.py`` this
 parameter is defined by the model parameter ``dt`` and initialized by the
 following code fragment:
 ::

@@ -3,11 +3,11 @@ import shutil
 import nopt
 import ipdb
 
-input_files = 'Intertemporal_example'  # for single year file name, for intertemporal folder name
+input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = input_files[0:4]
+result_name = 'single_year_dummy'
 result_dir = nopt.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -24,7 +24,7 @@ shutil.copy(__file__, result_dir)
 # No site name indicates minimize/maximize total capacity of all sites
 # example objectives [('South','Photovoltaics'),('Photovoltaics'),('South','North','cost')] etc.
 
-objective = [('Photovoltaics'),('Wind park')]
+objective = [('Photovoltaics')]
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 
@@ -42,12 +42,10 @@ report_tuples = [
 report_sites_name = {}
 
 # plotting commodities/sites
-plot_tuples = [
-
-    ]
+plot_tuples = [  (2050, ['North', 'Mid', 'South'], 'Elec')]
 
 # optional: define names for sites in plot_tuples
-plot_sites_name = {}
+plot_sites_name = {('North', 'Mid', 'South'): 'All'}
 
 # plotting timesteps
 plot_periods = {

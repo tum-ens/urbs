@@ -17,8 +17,7 @@ from .util_nopt import is_string
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 import seaborn as sns
-from matplotlib import dates as mdates
-from matplotlib.dates import DateFormatter
+
 sns.set_context("talk")
 
 def sort_plot_elements(elements):
@@ -315,6 +314,7 @@ def stack_bar_plot_capacities(prob, figure_basename,figure_size=(16, 12), extens
             else:
                 # remove item/commodity is not consumed
                 item_index = labels.index(item)
+
                 handles.pop(item_index)
                 labels.pop(item_index)
 
@@ -341,7 +341,7 @@ def stack_bar_plot_capacities(prob, figure_basename,figure_size=(16, 12), extens
     fig_name = str(prob.objective_dict).strip('{}').replace("'", "").replace('[', '').replace(']', '').replace(':','_')
     new_figure_title = 'Stack Plot of Process Capacities - Objective: {} year(s) {} '.format(fig_name ,str(prob.stf_list).strip('[]'))
     fig_stack.suptitle(new_figure_title, fontsize=16)
-
+    plt.subplots_adjust(bottom=0.20) ## Tweak spacing to prevent clipping of tick-labels
     if extensions is None:
         extensions = ['png']
 

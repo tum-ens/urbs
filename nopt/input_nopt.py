@@ -222,7 +222,7 @@ def pyomo_model_prep(data, timesteps):
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
 
-    m.slack_list = [0.02,0.04,0.06,0.08,0.1,0.15]
+    m.slack_list = [0.02,0.06,0.1]
 
 
     # Converting Data frames to dict

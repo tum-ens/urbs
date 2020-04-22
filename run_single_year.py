@@ -7,7 +7,7 @@ input_files = 'single_year_example.xlsx'  # for single year file name, for inter
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'urbs-optimal-cost'
+result_name = 'urbs-optimal-cost-single'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -38,9 +38,7 @@ report_sites_name = {('North', 'Mid', 'South'): 'All'}
 
 # plotting commodities/sites
 plot_tuples = [
-
-
-
+    (2020, ['North', 'Mid', 'South'], 'Elec')
 
     ]
 

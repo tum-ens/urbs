@@ -8,6 +8,36 @@ import os
 import urbs
 import time
 
+dict_countries = {"IE": "IEUK",
+                  "UK": "IEUK",
+                  "FR": "FR",
+                  "BE": "BELUNL",
+                  "LU": "BELUNL",
+                  "NL": "BELUNL",
+                  "DE": "DE",
+                  "DK": "DKFINOSE",
+                  "FI": "DKFINOSE",
+                  "NO": "DKFINOSE",
+                  "SE": "DKFINOSE",
+                  "ES": "ESPT",
+                  "PT": "ESPT",
+                  "AT": "ATCH",
+                  "CH": "ATCH",
+                  "IT": "IT",
+                  "CZ": "CZPLSK",
+                  "PL": "CZPLSK",
+                  "SK": "CZPLSK",
+                  "EE": "EELTLV",
+                  "LT": "EELTLV",
+                  "LV": "EELTLV",
+                  "HR": "HRHUSI",
+                  "HU": "HRHUSI",
+                  "SI": "HRHUSI",
+                  "BG": "BGELRO",
+                  "EL": "BGELRO",
+                  "RO": "BGELRO",
+                  }
+
 
 def write_Global(Global, version, model_type, suffix, year, writer):
     print("Global")
@@ -21,6 +51,7 @@ def write_Site(Site, version, suffix, year, writer):
     Site_year = Site[Site['scenario-year']==year]
     Site_year = Site_year[['Site','area']]
     Site_year = Site_year.rename(columns={'Site':'Name'})
+    Site_year = group_sites(Site_year).groupby("Name").sum().reset_index()
     Site_year.to_excel(writer, sheet_name='Site', index=False)
     
     
@@ -61,6 +92,10 @@ def write_Commodity(Commodity, version, suffix, year, writer):
     # Correct maxperhour for CCS_CO2
     if year > 2015:
         Commodity_year.loc[Commodity_year["Commodity"] == "CCS_CO2", "maxperhour"] = np.inf
+        
+    Commodity_year = group_sites(Commodity_year).groupby(["Site", "Commodity", "Type"]) \
+                                                .agg({"price": np.mean, "max": np.sum, "maxperhour": np.sum}) \
+                                                .reset_index()
         
     # Round to 1e-5
     Commodity_year["price"] = round(Commodity_year["price"], 5)
@@ -161,6 +196,14 @@ def write_Process(Process, Process_prev, EE_limits, co2_price, version, suffix, 
     
     # Last check
     Process_year = Process_year[Process_year['cap-up']!=0]
+    
+    Process_year = group_sites(Process_year).groupby(["Site", "Process"]) \
+                                            .agg({"inst-cap": np.sum, "cap-lo": np.sum, "cap-up": np.sum,
+                                                  "max-grad": np.mean, "min-fraction": np.sum,
+                                                  "inv-cost": np.mean, "fix-cost": np.mean, "var-cost": np.mean,
+                                                  "startup-cost": np.mean, "reliability": np.mean, "cap-credit": np.mean,
+                                                  "wacc": np.mean, "depreciation": np.mean, "area-per-cap": np.mean}) \
+                                            .reset_index()
     
     # Round to 1e-5
     Process_year["inst-cap"] = round(Process_year["inst-cap"], 5)
@@ -282,8 +325,25 @@ def write_Storage(Storage, Storage_prev, version, suffix, year, writer):
     # Round to 1e-5
     Storage_year = round(Storage_year, 5)
     
+    # Group sites
+    Storage_year = Storage_year.reset_index()
+    Storage_year = group_sites(Storage_year).groupby(["Site", "Storage", "Commodity"]) \
+                                            .agg({"inst-cap-c": np.sum, "cap-lo-c": np.sum, "cap-up-c": np.sum,
+                                                  "inst-cap-p": np.sum, "cap-lo-p": np.sum, "cap-up-p": np.sum,
+                                                  "eff-in": np.mean, "eff-out": np.mean,
+                                                  "inv-cost-c": np.mean, "inv-cost-p": np.mean, "fix-cost-p": np.mean,
+                                                  "fix-cost-c": np.mean, "var-cost-p": np.mean, "var-cost-c": np.mean,
+                                                  "wacc": np.mean, "depreciation": np.mean, "init": np.mean, "reliability": np.mean,
+                                                  "cap-credit": np.mean, "discharge": np.mean, "ep-ratio": np.mean}) \
+                                            .reset_index()
+                                            
+    if year == 2015:
+        Storage_year["ep-ratio"] = (Storage_year["inst-cap-c"] / Storage_year["inst-cap-p"]).round(2)
+        Storage_year['inst-cap-c'] = Storage_year['inst-cap-p'] * Storage_year['ep-ratio']
+        Storage_year['cap-lo-c'] = Storage_year['cap-lo-p'] * Storage_year['ep-ratio']
+        Storage_year['cap-up-c'] = Storage_year['cap-up-p'] * Storage_year['ep-ratio']
+    
     # Write
-    Storage_year.reset_index(inplace=True)
     Storage_year.to_excel(writer, sheet_name='Storage', index=False)
     
 
@@ -315,8 +375,20 @@ def add_weight(df):
     
     return df_new
     
+def group_sites(df):
+    # Replace site name
+    for cl in ["Name", "Site", "Site In", "Site Out"]:
+        if cl in df.columns:
+            df = df.set_index(cl)
+            df["aux"] = ""
+            for sit in df.index:
+                df.loc[sit, "aux"] = dict_countries[sit]
+            df = df.reset_index().drop(cl, axis=1).rename(columns={"aux":cl})
     
-def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slices):
+    return df
+    
+    
+def Database_to_urbs_grouped(version, model_type, suffix, year, result_folder, time_slices):
     # # Main code
     global fs
     global WACC
@@ -335,7 +407,7 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
     db = None
     
     # Read the time series
-    ts = pd.read_excel('Input' + fs + '4NEMO_Database_'+version+'_timeseries.xlsx', sheet_name=None)
+    ts = pd.read_excel('Input' + fs + '4NEMO_Database_'+version+'_timeseries_allRegs.xlsx', sheet_name=None)
     Demand = ts['Demand'].copy()
     SupIm = ts['SupIm'].copy()
     ts = None
@@ -396,7 +468,6 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
     
     # Correct cap-up-p
     Transmission.loc[Transmission["cap-up"] == -1, "cap-up"] = np.inf
-    Transmission = Transmission[Transmission['cap-up']>0]
         
     # Save for later
     # tra_capcredit = Transmission[['Site In','Site Out','Transmission','Commodity','cap-credit']]
@@ -405,6 +476,19 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
     Transmission['wacc'] = WACC
     Transmission.loc[Transmission["depreciation"] == 0, "depreciation"] = 50
     Transmission = Transmission[['Site In','Site Out','Transmission','Commodity','eff','inv-cost','fix-cost','var-cost','inst-cap','cap-lo','cap-up','cap-credit','wacc','depreciation']]
+    
+    # Change sites
+    Transmission = group_sites(Transmission).groupby(["Site In", "Site Out", "Transmission", "Commodity"]) \
+                                            .agg({"eff": np.min, "inv-cost": np.max, "fix-cost": np.max,
+                                                  "var-cost": np.max, "inst-cap": np.sum, "cap-lo": np.sum,
+                                                  "cap-up": np.sum, "cap-credit": np.mean, "wacc": np.mean,
+                                                  "depreciation": np.mean}) \
+                                            .reset_index()
+    Transmission = Transmission[Transmission['cap-up']>0]
+    
+    for idx in Transmission.index:
+        if Transmission.loc[idx, "Site In"] == Transmission.loc[idx, "Site Out"]:
+            Transmission.drop(index=idx, inplace=True)
     
     # Evetually add new capacities from previous year
     if year > 2030:
@@ -445,7 +529,8 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
     Demand_year_weighted = add_weight(Demand_year)
     for c in Demand_year.columns:
         Demand_year[c] = (annual_dem[c] * Demand_year[c]) / Demand_year_weighted[c].sum()
-        Demand_year = Demand_year.rename(columns={c: c+'.Elec'})
+        Demand_year = Demand_year.rename(columns={c: dict_countries[c]+'.Elec'})
+    Demand_year = Demand_year.transpose().reset_index().groupby("index").sum().transpose()
     
     # Round to 1e-5
     Demand_year = round(Demand_year, 5)
@@ -463,10 +548,10 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
     SupIm_year.sort_index(inplace=True)
     for c in SupIm_year.columns:
         cnew = c.replace('_','.',1)
-        if cnew[3:11] == "Solar_PV":
+        if "Solar_PV" in cnew.split(".")[1]:
             cnew = cnew.replace("Solar_PV","Solar",1)
         SupIm_year = SupIm_year.rename(columns={c: cnew})
-      
+    
     FLH_should = SupIm_year.sum(axis=0) * (len(time_slices)-1) / 8760
     SupIm_year = SupIm_year.loc[time_slices]
     correction = FLH_should / SupIm_year.sum(axis=0)
@@ -491,7 +576,7 @@ def Database_to_urbs(version, model_type, suffix, year, result_folder, time_slic
                     SupIm_year_new.loc[SupIm_year_new>1] = 1
                     gap = FLH_should[cf] - SupIm_year_new.sum()
                     offset = gap / nz * 1.5
-                SupIm_year[cf] = SupIm_year_new  
+                SupIm_year[cf] = SupIm_year_new
     
     SupIm_year.reset_index(inplace=True)
     SupIm_year["t"] = SupIm_year.index

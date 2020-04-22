@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def validate_input(data):
@@ -32,7 +33,25 @@ def validate_input(data):
                                  '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')
 
-    # Find ducplicate index
+    
+     # Add global parameters if necessary
+    for stf in data['global_prop'].index.get_level_values(0):
+        if 'Cost limit' not in data['global_prop'].loc[stf].index:
+            data['global_prop'].loc[(stf, 'Cost limit'), :] = np.inf
+            print('Added a global Cost limit for ' + str(stf) + ' with the value: inf.')
+        if 'CO2 limit' not in data['global_prop'].loc[stf].index:
+            data['global_prop'].loc[(stf, 'CO2 limit'), :] = np.inf
+            print('Added a global CO2 limit for ' + str(stf) + ' with the value: inf.')
+        if stf == min(data['global_prop'].index.get_level_values(0)):
+            if 'Cost budget' not in data['global_prop'].loc[stf].index:
+                data['global_prop'].loc[(stf, 'Cost budget'), :] = np.inf
+                print('Added a global Cost budget for the entire period with the value: inf.')
+            if 'CO2 budget' not in data['global_prop'].loc[stf].index:
+                data['global_prop'].loc[(stf, 'CO2 budget'), :] = np.inf
+                print('Added a global CO2 budget for the entire period with the value: inf.')
+                
+                
+    # Find duplicate index
     for key in data:
         if not data[key].index[data[key].index.duplicated()].unique().empty:
             if key == 'global_prop':

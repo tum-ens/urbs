@@ -366,30 +366,50 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-    if m.mode['int']:
-        m.res_global_co2_limit = pyomo.Constraint(
-            m.stf,
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= global.prop CO2 limit')
+
+
+
+    # if m.mode['int']:
+        # m.res_global_co2_limit = pyomo.Constraint(
+            # m.stf,
+            # rule=res_global_co2_limit_rule,
+            # doc='total co2 commodity output <= global.prop CO2 limit')
 
     # costs
     m.def_costs = pyomo.Constraint(
         m.cost_type,
         rule=def_costs_rule,
         doc='main cost function by cost type')
+        
+    
+    # Peak demand
+    m.peak_demand = pyomo.Expression(
+        m.sit_tuples, m.com_demand,
+        rule=def_peak_demand,
+        doc='Peak demand for each site')
+        
+    # capacity credit
+    m.res_capacity_credit = pyomo.Constraint(
+        m.sit_tuples, m.com_demand,
+        rule=res_capacity_credit_rule,
+        doc='sum of cap-credit >= peak demand')
 
     # objective and global constraints
     if m.obj.value == 'cost':
-
-        # if m.mode['int']:
-            # m.res_global_co2_budget = pyomo.Constraint(
-                # rule=res_global_co2_budget_rule,
-                # doc='total co2 commodity output <= global.prop CO2 budget')
-        # else:
-            # m.res_global_co2_limit = pyomo.Constraint(
-                # m.stf,
-                # rule=res_global_co2_limit_rule,
-                # doc='total co2 commodity output <= Global CO2 limit')
+        m.res_global_co2_limit = pyomo.Constraint(
+            m.stf,
+            rule=res_global_co2_limit_rule,
+            doc='total co2 commodity output <= Global CO2 limit')
+            
+        if m.mode['int']:
+            m.res_global_co2_budget = pyomo.Constraint(
+                rule=res_global_co2_budget_rule,
+                doc='total co2 commodity output <= global.prop CO2 budget')
+            
+            m.res_global_cost_limit = pyomo.Constraint(
+                m.stf,
+                rule=res_global_cost_limit_rule,
+                doc='total costs <= Global cost limit')
 
         m.objective_function = pyomo.Objective(
             rule=cost_rule,
@@ -399,9 +419,19 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     elif m.obj.value == 'CO2':
 
         m.res_global_cost_limit = pyomo.Constraint(
+            m.stf,
             rule=res_global_cost_limit_rule,
             doc='total costs <= Global cost limit')
 
+        if m.mode['int']:
+            m.res_global_cost_budget = pyomo.Constraint(
+                rule=res_global_cost_budget_rule,
+                doc='total costs <= global.prop Cost budget')
+            m.res_global_co2_limit = pyomo.Constraint(
+                m.stf,
+                rule=res_global_co2_limit_rule,
+                doc='total co2 commodity output <= Global CO2 limit')
+                
         m.objective_function = pyomo.Objective(
             rule=co2_rule,
             sense=pyomo.minimize,
@@ -414,7 +444,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     if dual:
         m.dual = pyomo.Suffix(direction=pyomo.Suffix.IMPORT)
-
     return m
 
 
@@ -570,33 +599,33 @@ def def_intermittent_supply_rule(m, tm, stf, sit, pro, coin):
     if coin in m.com_supim:
         return (m.e_pro_in[tm, stf, sit, pro, coin] ==
                 m.cap_pro[stf, sit, pro] * m.supim_dict[(sit, coin)]
-                [(stf, tm)] * m.dt)
+                [(stf, tm)] * m.dt * m._data["process"]["reliability"][(stf, sit, pro)])
     else:
         return pyomo.Constraint.Skip
 
 
 # process throughput <= process capacity
 def res_process_throughput_by_capacity_rule(m, tm, stf, sit, pro):
-    return (m.tau_pro[tm, stf, sit, pro] <= m.dt * m.cap_pro[stf, sit, pro])
+    return (m.tau_pro[tm, stf, sit, pro] <= m.dt * m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)])
 
 
 def res_process_maxgrad_lower_rule(m, t, stf, sit, pro):
     return (m.tau_pro[t - 1, stf, sit, pro] -
-            m.cap_pro[stf, sit, pro] *
+            m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] *
             m.process_dict['max-grad'][(stf, sit, pro)] * m.dt <=
             m.tau_pro[t, stf, sit, pro])
 
 
 def res_process_maxgrad_upper_rule(m, t, stf, sit, pro):
     return (m.tau_pro[t - 1, stf, sit, pro] +
-            m.cap_pro[stf, sit, pro] *
+            m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] *
             m.process_dict['max-grad'][(stf, sit, pro)] * m.dt >=
             m.tau_pro[t, stf, sit, pro])
 
 
 def res_throughput_by_capacity_min_rule(m, tm, stf, sit, pro):
     return (m.tau_pro[tm, stf, sit, pro] >=
-            m.cap_pro[stf, sit, pro] *
+            m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] *
             m.process_dict['min-fraction'][(stf, sit, pro)] * m.dt)
 
 
@@ -611,7 +640,7 @@ def def_partial_process_input_rule(m, tm, stf, sit, pro, coin):
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
     return (m.e_pro_in[tm, stf, sit, pro, coin] ==
-            m.dt * m.cap_pro[stf, sit, pro] * online_factor +
+            m.dt * m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
 
@@ -626,7 +655,7 @@ def def_partial_process_output_rule(m, tm, stf, sit, pro, coo):
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
     return (m.e_pro_out[tm, stf, sit, pro, coo] ==
-            m.dt * m.cap_pro[stf, sit, pro] * online_factor +
+            m.dt * m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
 
@@ -651,6 +680,29 @@ def res_area_rule(m, stf, sit):
     else:
         # Skip constraint, if area is not numeric
         return pyomo.Constraint.Skip
+        
+            
+def def_peak_demand(m, stf, sit, com):
+    peak = 0
+    for tm in m.tm:
+        peak = max(peak, m.demand_dict[(sit, com)][(stf, tm)])
+    return peak
+    
+    
+# sum of cap-credit >= peak demand
+def res_capacity_credit_rule(m, stf, sit, com):
+    if stf == 2015:
+        return pyomo.Constraint.Skip
+    else:
+        cap_credit = 0
+        for key in m._data["process"].index:
+            if (key[0:2] == (stf, sit)) and (key[2] != "Shunt"):
+                cap_credit = cap_credit + m._data["process"]["cap-credit"][key] * m.cap_pro[key]
+        if m.mode["sto"]:
+            cap_credit = cap_credit + m.cap_credit_storage[(stf, sit, com)]
+        if m.mode["tra"]:
+            cap_credit = cap_credit + m.cap_credit_transmission[(stf, sit, com)]
+        return (cap_credit >= m.peak_demand[(stf, sit, com)])
 
 
 # total CO2 output <= Global CO2 limit
@@ -696,12 +748,24 @@ def res_global_co2_budget_rule(m):
         return pyomo.Constraint.Skip
 
 
-def res_global_cost_limit_rule(m):
-    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost limit"]):
+# total cost of one year <= Global cost limit
+def res_global_cost_limit_rule(m, stf):
+    if math.isinf(m.global_prop_dict["value"][stf, "Cost limit"]):
         return pyomo.Constraint.Skip
-    elif m.global_prop_dict["value"][min(m.stf), "Cost limit"] >= 0:
+    elif m.global_prop_dict["value"][stf, "Cost limit"] >= 0:
         return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
-               [min(m.stf), "Cost limit"])
+               [stf, "Cost limit"])
+    else:
+        return pyomo.Constraint.Skip
+
+
+# total cost in entire period <= Global cost budget
+def res_global_cost_budget_rule(m):
+    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost budget"]):
+        return pyomo.Constraint.Skip
+    elif m.global_prop_dict["value"][min(m.stf), "Cost budget"] >= 0:
+        return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
+               [min(m.stf), "Cost budget"])
     else:
         return pyomo.Constraint.Skip
 
@@ -806,9 +870,11 @@ def co2_rule(m):
             for sit in m.sit:
                 # minus because negative commodity_balance represents
                 # creation of that commodity.
-                co2_output_sum += (- commodity_balance
-                                   (m, tm, stf, sit, 'CO2') *
-                                   m.weight *
-                                   stf_dist(stf, m))
+                if m.mode['int']:
+                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
+                                       m.weight * stf_dist(stf, m))
+                else:
+                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
+                                       m.weight)
 
     return (co2_output_sum)

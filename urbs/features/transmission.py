@@ -75,7 +75,12 @@ def add_transmission(m):
         # m.tra_tuples,
         # rule=res_transmission_symmetry_rule,
         # doc='total transmission capacity must be symmetric in both directions')
-
+        
+    # capacity credit
+    m.cap_credit_transmission = pyomo.Expression(
+        m.sit_tuples, m.com_demand,
+        rule=def_cap_credit_transmission,
+        doc='sum of cap-credit from transmission lines')
     return m
 
 
@@ -87,7 +92,7 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
         if (sin, sout, tra, com, stf) in m.inst_tra_tuples:
             if (min(m.stf), sin, sout, tra, com) in m.tra_const_cap_dict:
                 cap_tra = m.transmission_dict['inst-cap'][
-                    (stf, sin, sout, tra, com)]
+                    (min(m.stf), sin, sout, tra, com)]
             else:
                 cap_tra = (
                     sum(m.cap_tra_new[stf_built, sin, sout, tra, com]
@@ -141,6 +146,14 @@ def res_transmission_symmetry_rule(m, stf, sin, sout, tra, com):
                                                    [stf, sout, sin, tra, com])
 
 
+def def_cap_credit_transmission(m, stf, sit, com):
+    cap_credit = 0
+    for key in m._data["transmission"].index:
+        if (key[0] == stf) and (key[2] == sit) and (key[4] == com):
+            cap_credit = cap_credit + m._data["transmission"]["cap-credit"][key] * m.cap_tra[key]
+    return cap_credit
+    
+    
 # transmission balance
 def transmission_balance(m, tm, stf, sit, com):
     """called in commodity balance

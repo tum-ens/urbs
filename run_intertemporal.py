@@ -4,7 +4,7 @@ import urbs
 from Database_to_urbs_intertemporal import Database_to_urbs
 
 version = "v2.00"
-suffix = "_eu"
+suffix = "_green"
 scen = suffix[1:].upper()
 time_slices = [i for j in (range(169), range(2161, 2329), range(4345, 4513), range(6553, 6721)) for i in j]
 

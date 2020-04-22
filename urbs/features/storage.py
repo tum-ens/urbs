@@ -106,19 +106,23 @@ def add_storage(m):
         m.sto_tuples,
         rule=res_storage_capacity_rule,
         doc='storage.cap-lo-c <= storage capacity <= storage.cap-up-c')
-    m.res_initial_and_final_storage_state = pyomo.Constraint(
-        m.t, m.sto_init_bound_tuples,
-        rule=res_initial_and_final_storage_state_rule,
+    m.def_initial_storage_state = pyomo.Constraint(
+        m.sto_init_bound_tuples,
+        rule=def_initial_storage_state_rule,
         doc='storage content initial == and final >= storage.init * capacity')
-    m.res_initial_and_final_storage_state_var = pyomo.Constraint(
-        m.t, m.sto_tuples - m.sto_init_bound_tuples,
-        rule=res_initial_and_final_storage_state_var_rule,
+    m.res_storage_state_cyclicity = pyomo.Constraint(
+        m.sto_tuples,
+        rule=res_storage_state_cyclicity_rule,
         doc='storage content initial <= final, both variable')
     m.def_storage_energy_power_ratio = pyomo.Constraint(
         m.sto_ep_ratio_tuples,
         rule=def_storage_energy_power_ratio_rule,
         doc='storage capacity = storage power * storage E2P ratio')
-
+    # capacity credit
+    m.cap_credit_storage = pyomo.Expression(
+        m.sit_tuples, m.com_demand,
+        rule=def_cap_credit_storage,
+        doc='sum of cap-credit from storage')
     return m
 
 
@@ -137,14 +141,13 @@ def def_storage_state_rule(m, t, stf, sit, sto, com):
             m.e_sto_out[t, stf, sit, sto, com] /
             m.storage_dict['eff-out'][(stf, sit, sto, com)])
 
+
 # storage capacity (for m.cap_sto_c expression)
-
-
 def def_storage_capacity_rule(m, stf, sit, sto, com):
     if m.mode['int']:
         if (sit, sto, com, stf) in m.inst_sto_tuples:
             if (min(m.stf), sit, sto, com) in m.sto_const_cap_c_dict:
-                cap_sto_c = m.storage_dict['cap-up-c'][(stf, sit, sto, com)]
+                cap_sto_c = m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)]
             else:
                 cap_sto_c = (
                     sum(m.cap_sto_c_new[stf_built, sit, sto, com]
@@ -167,15 +170,14 @@ def def_storage_capacity_rule(m, stf, sit, sto, com):
 
     return cap_sto_c
 
+
 # storage power (for m.cap_sto_p expression)
-
-
 def def_storage_power_rule(m, stf, sit, sto, com):
     if m.mode['int']:
         if (sit, sto, com, stf) in m.inst_sto_tuples:
             if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
                 cap_sto_p = m.storage_dict['inst-cap-p'][
-                    (stf, sit, sto, com)]
+                    (min(m.stf), sit, sto, com)]
             else:
                 cap_sto_p = (
                     sum(m.cap_sto_p_new[stf_built, sit, sto, com]
@@ -198,9 +200,9 @@ def def_storage_power_rule(m, stf, sit, sto, com):
 
     return cap_sto_p
 
+
+
 # storage input <= storage power
-
-
 def res_storage_input_by_power_rule(m, t, stf, sit, sto, com):
     return (m.e_sto_in[t, stf, sit, sto, com] <= m.dt *
             m.cap_sto_p[stf, sit, sto, com])
@@ -208,7 +210,7 @@ def res_storage_input_by_power_rule(m, t, stf, sit, sto, com):
 
 # storage output <= storage power
 def res_storage_output_by_power_rule(m, t, stf, sit, sto, co):
-    return (m.e_sto_out[t, stf, sit, sto, co] <= m.dt *
+    return (m.e_sto_out[t, stf, sit, sto, co] <= m.dt * m.storage_dict["reliability"][(stf, sit, sto, co)] *
             m.cap_sto_p[stf, sit, sto, co])
 
 
@@ -235,20 +237,13 @@ def res_storage_capacity_rule(m, stf, sit, sto, com):
 # initialization of storage content in first timestep t[1]
 # forced minimun  storage content in final timestep t[len(m.t)]
 # content[t=1] == storage capacity * fraction <= content[t=final]
-def res_initial_and_final_storage_state_rule(m, t, stf, sit, sto, com):
-    if t == m.t[1]:  # first timestep (Pyomo uses 1-based indexing)
-        return (m.e_sto_con[t, stf, sit, sto, com] ==
-                m.cap_sto_c[stf, sit, sto, com] *
-                m.storage_dict['init'][(stf, sit, sto, com)])
-    elif t == m.t[len(m.t)]:  # last timestep
-        return (m.e_sto_con[t, stf, sit, sto, com] >=
-                m.cap_sto_c[stf, sit, sto, com] *
-                m.storage_dict['init'][(stf, sit, sto, com)])
-    else:
-        return pyomo.Constraint.Skip
+def def_initial_storage_state_rule(m, stf, sit, sto, com):
+    return (m.e_sto_con[m.t[1], stf, sit, sto, com] ==
+            m.cap_sto_c[stf, sit, sto, com] *
+            m.storage_dict['init'][(stf, sit, sto, com)])
 
 
-def res_initial_and_final_storage_state_var_rule(m, t, stf, sit, sto, com):
+def res_storage_state_cyclicity_rule(m, stf, sit, sto, com):
     return (m.e_sto_con[m.t[1], stf, sit, sto, com] <=
             m.e_sto_con[m.t[len(m.t)], stf, sit, sto, com])
 
@@ -256,6 +251,14 @@ def res_initial_and_final_storage_state_var_rule(m, t, stf, sit, sto, com):
 def def_storage_energy_power_ratio_rule(m, stf, sit, sto, com):
     return (m.cap_sto_c[stf, sit, sto, com] == m.cap_sto_p[stf, sit, sto, com] *
             m.storage_dict['ep-ratio'][(stf, sit, sto, com)])
+            
+
+def def_cap_credit_storage(m, stf, sit, com):
+    cap_credit = 0
+    for key in m._data["storage"].index:
+        if (key[0:2] == (stf, sit)) and (key[3]== com):
+            cap_credit = cap_credit + m._data["storage"]["cap-credit"][key] * m.cap_sto_p[key]
+    return cap_credit
 
 
 # storage balance
@@ -271,9 +274,8 @@ def storage_balance(m, tm, stf, sit, com):
                for stframe, site, storage, commodity in m.sto_tuples
                if site == sit and stframe == stf and commodity == com)
 
+
 # storage costs
-
-
 def storage_cost(m, cost_type):
     """returns storage cost function for the different cost types"""
     if cost_type == 'Invest':

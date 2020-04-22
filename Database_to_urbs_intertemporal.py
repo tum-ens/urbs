@@ -137,6 +137,7 @@ def write_Process(Process, EE_limits, version, suffix, year, writer):
     df["wacc"] = WACC
     df["depreciation"] = 1
     Process_year = Process_year.append(df.reset_index(), ignore_index=True, sort=False)
+    Process_year.loc[Process_year["Process"]=="Shunt", "lifetime"] = 50
     
     # Write
     pro = list(Process_year["Process"].unique())
@@ -254,7 +255,7 @@ def Database_to_urbs(version, suffix, time_slices):
     SupIm = ts['SupIm'].copy()
     ts = None
     
-    for year in range(2015,2026,5):
+    for year in range(2015,2051,5):
         # Prepare the output
         writer_path = os.path.join("Input", version + suffix, str(year) + ".xlsx")
         book = load_workbook(writer_path)

@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 
-input_files = 'urbs_model_v1.91_eu_2015.xlsx'  # for single year file name, for intertemporal folder name
+input_files = '2016_Laos_20200417.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
@@ -25,40 +25,39 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (2200, 3300)  # time step selection
+(offset, length) = (0, 8760)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
-report_tuples = [(2015, 'AT', 'Elec'),
-                 (2015, 'BE', 'Elec'),
-                 (2015, 'BG', 'Elec'),
-                 (2015, 'CH', 'Elec'),
-                 (2015, 'CZ', 'Elec'),
-                 (2015, 'DE', 'Elec'),
-                 (2015, 'DK', 'Elec'),
-                 (2015, 'EE', 'Elec'),
-                 (2015, 'EL', 'Elec'),
-                 (2015, 'ES', 'Elec'),
-                 (2015, 'FI', 'Elec'),
-                 (2015, 'FR', 'Elec'),
-                 (2015, 'HR', 'Elec'),
-                 (2015, 'HU', 'Elec'),
-                 (2015, 'IE', 'Elec'),
-                 (2015, 'IT', 'Elec'),
-                 (2015, 'LT', 'Elec'),
-                 (2015, 'LU', 'Elec'),
-                 (2015, 'LV', 'Elec'),
-                 (2015, 'NL', 'Elec'),
-                 (2015, 'NO', 'Elec'),
-                 (2015, 'PL', 'Elec'),
-                 (2015, 'PT', 'Elec'),
-                 (2015, 'RO', 'Elec'),
-                 (2015, 'SE', 'Elec'),
-                 (2015, 'SI', 'Elec'),
-                 (2015, 'SK', 'Elec'),
-                 (2015, 'UK', 'Elec'),
+report_tuples = [
+                 (2016, 'Attapu', 'Elec'),
+                 (2016, 'Bokeo', 'Elec'),
+                 (2016, 'Bolikhamxai', 'Elec'),
+                 (2016, 'Champasak', 'Elec'),
+                 (2016, 'Houaphan', 'Elec'),
+                 (2016, 'Khammouan', 'Elec'),
+                 (2016, 'LouangNamtha', 'Elec'),
+                 (2016, 'Louangphrabang', 'Elec'),
+                 (2016, 'Oudomxai', 'Elec'),
+                 (2016, 'Phongsali', 'Elec'),
+                 (2016, 'Saravan', 'Elec'),
+                 (2016, 'Savannakhet', 'Elec'),
+                 (2016, 'VientianeProvince', 'Elec'),
+                 (2016, 'VientianePrefecture', 'Elec'),
+                 (2016, 'Xaignabouri', 'Elec'),
+                 (2016, 'Xaisomboun', 'Elec'),
+                 (2016, 'Xiangkhoang', 'Elec'),
+                 (2016, 'Xekong', 'Elec'),
+                 (2016, 'China', 'Elec'),
+                 (2016, 'Thailand', 'Elec'),
+                 (2016, 'Vietnam', 'Elec'),
+                 (2016, 'Cambodia', 'Elec'),
                  ]
+
+
+
+
 
 # optional: define names for sites in report_tuples
 report_sites_name = {}

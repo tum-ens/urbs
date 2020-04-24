@@ -382,17 +382,17 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='main cost function by cost type')
         
     
-    # Peak demand
-    m.peak_demand = pyomo.Expression(
-        m.sit_tuples, m.com_demand,
-        rule=def_peak_demand,
-        doc='Peak demand for each site')
+    # # Peak demand
+    # m.peak_demand = pyomo.Expression(
+        # m.sit_tuples, m.com_demand,
+        # rule=def_peak_demand,
+        # doc='Peak demand for each site')
         
-    # capacity credit
-    m.res_capacity_credit = pyomo.Constraint(
-        m.sit_tuples, m.com_demand,
-        rule=res_capacity_credit_rule,
-        doc='sum of cap-credit >= peak demand')
+    # # capacity credit
+    # m.res_capacity_credit = pyomo.Constraint(
+        # m.sit_tuples, m.com_demand,
+        # rule=res_capacity_credit_rule,
+        # doc='sum of cap-credit >= peak demand')
 
     # objective and global constraints
     if m.obj.value == 'cost':

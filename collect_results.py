@@ -12,7 +12,7 @@ global dict_season
 
 # User preferences
 result_folders = [
-    'v1.00_2016_base-20200424T0500',
+    'v1.00_2016_base+PV-20200424T0610',
 ]
 
 dict_tech = {"Bioenergy": "Bioenergy",
@@ -221,24 +221,24 @@ def get_emissions_data(reader, writer):
     except:
         pass
     
-    # CCS_CO2
-    if year == "2016":
-        emissions.loc[co2.index, "CO2-captured"] = 0
-        emissions.loc[co2_regions.index, "CO2-captured"] = 0
-    else:
-        try:
-            ccs_co2 = df_result["e_pro_out"].unstack()['CCS_CO2'].fillna(0)
-            ccs_co2 = add_weight(ccs_co2)
-            ccs_co2 = ccs_co2.droplevel([0,3]).reorder_levels(['sit', 'stf']).sort_index()
-            ccs_co2 = ccs_co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"}).groupby(["Site", "scenario-year"]).sum() / 10**6 # unit: Mt_CO2
-            emissions.loc[ccs_co2.index, "CO2-captured"] = ccs_co2["CCS_CO2"]
+    # # CCS_CO2
+    # if year == "2016":
+        # emissions.loc[co2.index, "CO2-captured"] = 0
+        # emissions.loc[co2_regions.index, "CO2-captured"] = 0
+    # else:
+        # try:
+            # ccs_co2 = df_result["e_pro_out"].unstack()['CCS_CO2'].fillna(0)
+            # ccs_co2 = add_weight(ccs_co2)
+            # ccs_co2 = ccs_co2.droplevel([0,3]).reorder_levels(['sit', 'stf']).sort_index()
+            # ccs_co2 = ccs_co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"}).groupby(["Site", "scenario-year"]).sum() / 10**6 # unit: Mt_CO2
+            # emissions.loc[ccs_co2.index, "CO2-captured"] = ccs_co2["CCS_CO2"]
             
-            ccs_co2_regions = ccs_co2.reset_index()
-            ccs_co2_regions["Site"] = [dict_countries[x] for x in ccs_co2_regions["Site"]]
-            ccs_co2_regions = ccs_co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
-            emissions.loc[ccs_co2_regions.index, "CO2-captured"] = ccs_co2_regions["CCS_CO2"]
-        except KeyError:
-            pass
+            # ccs_co2_regions = ccs_co2.reset_index()
+            # ccs_co2_regions["Site"] = [dict_countries[x] for x in ccs_co2_regions["Site"]]
+            # ccs_co2_regions = ccs_co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
+            # emissions.loc[ccs_co2_regions.index, "CO2-captured"] = ccs_co2_regions["CCS_CO2"]
+        # except KeyError:
+            # pass
             
     # Save results
     emissions.round(2).reset_index().to_excel(writer, sheet_name='Emissions', index=False)
@@ -1050,7 +1050,7 @@ for folder in result_folders:
     # Save results
     writer.save()
     
-for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
+for scen in ["base+PV"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
     # Read output file
     writer_path = os.path.join("result", "Laos", "URBS_" + scen + ".xlsx")

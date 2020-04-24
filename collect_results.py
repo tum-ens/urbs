@@ -12,7 +12,7 @@ global dict_season
 
 # User preferences
 result_folders = [
-    'v1.00_2016_base-20200423T0918',
+    'v1.00_2016_base-20200424T0500',
 ]
 
 dict_tech = {"Bioenergy": "Bioenergy",
@@ -566,7 +566,6 @@ def get_curtailment_data(reader, writer):
     except KeyError:
         curtailed = curtailed.join(prod[["Hydro", "Lignite", "Bioenergy"]])
     curtailed = curtailed.loc[curtailed["Elec"]>0]
-    import pdb; pdb.set_trace()
     
     # Order of curtailment: Solar, WindOn, WindOff, Hydro
     for idx in curtailed.index:
@@ -664,10 +663,11 @@ def get_NTC_rents_data(reader, writer):
     tra_out = tra_out.reset_index()
     # tra_out = add_weight(tra_out)
     # tra_out_regions = tra_out.reset_index()
-    # tra_out_regions["Site"] = [dict_countries[x] for x in tra_out_regions["Site"]]
-    # tra_out_regions["Site Out"] = [dict_countries[x] for x in tra_out_regions["Site Out"]]
-    # tra_out_regions = tra_out_regions.groupby(["t", "Site", "scenario-year", "Site Out"]).sum().reset_index()
-    # tra_out = tra_out.append(tra_out_regions, sort=True, ignore_index=True)
+    tra_out_regions = tra_out.copy()
+    tra_out_regions["Site"] = [dict_countries[x] for x in tra_out_regions["Site"]]
+    tra_out_regions["Site Out"] = [dict_countries[x] for x in tra_out_regions["Site Out"]]
+    tra_out_regions = tra_out_regions.groupby(["t", "Site", "scenario-year", "Site Out"]).sum().reset_index()
+    tra_out = tra_out.append(tra_out_regions, sort=True, ignore_index=True)
     
     tra_out = tra_out.set_index(["t", "scenario-year", "Site"]).join(prices_site).rename(columns={0: "price Site"}).reset_index()
     tra_out = tra_out.set_index(["t", "scenario-year", "Site Out"]).join(prices_siteout).rename(columns={0: "price Site Out"}).reset_index()
@@ -991,35 +991,35 @@ for folder in result_folders:
     df_result = helpdf._result
     df_data = helpdf._data
     
-    # print(scen, year, ": Getting CO2 data")
-    # get_emissions_data(reader, writer)
+    print(scen, year, ": Getting CO2 data")
+    get_emissions_data(reader, writer)
     
-    # print(scen, year, ": Getting marginal electricity generation data")
-    # get_marginal_generation_data(reader, writer)
+    print(scen, year, ": Getting marginal electricity generation data")
+    get_marginal_generation_data(reader, writer)
     
-    # print(scen, year, ": Getting electricity prices")
-    # get_electricity_data(reader, writer, int(year))
+    print(scen, year, ": Getting electricity prices")
+    get_electricity_data(reader, writer, int(year))
     
-    # print(scen, year, ": Getting electricity generation data")
-    # get_generation_data(reader, writer)
+    print(scen, year, ": Getting electricity generation data")
+    get_generation_data(reader, writer)
     
-    # print(scen, year, ": Getting total, new and retired capacities data")
-    # get_capacities_data(reader, writer)
+    print(scen, year, ": Getting total, new and retired capacities data")
+    get_capacities_data(reader, writer)
     
-    # # print(scen, year, ": Getting storage data")
-    # # get_storage_data(reader, writer)
+    # print(scen, year, ": Getting storage data")
+    # get_storage_data(reader, writer)
     
     print(scen, year, ": Getting curtailment data")
     get_curtailment_data(reader, writer)
     
-    # print(scen, year, ": Getting transfer data")
-    # get_transfer_data(reader, writer)
+    print(scen, year, ": Getting transfer data")
+    get_transfer_data(reader, writer)
     
-    # print(scen, year, ": Getting NTC data")
-    # get_NTC_data(reader, writer)
+    print(scen, year, ": Getting NTC data")
+    get_NTC_data(reader, writer)
     
-    # print(scen, year, ": Getting system cost data")
-    # get_cost_data(reader, writer, int(year))
+    print(scen, year, ": Getting system cost data")
+    get_cost_data(reader, writer, int(year))
     
     # Save results
     writer.save()

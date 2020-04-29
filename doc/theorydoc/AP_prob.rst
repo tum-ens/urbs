@@ -88,7 +88,10 @@ equations and exemplified with the following graphic:
    \frac{r^{\text{in,out}}_{pc}-
    \underline{P}_p\underline{r}^{\text{in,out}}_{pc}}
    {1-\underline{P}_p}\cdot \tau_{pt}\right).
-
+   
+.. image:: img/Part load.png
+  :width: 400
+  :alt: Process with part load behaviour
 <a href="img/Part load.png"><img src="img/Part load.png" alt="Bar chart of cumulated annual electricity generation costs for all 5 scenarios defined in runme.py." style="width:400px"></a>
 
 A few restrictions have to be kept in mind when using this feature:

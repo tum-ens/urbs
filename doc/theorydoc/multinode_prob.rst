@@ -23,7 +23,7 @@ variable vector of the optimization problem reads:
    \pi^{\text{out}}_{aft}}_{\text{transmission variables}}).
 
 Here, :math:`\zeta` represents the total annualized system cost across all 
-modeled vertices :math:`v\in V`, :math:`\rho_vct` the amount of commodities
+modeled vertices :math:`v\in V`, :math:`\rho_{vct}` the amount of commodities
 :math:`c` taken from a virtual, infinite stock at vertex :math:`v` and time
 :math:`t`, :math:`\kappa_{vp}` and :math:`\widehat{\kappa}_{vp}` the total
 and the newly installed process capacities of processes :math:`p` at vertex

@@ -153,7 +153,7 @@ environmental commodity is then given by:
    k^{\text{env}}_{c}\text{CB}(c,t),
 
 where :math:`k^{\text{env}}_{c}` are the specific costs per unit of
-environmental commodity and :math:`CB` is the momentary commodity balnce of
+environmental commodity and :math:`CB` is the momentary commodity balance of
 commodity :math:`c` at time :math:`t`. The minus sign is due to the sign
 convention used for the commodity balance which is positive when the system
 takes in a unit of a commodity.
@@ -182,7 +182,7 @@ and the variable new process capacity units :math:`\beta_{p}`:
 
 Process capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The capacity pf each process :math:`p` is limited by a maximal and minimal
+The capacity of each process :math:`p` is limited by a maximal and minimal
 capacity, :math:`\overline{K}_p` and :math:`\underline{K}_p`, respectively,
 which are both given to the model as parameters:
 
@@ -272,7 +272,7 @@ Process dispatch constraints
 So far, apart from the commodity balance function, the interaction between
 processes and commodities have not been discussed. It is perhaps in order to
 start with the general idea behind the modeling of the process operation. In
-urbs all processes are mimo-processes, i.e., in general they in take in
+urbs all processes are mimo-processes, i.e., in general they take in
 multiple commodities as inputs and give out multiple commodities as outputs.
 The respective ratios between the respective commodity flows remain normally
 fixed. The operational state of the process is then captured in just one
@@ -325,6 +325,5 @@ a given process is desired
 Here, :math:`s_{ct}` is the time series that governs the exact operation of
 process :math:`p`, leaving only its capacity :math:`\kappa_{p}` as a free
 variable.
-
 
 This concludes the minimal model.

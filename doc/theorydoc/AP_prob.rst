@@ -92,7 +92,7 @@ equations and exemplified with the following graphic:
 .. image:: img/part-load.png
   :width: 400
   :align: center
-  :alt: Process with part load behaviour
+  :alt: Process with part load behaviour.
 
 A few restrictions have to be kept in mind when using this feature:
 
@@ -114,14 +114,14 @@ The following graphic illustrates a process with the on/off feature and constant
 .. image:: img/On-off.png
   :width: 400
   :align: center
-  :alt: Process with the on/off feature
+  :alt: Process with the on/off feature.
 
 The following graphic illustrates a process with the on/off feature and part load behavior:
 
 .. image:: img/Part-load-on-off.png
   :width: 400
   :align: center
-  :alt: Process with the on/off feature and part load behavior
+  :alt: Process with the on/off feature and part load behavior.
 
 **Coupling the throughput ant the on/off marker:**
 The following equation introduces a coupling between :math:`\omicron_{pt}`, 

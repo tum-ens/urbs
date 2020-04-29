@@ -78,7 +78,7 @@ can be set to vary linearly between their respective values at full load
 :math:`r^{\text{in,out}}_{pc}` and their values at the minimal allowed
 operational state :math:`\underline{P}_{p}\kappa_p`, which are given by
 :math:`\underline{r}^{\text{in,out}}_{pc}`. This is achieved with the following
-equations:
+equations and exemplified with the following graphic:
 
 .. math::
    &\forall p\in P^{\text{partload}},~c\in C,~t\in T_m:\\\\
@@ -88,6 +88,8 @@ equations:
    \frac{r^{\text{in,out}}_{pc}-
    \underline{P}_p\underline{r}^{\text{in,out}}_{pc}}
    {1-\underline{P}_p}\cdot \tau_{pt}\right).
+
+<a href="doc/img/Part load.png"><img src="doc/img/Part load.png" alt="Example process with part load behaviour." style="width:400px"></a>
 
 A few restrictions have to be kept in mind when using this feature:
 

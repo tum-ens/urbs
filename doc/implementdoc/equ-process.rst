@@ -602,10 +602,10 @@ In script ``AdvancedProcesses.py`` the constraint process start ups rule
 is defined and calculated by the following code fragment:
 ::
 
-    m.res_start_ups = pyomo.Constraint(
+    m.res_start_up = pyomo.Constraint(
         m.tm, m.pro_start_up_tuples,
         rule=res_start_ups_rule,
         doc='start >= on_off(t) - on_off(t-1)')
         
 .. literalinclude:: /../urbs/features/AdvancedProcesses.py
-   :pyobject: res_start_ups_rule
+   :pyobject: res_start_up_rule

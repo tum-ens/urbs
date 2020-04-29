@@ -118,7 +118,7 @@ The following graphic ilustrates a process with the on/off feature and constant 
 
 The following graphic ilustrates a process with the on/off feature and part load behavior:
 
-.. image:: img/part-load-on-off.png
+.. image:: img/Part-load-on-off.png
   :width: 400
   :align: center
   :alt: Process with the on/off feature and part load behavior

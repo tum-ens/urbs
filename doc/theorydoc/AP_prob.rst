@@ -109,14 +109,14 @@ Some processes are characterised by a minimum or part-load behavior but still
 retain the practical necessity of being turned on and off if this is optimal.
 This feature transforms urbs from a linear problem to a quadratic integer problem, 
 or piecewise linear.
-The following graphic ilustrates a process with the on/off feature and constant efficiency:
+The following graphic illustrates a process with the on/off feature and constant efficiency:
 
 .. image:: img/On-off.png
   :width: 400
   :align: center
   :alt: Process with the on/off feature
 
-The following graphic ilustrates a process with the on/off feature and part load behavior:
+The following graphic illustrates a process with the on/off feature and part load behavior:
 
 .. image:: img/Part-load-on-off.png
   :width: 400

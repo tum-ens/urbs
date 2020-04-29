@@ -89,7 +89,7 @@ equations and exemplified with the following graphic:
    \underline{P}_p\underline{r}^{\text{in,out}}_{pc}}
    {1-\underline{P}_p}\cdot \tau_{pt}\right).
 
-<a href="doc/img/Part load.png"><img src="doc/img/Part load.png" alt="Example process with part load behaviour." style="width:400px"></a>
+<a href="img/Part load.png"><img src="img/Part load.png" alt="Bar chart of cumulated annual electricity generation costs for all 5 scenarios defined in runme.py." style="width:400px"></a>
 
 A few restrictions have to be kept in mind when using this feature:
 

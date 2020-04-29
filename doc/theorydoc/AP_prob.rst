@@ -89,10 +89,10 @@ equations and exemplified with the following graphic:
    \underline{P}_p\underline{r}^{\text{in,out}}_{pc}}
    {1-\underline{P}_p}\cdot \tau_{pt}\right).
    
-.. image:: img/Part load.png
+.. image:: img/part-load.png
   :width: 400
+  :align: center
   :alt: Process with part load behaviour
-<a href="img/Part load.png"><img src="img/Part load.png" alt="Bar chart of cumulated annual electricity generation costs for all 5 scenarios defined in runme.py." style="width:400px"></a>
 
 A few restrictions have to be kept in mind when using this feature:
 
@@ -109,6 +109,19 @@ Some processes are characterised by a minimum or part-load behavior but still
 retain the practical necessity of being turned on and off if this is optimal.
 This feature transforms urbs from a linear problem to a quadratic integer problem, 
 or piecewise linear.
+The following graphic ilustrates a process with the on/off feature and constant efficiency:
+
+.. image:: img/On-off.png
+  :width: 400
+  :align: center
+  :alt: Process with the on/off feature
+
+The following graphic ilustrates a process with the on/off feature and part load behavior:
+
+.. image:: img/part-load-on-off.png
+  :width: 400
+  :align: center
+  :alt: Process with the on/off feature and part load behavior
 
 **Coupling the throughput ant the on/off marker:**
 The following equation introduces a coupling between :math:`\omicron_{pt}`, 

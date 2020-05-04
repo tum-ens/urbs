@@ -189,6 +189,9 @@ def add_advanced_processes(m):
         m.pro_start_up_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro,
             doc='Processes with fix start up costs')
+        m.pro_rampup_start_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro,
+            doc='Processes with different starting ramp up gradient')
 
     # Processes with minimum working load which cannot be turned off
     if m.mode['minfraction']:

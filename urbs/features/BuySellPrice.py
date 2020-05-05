@@ -130,8 +130,8 @@ def search_sell_buy_tuple(m, stf, sit_in, pro_in, coin):
     Returns:
         a process
     """
-    pro_output_tuples = list(m.pro_output_tuples.value)
-    pro_input_tuples = list(m.pro_input_tuples.value)
+    pro_output_tuples = [x for x in list(m.pro_output_tuples.value) if x[1] == sit_in]
+    pro_input_tuples = [x for x in list(m.pro_input_tuples.value) if x[1] == sit_in]
     # search the output commodities for the "buy" process
     # buy_out = (stf, site, output_commodity)
     buy_out = set([(x[0], x[1], x[3])

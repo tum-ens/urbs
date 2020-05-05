@@ -276,6 +276,8 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
     # make xtick distance duration-dependent
     if len(timesteps_plot) > 26 * 168 / dt[0]:     # time horizon > half a year
         steps_between_ticks = int(168 * 4 / dt[0])  # tick every four weeks
+        if steps_between_ticks == 0:
+            steps_between_ticks = 1                # tick every timestep
     elif len(timesteps_plot) > 3 * 168 / dt[0]:    # time horizon > three weeks
         steps_between_ticks = int(168 / dt[0])     # tick every week
     elif len(timesteps_plot) > 2 * 24 / dt[0]:     # time horizon > two days
@@ -287,7 +289,7 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
 
     hoursteps_plot_ = hoursteps_plot[(steps_between_ticks - 1):]
     hoursteps_plot_ = hoursteps_plot_[::steps_between_ticks]   # take hole h's
-    xticks = np.insert(hoursteps_plot_, 0, hoursteps_plot[0])  # add 1st tstep
+    xticks = np.insert(hoursteps_plot_, 0, hoursteps_plot[0])  # add 1st step
 
     # set limits and ticks for all axes
     for ax in all_axes:

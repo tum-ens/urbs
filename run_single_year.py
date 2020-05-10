@@ -1,7 +1,7 @@
 import os
 import shutil
 import urbs
-
+from datetime import date
 
 input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
@@ -9,6 +9,9 @@ input_path = os.path.join(input_dir, input_files)
 
 result_name = 'single-year'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
+
+#get year
+year = date.today().year
 
 # copy input file to result directory
 try:
@@ -25,16 +28,16 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'glpk'
 
 # simulation timesteps
-(offset, length) = (0, 8760)  # time step selection
+(offset, length) = (0, 20)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+    (year, 'North', 'Elec'),
+    (year, 'Mid', 'Elec'),
+    (year, 'South', 'Elec'),
+    (year, ['North', 'Mid', 'South'], 'Elec')
     ]
 
 # optional: define names for sites in report_tuples
@@ -42,10 +45,10 @@ report_sites_name = {('North', 'Mid', 'South'): 'All'}
 
 # plotting commodities/sites
 plot_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+    (year, 'North', 'Elec'),
+    (year, 'Mid', 'Elec'),
+    (year, 'South', 'Elec'),
+    (year, ['North', 'Mid', 'South'], 'Elec')
     ]
 
 # optional: define names for sites in plot_tuples

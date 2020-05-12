@@ -180,6 +180,8 @@ def list_entities(instance, entity_type):
             return isinstance(entity, pyomo.Constraint)
         elif entity_type == 'obj':
             return isinstance(entity, pyomo.Objective)
+        elif entity_type == 'exp':
+            return isinstance(entity, pyomo.Expression)
         else:
             raise ValueError("Unknown entity_type '{}'".format(entity_type))
 
@@ -190,7 +192,7 @@ def list_entities(instance, entity_type):
     except AttributeError:
         iter_entities = instance.__dict__.items()  # Python way
 
-    # now iterate over all entties and keep only those whose type matches
+    # now iterate over all entities and keep only those whose type matches
     entities = sorted(
         (name, entity.doc, _get_onset_names(entity))
         for (name, entity) in iter_entities

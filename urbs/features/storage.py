@@ -251,7 +251,7 @@ def def_storage_energy_power_ratio_rule(m, stf, sit, sto, com):
 
 # storage balance
 def storage_balance(m, tm, stf, sit, com):
-    """callesd in commodity balance
+    """called in commodity balance
     For a given commodity co and timestep tm, calculate the balance of
     storage input and output """
 

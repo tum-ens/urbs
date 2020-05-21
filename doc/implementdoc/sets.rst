@@ -166,8 +166,12 @@ code fragment:
 
 ::
 
+    # commodity type (i.e. SupIm, Demand, Stock, Env)
+    indexlist = set()
+    for key in m.commodity_dict["price"]:
+        indexlist.add(tuple(key)[3])
     m.com_type = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Type').unique(),
+        initialize=indexlist,
         doc='Set of commodity types')
 
 

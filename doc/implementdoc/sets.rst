@@ -108,7 +108,7 @@ In script ``model.py`` the set is defined as:
         initialize=indexlist,
         doc='Set of modeled support timeframes (e.g. years)')
 
-* `commodity_dict["price"]` is a dictionary in which prices of commodities in the 
+``commodity_dict["price"]`` is a dictionary in which prices of commodities in the 
 sites are noted for each support timeframe (i.e. year). The dictionary's keys have
 the form: Year (float), Site (string), Commodity Name (string), Commodity Type (string).
 
@@ -191,9 +191,16 @@ fragment:
 
 ::
 
+    # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
+    indexlist = set()
+    for key in m.process_dict["inv-cost"]:
+        indexlist.add(tuple(key)[2])
     m.pro = pyomo.Set(
-        initialize=m.process.index.get_level_values('Process').unique(),
+        initialize=indexlist,
         doc='Set of conversion processes')
+
+The ``m.process_dict["inv-cost"]`` is again a dictionary whose key has the form: 
+of Year (float), Site (String), Process (String).
 
 
 Storages

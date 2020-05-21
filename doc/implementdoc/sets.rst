@@ -100,10 +100,17 @@ In script ``model.py`` the set is defined as:
 
 ::
 
+    # support timeframes (e.g. 2020, 2030...)
+    indexlist = set()
+    for key in m.commodity_dict["price"]:
+        indexlist.add(tuple(key)[0])
     m.stf = pyomo.Set(
-        initialize=(m.commodity.index.get_level_values('support_timeframe')
-                    .unique()),
+        initialize=indexlist,
         doc='Set of modeled support timeframes (e.g. years)')
+
+* `commodity_dict["price"]` is a dictionary in which prices of commodities in the 
+sites are noted for each support timeframe (i.e. year). The dictionary's keys have
+the form: Year (float), Site (string), Commodity Name(string), Commodity Type(string).
 
 Sites
 ^^^^^
@@ -250,8 +257,8 @@ Commodity Tuples
 Commodity tuples represent combinations of defined commodities.
 These are represented by the set :math:`C_{yvq}`. A member :math:`c_{yvq}` in
 set :math:`C_{yvq}` is a commodity :math:`c` of commodity type :math:`q` in
-support timeframe :math:`y` and site :math:`v`. For example, `(2020, Mid, Elec,
-Demand)` is interpreted as commodity `Elec` of commodity type `Demand` in the
+support timeframe :math:`y` and site :math:`v`. For example, `(2020, Mid, Elec, Demand)` 
+is interpreted as commodity `Elec` of commodity type `Demand` in the
 year `2020` in site `Mid`. This set is defined as ``com_tuples`` and given by
 the code fragment:
 

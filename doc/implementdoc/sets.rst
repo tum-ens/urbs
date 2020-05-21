@@ -110,7 +110,7 @@ In script ``model.py`` the set is defined as:
 
 * `commodity_dict["price"]` is a dictionary in which prices of commodities in the 
 sites are noted for each support timeframe (i.e. year). The dictionary's keys have
-the form: Year (float), Site (string), Commodity Name(string), Commodity Type(string).
+the form: Year (float), Site (string), Commodity Name (string), Commodity Type (string).
 
 Sites
 ^^^^^
@@ -125,8 +125,12 @@ this set is defined by ``sit`` and initialized by the code fragment:
 
 ::
 
+    # site (e.g. north, middle, south...)
+    indexlist = set()
+    for key in m.commodity_dict["price"]:
+        indexlist.add(tuple(key)[1])
     m.sit = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Site').unique(),
+        initialize=indexlist,
         doc='Set of sites')
 
 Commodities

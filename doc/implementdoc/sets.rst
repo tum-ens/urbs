@@ -148,8 +148,12 @@ this set is defined by ``com`` and initialized by the code fragment:
 
 ::
 
+    # commodity (e.g. solar, wind, coal...)
+    indexlist = set()
+    for key in m.commodity_dict["price"]:
+        indexlist.add(tuple(key)[2])
     m.com = pyomo.Set(
-        initialize=m.commodity.index.get_level_values('Commodity').unique(),
+        initialize=indexlist,
         doc='Set of commodities')
 
 Commodity Types

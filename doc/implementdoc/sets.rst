@@ -212,7 +212,7 @@ Occasionally, on-hand commodities may not be able to satisfy the required
 amount of energy to meet the demand, or the available amount of energy may be
 much more than required. Storage technologies play a major role in such
 circumstances. The Set :math:`S` represents all storage technologies (e.g.
-`Pump storage`). In script ``model.py`` this set is defined as ``sto`` and
+`Pump storage`). In script ``features\storage.py`` this set is defined as ``sto`` and
 initialized by the code fragment:
 
 ::
@@ -236,14 +236,21 @@ Transmissions
 between sites. Transmission process technologies can vary between different
 commodities, due to distinct physical attributes and forms of commodities. Some
 examples for transmission technologies are: `hvac`, `hvdc`, `pipeline`. In
-script ``model.py`` this set is defined as ``tra`` and initialized by the code
+script ``features\transmission.py`` this set is defined as ``tra`` and initialized by the code
 fragment:
 
 ::
 
+    # tranmission (e.g. hvac, hvdc, pipeline...)
+    indexlist = set()
+    for key in m.transmission_dict["eff"]:
+        indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
-        initialize=m.transmission.index.get_level_values('Transmission').unique(),
+        initialize=indexlist,
         doc='Set of transmission technologies')
+
+The ``m.transmission_dict["eff"]`` is a dictionary whose key has the form: 
+Year (float), Site In (String), Site Out (String), Transmission (String), Commodity (String).
 
 .. _sec-cost-types:
 

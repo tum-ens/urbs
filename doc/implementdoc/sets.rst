@@ -199,8 +199,8 @@ fragment:
         initialize=indexlist,
         doc='Set of conversion processes')
 
-The ``m.process_dict["inv-cost"]`` is again a dictionary whose key has the form: 
-of Year (float), Site (String), Process (String).
+The ``m.process_dict["inv-cost"]`` is again a dictionary whose key has the form:
+ Year (float), Site (String), Process (String).
 
 
 Storages
@@ -217,9 +217,17 @@ initialized by the code fragment:
 
 ::
 
+    # storage (e.g. hydrogen, pump storage)
+    indexlist = set()
+    for key in m.storage_dict["eff-in"]:
+        indexlist.add(tuple(key)[2])
     m.sto = pyomo.Set(
-        initialize=m.storage.index.get_level_values('Storage').unique(),
+        initialize=indexlist,
         doc='Set of storage technologies')
+
+The ``m.storage_dict["eff-in"]`` is a dictionary whose key has the form: Year (float), 
+Site (String), Storage (String), Commodity (String). An example key would look like as follows:
+(2020, 'Mid', 'Hydrogen', 'Elec').
 
 Transmissions
 ^^^^^^^^^^^^^

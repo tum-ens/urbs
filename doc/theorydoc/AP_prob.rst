@@ -33,7 +33,7 @@ When the process in question is a process with part load behavior the equation
 for the time variable efficiency case takes the following form:
 
 .. math::
-   &\forall p\in P^{\text{partload}}~\text{and}~ p \in P^{\text{TimeVarEff}},
+   &\forall p\in P^{\text{part load}}~\text{and}~ p \in P^{\text{TimeVarEff}},
    ~c\in C,~t\in T_m:\\\\
    &\epsilon^{\text{out}}_{ypct}=\Delta t\cdot f^{\text{out}}_{ypt}\cdot
    \left(\frac{\underline{r}^{\text{out}}_{ypc}-r^{\text{out}}_{ypc}}
@@ -55,12 +55,18 @@ except for the fact that their values, together with the value of the throughput
 between the following boundaries:
 
 .. math::
-   &\forall p\in P^{\text{partload}},~c\in C,~t\in T_m:\\\\
+   &\forall p\in P^{\text{minimum load}},~c\in C,~t\in T_m:\\\\
    &\underline{P}_p\cdot \kappa_p\cdot r^{\text{in,out}}\leq
    \epsilon^{\text{in,out}}_{pct}\leq \kappa_p\cdot r^{\text{in,out}},
    
+.. math::
+   &\forall p\in P^{\text{part load}},~c\in C,~t\in T_m:\\\\
+   &\underline{P}_p\cdot \kappa_p\cdot \underline{r}^{\text{in,out}}\leq
+   \epsilon^{\text{in,out}}_{pct}\leq \kappa_p\cdot r^{\text{in,out}},
+   
 where :math:`\underline{P}_{p}` is the minimum load fraction, :math:`\kappa_p` the 
-installed capacity and :math:`r^{\text{in,out}` the input/output ratios.
+installed capacity, :math:`r^{\text{in,out}` the input/output ratios and 
+:math:`\underline{r}^{\text{in,out}` the minimum input/output ratios.
 
 Many processes show a non-trivial part-load behavior. In particular, often a
 nonlinear reaction of the efficiency on the operational state is given.

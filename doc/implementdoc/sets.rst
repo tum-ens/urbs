@@ -266,7 +266,7 @@ Cost Types
 ^^^^^^^^^^
 
 One of the major goals of the model is to calculate the costs of a simulated
-energy system. There are 6 different types of costs. Each one has different
+energy system. There are 7 different types of costs. Each one has different
 features and are defined for different instances. Set of **cost types** is
 hardcoded, which means they are not considered to be fixed or changed  by the
 user. The set :math:`R` defines the cost types, each member :math:`r` of this
@@ -314,7 +314,7 @@ the code fragment under ``model.py``:
 
 where:
 
-* The key of ``commodity_dict`` has the following form: (Year,Site,Commodity,Commodity Type).
+* The key of ``commodity_dict`` has the following form: (Year, Site, Commodity, Commodity Type).
 
 Process Tuples
 ^^^^^^^^^^^^^^
@@ -329,9 +329,13 @@ These are represented by the set :math:`P_{yv}`. A member :math:`p_{yv}` in set
 ::
 
     m.pro_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
-        initialize=m.process.index,
-        doc='Combinations of possible processes, e.g. (2020,North,Coal plant)')
+        within=m.stf * m.sit * m.pro,
+        initialize=tuple(m.process_dict["inv-cost"].keys()),
+        doc='Combinations of possible processes, e.g. (2018,North,Coal plant)')
+
+where:
+
+* The key of ``process_dict["inv-cost"]`` has the following form: Year, Site, Process.
 
 There are three subsets defined for process tuples, which each activate a
 different set of modeling constraints.

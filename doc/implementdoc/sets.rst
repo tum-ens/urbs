@@ -241,7 +241,7 @@ Transmissions
 :ref:`Transmissions <transmission-def-userguide>` :math:`f \in F` represent possible conveyances of commodities
 between sites. Transmission process technologies can vary between different
 commodities, due to distinct physical attributes and forms of commodities. Some
-examples for transmission technologies are: `hvac`, `hvdc`, `pipeline`. In
+examples for transmission technologies are: `HVAC` (High Voltage AC), `HVDC`, `pipeline`. In
 script ``features\transmission.py`` this set is defined as ``tra`` and initialized by the code
 fragment:
 

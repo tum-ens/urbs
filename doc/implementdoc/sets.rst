@@ -295,15 +295,18 @@ set :math:`C_{yvq}` is a commodity :math:`c` of commodity type :math:`q` in
 support timeframe :math:`y` and site :math:`v`. For example, `(2020, Mid, Elec, Demand)` 
 is interpreted as commodity `Elec` of commodity type `Demand` in the
 year `2020` in site `Mid`. This set is defined as ``com_tuples`` and given by
-the code fragment:
+the code fragment under ``model.py``:
 
 ::
 
     m.com_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.com*m.com_type,
-        initialize=m.commodity.index,
-        doc='Combinations of defined commodities, e.g. (2020,Mid,Elec,Demand)')
+        within=m.stf * m.sit * m.com * m.com_type,
+        initialize=tuple(m.commodity_dict["price"].keys()),
+        doc='Combinations of defined commodities, e.g. (2018,Mid,Elec,Demand)')
 
+where:
+
+The key of ``commodity_dict`` has the following form: (Year,Site,Commodity,Commodity Type).
 
 Process Tuples
 ^^^^^^^^^^^^^^

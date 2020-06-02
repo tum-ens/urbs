@@ -108,9 +108,11 @@ In script ``model.py`` the set is defined as:
         initialize=indexlist,
         doc='Set of modeled support timeframes (e.g. years)')
 
-``commodity_dict["price"]`` is a dictionary in which prices of commodities in the 
-sites are noted for each support timeframe (i.e. year). The dictionary's keys have
-the form: Year (float), Site (string), Commodity Name (string), Commodity Type (string).
+where: 
+
+* The ``commodity_dict["price"]`` is a dictionary in which prices of commodities in the 
+  sites are noted for each support timeframe (i.e. year). The dictionary's keys have
+  the form: Year, Site, Commodity Name, Commodity Type.
 
 Sites
 ^^^^^
@@ -199,8 +201,10 @@ fragment:
         initialize=indexlist,
         doc='Set of conversion processes')
 
-The ``m.process_dict["inv-cost"]`` is again a dictionary whose key has the form:
- Year (float), Site (String), Process (String).
+where:
+
+* The ``m.process_dict["inv-cost"]`` is again a dictionary whose key has the form:
+  Year, Site, Process. (see also :ref:`process <process-def-userguide>`)
 
 
 Storages
@@ -225,9 +229,11 @@ initialized by the code fragment:
         initialize=indexlist,
         doc='Set of storage technologies')
 
-The ``m.storage_dict["eff-in"]`` is a dictionary whose key has the form: Year (float), 
-Site (String), Storage (String), Commodity (String). An example key would look like as follows:
-(2020, 'Mid', 'Hydrogen', 'Elec').
+where:
+
+* The ``m.storage_dict["eff-in"]`` is a dictionary whose key has the form: Year, 
+  Site, Storage, Commodity. An example key would look like as follows: (2020, 
+  'Mid', 'Hydrogen', 'Elec').
 
 Transmissions
 ^^^^^^^^^^^^^
@@ -249,8 +255,10 @@ fragment:
         initialize=indexlist,
         doc='Set of transmission technologies')
 
-The ``m.transmission_dict["eff"]`` is a dictionary whose key has the form: 
-Year (float), Site In (String), Site Out (String), Transmission (String), Commodity (String).
+where:
+
+* The ``m.transmission_dict["eff"]`` is a dictionary whose key has the form: 
+  Year, Site In, Site Out, Transmission, Commodity.
 
 .. _sec-cost-types:
 
@@ -306,7 +314,7 @@ the code fragment under ``model.py``:
 
 where:
 
-The key of ``commodity_dict`` has the following form: (Year,Site,Commodity,Commodity Type).
+* The key of ``commodity_dict`` has the following form: (Year,Site,Commodity,Commodity Type).
 
 Process Tuples
 ^^^^^^^^^^^^^^

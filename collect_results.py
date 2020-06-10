@@ -11,9 +11,9 @@ global dict_countries
 global dict_season
 
 # User preferences
-result_folders = [
-    'v1.00_2016_base+PV-20200424T0610',
-]
+subfolder = "ASEAN"
+result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
+
 scenario_years = [2016]
 
 dict_tech = {"Bioenergy": "Bioenergy",
@@ -144,6 +144,7 @@ def add_weight(df):
 
    
 def get_emissions_data(reader, writer):
+    multiindex = pd.MultiIndex.from_product([df_data["Site"]["Name"], scenario_years], names=["Site", "scenario-year"])
     emissions = reader["Emissions"].set_index(["Site", "scenario-year"])
     emissions_by_fuel = reader["Emissions by fuel"].set_index(["Site", "scenario-year"])
     

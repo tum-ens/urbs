@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 
-input_files = '2016_Laos+PV_20200424.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'ASEAN_Mekong_provinces_2016.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
@@ -30,34 +30,7 @@ timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
-report_tuples = [
-                 (2016, 'Attapu', 'Elec'),
-                 (2016, 'Bokeo', 'Elec'),
-                 (2016, 'Bolikhamxai', 'Elec'),
-                 (2016, 'Champasak', 'Elec'),
-                 (2016, 'Houaphan', 'Elec'),
-                 (2016, 'Khammouan', 'Elec'),
-                 (2016, 'LouangNamtha', 'Elec'),
-                 (2016, 'Louangphrabang', 'Elec'),
-                 (2016, 'Oudomxai', 'Elec'),
-                 (2016, 'Phongsali', 'Elec'),
-                 (2016, 'Saravan', 'Elec'),
-                 (2016, 'Savannakhet', 'Elec'),
-                 (2016, 'VientianeProvince', 'Elec'),
-                 (2016, 'VientianePrefecture', 'Elec'),
-                 (2016, 'Xaignabouri', 'Elec'),
-                 (2016, 'Xaisomboun', 'Elec'),
-                 (2016, 'Xiangkhoang', 'Elec'),
-                 (2016, 'Xekong', 'Elec'),
-                 (2016, 'China', 'Elec'),
-                 (2016, 'Thailand', 'Elec'),
-                 (2016, 'Vietnam', 'Elec'),
-                 (2016, 'Cambodia', 'Elec'),
-                 ]
-
-
-
-
+report_tuples = []
 
 # optional: define names for sites in report_tuples
 report_sites_name = {}

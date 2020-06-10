@@ -14,9 +14,10 @@ global dict_season
 result_folders = [
     'v1.00_2016_base+PV-20200424T0610',
 ]
+scenario_years = [2016]
 
 dict_tech = {"Bioenergy": "Bioenergy",
-             "Hydro_2016": "Hydro",
+             "Hydro": "Hydro",
              "Lignite": "Lignite",
              "Import": "Import",
              "Solar_2016": "Solar",

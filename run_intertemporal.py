@@ -7,7 +7,7 @@ input_files = 'Intertemporal_example'  # for single year file name, for intertem
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Intertemp'
+result_name = 'Int'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory

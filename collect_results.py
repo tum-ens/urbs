@@ -11,59 +11,62 @@ global dict_countries
 global dict_season
 
 # User preferences
-subfolder = "ASEAN"
+subfolder = "Mekong"
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
 
 scenario_years = [2016]
 
-dict_tech = {"Bioenergy": "Bioenergy",
-             "Hydro": "Hydro",
-             "Lignite": "Lignite",
-             "Import": "Import",
-             "Solar_2016": "Solar",
-             "Slack": "Slack",
-             "Shunt": "Curtailment",
-             }
-dict_countries = {
-                  "Attapu": "Southern",
-                  "Bokeo": "Northern",
-                  "Bolikhamxai": "Central2",
-                  "Champasak": "Southern",
-                  "Houaphan": "Central1",
-                  "Khammouan": "Central2",
-                  "LouangNamtha": "Northern",
-                  "Louangphrabang": "Northern",
-                  "Oudomxai": "Northern",
-                  "Phongsali": "Northern",
-                  "Saravan": "Southern", 
-                  "Savannakhet": "Central2",
-                  "VientianeProvince": "Central1",
-                  "VientianePrefecture": "Central1",
-                  "Xaignabouri": "Northern",
-                  "Xaisomboun": "Central1",
-                  "Xiangkhoang": "Central1",
-                  "Xekong": "Southern",
-                  "China": "China",
-                  "Thailand": "Thailand",
-                  "Vietnam": "Vietnam",
-                  "Cambodia": "Cambodia",
-                  }
+def group_technologies(list_tech):
+    grouped_tech = {}
+    for elem in list_tech:
+        if elem.startswith("Oil"):
+            grouped_tech[elem] = "Oil"
+        elif elem.startswith("Gas"):
+            grouped_tech[elem] = "Gas"
+        else:
+            grouped_tech[elem] = elem
+    return grouped_tech
 
-dict_season = {}
-for t in range(0, 8761):
-    if (t <= 2184) or (t>=7897):
-        dict_season[t] = "winter"
-    elif (t <= 6552) and (t>=3529):
-        dict_season[t] = "summer"
-    else:
-        dict_season[t] = "midseason"
-# for t in range(0, 673):
-    # if (t <= 168):
-        # dict_season[t] = "winter"
-    # elif (t <= 504) and (t>=337):
-        # dict_season[t] = "summer"
-    # else:
-        # dict_season[t] = "midseason"
+def group_seasons():
+    dict_season = {}
+    # # Europe
+    # for t in range(0, 8761):
+        # if (t <= 2184) or (t>=7897):
+            # dict_season[t] = "winter"
+        # elif (t <= 6552) and (t>=3529):
+            # dict_season[t] = "summer"
+        # else:
+            # dict_season[t] = "midseason"
+         
+    # Laos / Mekong?
+    for t in range(0, 8761):
+        if (t <= 3528) or (t>=8017):
+            dict_season[t] = "monsoon"
+        else:
+            dict_season[t] = "dry"
+    return dict_season
+        
+        
+def group_sites(list_sites):
+    """
+    """
+    list_sites = list_sites
+    grouped_sites = {}
+    for elem in list_sites:
+        if elem.startswith("KHM"):
+            grouped_sites[elem] = "Cambodia"
+        if elem.startswith("THA"):
+            grouped_sites[elem] = "Thailand"
+        if elem.startswith("LAO"):
+            grouped_sites[elem] = "Laos"
+        if elem.startswith("CHN"):
+            grouped_sites[elem] = "China"
+        if elem.startswith("VNM"):
+            grouped_sites[elem] = "Vietnam"
+        if elem.startswith("MYS"):
+            grouped_sites[elem] = "Malaysia"
+    return grouped_sites
+    
         
 def extend_to_year(df):
     # Get column names
@@ -143,117 +146,114 @@ def add_weight(df):
     return df_new
 
    
-def get_emissions_data(reader, writer):
-    multiindex = pd.MultiIndex.from_product([df_data["Site"]["Name"], scenario_years], names=["Site", "scenario-year"])
-    emissions = reader["Emissions"].set_index(["Site", "scenario-year"])
-    emissions_by_fuel = reader["Emissions by fuel"].set_index(["Site", "scenario-year"])
+def get_emissions_data(urbs_results):
+    """
+    description
+    """
+    multiindex = pd.MultiIndex.from_product([report_sites, scenario_years], names=["Site", "scenario-year"])
+    # Prepare dataframe of emissions
+    emissions = pd.DataFrame(index=multiindex, columns=["CO2 emissions (Mt)", "CO2 captured (Mt)"])
+    # Prepare dataframe of emissions by fuel
+    filter = df_data["process_commodity"].reset_index()
+    aux_process = filter.loc[filter["Commodity"]=="CO2", "Process"].tolist()
+    pro_com = filter.loc[(filter["Process"].isin(aux_process)) & (filter["Direction"] == "In"), ["Process", "Commodity"]].set_index("Process")["Commodity"].to_dict()
+    emissions_by_fuel = pd.DataFrame(0, index=multiindex, columns=list(set(pro_com.values())))
     
     co2 = df_result["e_pro_out"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
     co2 = add_weight(co2)
     co2 = co2.unstack(level=3).sum(axis=1)
-    co2 = co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"})
-    co2["Technology"] = co2["pro"]
-    for pro in co2["pro"].index:
-        co2.loc[pro, "Technology"] = dict_tech[co2.loc[pro, "Technology"]]
-    co2 = co2.drop(columns=["pro"])
+    co2 = co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year", "pro": "Technology"})
     co2 = co2.groupby(["Site", "scenario-year", "Technology"]).sum()
     co2 = co2.unstack(level=2).droplevel(0, axis=1).fillna(0) / 10**6 # unit: Mt_CO2
-    emissions.loc[co2.index, "CO2-emissions-elec"] = co2.sum(axis=1)
+    emissions.loc[co2.index, "CO2 emissions (Mt)"] = co2.sum(axis=1)
     
-    try:
-        #emissions_by_fuel.loc[co2.index, "CO2-emissions-coal"] = co2["Coal"] + co2["Coal-CCS"]
-        #emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas-CCGT"] + co2["Gas-OCGT"] + co2["Gas-ST"] + co2["Gas-CCS"]
-        emissions_by_fuel.loc[co2.index, "CO2-emissions-lignite"] = co2["Lignite"]
-        #emissions_by_fuel.loc[co2.index, "CO2-emissions-oil/other"] = co2["OilOther"]
-    except KeyError:
-        try: # No CCS
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-coal"] = co2["Coal"]
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas-CCGT"] + co2["Gas-OCGT"] + co2["Gas-ST"]
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-lignite"] = co2["Lignite"]
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-oil/other"] = co2["OilOther"]
-        except KeyError: # Aggregated technologies
-            emissions_by_fuel.loc[co2.index, "CO2-emissions-gas"] = co2["Gas-CCGT"]
+    for pro in pro_com.keys():
+        try:
+            emissions_by_fuel.loc[co2.index, pro_com[pro]] = emissions_by_fuel.loc[co2.index, pro_com[pro]] + co2[pro]
+        except:
+            pass
     
     try: # Bio_CCS negative
         co2_neg = df_result["e_pro_in"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
         co2_neg = add_weight(co2_neg)
         co2_neg = co2_neg.unstack(level=3).sum(axis=1)
-        co2_neg = co2_neg.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"})
+        co2_neg = co2_neg.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year", "pro": "Technology"})
         co2_neg["Technology"] = co2_neg["pro"]
-        for pro in co2_neg["pro"].index:
-            if len(co2_neg["pro"][pro]) > 5:
-                co2_neg.loc[pro, "Technology"] = dict_tech[co2_neg.loc[pro, "Technology"][:-5]]
-            else:
-                co2_neg.loc[pro, "Technology"] = dict_tech[co2_neg.loc[pro, "Technology"]]
-        co2_neg = co2_neg.drop(columns=["pro"])
         co2_neg = co2_neg.groupby(["Site", "scenario-year", "Technology"]).sum()
-        co2_neg = co2_neg.unstack(level=2).droplevel(0, axis=1).fillna(0) / 10**6 # unit: Mt_CO2
-        emissions.loc[co2_neg.index, "CO2-emissions-elec"] = emissions.loc[co2_neg.index, "CO2-emissions-elec"] - co2_neg.sum(axis=1)
+        co2_neg = co2_neg.unstack(level=2).droplevel(0, axis=1).fillna(0) / 10**6# unit: t_CO2
+        emissions.loc[co2_neg.index, "CO2 emissions (Mt)"] = emissions.loc[co2_neg.index, "CO2 emissions (Mt)"] - co2_neg.sum(axis=1)
     
-        emissions_by_fuel.loc[co2_neg.index, "CO2-emissions-bioenergy"] = - co2_neg["Bio-CCS"]
+        for pro in pro_com.keys():
+            try:
+                emissions_by_fuel.loc[co2.index, pro_com[pro]] = emissions_by_fuel.loc[co2.index, pro_com[pro]] - co2_neg[pro]
+            except:
+                pass
     except KeyError:
         pass
     
     co2_regions = co2.reset_index()
     co2_regions["Site"] = [dict_countries[x] for x in co2_regions["Site"]]
     co2_regions = co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
-    emissions.loc[co2_regions.index, "CO2-emissions-elec"] = co2_regions.sum(axis=1)
+    emissions.loc[co2_regions.index, "CO2 emissions (Mt)"] = co2_regions.sum(axis=1)
     
-    try:
-        #emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-coal"] = co2_regions["Coal"] + co2_regions["Coal-CCS"]
-        #emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas-CCGT"] + co2_regions["Gas-OCGT"] + co2_regions["Gas-ST"] + co2_regions["Gas-CCS"]
-        emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-lignite"] = co2_regions["Lignite"]
-        #emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-oil/other"] = co2_regions["OilOther"]
-    except KeyError:
-        try: # No CCS
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-coal"] = co2_regions["Coal"]
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas-CCGT"] + co2_regions["Gas-OCGT"] + co2_regions["Gas-ST"]
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-lignite"] = co2_regions["Lignite"]
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-oil/other"] = co2_regions["OilOther"]
-        except KeyError: # Aggregated technologies
-            emissions_by_fuel.loc[co2_regions.index, "CO2-emissions-gas"] = co2_regions["Gas-CCGT"]
+    for pro in pro_com.keys():
+        try:
+            emissions_by_fuel.loc[co2_regions.index, pro_com[pro]] = emissions_by_fuel.loc[co2_regions.index, pro_com[pro]] + co2_regions[pro]
+        except:
+            pass
         
     try: # Bio_CCS negative
         co2_neg_regions = co2_neg.reset_index()
         co2_neg_regions["Site"] = [dict_countries[x] for x in co2_neg_regions["Site"]]
         co2_neg_regions = co2_neg_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
-        emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2-emissions-elec"] = emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2-emissions-elec"] - co2_neg_regions.sum(axis=1)
+        emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2 emissions (Mt)"] = emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2 emissions (Mt)"] - co2_neg_regions.sum(axis=1)
     
-        emissions_by_fuel.loc[co2_neg_regions.index, "CO2-emissions-bioenergy"] = - co2_neg_regions["Bio-CCS"]
+        for pro in pro_com.keys():
+            try:
+                emissions_by_fuel.loc[co2_regions.index, pro_com[pro]] = emissions_by_fuel.loc[co2_regions.index, pro_com[pro]] - co2_neg_regions[pro]
+            except:
+                pass
     except:
         pass
     
-    # # CCS_CO2
-    # if year == "2016":
-        # emissions.loc[co2.index, "CO2-captured"] = 0
-        # emissions.loc[co2_regions.index, "CO2-captured"] = 0
+    # CCS_CO2
+    if year == "2016":
+        emissions.loc[co2.index, "CO2 captured (Mt)"] = 0
+        emissions.loc[co2_regions.index, "CO2 captured (Mt)"] = 0
     # else:
         # try:
             # ccs_co2 = df_result["e_pro_out"].unstack()['CCS_CO2'].fillna(0)
             # ccs_co2 = add_weight(ccs_co2)
             # ccs_co2 = ccs_co2.droplevel([0,3]).reorder_levels(['sit', 'stf']).sort_index()
-            # ccs_co2 = ccs_co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"}).groupby(["Site", "scenario-year"]).sum() / 10**6 # unit: Mt_CO2
-            # emissions.loc[ccs_co2.index, "CO2-captured"] = ccs_co2["CCS_CO2"]
+            # ccs_co2 = ccs_co2.reset_index().rename(columns={"sit":"Site", "stf": "scenario-year"}).groupby(["Site", "scenario-year"]).sum() # unit: t_CO2
+            # emissions.loc[ccs_co2.index, "CO2 captured (Mt)"] = ccs_co2["CCS_CO2"]
             
             # ccs_co2_regions = ccs_co2.reset_index()
             # ccs_co2_regions["Site"] = [dict_countries[x] for x in ccs_co2_regions["Site"]]
             # ccs_co2_regions = ccs_co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
-            # emissions.loc[ccs_co2_regions.index, "CO2-captured"] = ccs_co2_regions["CCS_CO2"]
+            # emissions.loc[ccs_co2_regions.index, "CO2 captured (Mt)"] = ccs_co2_regions["CCS_CO2"]
         # except KeyError:
             # pass
             
     # Save results
-    emissions.round(2).reset_index().to_excel(writer, sheet_name='Emissions', index=False)
-    emissions_by_fuel.round(2).reset_index().to_excel(writer, sheet_name='Emissions by fuel', index=False)
+    urbs_results["Emissions"] = emissions.astype("float").round(2).reset_index()
+    urbs_results["Emissions by fuel"] = emissions_by_fuel.round(2).reset_index()
+    return urbs_results
     
     
-def get_electricity_data(reader, writer, year_built):
-    electricity = reader["Electricity"].set_index(["Site", "scenario-year"])
-    hourly_prices = reader["Hourly prices"].set_index(["Hours", "Year"])
+def get_electricity_data(urbs_results, year_built):
     
-    # Get helping factors
-    stf_min = 2016
-    if year_built > 2016:
+    # Prepare dataframe of electricity
+    multiindex = pd.MultiIndex.from_product([report_sites, scenario_years], names=["Site", "scenario-year"])
+    list_cols = ["price-avg"] + ["price-avg-" + season for season in set(dict_season.values())] + ["price-median", "price-max", "price-min", "elec-demand"]
+    electricity = pd.DataFrame(index=multiindex, columns=list_cols)
+    
+    # Prepare dataframe of hourly prices
+    multiindex = pd.MultiIndex.from_product([range(1,8761), scenario_years], names=["Hour", "scenario-year"])
+    hourly_prices = pd.DataFrame(index=multiindex, columns=report_sites)
+    
+    # Get cost factor
+    if year_built > stf_min:
         discount = 0 #df_data["global_prop"].droplevel(0).loc["Discount rate", "value"]
     else:
         discount = 0
@@ -272,12 +272,9 @@ def get_electricity_data(reader, writer, year_built):
     # Averages
     prices_avg = prices[["Site", "scenario-year", "res_vertex"]].groupby(["Site", "scenario-year"]).mean()
     electricity.loc[prices_avg.index, "price-avg"] = prices_avg["res_vertex"] * cost_factor
-    prices_avg_winter = prices.loc[prices["season"]=="winter", ["Site", "scenario-year", "res_vertex"]].groupby(["Site", "scenario-year"]).mean()
-    electricity.loc[prices_avg_winter.index, "price-avg-winter"] = prices_avg_winter["res_vertex"] * cost_factor
-    prices_avg_summer = prices.loc[prices["season"]=="summer", ["Site", "scenario-year", "res_vertex"]].groupby(["Site", "scenario-year"]).mean()
-    electricity.loc[prices_avg_summer.index, "price-avg-summer"] = prices_avg_summer["res_vertex"] * cost_factor
-    prices_avg_midseason = prices.loc[prices["season"]=="midseason", ["Site", "scenario-year", "res_vertex"]].groupby(["Site", "scenario-year"]).mean()
-    electricity.loc[prices_avg_midseason.index, "price-avg-midseason"] = prices_avg_midseason["res_vertex"] * cost_factor
+    for season in set(dict_season.values()):
+        prices_avg_season = prices.loc[prices["season"]==season, ["Site", "scenario-year", "res_vertex"]].groupby(["Site", "scenario-year"]).mean()
+        electricity.loc[prices_avg_season.index, "price-avg-" + season] = prices_avg_season["res_vertex"] * cost_factor
     # Median
     prices_median = prices[["Site", "scenario-year", "res_vertex"]].groupby(["Site", "scenario-year"]).median()
     electricity.loc[prices_median.index, "price-median"] = prices_median["res_vertex"] * cost_factor
@@ -291,7 +288,7 @@ def get_electricity_data(reader, writer, year_built):
     dem = demand[["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).sum()
     electricity.loc[dem.index, "elec-demand"] = dem[0]
     # Hourly prices
-    prices_h = prices.rename(columns={"scenario-year":"Year", "t":"Hours"}).drop(columns=["season"]).set_index(["Hours", "Year", "Site"]).unstack()["res_vertex"]
+    prices_h = prices.rename(columns={"t":"Hour"}).drop(columns=["season"]).set_index(["Hour", "scenario-year", "Site"]).unstack()["res_vertex"]
     hourly_prices.loc[prices_h.index, prices_h.columns] = prices_h * cost_factor
     
     # Repeat for groups of countries
@@ -312,12 +309,9 @@ def get_electricity_data(reader, writer, year_built):
     # Averages
     prices_weighted_avg = prices_weighted_regions[["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).mean()
     electricity.loc[prices_weighted_avg.index, "price-avg"] = prices_weighted_avg[0] * cost_factor
-    prices_weighted_winter = prices_weighted_regions.loc[prices_weighted_regions["season"]=="winter", ["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).mean()
-    electricity.loc[prices_weighted_winter.index, "price-avg-winter"] = prices_weighted_winter[0] * cost_factor
-    prices_weighted_summer = prices_weighted_regions.loc[prices_weighted_regions["season"]=="summer", ["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).mean()
-    electricity.loc[prices_weighted_summer.index, "price-avg-summer"] = prices_weighted_summer[0] * cost_factor
-    prices_weighted_midseason = prices_weighted_regions.loc[prices_weighted_regions["season"]=="midseason", ["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).mean()
-    electricity.loc[prices_weighted_midseason.index, "price-avg-midseason"] = prices_weighted_midseason[0] * cost_factor
+    for season in set(dict_season.values()):
+        prices_weighted_season = prices_weighted_regions.loc[prices_weighted_regions["season"]==season, ["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).mean()
+        electricity.loc[prices_weighted_season.index, "price-avg-" + season] = prices_weighted_season[0] * cost_factor
     # Median
     prices_weighted_median = prices_weighted_regions[["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).median()
     electricity.loc[prices_weighted_median.index, "price-median"] = prices_weighted_median[0] * cost_factor
@@ -335,12 +329,21 @@ def get_electricity_data(reader, writer, year_built):
     hourly_prices.loc[prices_h_regions.index, prices_h_regions.columns] = prices_h_regions * cost_factor
     
     # Save results
-    electricity.round(2).reset_index().to_excel(writer, sheet_name='Electricity', index=False)
-    hourly_prices.round(2).reset_index().to_excel(writer, sheet_name='Hourly prices', index=False)
+    urbs_results["Electricity"] = electricity.astype("float").round(2).reset_index()
+    urbs_results["Hourly prices"] = hourly_prices.round(2).reset_index()
+    return urbs_results
     
 
-def get_generation_data(reader, writer):
-    generation = reader["Electricity generation"].set_index(["Site", "scenario-year"])
+def get_generation_data(urbs_results):
+    """
+    """
+    multiindex = pd.MultiIndex.from_product([report_sites, scenario_years], names=["Site", "scenario-year"])
+    # Prepare dataframe of generation by power plant type
+    filter = df_data["process_commodity"].reset_index()
+    aux_process = filter.loc[(filter["Commodity"]=="Elec") & (filter["Direction"] == "Out"), "Process"].tolist()
+    dict_tech = group_technologies(aux_process)
+    generation = pd.DataFrame(0, index=multiindex, columns=sorted(list(set(dict_tech.values()))))
+    
     prod = df_result["e_pro_out"].unstack()['Elec'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
     prod = add_weight(prod)
     prod = prod.fillna(0).unstack(level=3).sum(axis=1)
@@ -360,7 +363,8 @@ def get_generation_data(reader, writer):
     generation.loc[prod_regions.index, prod_regions.columns] = prod_regions
     generation.loc[prod_regions.index] = generation.loc[prod_regions.index].fillna(0)
     
-    generation.round(2).reset_index().to_excel(writer, sheet_name='Electricity generation', index=False)
+    urbs_results["Electricity generation"] = generation.round(2).reset_index()
+    return urbs_results
 
 
 def get_capacities_data(reader, writer):
@@ -924,10 +928,10 @@ def get_cost_data(reader, writer, year_built):
     abatement.round(2).reset_index().to_excel(writer, sheet_name='Abatement', index=False)
 
 
-def get_marginal_generation_data(reader, writer):
+def get_marginal_generation_data(urbs_results):
     # import pdb; pdb.set_trace()
     # marginal = reader["Marg. elec. generation process"].set_index(["Site", "scenario-year"])
-    pass
+    return urbs_results
     
 
 def get_FLH_data(reader, writer):
@@ -963,7 +967,7 @@ def get_abatement(reader, writer):
 
     # Fill Abatement sheet
     abatement = reader["Abatement"].set_index(["scenario-year"])
-    abatement.loc[emissions.index, "CO2-emissions-elec"] = emissions[0]
+    abatement.loc[emissions.index, "CO2 emissions (Mt)"] = emissions[0]
     abatement["Total costs (no model horizon)"] = abatement["fix-costs"] + abatement["var-costs"] + abatement["inv-costs-abs"]
     abatement["Total costs (model horizon)"] = abatement["fix-costs"] + abatement["var-costs"] + abatement["inv-costs-abs-horizon"]
     abatement["Capital costs"] = abatement["fix-costs"] + abatement["var-costs"] + (abatement["inv-capital-pro"] + abatement["inv-capital-tra"] + abatement["inv-capital-sto"])*0.07
@@ -974,99 +978,116 @@ def get_abatement(reader, writer):
 
 # Read in data for all scenarios
 for folder in result_folders:
-    version = folder.split("-")[0].split("_")[0]
-    year = folder.split("-")[0].split("_")[1]
-    suffix = folder.split("-")[0].split("_")[2]
-    scen = suffix#.upper()
+    #version = folder.split("-")[0].split("_")[0]
+    #year = folder.split("-")[0].split("_")[1]
+    #suffix = folder.split("-")[0].split("_")[2]
+    #scen = suffix#.upper()
+    year = "2016"
+    scen = "base"
+    stf_min = 2016
     
     # Read output file
-    writer_path = os.path.join("result", "Laos", "URBS_" + scen + ".xlsx")
-    book = load_workbook(writer_path)
-    reader = pd.read_excel(writer_path, sheet_name=None)
+    writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    #book = load_workbook(writer_path)
+    #reader = pd.read_excel(writer_path, sheet_name=None)
     writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    #writer.book = book
+    #writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
     
     # Read in results
-    urbs_path = os.path.join("result", "Laos", folder, "scenario_base.h5")
+    urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
     helpdf = urbs.load(urbs_path)
     df_result = helpdf._result
     df_data = helpdf._data
     
+    urbs_results = {}
+    
+    # Get dictionaries and list of sites to be used in the report
+    dict_season = group_seasons()
+    dict_countries = group_sites(df_data["site"].reset_index()["Name"].tolist())
+    report_sites = sorted(list(set(dict_countries.keys()))) + sorted(list(set(dict_countries.values())))
+    
+    
+    ### SHEETS ###
     print(scen, year, ": Getting CO2 data")
-    get_emissions_data(reader, writer)
+    urbs_results = get_emissions_data(urbs_results)
     
     print(scen, year, ": Getting marginal electricity generation data")
-    get_marginal_generation_data(reader, writer)
+    urbs_results = get_marginal_generation_data(urbs_results)
     
     print(scen, year, ": Getting electricity prices")
-    get_electricity_data(reader, writer, int(year))
+    urbs_results = get_electricity_data(urbs_results, int(year))
     
     print(scen, year, ": Getting electricity generation data")
-    get_generation_data(reader, writer)
+    urbs_results = get_generation_data(urbs_results)
     
-    print(scen, year, ": Getting total, new and retired capacities data")
-    get_capacities_data(reader, writer)
+    # print(scen, year, ": Getting total, new and retired capacities data")
+    # urbs_results = get_capacities_data(urbs_results)
     
     # print(scen, year, ": Getting storage data")
-    # get_storage_data(reader, writer)
+    # urbs_results = get_storage_data(urbs_results)
     
-    print(scen, year, ": Getting curtailment data")
-    get_curtailment_data(reader, writer)
+    # print(scen, year, ": Getting curtailment data")
+    # urbs_results = get_curtailment_data(urbs_results)
     
-    print(scen, year, ": Getting transfer data")
-    get_transfer_data(reader, writer)
+    # print(scen, year, ": Getting transfer data")
+    # urbs_results = get_transfer_data(urbs_results)
     
-    print(scen, year, ": Getting NTC data")
-    get_NTC_data(reader, writer)
+    # print(scen, year, ": Getting NTC data")
+    # urbs_results = get_NTC_data(urbs_results)
     
-    print(scen, year, ": Getting system cost data")
-    get_cost_data(reader, writer, int(year))
-    
-    # Save results
-    writer.save()
-    
-for folder in result_folders:
-    version = folder.split("-")[0].split("_")[0]
-    year = folder.split("-")[0].split("_")[1]
-    suffix = folder.split("-")[0].split("_")[2]
-    scen = suffix#.upper()
-    
-    # Read output file
-    writer_path = os.path.join("result", "Laos", "URBS_" + scen + ".xlsx")
-    book = load_workbook(writer_path)
-    reader = pd.read_excel(writer_path, sheet_name=None)
-    writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-    
-    # Read in results
-    urbs_path = os.path.join("result", "Laos", folder, "scenario_base.h5")
-    helpdf = urbs.load(urbs_path)
-    df_result = helpdf._result
-    df_data = helpdf._data
-    
-    print(scen, year, ": Getting NTC rents data")
-    get_NTC_rents_data(reader, writer)
+    # print(scen, year, ": Getting system cost data")
+    # urbs_results = get_cost_data(urbs_results, int(year))
     
     # Save results
+    for sheet in urbs_results.keys():
+        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=False, header=True)
     writer.save()
+    import pdb; pdb.set_trace()
     
-for scen in ["base+PV"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
+# for folder in result_folders:
+    # #version = folder.split("-")[0].split("_")[0]
+    # #year = folder.split("-")[0].split("_")[1]
+    # #suffix = folder.split("-")[0].split("_")[2]
+    # #scen = suffix#.upper()
+    # year = "2016"
+    # scen = "base"
+    
+    # # Read output file
+    # writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    # book = load_workbook(writer_path)
+    # reader = pd.read_excel(writer_path, sheet_name=None)
+    # writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
+    # writer.book = book
+    # writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    
+    # # Read in results
+    # urbs_path = os.path.join("result", subfolder, folder, "scenario_base.h5")
+    # helpdf = urbs.load(urbs_path)
+    # df_result = helpdf._result
+    # df_data = helpdf._data
+    
+    # print(scen, year, ": Getting NTC rents data")
+    # get_NTC_rents_data(reader, writer)
+    
+    # # Save results
+    # writer.save()
+    
+# for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
 
-    # Read output file
-    writer_path = os.path.join("result", "Laos", "URBS_" + scen + ".xlsx")
-    book = load_workbook(writer_path)
-    reader = pd.read_excel(writer_path, sheet_name=None)
-    writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
-    writer.book = book
-    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    # # Read output file
+    # writer_path = os.path.join("result", subfolder, "URBS_" + scen + ".xlsx")
+    # book = load_workbook(writer_path)
+    # reader = pd.read_excel(writer_path, sheet_name=None)
+    # writer = pd.ExcelWriter(writer_path, engine='openpyxl') 
+    # writer.book = book
+    # writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
 
-    # print(scen, ": Getting FLH data")
-    # get_FLH_data(reader, writer)
+    # # print(scen, ": Getting FLH data")
+    # # get_FLH_data(reader, writer)
     
-    print(scen, ": Getting abatement data")
-    get_abatement(reader, writer)
+    # print(scen, ": Getting abatement data")
+    # get_abatement(reader, writer)
     
-    # Save results
-    writer.save()
+    # # Save results
+    # writer.save()

@@ -219,25 +219,32 @@ def inst_pro_tuples(m):
     return inst_pro
 
 
-def read_capacity(m, name):
+def read_capacity(instance, name):
     # objective_arg = m.objective_pro
-    cpro = get_entity(m, 'cap_pro')
+    cpro = get_entity(instance, 'cap_pro')
     if not cpro.empty:
         cpro.index.names = ['Stf', 'Site', 'Process']
         cpro.columns = [name]
         cpro.sort_index(inplace=True)
-    # optimized_cap = cpro['Total'][:, :, objective_arg]
-    # optimized_cap = pd.concat([optimized_cap], keys=[objective_sites], names=['Objective_Sites'])
-    # optimized_cap = pd.concat([optimized_cap], keys=[objective_arg],names=['Objective_Process'])
 
     optimized_cap = cpro.to_frame(name=name)
     return optimized_cap
 
+def read_storage(instance, name):
+    # objective_arg = m.objective_pro
+    csto = get_entities(instance, ['cap_sto_c','cap_sto_p'])
+    if not csto.empty:
+        csto.index.names = ['Stf', 'Site', 'Storage','Commodity']
+        csto.columns = [name+'_capacity', name+'_power']
+        csto.sort_index(inplace=True)
 
-def read_costs(m, name):
-    costs = get_entity(m, 'costs')
+
+    optimized_cap_sto = csto.copy(deep=True)
+    return optimized_cap_sto
+
+def read_costs(instance, name):
+    costs = get_entity(instance, 'costs')
     total_cost = pd.Series(costs.sum(), index=['Total Cost'])
     costs = costs.append([total_cost])
     costs = costs.to_frame(name=name)
-
     return costs

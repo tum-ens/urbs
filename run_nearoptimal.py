@@ -36,10 +36,7 @@ timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
-report_tuples = [(2050, ['Germany'], 'Elec'),
-(2040, ['Germany'], 'Elec'),
-(2030, ['Germany'], 'Elec'),
-(2020, ['Germany'], 'Elec')
+report_tuples = [
 
     ]
 
@@ -47,7 +44,7 @@ report_tuples = [(2050, ['Germany'], 'Elec'),
 report_sites_name = {}
 
 # plotting commodities/sites
-plot_tuples = [  (2050, ['Germany'], 'Elec')]
+plot_tuples = [ ]
 
 # optional: define names for sites in plot_tuples
 plot_sites_name = {}
@@ -64,7 +61,7 @@ for country, color in my_colors.items():
 
 # select scenarios to be run
 scenarios = [
-             nopt.scenario_TM80_ccs,
+             nopt.scenario_base,
             ]
 
 for scenario in scenarios:

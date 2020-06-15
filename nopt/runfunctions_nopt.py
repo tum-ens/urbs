@@ -117,6 +117,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     if 'cost' in objective_dict.keys() or 'CO2' in objective_dict.keys():
 
         prob = create_model(data, objective_dict, dt, timesteps)
+
         # solve model and read results
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
         optim = setup_solver(optim, logfile=log_filename)
@@ -148,6 +149,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         # solve cost model and read optimized cost
         prob = create_model(data, objective_dict, dt, timesteps)
+        prob.write('model.lp', io_options={'symbolic_solver_labels': True})
+
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
         optim = setup_solver(optim, logfile=log_filename)
         result_cost_opt = optim.solve(prob, tee=True)
@@ -161,6 +164,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         # Record minimum costs for reporting
         prob.near_optimal_capacities = read_capacity(prob, 'Minimum Cost')
         prob.near_optimal_cost = read_costs(prob, 'Minimum Cost')
+        prob.near_optimal_storage = read_storage(prob, 'Minimum Cost')
 
         # save problem solution (and input data) to HDF5 file
         save(prob, os.path.join(result_dir, '{}.h5'.format('cost')))
@@ -171,6 +175,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             assert m.cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
             return (1 + m.cost_factor) * m.opt_cost_sum == pyomo.summation(m.costs)
 
+        prob.timeseries_data = {}
         prob.slack_list.sort()
         for slack in prob.slack_list:
             prob.cost_factor = slack
@@ -198,7 +203,16 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             # read minimized capacities from instance
             minimized_cap_pro = read_capacity(prob, 'Min' + '-' + str(slack))
             minimized_cap_costs = read_costs(prob, 'Min' + '-' + str(slack))
+            minimized_cap_storage = read_storage(prob, 'Min' + '-' + str(slack))
+            ts_name=str(slack)+'_Min'
 
+            try:
+                del com_sum,ts_data
+            except NameError:
+                pass
+            com_sum,ts_data=read_generation(prob,report_tuples=report_tuples,report_sites_name=report_sites_name)
+            if ts_data:
+                prob.timeseries_data[ts_name]=[com_sum,ts_data]
             prob.del_component(prob.objective_function)
             # Maximize
             # log_filename = os.path.join(result_dir, 'maximize.log')
@@ -215,13 +229,22 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             # read maximized capacities from instance
             maximized_cap_pro = read_capacity(prob, 'Max' + '-' + str(slack))
             maximized_cap_costs = read_costs(prob, 'Max' + '-' + str(slack))
-
+            maximized_cap_storage = read_storage(prob, 'Max' + '-' + str(slack))
+            ts_name=str(slack)+'_Max'
+            try:
+                del com_sum,ts_data
+            except NameError:
+                pass
+            com_sum,ts_data=read_generation(prob,report_tuples=report_tuples,report_sites_name=report_sites_name)
+            if ts_data:
+                prob.timeseries_data[ts_name]=[com_sum,ts_data]
             # store optimized capacities in a data frame
             prob.near_optimal_capacities = prob.near_optimal_capacities.join(maximized_cap_pro, how='outer')
             prob.near_optimal_capacities = prob.near_optimal_capacities.join(minimized_cap_pro, how='outer')
             prob.near_optimal_cost = prob.near_optimal_cost.join(maximized_cap_costs, how='outer')
             prob.near_optimal_cost = prob.near_optimal_cost.join(minimized_cap_costs, how='outer')
-            #prob.near_optimal_capacities = pd.concat([prob.near_optimal_capacities], keys=[str(list(objective_dict.items())).replace("'","").strip("[]")],names=['Objective_pro'])
+            prob.near_optimal_storage = prob.near_optimal_storage.join(maximized_cap_storage, how='outer')
+            prob.near_optimal_storage = prob.near_optimal_storage.join(minimized_cap_storage, how='outer')
 
         report(prob,
             os.path.join(result_dir, 'nopt.xlsx'),

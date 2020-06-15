@@ -17,16 +17,19 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
     """
 
     # default to all demand (sit, com) tuples if none are specified
-    if report_tuples is None:
-        report_tuples = get_input(instance, 'demand').columns
+    if len(report_tuples)==0:
+        report_tuples = get_input(instance, 'dsm').index
 
-    costs, cpro, ctra, csto = get_constants(instance)  # finds these values from model instance prob
+
     # Report new  optimized capacities:
 
 
     # create spreadsheet writer object
     with pd.ExcelWriter(filename) as writer:
         if 'cost' in instance.objective_dict.keys() or 'CO2' in instance.objective_dict.keys():
+            if len(report_tuples) is None:
+                report_tuples = get_input(instance, 'demand').index
+            costs, cpro, ctra, csto = get_constants(instance)  # finds these values from model instance prob
             costs = costs.to_frame(name='Costs')
             costs = pd.concat([costs],keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
                                  names=['Objective'])
@@ -36,95 +39,209 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
             ctra.to_excel(writer, 'Transmission caps')
             csto.to_excel(writer, 'Storage caps')
             costs.to_excel(writer, 'Costs')
+            # initialize timeseries tableaus
+            energies = []
+            timeseries = {}
+            help_ts = {}
+
+            # collect timeseries data
+            for stf, sit, com in report_tuples:
+
+                # wrap single site name in 1-element list for consistent behavior
+                if is_string(sit):
+                    help_sit = [sit]
+                else:
+                    help_sit = sit
+                    sit = tuple(sit)
+
+                # check existence of predefined names, else define them
+                try:
+                    report_sites_name[sit]
+                except BaseException:
+                    report_sites_name[sit] = str(sit)
+
+                for lv in help_sit:
+                    (created, consumed, stored, imported, exported,
+                     dsm, voltage_angle) = get_timeseries(instance, stf, com, lv)
+
+                    overprod = pd.DataFrame(
+                        columns=['Overproduction'],
+                        data=created.sum(axis=1) - consumed.sum(axis=1) +
+                             imported.sum(axis=1) - exported.sum(axis=1) +
+                             stored['Retrieved'] - stored['Stored'])
+
+                    tableau = pd.concat(
+                        [created, consumed, stored, imported, exported, overprod,
+                         dsm, voltage_angle],
+                        axis=1,
+                        keys=['Created', 'Consumed', 'Storage', 'Import from',
+                              'Export to', 'Balance', 'DSM', 'Voltage Angle'])
+                    help_ts[(stf, lv, com)] = tableau.copy()
+
+                    # timeseries sums
+                    help_sums = pd.concat([created.sum(), consumed.sum(),
+                                           stored.sum().drop('Level'),
+                                           imported.sum(), exported.sum(),
+                                           overprod.sum(), dsm.sum()],
+                                          axis=0,
+                                          keys=['Created', 'Consumed', 'Storage',
+                                                'Import', 'Export', 'Balance',
+                                                'DSM'])
+                    try:
+                        timeseries[(stf, report_sites_name[sit], com)] = \
+                            timeseries[(stf, report_sites_name[sit], com)].add(
+                                help_ts[(stf, lv, com)], axis=1, fill_value=0)
+                        sums = sums.add(help_sums, fill_value=0)
+                    except BaseException:
+                        timeseries[(stf, report_sites_name[sit], com)] = help_ts[
+                            (stf, lv, com)]
+                        sums = help_sums
+
+                # timeseries sums
+                sums = pd.concat([created.sum(), consumed.sum(),
+                                  stored.sum().drop('Level'),
+                                  imported.sum(), exported.sum(), overprod.sum(),
+                                  dsm.sum()],
+                                 axis=0,
+                                 keys=['Created', 'Consumed', 'Storage', 'Import',
+                                       'Export', 'Balance', 'DSM'])
+                energies.append(sums.to_frame("{}.{}.{}".format(stf, sit, com)))
+
+            # write timeseries data (if any)
+            if timeseries:
+                # concatenate Commodity sums
+                energy = pd.concat(energies, axis=1).fillna(0)
+                energy.to_excel(writer, 'Commodity sums')
+
+                # write timeseries to individual sheets
+                for stf, sit, com in report_tuples:
+                    if isinstance(sit, list):
+                        sit = tuple(sit)
+                    # sheet names cannot be longer than 31 characters...
+                    sheet_name = "{}.{}.{} timeseries".format(
+                        stf, report_sites_name[sit], com)[:31]
+                    timeseries[(stf, report_sites_name[sit], com)].to_excel(
+                        writer, sheet_name)
+
         else:
             costs = pd.concat([instance.near_optimal_cost],keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
                                  names=['Objective'])
-            nopt_cap = pd.concat([instance.near_optimal_capacities],
+            pro_cap = pd.concat([instance.near_optimal_capacities],
+                                 keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
+                                 names=['Objective'])
+            sto_cap = pd.concat([instance.near_optimal_storage],
                                  keys=[str(list(instance.objective_dict.items())).replace("'", "").strip("[]")],
                                  names=['Objective'])
             costs.to_excel(writer, 'Costs')
-            nopt_cap.to_excel(writer, 'Near-Optimal Process Capacities')
+            pro_cap.to_excel(writer, 'Near-Optimal Process Capacities')
+            sto_cap.to_excel(writer, 'Near-Optimal Storage Capacities')
+            instance.slack_list.sort()
+            for slack in instance.slack_list:
+                ts_name_1 = str(slack) + '_Min'
+                ts_name_2 = str(slack) + '_Max'
+                energy_min=instance.timeseries_data[ts_name_1][0]
+                timeseries_min = instance.timeseries_data[ts_name_1][1]
+                if timeseries_min:
+                    energy_min.to_excel(writer, 'Commodity sums'+ts_name_1)
+                for stf, sit, com in report_tuples:
+                    if isinstance(sit, list):
+                        sit = tuple(sit)
+                    # sheet names cannot be longer than 31 characters...
+                    sheet_name = "{}.{}.{}.{} timeseries".format(
+                        ts_name_1,stf, report_sites_name[sit], com)[:31]
+                    timeseries_min[(stf, report_sites_name[sit], com)].to_excel(
+                        writer, sheet_name)
 
-        # initialize timeseries tableaus
-        energies = []
-        timeseries = {}
-        help_ts = {}
+                energy_max=instance.timeseries_data[ts_name_2][0]
+                timeseries_max = instance.timeseries_data[ts_name_2][1]
+                if timeseries_max:
+                    energy_max.to_excel(writer, 'Commodity sums'+ts_name_2)
+                for stf, sit, com in report_tuples:
+                    if isinstance(sit, list):
+                        sit = tuple(sit)
+                    # sheet names cannot be longer than 31 characters...
+                    sheet_name = "{}.{}.{}.{} timeseries".format(
+                        ts_name_2,stf, report_sites_name[sit], com)[:31]
+                    timeseries_max[(stf, report_sites_name[sit], com)].to_excel(
+                        writer, sheet_name)
 
-        # collect timeseries data
-        for stf, sit, com in report_tuples:
+def read_generation(instance, report_tuples=None, report_sites_name={}):
 
-            # wrap single site name in 1-element list for consistent behavior
-            if is_string(sit):
-                help_sit = [sit]
-            else:
-                help_sit = sit
-                sit = tuple(sit)
+    if len(report_tuples)==0:
+        report_tuples = get_input(instance, 'dsm').index
+    # initialize timeseries tableaus
+    energies = []
+    timeseries = {}
+    help_ts = {}
 
-            # check existence of predefined names, else define them
-            try:
-                report_sites_name[sit]
-            except BaseException:
-                report_sites_name[sit] = str(sit)
+    # collect timeseries data
+    for stf, sit, com in report_tuples:
 
-            for lv in help_sit:
-                (created, consumed, stored, imported, exported,
-                 dsm, voltage_angle) = get_timeseries(instance, stf, com, lv)
+        # wrap single site name in 1-element list for consistent behavior
+        if is_string(sit):
+            help_sit = [sit]
+        else:
+            help_sit = sit
+            sit = tuple(sit)
 
-                overprod = pd.DataFrame(
-                    columns=['Overproduction'],
-                    data=created.sum(axis=1) - consumed.sum(axis=1) +
-                         imported.sum(axis=1) - exported.sum(axis=1) +
-                         stored['Retrieved'] - stored['Stored'])
+        # check existence of predefined names, else define them
+        try:
+            report_sites_name[sit]
+        except BaseException:
+            report_sites_name[sit] = str(sit)
 
-                tableau = pd.concat(
-                    [created, consumed, stored, imported, exported, overprod,
-                     dsm, voltage_angle],
-                    axis=1,
-                    keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'DSM', 'Voltage Angle'])
-                help_ts[(stf, lv, com)] = tableau.copy()
+        for lv in help_sit:
+            (created, consumed, stored, imported, exported,
+             dsm, voltage_angle) = get_timeseries(instance, stf, com, lv)
 
-                # timeseries sums
-                help_sums = pd.concat([created.sum(), consumed.sum(),
-                                       stored.sum().drop('Level'),
-                                       imported.sum(), exported.sum(),
-                                       overprod.sum(), dsm.sum()],
-                                      axis=0,
-                                      keys=['Created', 'Consumed', 'Storage',
-                                            'Import', 'Export', 'Balance',
-                                            'DSM'])
-                try:
-                    timeseries[(stf, report_sites_name[sit], com)] = \
-                        timeseries[(stf, report_sites_name[sit], com)].add(
-                            help_ts[(stf, lv, com)], axis=1, fill_value=0)
-                    sums = sums.add(help_sums, fill_value=0)
-                except BaseException:
-                    timeseries[(stf, report_sites_name[sit], com)] = help_ts[
-                        (stf, lv, com)]
-                    sums = help_sums
+            overprod = pd.DataFrame(
+                columns=['Overproduction'],
+                data=created.sum(axis=1) - consumed.sum(axis=1) +
+                     imported.sum(axis=1) - exported.sum(axis=1) +
+                     stored['Retrieved'] - stored['Stored'])
+
+            tableau = pd.concat(
+                [created, consumed, stored, imported, exported, overprod,
+                 dsm, voltage_angle],
+                axis=1,
+                keys=['Created', 'Consumed', 'Storage', 'Import from',
+                      'Export to', 'Balance', 'DSM', 'Voltage Angle'])
+            help_ts[(stf, lv, com)] = tableau.copy()
 
             # timeseries sums
-            sums = pd.concat([created.sum(), consumed.sum(),
-                              stored.sum().drop('Level'),
-                              imported.sum(), exported.sum(), overprod.sum(),
-                              dsm.sum()],
-                             axis=0,
-                             keys=['Created', 'Consumed', 'Storage', 'Import',
-                                   'Export', 'Balance', 'DSM'])
-            energies.append(sums.to_frame("{}.{}.{}".format(stf, sit, com)))
+            help_sums = pd.concat([created.sum(), consumed.sum(),
+                                   stored.sum().drop('Level'),
+                                   imported.sum(), exported.sum(),
+                                   overprod.sum(), dsm.sum()],
+                                  axis=0,
+                                  keys=['Created', 'Consumed', 'Storage',
+                                        'Import', 'Export', 'Balance',
+                                        'DSM'])
+            try:
+                timeseries[(stf, report_sites_name[sit], com)] = \
+                    timeseries[(stf, report_sites_name[sit], com)].add(
+                        help_ts[(stf, lv, com)], axis=1, fill_value=0)
+                sums = sums.add(help_sums, fill_value=0)
+            except BaseException:
+                timeseries[(stf, report_sites_name[sit], com)] = help_ts[
+                    (stf, lv, com)]
+                sums = help_sums
 
-        # write timeseries data (if any)
-        if timeseries:
-            # concatenate Commodity sums
-            energy = pd.concat(energies, axis=1).fillna(0)
-            energy.to_excel(writer, 'Commodity sums')
+        # timeseries sums
+        sums = pd.concat([created.sum(), consumed.sum(),
+                          stored.sum().drop('Level'),
+                          imported.sum(), exported.sum(), overprod.sum(),
+                          dsm.sum()],
+                         axis=0,
+                         keys=['Created', 'Consumed', 'Storage', 'Import',
+                               'Export', 'Balance', 'DSM'])
+        energies.append(sums.to_frame("{}.{}.{}".format(stf, sit, com)))
 
-            # write timeseries to individual sheets
-            for stf, sit, com in report_tuples:
-                if isinstance(sit, list):
-                    sit = tuple(sit)
-                # sheet names cannot be longer than 31 characters...
-                sheet_name = "{}.{}.{} timeseries".format(
-                    stf, report_sites_name[sit], com)[:31]
-                timeseries[(stf, report_sites_name[sit], com)].to_excel(
-                    writer, sheet_name)
+    # write timeseries data (if any)
+    if timeseries:
+        # concatenate Commodity sums
+        com_sums = pd.concat(energies, axis=1).fillna(0)
+    else:
+        com_sums= None
+        timeseries= None
+    return com_sums,timeseries

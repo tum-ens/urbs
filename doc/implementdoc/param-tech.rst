@@ -50,13 +50,13 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{K}_{yvp}`                   |MW  |Process Capacity Upper Bound                |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{vp}`                               |MW  |Remaining Lifetime of Installed Processes   |
+    |:math:`T_{vp}`                               |a   |Remaining Lifetime of Installed Processes   |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{PG}_{yvp}`                  |1/h |Process Maximal Power Gradient (relative)   |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\underline{P}_{yvp}`                  | _  |Process Minimum Part Load Fraction          |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`f_{yvpt}^\text{out}`                  | _  |Process Output Ratio Multiplyer             |
+    |:math:`f_{yvpt}^\text{out}`                  | _  |Process Output Ratio Multiplier             |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`r_{ypc}^\text{in}`                    | _  |Process Input Ratio                         |
     +---------------------------------------------+----+--------------------------------------------+
@@ -88,7 +88,7 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{K}_{yvs}^\text{p}`          |MW  |Storage Power Upper Bound                   |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{vs}`                               |MW  |Remaining Lifetime of Installed Storages    |
+    |:math:`T_{vs}`                               |a   |Remaining Lifetime of Installed Storages    |
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`k_{yvs}^\text{E/P}`                   |h   |Storage Energy to Power Ratio               |    
     +---------------------------------------------+----+--------------------------------------------+
@@ -173,8 +173,8 @@ Commodity Technical Parameters
 ------------------------------
 
 **Demand for Commodity**, :math:`d_{yvct}`,
-``m.demand_dict[(stf, sit, com)][tm]``: The parameter represents the energy
-amount of a demand commodity tuple :math:`c_{yvq}` required at a timestep
+``m.demand_dict[(sit, com)][(stf, tm)]``: The parameter :math:`d_{yvct}` represents 
+the energy amount of a demand commodity tuple :math:`c_{yvq}` required at a timestep
 :math:`t`
 (:math:`\forall y \in Y, \forall v \in V, q = "Demand", \forall t \in T_m`).
 The unit of this parameter is MWh. This data is to be provided by the user and
@@ -184,13 +184,13 @@ found in the "Demand" sheet. Here each row represents another timestep
 :math:`t` and each column represent a commodity tuple :math:`c_{yvq}`. Rows are
 named after the timestep number :math:`n` of timesteps :math:`t_n`. Columns are
 named after the combination of site name :math:`v` and commodity name :math:`c`
-respecting the order and seperated by a period(.). For example (Mid, Elec)
-represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted
+respecting the order and seperated by a period(.). For example (Mid.Elec)
+represents the commodity Elec in site Mid. Commodity type :math:`q` is omitted
 in column declarations, because every commodity of this parameter has to be
 from commodity type `Demand` in any case.
 
 **Intermittent Supply Capacity Factor**, :math:`s_{yvct}`,
-``m.supim_dict[(stf, sit, coin)][tm]``: The parameter :math:`s_{yvct}`
+``m.supim_dict[(sit, coin)][(stf, tm)]``: The parameter :math:`s_{yvct}`
 represents the normalized availability of a supply intermittent commodity
 :math:`c` :math:`(\forall c \in C_\text{sup})` in a support timeframe :math:`y` 
 and site :math:`v` at a timestep :math:`t`. In other words this parameter gives
@@ -199,11 +199,11 @@ of a supply intermittent commodity. This data is to be provided by the user and
 to be entered in the spreadsheet corresponding to the support timeframe. The
 related section for this parameter in the spreadsheet can be found under the
 "SupIm" sheet. Here each row represents another timestep :math:`t` and each
-column represent a commodity tuple :math:`c_{vq}`. Rows are named after the
+column represent a commodity tuple :math:`c_{yvq}`. Rows are named after the
 timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the
-combination of site name :math:`v` and commodity name :math:`c`, in this
-respective order and separated by a period(.). For example (Mid.Elec)
-represents the commodity Elec in site Mid. Commodity Type :math:`q` is omitted
+combination of site name :math:`v` and commodity name :math:`c`, respectively
+ and separated by a period(.). For example (Mid.Elec)
+represents the commodity Elec in site Mid. Commodity type :math:`q` is omitted
 in column declarations, because every commodity of this parameter has to be
 from commodity type `SupIm` in any case.
 
@@ -216,7 +216,7 @@ allowed to use per hour. The unit of this parameter is MW. This parameter
 applies to every timestep and does not vary for each timestep :math:`t`. This
 parameter is to be provided by the user and to be entered in spreadsheet
 corresponding to the support timeframe. The related section for this parameter
-in the spreadsheet can be found under the ``Commodity`` sheet. Here each row
+in the spreadsheet can be found under the "Commodity" sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column with the
 header label "maxperhour" represents the parameter :math:`\overline{l}_{yvc}`.
 If there is no desired restriction of a stock commodity tuple usage per
@@ -230,10 +230,10 @@ commodity tuple :math:`c_{yvq}`
 allowed to use annually. The unit of this parameter is MWh. This parameter is
 to be provided by the user and to be entered in spreadsheet corresponding to
 the support timeframe. The related section for this parameter in the
-spreadsheet can be found under the ``Commodity`` sheet. Here each row
+spreadsheet can be found under the "Commodity" sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column with the
 header label "max" represents the parameter :math:`\overline{L}_{yvc}`. If
-there is no desired restriction of a stock commodity tuple usage per timestep,
+there is no desired restriction of a stock commodity tuple usage annually,
 the corresponding cell can be set to "inf" to ignore this parameter. 
 
 **Maximum Environmental Output Per Hour**, :math:`\overline{m}_{yvc}`,
@@ -245,7 +245,7 @@ allowed to produce and release to environment per time step. This parameter
 applies to every timestep and does not vary for each timestep :math:`t/h`. This
 parameter is to be provided by the user and to be entered in spreadsheet
 corresponding to the support timeframe. The related section for this parameter
-in the spreadsheet can be found under the ``Commodity`` sheet. Here each row
+in the spreadsheet can be found under the "Commodity" sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column with the
 header label "maxperhour" represents the parameter :math:`\overline{m}_{yvc}`.
 If there is no desired restriction of an environmental commodity tuple usage per
@@ -253,16 +253,16 @@ timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
 **Maximum Annual Environmental Output**, :math:`\overline{M}_{yvc}`,
 ``m.commodity_dict['max'][(stf, sit, com, com_type)]``: The parameter
-:math:`\overline{M}_{vc}` represents the maximum energy amount of an
+:math:`\overline{M}_{yvc}` represents the maximum energy amount of an
 environmental commodity tuple :math:`c_{yvq}`
 (:math:`\forall y\in Y, \forall v \in V , q = "Env"`) that energy model is
 allowed to produce and release to environment annually. This parameter is to be
 provided by the user and to be entered in spreadsheet corresponding to the
 support timeframe. The related section for this parameter in the spreadsheet
-can be found under the ``Commodity`` sheet. Here each row represents another
+can be found under the "Commodity" sheet. Here each row represents another
 commodity tuple :math:`c_{yvq}` and the column with the header label "max"
 represents the parameter :math:`\overline{M}_{yvc}`. If there is no desired
-restriction of a stock commodity tuple usage per timestep, the corresponding
+restriction of the annual environmental commodity tuple usage, the corresponding
 cell can be set to "inf" to ignore this parameter.
 
 **Maximum Sell Limit Per Hour**, :math:`\overline{g}_{yvc}`,
@@ -274,7 +274,7 @@ allowed to sell per hour. The unit of this parameter is MW. This parameter
 applies to every timestep and does not vary for each timestep :math:`t`. This
 parameter is to be provided by the user and to be entered in spreadsheet. The
 related section for this parameter in the spreadsheet corresponding to the
-support timeframe can be found under the ``Commodity`` sheet. Here each row
+support timeframe can be found under the "Commodity" sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column with the
 header label "maxperhour" represents the parameter :math:`\overline{g}_{yvc}`.
 If there is no desired restriction of a sell commodity tuple usage per
@@ -288,10 +288,10 @@ commodity tuple :math:`c_{yvq}`
 allowed to sell annually. The unit of this parameter is MWh. This parameter is
 to be provided by the user and to be entered in spreadsheet corresponding to
 the support timeframe. The related section for this parameter in the
-spreadsheet can be found under the ``Commodity`` sheet. Here each row
+spreadsheet can be found under the "Commodity" sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column of sell with
 the header label "max" represents the parameter :math:`\overline{G}_{yvc}`. If
-there is no desired restriction of a sell commodity tuple usage per timestep,
+there is no desired restriction of a sell commodity tuple usage annually,
 the corresponding cell can be set to "inf" to ignore this parameter. 
 
 **Maximum Buy Limit Per Hour**, :math:`\overline{b}_{yvc}`,
@@ -303,10 +303,10 @@ allowed to buy per hour. The unit of this parameter is MW. This parameter
 applies to every timestep and does not vary for each timestep :math:`t`. This
 parameter is to be provided by the user and to be entered in spreadsheet
 corresponding to the support timeframe. The related section for this parameter
-in the spreadsheet can be found under the ``Commodity`` sheet. Here each row
+in the spreadsheet can be found under the "Commodity" sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column with the
 header label "maxperhour" represents the parameter :math:`\overline{b}_{yvc}`.
-If there is no desired restriction of a sell commodity tuple usage per
+If there is no desired restriction of a buy commodity tuple usage per
 timestep, the corresponding cell can be set to "inf" to ignore this parameter.
 
 **Maximum Annual Buy Limit**, :math:`\overline{B}_{yvc}`,
@@ -317,15 +317,15 @@ commodity tuple :math:`c_{yvq}`
 allowed to buy annually. The unit of this parameter is MWh. This parameter is
 to be provided by the user and to be entered in spreadsheet corresponding to
 the support timeframe. The related section for this parameter in the
-spreadsheet can be found under the ``Commodity`` sheet. Here each row
+spreadsheet can be found under the "Commodity" sheet. Here each row
 represents another commodity tuple :math:`c_{yvq}` and the column with the
 header label "max" represents the parameter :math:`\overline{B}_{yvc}`. If
-there is no desired restriction of a buy commodity tuple usage per timestep,
+there is no desired restriction of a buy commodity tuple usage annually,
 the corresponding cell can be set to "inf" to ignore this parameter. 
 
 **Maximum Global Annual CO**:math:`_\textbf{2}` **Annual Emission Limit**,
 :math:`\overline{L}_{CO_2,y}`,
-``m.global_prop.loc[stf, 'CO2 limit']['value']``: The parameter
+``m.global_prop_dict['value'][stf, 'CO2 limit']``: The parameter
 :math:`\overline{L}_{CO_2,y}` represents the maximum total amount of CO2 the
 energy model is allowed to produce and release to the environment annually. If
 the user desires to set a maximum annual limit to total :math:`CO_2` emission
@@ -337,9 +337,9 @@ under the sheet "Global". Here the the cell where the "CO2 limit" row and
 :math:`\overline{L}_{CO_2,y}`. If the user wants to disable this parameter and
 restriction it provides, this cell can be set to "inf" or simply be deleted.
 
-**CO**:math:`_\textbf{2}` **Total Emission budget**,
+**CO**:math:`_\textbf{2}` **Emission Budget for Modeling Horizon**,
 :math:`\overline{\overline{L}}_{CO_2}`,
-``m.global_prop.loc[min(m.stf), 'CO2 budget']['value']``: The parameter
+``m.global_prop_dict['value'][min(m.stf_list), 'CO2 budget']``: The parameter
 :math:`\overline{\overline{L}}_{CO_2}` represents the maximum total amount of
 CO2 the energy model is allowed to produce and release to the environment
 over the entire modeling horizon. If the user desires to set a limit to total
@@ -398,7 +398,7 @@ limit for the process capacities, both input parameters can be simply set to
 "inf".
 
 **Remaining Lifetime of Installed Processes**, :math:`T_{vp}`,
-``m.process.loc[(min(m.stf), sit, pro), 'lifetime']``: The parameter
+``m.process_dict['lifetime'][(stf, sit, pro)])``: The parameter
 :math:`T_{vp}` represents the remaining lifetime of already installed units. It
 is used to determine the set `m.inst_pro_tuples`, i.e. to identify for which
 support timeframes the installed unit can still be used.
@@ -430,10 +430,10 @@ only relevant when the part load behavior for the process is active, i.e., when
 in the process commodity sheet a value for "ratio-min" is set for at least one
 input commodity.  
 
-**Process Output Ratio multiplyer**, :math:`f_{yvpt}^\text{out}`,
+**Process Output Ratio Multiplier**, :math:`f_{yvpt}^\text{out}`,
 ``m.eff_factor_dict[(stf, sit, pro)]``: The parameter time series
 :math:`f_{yvpt}^\text{out}` allows for a time dependent modification of process
-outputs and by extension of the efficiency of a process :math:`p` in site
+outputs and consequently the efficiency of a process :math:`p` in site
 :math:`v` and support timeframe :math:`y`. It can be used, e.g., to
 model temperature dependent efficiencies of processes or to include scheduled
 maintenance intervals. In the spreadsheet corresponding to the support
@@ -442,10 +442,10 @@ represents another timestep :math:`t` and each column represent a process tuple
 :math:`p_{yv}`. Rows are named after the timestep number :math:`n` of timesteps
 :math:`t_n`. Columns are named after the combination of site name :math:`v` and
 commodity name and process name :math:`p` respecting the order and seperated by
-a period(.). For example (Mid, Lignite plant) represents the process Lignite
-plant in site Mid. Note that the output of environmental commodity outputs are
+a period(.). For example (Mid.Lignite plant) represents the process Lignite
+plant in site Mid. Note that the output of environmental commodity is
 not manipulated by this factor as it is typically linked to an input commodity
-as , e.g., CO2 output is linked to a fossil input.
+as, e.g., CO2 output is linked to a fossil input.
 
 **Process Input Ratio**, :math:`r_{ypc}^\text{in}`,
 ``m.r_in_dict[(stf, pro, co)]``: The parameter :math:`r_{ypc}^\text{in}`
@@ -470,7 +470,7 @@ parameter in the spreadsheet corresponding to the support timeframe can be
 found under the "Process-Commodity" sheet. Here each row represents another
 commodity :math:`c` that either goes in to or comes out of a process :math:`p`.
 The column with the header label "ratio-min" represents the parameters
-:math:`\underline{r}_{ypc}^\text{in,out}` of the corresponding process
+:math:`\underline{r}_{ypc}^\text{in}` of the corresponding process
 :math:`p` and commodity :math:`c` if the latter is an input commodity.
 
 **Process Output Ratio**, :math:`r_{ypc}^\text{out}`,
@@ -481,8 +481,8 @@ a given timestep.  The related section for this parameter in the spreadsheet
 corresponding to the support timeframe can be found under the
 "Process-Commodity" sheet. Here each row represents another commodity :math:`c`
 that either goes in to or comes out of a process :math:`p`. The column with the
-header label "ratio" represents the parameters of the corresponding process
-:math:`p` and commodity :math:`c` if the latter is an output commodity.
+header label "ratio" represents the parameters :math:`r_{ypc}^\text{out}` of 
+the corresponding process :math:`p` and commodity :math:`c` if the latter is an output commodity.
 
 **Process Partial Output Ratio**, :math:`\underline{r}_{ypc}^\text{out}`,
 ``m.r_out_min_fraction[stf, pro, coo]``: The parameter
@@ -495,7 +495,7 @@ parameter in the spreadsheet corresponding to the support timeframe can be
 found under the "Process-Commodity" sheet. Here each row represents another
 commodity :math:`c` that either goes in to or comes out of a process :math:`p`.
 The column with the header label "ratio-min" represents the parameters
-:math:`\underline{r}_{ypc}^\text{in,out}` of the corresponding process
+:math:`\underline{r}_{ypc}^\text{out}` of the corresponding process
 :math:`p` and commodity :math:`c` if the latter is an output commodity.
 
 Process input and output ratios are, in general, used for unit conversion
@@ -541,7 +541,7 @@ found under the "Storage" sheet. Here each row represents a storage technology
 with the header label "eff-in" represents the parameters
 :math:`e_{yvs}^\text{in}` for corresponding storage tuples.
 
-**Storage Efficiency During discharge**, :math:`e_{yvs}^\text{out}`,
+**Storage Efficiency During Discharge**, :math:`e_{yvs}^\text{out}`,
 ``m.storage_dict['eff-out'][(stf, sit, sto, com)]``: The parameter
 :math:`e_{yvs}^\text{out}` represents the discharging efficiency of a storage
 :math:`s` in a site :math:`v` and support timeframe :math:`y` that stores a
@@ -557,7 +557,7 @@ with the header label "eff-out" represents the parameters
 
 **Storage Self-discharge Per Hour**, :math:`d_{yvs}`,
 ``m.storage_dict['discharge'][(stf, sit, sto, com)]``: The parameter
-:math:`d_{vs}` represents the fraction of the energy content within a storage
+:math:`d_{yvs}` represents the fraction of the energy content within a storage
 which is lost due to self-discharge per hour. It introduces an exponential
 decay of a given storage state if no charging/discharging takes place. The unit
 of this parameter is 1/h. The related section for this parameter in the
@@ -583,9 +583,9 @@ parameter can be simply set to "0".
 **Storage Capacity Installed**, :math:`K_{vs}^\text{c}`,
 ``m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)]]``: The parameter
 :math:`K_{vs}^\text{c}` represents the amount of energy content capacity of a
-storage :math:`s` storing commodity :math:`c` in a site :math:`v` and support
-timeframe :math:`y`, that is already installed to the energy system at the
-beginning of the model horizon. The unit of this parameter is MWh. The related
+storage :math:`s` storing commodity :math:`c` in a site :math:`v`, 
+that is already installed to the energy system at the
+beginning of the modeling horizon. The unit of this parameter is MWh. The related
 section for this parameter in the spreadsheet corresponding to the first
 support timeframe can be found under the "Storage" sheet. Here each row
 represents a storage technology :math:`s` in a site :math:`v` that stores a
@@ -603,7 +603,7 @@ represents a storage technology :math:`s` in a site :math:`v` that stores a
 commodity :math:`c`. The column with the header label "cap-up-c" represents the
 parameters :math:`\overline{K}_{yvs}^\text{c}` for corresponding storage
 tuples. If there is no desired maximum limit for the storage energy content
-capacities, this parameter can be simply set to ""inf"".
+capacities, this parameter can be simply set to "inf".
 
 **Storage Power Lower Bound**, :math:`\underline{K}_{yvs}^\text{p}`,
 ``m.storage_dict['cap-lo-p'][(stf, sit, sto, com)]``: The parameter
@@ -621,9 +621,9 @@ parameter can be simply set to "0".
 **Storage Power Installed**, :math:`K_{vs}^\text{p}`,
 ``m.storage_dict['inst-cap-p'][(min(m.stf), sit, sto, com)]]``: The parameter
 :math:`K_{vs}^\text{p}` represents the amount of charging/discharging power of
-a storage :math:`s` storing commodity :math:`c` in a site :math:`v` and support
-timeframe :math:`y`, that is already installed to the energy system at the
-beginning of the model horizon. The unit of this parameter is MW. The related
+a storage :math:`s` storing commodity :math:`c` in a site :math:`v`, 
+that is already installed to the energy system at the
+beginning of the modeling horizon. The unit of this parameter is MW. The related
 section for this parameter in the spreadsheet corresponding to the first
 support timeframe can be found under the "Storage" sheet. Here each row
 represents a storage technology :math:`s` in a site :math:`v` that stores a
@@ -632,7 +632,7 @@ the parameters :math:`K_{vs}^\text{p}` for corresponding storage tuples.
 
 **Storage Power Upper Bound**, :math:`\overline{K}_{yvs}^\text{p}`,
 ``m.storage_dict['cap-up-p'][(stf, sit, sto, com)]``: The parameter
-:math:`\overline{K}_{yvs}^\text{c}` represents the maximum amount of
+:math:`\overline{K}_{yvs}^\text{p}` represents the maximum amount of
 charging/discharging power allowed of a storage :math:`s` storing a commodity
 :math:`c` in a site :math:`v` in support timeframe :math:`y`. The unit of this
 parameter is MW. The related section for this parameter in the spreadsheet
@@ -640,11 +640,11 @@ corresponding to the support timeframe can be found under the "Storage" sheet.
 Here each row represents a storage technology :math:`s` in a site :math:`v`
 that stores a commodity :math:`c`. The column with the header label "cap-up-p"
 represents the parameters :math:`\overline{K}_{yvs}^\text{p}` for corresponding
-storage tuples. If there is no desired maximum limit for the storage energy
-content capacities, this parameter can be simply set to ""inf"".
+storage tuples. If there is no desired maximum limit for the storage charging/discharging 
+powers, this parameter can be simply set to "inf".
 
 **Remaining Lifetime of Installed Storages**, :math:`T_{vs}`,
-``m.storage.loc[(min(m.stf), sit, pro), 'lifetime']``: The parameter
+``m.storage_dict['lifetime'][(stf, sit, sto, com)])``: The parameter
 :math:`T_{vs}` represents the remaining lifetime of already installed units. It
 is used to determine the set `m.inst_sto_tuples`, i.e. to identify for which
 support timeframes the installed units can still be used.
@@ -682,9 +682,9 @@ transmission tuples.
 
 **Transmission Capacity Lower Bound**, :math:`\underline{K}_{yaf}`,
 ``m.transmission_dict['cap-lo'][(stf, sin, sout, tra, com)]``: The parameter
-:math:`\underline{K}_{<af}` represents the minimum power output capacity of a
+:math:`\underline{K}_{yaf}` represents the minimum power output capacity of a
 transmission :math:`f` transferring a commodity :math:`c` through an arc
-:math:`a`, that the energy system model is required to have. Here an arc
+:math:`a` in a support timeframe :math:`y`, that the energy system model is required to have. Here an arc
 :math:`a` defines the connection line from an origin site :math:`v_\text{out}`
 to a destination site :math:`{v_\text{in}}`. The unit of this parameter is MW.
 The related section for this parameter in the spreadsheet corresponding to the
@@ -720,7 +720,7 @@ the parameters :math:`\overline{K}_{yaf}` of the corresponding transmission
 tuples.
 
 **Remaining Lifetime of Installed Transmission**, :math:`T_{af}`,
-``m.transmission.loc[(min(m.stf), sitin, sitout, tra, com), 'lifetime']``: The
+``m.transmission_dict['lifetime'][(stf, sit1, sit2, tra, com)])``: The
 parameter :math:`T_{af}` represents the remaining lifetime of already installed
 units. It is used to determine the set `m.inst_tra_tuples`, i.e. to identify
 for which support timeframes the installed units can still be used.
@@ -816,7 +816,7 @@ this parameter in the spreadsheet corresponding to the support timeframe can be
 found under the "DSM" sheet. Here each row represents another DSM potential for
 demand commodity :math:`c` in site :math:`v`. The column with the header label
 "recov" represents the parameters :math:`o_{yvc}` of the corresponding DSM
-tuples. If no limitation via this parameter is desired it has to be set to
+tuples. If no limitation via this parameter is desired, it has to be set to
 values lower than the delay time :math:`y_{yvc}`.
 
 **DSM Maximal Upshift Per Hour**, :math:`\overline{K}_{yvc}^\text{up}`, MW,
@@ -832,7 +832,7 @@ the corresponding DSM tuples.
 
 **DSM Maximal Downshift Per Hour**, :math:`\overline{K}_{yvc}^\text{down}`, MW,
 ``m.dsm_dict['cap-max-do'][(stf, sit, com)]``: The DSM downshift capacity
-:math:`\overline{K}_{yvc}^\text{up}` limits the total downshift per hour for a
+:math:`\overline{K}_{yvc}^\text{down}` limits the total downshift per hour for a
 DSM potential of demand commodity :math:`c` in site :math:`v` and support
 timeframe :math:`y`. The parameter is given in MW. The related section for
 this parameter in the spreadsheet corresponding to the support timeframe can be

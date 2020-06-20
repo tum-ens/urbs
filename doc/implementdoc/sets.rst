@@ -68,7 +68,7 @@ Where:
 Modelled Timesteps
 ^^^^^^^^^^^^^^^^^^
 
-The set, **modelled timesteps**, is a subset of the time steps set. The only
+The set, **modelled timesteps**, is a subset of the timesteps set. The only
 difference between modelled timesteps set and the timesteps set is that the
 initial timestep :math:`t_0` is not included. All other features of the set
 time steps also apply to the set of modelled timesteps. This set is the main
@@ -112,7 +112,7 @@ where:
 
 * The ``commodity_dict["price"]`` is a dictionary in which prices of commodities in the 
   sites are noted for each support timeframe (i.e. year). The dictionary's keys have
-  the form: Year, Site, Commodity Name, Commodity Type.
+  the elements: (Year, Site, Commodity Name, Commodity Type).
 
 Sites
 ^^^^^
@@ -203,8 +203,8 @@ fragment:
 
 where:
 
-* The ``m.process_dict["inv-cost"]`` is again a dictionary whose key has the form:
-  Year, Site, Process. (see also :ref:`process <process-def-userguide>`)
+* The ``m.process_dict["inv-cost"]`` is again a dictionary whose key has the elements:
+  (Year, Site, Process). An example key would look like as follows: (2020, 'Mid', 'Biomass plant').
 
 
 Storages
@@ -231,8 +231,8 @@ initialized by the code fragment:
 
 where:
 
-* The ``m.storage_dict["eff-in"]`` is a dictionary whose key has the form: Year, 
-  Site, Storage, Commodity. An example key would look like as follows: (2020, 
+* The ``m.storage_dict["eff-in"]`` is a dictionary whose key has the elements: (Year, 
+  Site, Storage, Commodity). An example key would look like as follows: (2020, 
   'Mid', 'Hydrogen', 'Elec').
 
 Transmissions
@@ -257,7 +257,7 @@ fragment:
 
 where:
 
-* The ``m.transmission_dict["eff"]`` is a dictionary whose key has the form: 
+* The ``m.transmission_dict["eff"]`` is a dictionary whose key has the elements: 
   Year, Site In, Site Out, Transmission, Commodity.
 
 .. _sec-cost-types:
@@ -300,10 +300,8 @@ Commodity Tuples
 Commodity tuples represent combinations of defined commodities.
 These are represented by the set :math:`C_{yvq}`. A member :math:`c_{yvq}` in
 set :math:`C_{yvq}` is a commodity :math:`c` of commodity type :math:`q` in
-support timeframe :math:`y` and site :math:`v`. For example, `(2020, Mid, Elec, Demand)` 
-is interpreted as commodity `Elec` of commodity type `Demand` in the
-year `2020` in site `Mid`. This set is defined as ``com_tuples`` and given by
-the code fragment under ``model.py``:
+support timeframe :math:`y` and site :math:`v`.  This set is defined as 
+``com_tuples`` and given by the code fragment under ``model.py``:
 
 ::
 
@@ -314,7 +312,9 @@ the code fragment under ``model.py``:
 
 where:
 
-* The key of ``commodity_dict`` has the following form: (Year, Site, Commodity, Commodity Type).
+* The keys of ``commodity_dict["price"]`` has the following elements: (Year, Site, Commodity, Commodity Type).
+  For example, `(2020, Mid, Elec, Demand)` and it is interpreted as commodity `Elec` of commodity type 
+  `Demand` in the year `2020` in site `Mid`.
 
 Process Tuples
 ^^^^^^^^^^^^^^
@@ -322,9 +322,7 @@ Process Tuples
 Process tuples represent possible placements of processes within the model.
 These are represented by the set :math:`P_{yv}`. A member :math:`p_{yv}` in set
 :math:`P_{yv}` is a process :math:`p` in support timeframe :math:`y` and site
-:math:`v`. For example, `(2020, North, Coal Plant)` is interpreted as process
-`Coal Plant` in site `North` in the year `2020`. This set is defined as
-``pro_tuples`` and given by the code fragment:
+:math:`v`. This set is defined as ``pro_tuples`` and given by the code fragment:
 
 ::
 
@@ -335,7 +333,9 @@ These are represented by the set :math:`P_{yv}`. A member :math:`p_{yv}` in set
 
 where:
 
-* The key of ``process_dict["inv-cost"]`` has the following form: Year, Site, Process.
+* The key of ``process_dict["inv-cost"]`` has the following elements: (Year, Site, Process).
+  For example, `(2020, 'North', 'Coal Plant')` and it is interpreted as process `Coal Plant` 
+  in site `North` in the year `2020`.
 
 There are three subsets defined for process tuples, which each activate a
 different set of modeling constraints.
@@ -349,12 +349,17 @@ input commodities in table *Process-Commodity*. The tuple set is defined as:
 ::
 
     m.pro_partial_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
+        within=m.stf * m.sit * m.pro,
         initialize=[(stf, site, process)
                     for (stf, site, process) in m.pro_tuples
-                    for (s, pro, _) in m.r_in_min_fraction.index
+                    for (s, pro, _) in tuple(m.r_in_min_fraction_dict.keys())
                     if process == pro and s == stf],
         doc='Processes with partial input')
+
+where:
+
+* The keys of dictionary ``r_in_min_fraction_dict`` contain the data: Year, Process, Commodity.
+  For example `(2020, 'Coal Plant', 'Coal')`.
 
 The second subset is formed in order to capture all processes that take up a
 certain area and are thus subject to the area constraint at the given site.
@@ -364,10 +369,16 @@ tuple set is defined as:
 
 ::
 
+    # process tuples for area rule
     m.pro_area_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
-        initialize=m.proc_area.index,
+        within=m.stf * m.sit * m.pro,
+        initialize=tuple(m.proc_area_dict.keys()),
         doc='Processes and Sites with area Restriction')
+
+where:
+
+* The key of dictionary ``proc_area_dict`` has the form: Year, Site, Process.
+  For example `(2020, 'Mid', 'Photovoltaics')`.
 
 Finally, processes that are subject to restrictions in the change of
 operational state are captured with the ``pro_maxgrad_tuples``. This subset is
@@ -375,12 +386,20 @@ defined as:
 
 ::
 
+    # process tuples for maximum gradient feature
     m.pro_maxgrad_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
+        within=m.stf * m.sit * m.pro,
         initialize=[(stf, sit, pro)
                     for (stf, sit, pro) in m.pro_tuples
-                    if m.process.loc[stf, sit, pro]['max-grad'] < 1.0 / dt],
+                    if m.process_dict['max-grad'][stf, sit, pro] < 1.0 / dt],
         doc='Processes with maximum gradient smaller than timestep length')
+
+where:
+
+* The ``process_dict['max-grad'][stf, sit, pro]`` returns the values from `max-grad` 
+  column in the `process` sheet of input excel files. In the dictionary, the keys that
+  correspond to the values are tuples in form Stf, sit, pro and they are to interpreted
+  as `year, site, process`.
 
 Transmission Tuples
 ^^^^^^^^^^^^^^^^^^^
@@ -401,8 +420,8 @@ site `Mid` carrying commodity `Elec` in year `2020`. This set is defined as
 ::
 
     m.tra_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.sit*m.tra*m.com,
-        initialize=m.transmission.index,
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(m.transmission_dict["eff"].keys()),
         doc='Combinations of possible transmissions, e.g. '
             '(2020,South,Mid,hvac,Elec)')
 
@@ -453,8 +472,8 @@ and given by the code fragment:
 ::
 
     m.sto_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.sto*m.com,
-        initialize=m.storage.index,
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.storage_dict["eff-in"].keys()),
         doc='Combinations of possible storage by site,'
             'e.g. (2020,Mid,Bat,Elec)')
 
@@ -466,8 +485,8 @@ defined fixed value for the initial state are collected.
 ::
 
     m.sto_init_bound_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.sto*m.com,
-        initialize=m.stor_init_bound.index,
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.stor_init_bound_dict.keys()),
         doc='storages with fixed initial state')
 
 A second subset is defined for all storages that have a fixed ratio between
@@ -495,15 +514,15 @@ fragment:
 ::
 
     m.pro_input_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro*m.com,
+        within=m.stf * m.sit * m.pro * m.com,
         initialize=[(stf, site, process, commodity)
                     for (stf, site, process) in m.pro_tuples
-                    for (s, pro, commodity) in m.r_in.index
+                    for (s, pro, commodity) in tuple(m.r_in_dict.keys())
                     if process == pro and s == stf],
         doc='Commodities consumed by process by site,'
             'e.g. (2020,Mid,PV,Solar)')
 
-Where: ``r_in`` represents the process input ratio as set in the input.
+Where: ``r_in_dict`` represents the process input ratio as set in the input.
 
 For processes in the tuple set ``pro_partial_tuples``, the following tuple set
 ``pro_partial_input_tuples`` enumerates their input commodities. It is used to
@@ -513,14 +532,13 @@ following code fragment:
 
 ::
 
-    m.pro_partial_input_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro*m.com,
-        initialize=[(stf, site, process, commodity)
-                    for (stf, site, process) in m.pro_partial_tuples
-                    for (s, pro, commodity) in m.r_in_min_fraction.index
+    m.pro_partial_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (s, pro, _) in tuple(m.r_in_min_fraction_dict.keys())
                     if process == pro and s == stf],
-        doc='Commodities with partial input ratio,'
-            'e.g. (2020,Mid,Coal PP,Coal)')
+        doc='Processes with partial input')
 
 
 Process Output Tuples
@@ -537,14 +555,14 @@ fragment:
 ::
 
     m.pro_output_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro*m.com,
+        within=m.stf * m.sit * m.pro * m.com,
         initialize=[(stf, site, process, commodity)
                     for (stf, site, process) in m.pro_tuples
-                    for (s, pro, commodity) in m.r_out.index
+                    for (s, pro, commodity) in tuple(m.r_out_dict.keys())
                     if process == pro and s == stf],
         doc='Commodities produced by process by site, e.g. (2020,Mid,PV,Elec)')
 
-Where: ``r_out`` represents the process output ratio as set in the input.
+Where: ``r_out_dict`` represents the process output ratio as set in the input.
 
 There are two alternative tuple sets that are active whenever their respective
 features are set in the input.
@@ -558,25 +576,29 @@ following code fragment:
 ::
 
     m.pro_partial_output_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro*m.com,
+        within=m.stf * m.sit * m.pro * m.com,
         initialize=[(stf, site, process, commodity)
                     for (stf, site, process) in m.pro_partial_tuples
-                    for (s, pro, commodity) in m.r_out_min_fraction.index
+                    for (s, pro, commodity) in tuple(m.r_out_min_fraction_dict
+                                                     .keys())
                     if process == pro and s == stf],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
 
 Second, the output of all processes that have a time dependent efficiency are
 collected in an additional tuple set. The set contains all outputs
 corresponding to processes that are specified as column indices in the input
-file worksheet ``TimeVarEff``.
+file worksheet ``TimeVarEff``. The code is implemented in ``features\TimeVarEff.py``
+as: 
 ::
 
     m.pro_timevar_output_tuples = pyomo.Set(
-        within=m.sit*m.pro*m.com,
-        initialize=[(site, process, commodity)
-                    for (site, process) in m.eff_factor.columns.values
-                    for (pro, commodity) in m.r_out.index
-                    if process == pro],
+        within=m.stf * m.sit * m.pro * m.com,
+        initialize=[(stf, site, process, commodity)
+                    for stf in tve_stflist
+                    for (site, process) in tuple(m.eff_factor_dict.keys())
+                    for (st, pro, commodity) in tuple(m.r_out_dict.keys())
+                    if process == pro and st == stf and commodity not in
+                    m.com_env],
         doc='Outputs of processes with time dependent efficiency')
 
 Demand Side Management Tuples
@@ -591,8 +613,9 @@ commodity :math:`c` of the DSM sheet. It is given by the code fragment:
 
     m.dsm_site_tuples = pyomo.Set(
         within=m.stf*m.sit*m.com,
-        initialize=m.dsm.index,
-        doc='Combinations of possible dsm by site, e.g. (2020, Mid, Elec)')
+        initialize=tuple(m.dsm_dict["delay"].keys()),
+        doc='Combinations of possible dsm by site, e.g. '
+            '(2020, Mid, Elec)')
 
 The second kind :math:`D_{t,tt,yvc}^\text{down}` refers to all possible DSM
 downshift possibilities. It is defined to overcome the difficulty caused by the

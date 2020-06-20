@@ -8,13 +8,13 @@ Economic Parameters
 	+----------------------------------+---------+-------------------------------------------------+
 	|Parameter                         |Unit     |Description                                      |
 	+==================================+=========+=================================================+
-	|:math:`j`                         | _       |Global Discount rate                             |
+	|:math:`j`                         | _       |Global Discount Rate                             |
 	+----------------------------------+---------+-------------------------------------------------+
-	|:math:`D_y`                       | _       |Factor for any payment made in modeled year y    |
+	|:math:`D_y`                       | _       |Factor for any Payment Made in Modeled Year y    |
 	+----------------------------------+---------+-------------------------------------------------+
-	|:math:`I_y`                       | _       |Factor for any investment made in modeled year y |
+	|:math:`I_y`                       | _       |Factor for any Investment Made in Modeled Year y |
 	+----------------------------------+---------+-------------------------------------------------+
-	|:math:`\overline{L}_{\text{cost}}`|€        |Maximum total system costs (if CO2 is minimized) |
+	|:math:`\overline{L}_{\text{cost}}`|€        |Maximum Total System Costs (if CO2 is minimized) |
 	+----------------------------------+---------+-------------------------------------------------+
 	|**Commodity Economic Parameters**                                                             |
 	+----------------------------------+---------+-------------------------------------------------+
@@ -30,7 +30,7 @@ Economic Parameters
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`i_{yvp}`                   | _       |Weighted Average Cost of Capital for Process     |
 	+----------------------------------+---------+-------------------------------------------------+
-	|:math:`z_{yvp}`                   | _       |Process Depreciation Period                      |
+	|:math:`z_{yvp}`                   | a       |Process Depreciation Period                      |
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`k_{yvp}^\text{inv}`        |€/MW     |Process Capacity Investment Costs                |
 	+----------------------------------+---------+-------------------------------------------------+
@@ -42,7 +42,7 @@ Economic Parameters
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`i_{yvs}`                   | _       |Weighted Average Cost of Capital for Storage     |
 	+----------------------------------+---------+-------------------------------------------------+
-	|:math:`z_{yvs}`                   | _       |Storage Depreciation Period                      |
+	|:math:`z_{yvs}`                   | a       |Storage Depreciation Period                      |
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`k_{yvs}^\text{p,inv}`      |€/MW     |Storage Power Investment Costs                   |
 	+----------------------------------+---------+-------------------------------------------------+
@@ -60,7 +60,7 @@ Economic Parameters
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`i_{yvf}`                   | _       |Weighted Average Cost of Capital for Transmission|
 	+----------------------------------+---------+-------------------------------------------------+
-	|:math:`z_{yaf}`                   | _       |Tranmission Depreciation Period                  |
+	|:math:`z_{yaf}`                   | a       |Tranmission Depreciation Period                  |
 	+----------------------------------+---------+-------------------------------------------------+
 	|:math:`k_{yaf}^\text{inv}`        |€/MW     |Transmission Capacity Investment Costs           |
 	+----------------------------------+---------+-------------------------------------------------+
@@ -69,13 +69,13 @@ Economic Parameters
 	|:math:`k_{yaf}^\text{var}`        |€/MWh    |Tranmission Usage Variable Costs                 |
 	+----------------------------------+---------+-------------------------------------------------+
 
-**Discount rate**, :math:`j`,
+**Discount Rate**, :math:`j`,
 ``m.global_prop.xs('Discount rate', level=1).loc[m.global_prop.index.min()[0]]['value']``:
 The discount rate :math:`j` is used to calculate the present value of future
 costs. It is set in the worksheet "Global" in the input file of the first
 support timeframe.
 
-**Factor for future payments**, :math:`D_y`: The parameter :math:`D_y`
+**Factor for Future Payments**, :math:`D_y`: The parameter :math:`D_y`
 is a multiplier that has to be factored into all cost terms apart from the
 invest costs in intertemporal planning based on support timeframes. All other
 cost terms for the support timeframe :math:`y` are muliplied directly with this
@@ -98,7 +98,7 @@ and
 .. literalinclude:: /../urbs/features/modelhelper.py
    :pyobject: effective_distance
 
-**Factor for investment made in support timeframe y**, :math:`I_y`: The
+**Factor for Investment Made in Support Timeframe y**, :math:`I_y`: The
 parameter :math:`I_y` is a multiplier that has to be factored into the invest
 costs in intertemporal planning based on support timeframes. The book value of
 the total invest costs per capacity in support timeframe :math:`y` is muliplied
@@ -147,7 +147,7 @@ made. To fix this the overpay is subtracted via:
 
 In case of negative values this overpay factor is set to zero afterwards.
 
-**Maximum total system cost**, :math:`\overline{L}_{\text{cost}}`,
+**Maximum Total System Cost**, :math:`\overline{L}_{\text{cost}}`,
 ``m.global_prop.loc[(min(m.stf), 'Cost budget'), 'value']``: This parameter
 restricts the total present costs over the entire modeling horizon. It is only
 sensible and active when the objective is a minimization of CO2 emissions.  
@@ -155,7 +155,7 @@ sensible and active when the objective is a minimization of CO2 emissions.
 Commodity Economic Parameters
 -----------------------------
 
-**Stock Commodity Fuel Costs**, :math:`k_{vc}^\text{fuel}`,
+**Stock Commodity Fuel Costs**, :math:`k_{yvc}^\text{fuel}`,
 ``m.commodity_dict['price'][c]``: The parameter :math:`k_{yvc}^\text{fuel}`
 represents the book cost for purchasing one unit (1 MWh) of a stock commodity
 :math:`c` (:math:`\forall c \in C_\text{stock}`) in modeled timeframe :math:`y`
@@ -181,7 +181,7 @@ represents the corresponding parameter :math:`k_{yvc}^\text{env}`.
 
 **Buy/Sell Commodity Buy/Sell Costs**, :math:`k_{yvct}^\text{bs}`,
 ``m.buy_sell_price_dict[c[2], ][(c[0], tm)]``: The parameter
-:math:`k_{yvct}^\text{bs}` represents the purchase/buy cost for
+:math:`k_{yvct}^\text{bs}` represents the cost for
 purchasing/selling one unit (1 MWh) of a buy/sell commodity :math:`c`
 (:math:`\forall c \in C_\text{buy}`)/(:math:`\forall c \in C_\text{sell}`) in
 support timeframe :math:`y` in a site :math:`v` (:math:`\forall v \in V`) at
@@ -190,10 +190,10 @@ timestep :math:`t` (:math:`\forall t \in T_m`). The unit of this parameter is
 in the "Buy-Sell-Price" sheet. Here each column represents a commodity tuple
 and the row values provide the timestep information.
 
-**Multiplyer for Buy/Sell Commodity Buy/Sell Costs**,
+**Multiplier for Buy/Sell Commodity Buy/Sell Costs**,
 :math:`k_{yvc}^\text{bs}`, ``m.commodity_dict['price'][c]``: The parameter
 :math:`k_{yvc}^\text{bs}` is a multiplier for the buy/sell time series. It
-represents the factor on the purchase/buy cost for purchasing/selling one unit
+represents the factor on the cost for purchasing/selling one unit
 (1 MWh) of a buy/sell commodity :math:`c`
 (:math:`\forall c \in C_\text{buy}`)/(:math:`\forall c \in C_\text{sell}`) in
 support timeframe :math:`y` in a site :math:`v` (:math:`\forall v \in V`). This
@@ -207,9 +207,9 @@ represents the corresponding parameter :math:`k_{yvc}^\text{bs}`.
 Process Economic Parameters
 ---------------------------
 
-**Weighted Average Cost of Capital for Process**, :math:`i_{yvp}`, : The
+**Weighted Average Cost of Capital for Process**, :math:`i_{yvp}`: The
 parameter :math:`i_{yvp}` represents the weighted average cost of capital for a
-process technology :math:`p` in support timeframe ;math:`y` in a site
+process technology :math:`p` in support timeframe :math:`y` in a site
 :math:`v`. The weighted average cost of capital gives the interest rate (%) of
 costs for capital after taxes. The related section for this parameter in the
 spreadsheet corresponding to support timeframe :math:`y` can be found under the
@@ -217,7 +217,7 @@ spreadsheet corresponding to support timeframe :math:`y` can be found under the
 with the header label "wacc" represents the parameters :math:`i_{yvp}`. The
 parameter is given as a percentage, where "0.07" means 7%
 
-**Process Depreciation Period**, :math:`z_{yvp}`: The parameter :math:`z_{yvp}`
+**Process Depreciation Period**, :math:`z_{yvp}`, (a): The parameter :math:`z_{yvp}`
 represents the depreciation period of a process :math:`p` built in support
 timeframe :math:`y` in a site :math:`v`. The depreciation period gives the
 economic and technical lifetime of a process investment. It thus features in
@@ -234,7 +234,7 @@ represents the book value of the investment cost for adding one unit new
 capacity of a process technology :math:`p` in support timeframe :math:`y` in a
 site :math:`v`. The unit of this parameter is €/MW. To get the full impact of
 the investment within the modeling horizon this parameter is multiplied with
-the factor for the investment made in modeled year y :math:`I_y`. The process
+the factor :math:`I_y` for the investment made in modeled year :math:`y`. The process
 capacity investment cost is to be given as an input by the user. The related
 section for the process capacity investment cost in the spreadsheet
 representing the support timeframe :math:`y` can be found under the "Process"
@@ -243,7 +243,7 @@ and the column with the header label "inv-cost" represents the process capacity
 investment costs of the corresponding process :math:`p` and site :math:`v`
 combinations.
 
-**Process Capacity Fixed Costs**, :math:`k_{yvp}^\text{fix}`,
+**Annual Process Capacity Fixed Costs**, :math:`k_{yvp}^\text{fix}`,
 ``m.process_dict['fix-cost'][p]``: The parameter :math:`k_{yvp}^\text{fix}`
 represents the fix cost per one unit capacity :math:`\kappa_{yvp}` of a process
 technology :math:`p` in support timeframe :math:`y` in a site :math:`v`, that
@@ -270,10 +270,10 @@ with the header label "var-cost" represents the parameters
 Storage Economic Parameters
 ---------------------------
 
-**Weighted Average Cost of Capital for Storage**, :math:`i_{yvs}`, : The
+**Weighted Average Cost of Capital for Storage**, :math:`i_{yvs}`: The
 parameter :math:`i_{yvs}` represents the weighted average cost of capital for a
 storage technology :math:`s` in a site :math:`v` and support timeframe
-:math:`y`. The weighted average cost of capital gives the interest rate(%) of
+:math:`y`. The weighted average cost of capital gives the interest rate (%) of
 costs for capital after taxes. The related section for this parameter in the
 spreadsheet corresponding to the support timeframe :math:`y` can be found under
 the "Storage" sheet. Here each row represents another storage :math:`s` in a
@@ -301,8 +301,8 @@ represents the book value of the total investment cost for adding one unit new
 power output capacity of a storage technology :math:`s` in a site :math:`v` in
 support timeframe :math:`y`. The unit of this parameter is €/MW. To get the
 full impact of the investment within the modeling horizon this parameter is
-multiplied with the factor for the investment made in modeled year y
-:math:`I_y`. The related section for the storage power output capacity
+multiplied with the factor :math:`I_y` for the investment made in modeled year :math:`y`. 
+The related section for the storage power output capacity
 investment cost in the spreadsheet corresponding to the support timeframe
 :math:`y` can be found under the "Storage" sheet. Here each row represents
 another storage :math:`s` in a site :math:`v` and the column with the header
@@ -338,8 +338,8 @@ represents the book value of the total investment cost for adding one unit new
 storage capacity to a storage technology :math:`s` in a site :math:`v` in
 support timeframe :math:`y`. The unit of this parameter is €/MWh. To get the
 full impact of the investment within the modeling horizon this parameter is
-multiplied with the factor for the investment made in modeled year y
-:math:`I_y`. The related section for the storage content capacity investment
+multiplied with the factor :math:`I_y` for the investment made in modeled year :math:`y`. 
+The related section for the storage content capacity investment
 cost in the spreadsheet corresponding to support timeframe :math:`y` can be
 found under the "Storage" sheet. Here each row represents another storage
 :math:`s` in a site :math:`v` and the column with the header label "inv-cost-c"
@@ -354,11 +354,11 @@ storage technology :math:`s` in a site :math:`v` in support timeframe
 this parameter in the spreadsheet corresponding to support timeframe :math:`y`
 can be found under the "Storage" sheet. Here each row represents another
 storage :math:`s` in a site :math:`v` and the column with the header label
-"fix-cost-c" represents the parameters :math:`k_{vs}^\text{c,fix}` of the
+"fix-cost-c" represents the parameters :math:`k_{yvs}^\text{c,fix}` of the
 corresponding storage :math:`s` and site :math:`v` combinations.
 
 **Storage Usage Variable Costs**, :math:`k_{yvs}^\text{c,var}`,
-``m.storage_dict['var-cost-c'][s]``: The parameter :math:`k_{yvs}^\text{p,var}`
+``m.storage_dict['var-cost-c'][s]``: The parameter :math:`k_{yvs}^\text{c,var}`
 represents the variable cost per unit energy, that is conserved in a storage
 technology :math:`s` in a site :math:`v` in support timeframe :math:`y`. The
 unit of this parameter is €/MWh. The related section for this parameter in the
@@ -374,22 +374,22 @@ energy stored.
 Transmission Economic Parameters
 --------------------------------
 
-**Weighted Average Cost of Capital for Transmission**, :math:`i_{yvf}`, : The
-parameter :math:`i_{yvf}` represents the weighted average cost of capital for a
+**Weighted Average Cost of Capital for Transmission**, :math:`i_{yaf}`: The
+parameter :math:`i_{yaf}` represents the weighted average cost of capital for a
 transmission :math:`f` transferring commodities through an arc :math:`a` built
 in support timeframe :math:`y`. The weighted average cost of capital gives the
-interest rate(%) of costs for capital after taxes. The related section for this
+interest rate (%) of costs for capital after taxes. The related section for this
 parameter in the spreadsheet corresponding to support timeframe :math:`y` can be
 found under the "Transmission" sheet. Here each row represents another
 transmission :math:`f` transferring commodities through an arc :math:`a` and
 the column with the header label "wacc" represents the parameters
-:math:`i_{yvf}` of the corresponding transmission :math:`f` and arc :math:`a`
+:math:`i_{yaf}` of the corresponding transmission :math:`f` and arc :math:`a`
 combinations. The parameter is given as a percentage, where "0.07" means 7%.
 
 **Transmission Depreciation Period**, :math:`z_{yaf}`, (a): The parameter
 :math:`z_{yaf}` represents the depreciation period of a transmission :math:`f`
 transferring commodities through an arc :math:`a` built in support timeframe
-:math:`y`. The depreciation period of gives the economic and technical lifetime
+:math:`y`. The depreciation period gives the economic and technical lifetime
 of a transmission investment. It thus features in the calculation of the invest
 cost factor and determines the end of operation of the transmission. The unit
 of this parameter is "a", where "a" represents a year of 8760 hours. The
@@ -406,8 +406,8 @@ arc :math:`a` combinations.
 adding one unit new transmission capacity to a transmission :math:`f`
 transferring commodities through an arc :math:`a` in support timeframe
 :math:`y`. To get the full impact of the investment within the modeling horizon
-this parameter is multiplied with the factor for the investment made in modeled
-year y :math:`I_y`. The unit of this parameter is €/MW. The related section for
+this parameter is multiplied with the factor :math:`I_y` for the investment made in modeled
+year :math:`y`. The unit of this parameter is €/MW. The related section for
 the transmission capacity investment cost in the spreadsheet corresponding to
 support timeframe :math:`y` can be found under the "Transmission" sheet. Here
 each row represents another transmission :math:`f` transferring commodities
@@ -431,9 +431,9 @@ the header label "fix-cost" represents the parameters
 ``m.transmission_dict['var-cost'][t]``: The parameter
 :math:`k_{yaf}^\text{var}` represents the variable cost per unit energy, that
 is transferred with a transmission :math:`f` through an arc :math:`a`. The unit
-of this parameter is €/ MWh. The related section for this parameter in the
+of this parameter is €/MWh. The related section for this parameter in the
 spreadsheet corresponding to support timeframe :math:`y` can be found under the
 "Transmission" sheet. Here each row represents another transmission :math:`f`
 transferring commodities through an arc :math:`a` and the column with the
-header label "var-cost" represents the parameters :math:`k_{af}^\text{var}` of
+header label "var-cost" represents the parameters :math:`k_{yaf}^\text{var}` of
 the corresponding transmission :math:`f` and arc :math:`a` combinations.

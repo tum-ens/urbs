@@ -141,9 +141,9 @@ The variable :math:`\varrho_{yvct}` represents the energy amount in [MWh] that
 is being used by the system of commodity :math:`c` from type sell
 (:math:`\forall c \in C_\text{sell}`) in support timeframe :math:`y`
 (:math:`\forall y \in Y`) in a site :math:`v` (:math:`\forall v \in V`) at
-timestep :math:`t` (:math:`\forall t \in T_\text{m}`). In script ``model.py``
+timestep :math:`t` (:math:`\forall t \in T_\text{m}`). In script ``features\BuySellPrice.py``
 this variable is defined by the variable ``e_co_sell`` and initialized by the
-following code fragment: ::
+following code fragment in: ::
 
     m.e_co_sell = pyomo.Var(
         m.tm, m.com_tuples,
@@ -155,7 +155,7 @@ variable :math:`\psi_{yvct}` represents the energy amount in [MWh] that is
 being used by the system of commodity :math:`c` from type buy
 (:math:`\forall c \in C_\text{buy}`) in support timeframe :math:`y`
 (:math:`\forall y \in Y`) in a site :math:`v` (:math:`\forall v \in V`) at
-timestep :math:`t` (:math:`\forall t \in T_\text{m}`). In script ``model.py``
+timestep :math:`t` (:math:`\forall t \in T_\text{m}`). In script ``features\BuySellPrice.py``
 this variable is defined by the variable ``e_co_buy`` and initialized by the
 following code fragment: ::
 
@@ -258,7 +258,7 @@ an origin site :math:`v_\text{out}` to a destination site
 :math:`{v_\text{in}}`. The total transmission capacity includes both the
 already installed transmission capacity and the additional new transmission
 capacity that needs to be installed. This variable is expressed in the unit MW.
-In script ``model.py`` this variable is defined by the model variable
+In script ``features\transmission.py`` this variable is defined by the model variable
 ``cap_tra`` and initialized by the following code fragment: ::
 
     m.cap_tra = pyomo.Var(
@@ -271,7 +271,7 @@ variable :math:`\hat{\kappa}_{yaf}` represents the additional capacity, that
 needs to be installed, of a transmission tuple :math:`f_{yca}`, where :math:`a`
 represents the arc from an origin site :math:`v_\text{out}` to a destination
 site :math:`v_\text{in}`. This variable is expressed in the unit MW.
-In script ``model.py`` this variable is defined by the model variable
+In script ``features\transmission.py`` this variable is defined by the model variable
 ``cap_tra_new`` and initialized by the following code fragment: ::
 
     m.cap_tra_new = pyomo.Var(
@@ -284,7 +284,7 @@ In script ``model.py`` this variable is defined by the model variable
 commodity flow input into a transmission tuple :math:`f_{yca}` at a timestep
 :math:`t`, where :math:`a` represents the arc from an origin site
 :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
-is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
+is expressed in the unit MWh. In script ``features\transmission.py`` this variable is defined by
 the model variable ``e_tra_in`` and initialized by the following code fragment:
 ::
 
@@ -298,7 +298,7 @@ the model variable ``e_tra_in`` and initialized by the following code fragment:
 commodity flow output out of a transmission tuple :math:`f_{yca}` at a timestep
 :math:`t`, where :math:`a` represents the arc from an origin site
 :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
-is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
+is expressed in the unit MWh. In script ``features\transmission.py`` this variable is defined by
 the model variable ``e_tra_out`` and initialized by the following code
 fragment: ::
 
@@ -314,7 +314,7 @@ If the DC Power Flow transmission modelling is activated, two new variables are 
 
 **Voltage Angle**, :math:`\theta_{yvt}`, ``voltage_angle``: The variable :math:`\theta_{yvt}` represents the voltage
 angle of a site :math:`v`, which has a DCPF transmission line connection, at a timestep :math:`t`. This variable is
-expressed in the unit degrees. In script ``urbs.py`` this variable is defined by the model variable ``voltage_angle``
+expressed in the unit degrees. In script ``features\transmission.py`` this variable is defined by the model variable ``voltage_angle``
 and initialized by the following code
 fragment: ::
 
@@ -328,7 +328,7 @@ The variable :math:`{\pi_{yaft}^{\text{in}}}^\prime` represents the absolute val
 on a DCPF transmission tuple :math:`f_{yca}` at a timestep
 :math:`t`, where :math:`a` represents the arc from an origin site
 :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
-is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
+is expressed in the unit MWh. In script ``features\transmission.py`` this variable is defined by
 the model variable ``e_tra_abs`` and initialized by the following code
 fragment: ::
 
@@ -374,7 +374,7 @@ variable :math:`\kappa_{yvs}^\text{c}` represents the total load capacity of a
 storage tuple :math:`s_{yvc}`. The total storage load capacity includes both the
 already installed storage load capacity and the additional new storage load
 capacity that needs to be installed. This variable is expressed in unit MWh. In
-script ``model.py`` this variable is defined by the model variable
+script ``features\storage.py`` this variable is defined by the model variable
 ``cap_sto_c`` and initialized by the following code fragment: ::
 
     m.cap_sto_c = pyomo.Var(
@@ -386,7 +386,7 @@ script ``model.py`` this variable is defined by the model variable
 The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the additional
 storage load capacity of a storage tuple :math:`s_{yvc}` that needs to be
 installed to the energy system in order to provide the optimal solution. This
-variable is expressed in the unit MWh. In script ``model.py`` this variable is
+variable is expressed in the unit MWh. In script ``features\storage.py`` this variable is
 defined by the model variable ``cap_sto_c_new`` and initialized by the
 following code fragment: ::
 
@@ -400,7 +400,7 @@ variable :math:`\kappa_{yvs}^\text{p}` represents the total potential discharge
 power of a storage tuple :math:`s_{yvc}`. The total storage power includes both
 the already installed storage power and the additional new storage power that
 needs to be installed. This variable is expressed in the unit MW. In script
-``model.py`` this variable is defined by the model variable ``cap_sto_p`` and
+``features\storage.py`` this variable is defined by the model variable ``cap_sto_p`` and
 initialized by the following code fragment:
 ::
 
@@ -413,7 +413,7 @@ initialized by the following code fragment:
 The variable :math:`\hat{\kappa}_{yvs}^\text{p}` represents the additional
 potential discharge power of a storage tuple :math:`s_{yvc}` that needs to be
 installed to the energy system in order to provide the optimal solution. This
-variable is expressed in the unit MW. In script ``model.py`` this variable is
+variable is expressed in the unit MW. In script ``features\storage.py`` this variable is
 defined by the model variable ``cap_sto_p_new`` and initialized by the
 following code fragment:
 ::
@@ -428,7 +428,7 @@ following code fragment:
 input commodity flow into a storage tuple :math:`s_{yvc}` at a timestep
 :math:`t`. Input commodity flow into a storage tuple can also be defined as the
 charge of a storage tuple. This variable is expressed in the unit MWh. In
-script ``model.py`` this variable is defined by the model variable ``e_sto_in``
+script ``features\storage.py`` this variable is defined by the model variable ``e_sto_in``
 and initialized by the following code fragment:
 ::
 
@@ -442,7 +442,7 @@ and initialized by the following code fragment:
 output commodity flow out of a storage tuple :math:`s_{yvc}` at a timestep
 :math:`t`. Output commodity flow out of a storage tuple can also be defined as
 the discharge of a storage tuple. This variable is expressed in the unit MWh.
-In script ``model.py`` this variable is defined by the model variable
+In script ``features\storage.py`` this variable is defined by the model variable
 ``e_sto_out`` and initialized by the following code fragment:
 ::
 
@@ -454,7 +454,7 @@ In script ``model.py`` this variable is defined by the model variable
 **Storage Energy Content**, :math:`\epsilon_{yvst}^\text{con}`, ``e_sto_con``:
 The variable :math:`\epsilon_{yvst}^\text{con}` represents the energy amount
 that is loaded in a storage tuple :math:`s_{yvc}` at a timestep :math:`t`. This
-variable is expressed in the unit MWh. In script ``urbs.py`` this variable is
+variable is expressed in the unit MWh. In script ``features\storage.py`` this variable is
 defined by the model variable ``e_sto_out`` and initialized by the following
 code fragment:
 ::

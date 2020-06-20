@@ -102,11 +102,13 @@ balance is thereby allowing for commodities to leave the system at vertex
 commodity balance the vertex rule and the other rules restricting commodity
 flows remain unchanged with respect to the minimal model.
 
+.. _Global CO2 Limit:
+
 Global CO2 Limit
 ~~~~~~~~~~~~~~~~
 In addition to the general vertex specific constraint for the emissions of
-environmental commodities as discussed in the minimal model, there is a hard
-coded possibility to limit the CO2 emissions across all modeled sites:
+environmental commodities as discussed in the :ref:`minimal model<Environmental Commodity Limitations>`, 
+there is a hard coded possibility to limit the CO2 emissions across all modeled sites:
 
 .. math::
    -w\sum_{v\in V\\t\in T_{m}}\text{CB}(v,\text{CO}_2,t)\leq

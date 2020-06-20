@@ -245,6 +245,8 @@ where :math:`\overline{L}_c` and :math:`\overline{l}_c` are the totally allowed
 annual and hourly retrieval of commodity :math:`c` from the stock,
 respectively.
 
+.. _Environmental Commodity Limitations:
+
 Environmental Commodity Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Similar to stock commodities, :ref:`environmental commodities<env-commodity-def>` can also be limited

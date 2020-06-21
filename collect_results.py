@@ -285,6 +285,7 @@ def get_electricity_data(urbs_results, year_built):
     prices_min = prices[["Site", "scenario-year", "res_vertex"]].groupby(["Site", "scenario-year"]).min()
     electricity.loc[prices_min.index, "price-min"] = prices_min["res_vertex"] * cost_factor
     # Demand
+    demand = demand.loc[demand["Site"]!="Unnamed: 11"]
     dem = demand[["Site", "scenario-year", 0]].groupby(["Site", "scenario-year"]).sum()
     electricity.loc[dem.index, "elec-demand"] = dem[0]
     # Hourly prices

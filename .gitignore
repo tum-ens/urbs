@@ -7,3 +7,4 @@ doc/_build/*
 nopt/features_nopt/Kraftwerkliste.py
 nopt/features_nopt/read_csv.py
 nopt/features_nopt/matplotlibrc
+*.lp

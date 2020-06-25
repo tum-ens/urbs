@@ -484,7 +484,7 @@ def res_vertex_rule(m, tm, stf, sit, com, com_type):
     # constraint is about power (MW), not energy (MWh)
     if com in m.com_demand:
         try:
-            power_surplus -= m.demand_dict[(sit, com)][(stf, tm)]
+            power_surplus -= m.demand_dict[(sit, com)][(stf, tm)] #/ 0.925
         except KeyError:
             pass
 
@@ -598,8 +598,8 @@ def def_process_output_rule(m, tm, stf, sit, pro, com):
 def def_intermittent_supply_rule(m, tm, stf, sit, pro, coin):
     if coin in m.com_supim:
         return (m.e_pro_in[tm, stf, sit, pro, coin] ==
-                m.cap_pro[stf, sit, pro] * m.supim_dict[(sit, coin)]
-                [(stf, tm)] * m.dt * m._data["process"]["reliability"][(stf, sit, pro)])
+                m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] * m.supim_dict[(sit, coin)]
+                [(stf, tm)] * m.dt)
     else:
         return pyomo.Constraint.Skip
 
@@ -611,21 +611,21 @@ def res_process_throughput_by_capacity_rule(m, tm, stf, sit, pro):
 
 def res_process_maxgrad_lower_rule(m, t, stf, sit, pro):
     return (m.tau_pro[t - 1, stf, sit, pro] -
-            m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] *
+            m.cap_pro[stf, sit, pro] *
             m.process_dict['max-grad'][(stf, sit, pro)] * m.dt <=
             m.tau_pro[t, stf, sit, pro])
 
 
 def res_process_maxgrad_upper_rule(m, t, stf, sit, pro):
     return (m.tau_pro[t - 1, stf, sit, pro] +
-            m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] *
+            m.cap_pro[stf, sit, pro] *
             m.process_dict['max-grad'][(stf, sit, pro)] * m.dt >=
             m.tau_pro[t, stf, sit, pro])
 
 
 def res_throughput_by_capacity_min_rule(m, tm, stf, sit, pro):
     return (m.tau_pro[tm, stf, sit, pro] >=
-            m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] *
+            m.cap_pro[stf, sit, pro] *
             m.process_dict['min-fraction'][(stf, sit, pro)] * m.dt)
 
 
@@ -640,7 +640,7 @@ def def_partial_process_input_rule(m, tm, stf, sit, pro, coin):
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
     return (m.e_pro_in[tm, stf, sit, pro, coin] ==
-            m.dt * m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] * online_factor +
+            m.dt * m.cap_pro[stf, sit, pro] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
 
@@ -655,7 +655,7 @@ def def_partial_process_output_rule(m, tm, stf, sit, pro, coo):
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
     return (m.e_pro_out[tm, stf, sit, pro, coo] ==
-            m.dt * m.cap_pro[stf, sit, pro] * m._data["process"]["reliability"][(stf, sit, pro)] * online_factor +
+            m.dt * m.cap_pro[stf, sit, pro] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
 

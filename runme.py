@@ -4,7 +4,7 @@ import urbs
 
 
 input_files = 'ASEAN_Mekong_provinces_2016.xlsx'  # for single year file name, for intertemporal folder name
-input_dir = 'Input'
+input_dir = os.path.join('Input', 'Mekong')
 input_path = os.path.join(input_dir, input_files)
 
 result_name = 'Run'

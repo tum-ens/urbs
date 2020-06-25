@@ -965,9 +965,9 @@ def get_cost_data(urbs_results, year_built):
         costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_1[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
         costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_2[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] 
     
-    costs['Annualized total costs'] = costs["Fix costs"] + costs["Variable costs"] + costs["Annualized inv costs"]
-    costs['Annualized total costs (incl. past)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Annualized inv costs (incl. past)"]
-    costs['Annualized total costs (incl. past, till horizon)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Annualized inv costs (incl. past, till horizon)"]
+    costs['Annualized total costs'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs"]
+    costs['Annualized total costs (incl. past)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs (incl. past)"]
+    costs['Annualized total costs (incl. past, till horizon)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs (incl. past, till horizon)"]
     
     # Regions
     costs_regions = costs.loc[list(set(dict_countries.keys()))].reset_index()
@@ -1061,7 +1061,6 @@ for folder in result_folders:
     dict_season = group_seasons()
     dict_countries = group_sites(df_data["site"].reset_index()["Name"].tolist())
     report_sites = sorted(list(set(dict_countries.keys()))) + sorted(list(set(dict_countries.values())))
-    
     
     ### SHEETS ###
     print(scen, year, ": Getting CO2 data")

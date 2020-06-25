@@ -484,7 +484,7 @@ def res_vertex_rule(m, tm, stf, sit, com, com_type):
     # constraint is about power (MW), not energy (MWh)
     if com in m.com_demand:
         try:
-            power_surplus -= m.demand_dict[(sit, com)][(stf, tm)] #/ 0.925
+            power_surplus -= m.demand_dict[(sit, com)][(stf, tm)] / 0.925
         except KeyError:
             pass
 

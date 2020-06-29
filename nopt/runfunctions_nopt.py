@@ -149,7 +149,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         # solve cost model and read optimized cost
         prob = create_model(data, objective_dict, dt, timesteps)
-        prob.write('model.lp', io_options={'symbolic_solver_labels': True})
+        #prob.write('model.lp', io_options={'symbolic_solver_labels': True})
 
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
         optim = setup_solver(optim, logfile=log_filename)
@@ -247,7 +247,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
             prob.near_optimal_storage = prob.near_optimal_storage.join(minimized_cap_storage, how='outer')
 
         report(prob,
-            os.path.join(result_dir, 'nopt.xlsx'),
+            os.path.join(result_dir, sce+'.xlsx'),
             report_tuples=report_tuples,
             report_sites_name=report_sites_name)
 

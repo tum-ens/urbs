@@ -186,9 +186,9 @@ def scenario_RF_ccs(data) :
     # change demand for scenario
     demand = data['demand']
     idx = pd.IndexSlice
-    demand.loc[idx[2030, :], ('Germany', 'Elec')] *= 1.03
-    demand.loc[idx[2040, :], ('Germany', 'Elec')] *= 1.04
-    demand.loc[idx[2050, :], ('Germany', 'Elec')] *= 1.04
+    demand.loc[idx[2030, :], ('Germany', 'Elec')] *= 1
+    demand.loc[idx[2040, :], ('Germany', 'Elec')] *= 1
+    demand.loc[idx[2050, :], ('Germany', 'Elec')] *= 1
     return data
 
 def scenario_TM80_ccs(data) :

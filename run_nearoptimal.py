@@ -7,7 +7,7 @@ start_time = time.time()
 input_files = 'Intertemporal-Germany'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
-objectives = [[('Photovoltaics')],[('Onshore wind')]]
+objectives = [[('Photovoltaics')]] #,[('Onshore wind')]
 for objective in objectives:
     result_name = 'Int-DE-ms-'+str(objective[0])
     result_dir = nopt.prepare_result_directory(result_name)  # name + time stamp
@@ -39,7 +39,18 @@ for objective in objectives:
 
     # detailed reporting commodity/sites
     report_tuples = [
-
+        (2020,'Germany','Elec'),
+        (2030, 'Germany', 'Elec'),
+        (2040, 'Germany', 'Elec'),
+        (2050, 'Germany', 'Elec'),
+        (2020, 'Germany', 'CO2'),
+        (2030, 'Germany', 'CO2'),
+        (2040, 'Germany', 'CO2'),
+        (2050, 'Germany', 'CO2'),
+        (2020, 'Germany', 'H2'),
+        (2030, 'Germany', 'H2'),
+        (2040, 'Germany', 'H2'),
+        (2050, 'Germany', 'H2')
     ]
 
     # optional: define names for sites in report_tuples
@@ -63,7 +74,7 @@ for objective in objectives:
 
     # select scenarios to be run
     scenarios = [
-        nopt.scenario_RF,
+        #nopt.scenario_RF,
         nopt.scenario_TM80,
         #nopt.scenario_EL80,
         #nopt.scenario_TM95,

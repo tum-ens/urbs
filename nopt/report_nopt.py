@@ -117,6 +117,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
                 for stf, sit, com in report_tuples:
                     if isinstance(sit, list):
                         sit = tuple(sit)
+
                     # sheet names cannot be longer than 31 characters...
                     sheet_name = "{}.{}.{} timeseries".format(
                         stf, report_sites_name[sit], com)[:31]
@@ -135,6 +136,26 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
             costs.to_excel(writer, 'Costs')
             pro_cap.to_excel(writer, 'Near-Optimal Process Capacities')
             sto_cap.to_excel(writer, 'Near-Optimal Storage Capacities')
+
+            #Min cost solution commodity report sheets
+            ts_name = 'Min_Cost'
+            energy_cost = instance.timeseries_data[ts_name][0]
+            timeseries_cost = instance.timeseries_data[ts_name][1]
+            if timeseries_cost:
+                energy_cost.to_excel(writer, 'Commodity sums_' + ts_name)
+            for stf, sit, com in report_tuples:
+                if isinstance(sit, list):
+                    sit = tuple(sit)
+                try:
+                    report_sites_name[sit]
+                except BaseException:
+                    report_sites_name[sit] = str(sit)
+                # sheet names cannot be longer than 31 characters...
+                sheet_name = "{}.{}.{}.{} timeseries".format(
+                    ts_name, stf, report_sites_name[sit], com)[:31]
+                timeseries_cost[(stf, report_sites_name[sit], com)].to_excel(
+                    writer, sheet_name)
+
             instance.slack_list.sort()
             for slack in instance.slack_list:
                 ts_name_1 = str(slack) + '_Min'
@@ -146,6 +167,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
                 for stf, sit, com in report_tuples:
                     if isinstance(sit, list):
                         sit = tuple(sit)
+                    try:
+                        report_sites_name[sit]
+                    except BaseException:
+                        report_sites_name[sit] = str(sit)
                     # sheet names cannot be longer than 31 characters...
                     sheet_name = "{}.{}.{}.{} timeseries".format(
                         ts_name_1,stf, report_sites_name[sit], com)[:31]
@@ -159,6 +184,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):  # pro
                 for stf, sit, com in report_tuples:
                     if isinstance(sit, list):
                         sit = tuple(sit)
+                    try:
+                        report_sites_name[sit]
+                    except BaseException:
+                        report_sites_name[sit] = str(sit)
                     # sheet names cannot be longer than 31 characters...
                     sheet_name = "{}.{}.{}.{} timeseries".format(
                         ts_name_2,stf, report_sites_name[sit], com)[:31]

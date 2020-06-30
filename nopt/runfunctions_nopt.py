@@ -168,14 +168,22 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         # save problem solution (and input data) to HDF5 file
         save(prob, os.path.join(result_dir, '{}.h5'.format('cost')))
-
+        ts_name = 'Min_Cost'
+        prob.timeseries_data = {}
+        try:
+            del com_sum, ts_data
+        except NameError:
+            pass
+        com_sum, ts_data = read_generation(prob, report_tuples=report_tuples, report_sites_name=report_sites_name)
+        if ts_data:
+            prob.timeseries_data[ts_name] = [com_sum, ts_data]
 
 
         def res_cost_restrict_rule(m):
             assert m.cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
             return (1 + m.cost_factor) * m.opt_cost_sum == pyomo.summation(m.costs)
 
-        prob.timeseries_data = {}
+
         prob.slack_list.sort()
         for slack in prob.slack_list:
             prob.cost_factor = slack

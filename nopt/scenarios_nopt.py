@@ -64,7 +64,7 @@ def scenario_RF(data) :
 
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
-    budget= ((305+177+124)*10+104)*1000000 #Tonnes of CO2 eq
+    budget= ((305+177+124+104)*10)*1000000 #Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -88,7 +88,7 @@ def scenario_TM80(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     #80  40% 55% 70% 80%
-    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(58/374)*(1-0.70)) * 10 + (4/250)*(1-0.80)) *emm1990_total  # Tonnes of CO2 eq
+    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(58/374)*(1-0.70) + (4/250)*(1-0.80)) * 10) *emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -111,7 +111,7 @@ def scenario_TM95(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     #80  40% 55% 75% 95%
-    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(35/305)*(1-0.75)) * 10 + (0/64)*(1-0.95)) *emm1990_total  # Tonnes of CO2 eq
+    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(35/305)*(1-0.75) + (0/64)*(1-0.95)) * 10) *emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -134,7 +134,7 @@ def scenario_EL80(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     #80  40% 55% 70% 80%
-    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55)+(132/374)*(1-0.70)) * 10 + (76/250)*(1-0.80)) *emm1990_total  # Tonnes of CO2 eq
+    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55)+(132/374)*(1-0.70)+ (76/250)*(1-0.80)) * 10 ) *emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -157,8 +157,7 @@ def scenario_EL95(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     # 80  40% 55% 75% 95%
-    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55) + (114 / 305) * (1 - 0.75)) * 10 + (0 / 64) * (
-                1 - 0.95)) * emm1990_total  # Tonnes of CO2 eq
+    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55) + (114 / 305) * (1 - 0.75) + (0 / 64) * (1 - 0.95)) * 10) * emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -181,7 +180,7 @@ def scenario_RF_ccs(data) :
 
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
-    budget= ((305+177+124)*10+104)*1000000 #Tonnes of CO2 eq
+    budget= ((305+177+124+104)*10)*1000000 #Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -196,7 +195,7 @@ def scenario_TM80_ccs(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     #80  40% 55% 70% 80%
-    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(58/374)*(1-0.70)) * 10 + (4/250)*(1-0.80)) *emm1990_total  # Tonnes of CO2 eq
+    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(58/374)*(1-0.70)+ (4/250)*(1-0.80)) * 10 ) *emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -213,7 +212,7 @@ def scenario_TM95_ccs(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     #80  40% 55% 75% 95%
-    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(35/305)*(1-0.75)) * 10 + (0/64)*(1-0.95)) *emm1990_total  # Tonnes of CO2 eq
+    budget = (((308/841)*(1-0.4)+(144/561)*(1-0.55)+(35/305)*(1-0.75)+ (0/64)*(1-0.95)) * 10 ) *emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -231,7 +230,7 @@ def scenario_EL80_ccs(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     #80  40% 55% 70% 80%
-    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55)+(132/374)*(1-0.70)) * 10 + (76/250)*(1-0.80)) *emm1990_total  # Tonnes of CO2 eq
+    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55)+(132/374)*(1-0.70)+ (76/250)*(1-0.80)) * 10 ) *emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']
@@ -249,8 +248,7 @@ def scenario_EL95_ccs(data) :
     # change global CO2 budget for reference scenario
     global_prop = data['global_prop']
     # 80  40% 55% 75% 95%
-    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55) + (114 / 305) * (1 - 0.75)) * 10 + (0 / 64) * (
-                1 - 0.95)) * emm1990_total  # Tonnes of CO2 eq
+    budget = (((319/838)*(1-0.4)+(209/561)*(1-0.55) + (114 / 305) * (1 - 0.75)+ (0 / 64) * ( 1 - 0.95)) * 10 ) * emm1990_total  # Tonnes of CO2 eq
     global_prop.loc[(2020, 'CO2 budget'), 'value'] = budget
     # change demand for scenario
     demand = data['demand']

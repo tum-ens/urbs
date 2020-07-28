@@ -370,18 +370,18 @@ def transmission_cost(m, cost_type):
                    for t in m.tra_tuples)
     elif cost_type == 'Variable':
         if m.mode['dpf']:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_tp) + \
-                   sum(m.e_tra_abs[(tm,) + t] * m.weight *
+                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_dc)
         else:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm

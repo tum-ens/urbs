@@ -7,7 +7,7 @@ input_files = 'single_year_example.xlsx'  # for single year file name, for inter
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'single-year'
+result_name = 'withTDY'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -25,16 +25,16 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'glpk'
 
 # simulation timesteps
-(offset, length) = (0, 8760)  # time step selection
+(offset, length) = (0, 120)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+    (2020, 'North', 'Elec'),
+    (2020, 'Mid', 'Elec'),
+    (2020, 'South', 'Elec'),
+    (2020, ['North', 'Mid', 'South'], 'Elec')
     ]
 
 # optional: define names for sites in report_tuples
@@ -42,10 +42,10 @@ report_sites_name = {('North', 'Mid', 'South'): 'All'}
 
 # plotting commodities/sites
 plot_tuples = [
-    (2019, 'North', 'Elec'),
-    (2019, 'Mid', 'Elec'),
-    (2019, 'South', 'Elec'),
-    (2019, ['North', 'Mid', 'South'], 'Elec')
+    (2020, 'North', 'Elec'),
+    (2020, 'Mid', 'Elec'),
+    (2020, 'South', 'Elec'),
+    (2020, ['North', 'Mid', 'South'], 'Elec')
     ]
 
 # optional: define names for sites in plot_tuples
@@ -67,12 +67,12 @@ for country, color in my_colors.items():
 # select scenarios to be run
 scenarios = [
              urbs.scenario_base,
-             urbs.scenario_stock_prices,
-             urbs.scenario_co2_limit,
-             urbs.scenario_co2_tax_mid,
-             urbs.scenario_no_dsm,
-             urbs.scenario_north_process_caps,
-             urbs.scenario_all_together
+             # urbs.scenario_stock_prices,
+             # urbs.scenario_co2_limit,
+             # urbs.scenario_co2_tax_mid,
+             # urbs.scenario_no_dsm,
+             # urbs.scenario_north_process_caps,
+             # urbs.scenario_all_together
             ]
 
 for scenario in scenarios:

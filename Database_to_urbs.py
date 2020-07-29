@@ -57,7 +57,8 @@ def write_Process(Process, Process_prev, EE_limits, year, writer):
         Process_year.set_index(["Site", "Process"], inplace=True)
     
     # Prepare sheet
-    Process_year = Process_year[['inst-cap','cap-lo','cap-up','max-grad','min-fraction','inv-cost','fix-cost','var-cost','startup-cost','reliability', 'cap-credit','wacc','depreciation','area-per-cap']]
+    Process_year = Process_year.reset_index().drop(columns=["lifetime", "scenario-year", "Construction year", "Source"])
+    Process_year = Process_year.groupby(['Site','Process']).agg({'max-grad':np.mean, 'min-fraction':np.sum, 'inv-cost':np.mean, 'fix-cost':np.mean, 'var-cost':np.mean, 'startup-cost':np.mean, 'reliability':np.mean, 'cap-credit':np.mean, 'wacc':np.mean, 'depreciation':np.mean, 'area-per-cap':np.mean, 'inst-cap':np.sum, 'cap-lo':np.sum, 'cap-up':np.sum})
     
     # Correct cap-up
     Process_year.reset_index(inplace=True)
@@ -80,7 +81,7 @@ def write_Process(Process, Process_prev, EE_limits, year, writer):
         Process_year.drop(index=idx, inplace=True)
         Process_year = Process_year.append(Process_capped, ignore_index=True, sort=False)
         Process_year.loc[Process_year["cap-up"]<0, "cap-up"] = 0
-    
+        
     # Last check
     Process_year = Process_year[Process_year['cap-up']!=0]
     
@@ -298,12 +299,13 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     ### Demand
     print("Demand")
     # Prepare sheet
-    Demand_year = Demand.set_index('t')
+    Demand = Demand.set_index('t')
+    Demand_year = (0.043494 * (year-2016) + 1) * Demand
     Demand_year = Demand_year.loc[time_slices]
     Demand_year.reset_index(inplace=True)
     Demand_year["t"] = Demand_year.index
     Demand_year.set_index('t', inplace=True)
-    annual_dem = Demand.set_index('t').sum(axis=0)
+    annual_dem = Demand.sum(axis=0)
     Demand_year_weighted = add_weight(Demand_year, time_slices)
     for c in Demand_year.columns:
         Demand_year[c] = (annual_dem[c] * Demand_year[c]) / Demand_year_weighted[c].sum()

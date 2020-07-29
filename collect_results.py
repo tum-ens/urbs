@@ -12,9 +12,9 @@ global dict_season
 
 # User preferences
 subfolder = "Mekong"
-result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
+result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:4]=="0Run")]
 
-scenario_years = [2016]
+scenario_years = [2016, 2020, 2025, 2030, 2035, 2037]
 
 def group_technologies(list_tech):
     grouped_tech = {}
@@ -384,10 +384,10 @@ def get_capacities_data(urbs_results):
     cap_new = df_result["cap_pro_new"].reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "pro":"Process", "cap_pro_new":"inst-cap"})
     cap_new["Technology"] = cap_new["Process"]
     for pro in cap_new["Process"].index:
-        if cap_new["Process"][pro] in ["Slack", "Shunt"]:
-            cap_new.drop(index=pro, inplace=True)
+        try:
+            cap_new.loc[pro, "Technology"] = dict_tech[cap_new.loc[pro, "Technology"]]
+        except:
             continue
-        cap_new.loc[pro, "Technology"] = dict_tech[cap_new.loc[pro, "Technology"]]
     cap_new = cap_new.drop(columns=["Process"]).groupby(["Site", "scenario-year", "Technology"]).sum()
     cap_new_regions = cap_new.reset_index()
     cap_new_regions["Site"] = [dict_countries[x] for x in cap_new_regions["Site"]]
@@ -397,10 +397,10 @@ def get_capacities_data(urbs_results):
     cap_total = df_data["process"][["inst-cap"]].reset_index().rename(columns={"support_timeframe": "scenario-year"})
     cap_total["Technology"] = cap_total["Process"]
     for pro in cap_total["Process"].index:
-        if cap_total["Process"][pro] in ["Slack", "Shunt"]:
-            cap_total.drop(index=pro, inplace=True)
+        try:
+            cap_total.loc[pro, "Technology"] = dict_tech[cap_total.loc[pro, "Technology"]]
+        except:
             continue
-        cap_total.loc[pro, "Technology"] = dict_tech[cap_total.loc[pro, "Technology"]]
     year_now = cap_total["scenario-year"].unique()[0]
     cap_total = cap_total.drop(columns=["Process"]).groupby(["Site", "scenario-year", "Technology"]).sum()
     cap_retired = - cap_total.copy()
@@ -411,22 +411,22 @@ def get_capacities_data(urbs_results):
     
     # Save results
     cap_new = cap_new.unstack()["inst-cap"].fillna(0)
-    capacities_new.loc[cap_new.index, cap_new.columns] = cap_new
+    capacities_new.loc[cap_new.index, cap_new.columns.intersection(capacities_new.columns)] = cap_new[capacities_new.columns]
     cap_total = cap_total.unstack()["inst-cap"].fillna(0)
-    capacities_total.loc[cap_total.index, cap_total.columns] = cap_total
+    capacities_total.loc[cap_total.index, cap_total.columns.intersection(capacities_total.columns)] = cap_total[capacities_total.columns]
     
     # Repeat for groups of regions
     cap_new_regions = cap_new_regions.unstack()["inst-cap"].fillna(0)
-    capacities_new.loc[cap_new_regions.index, cap_new_regions.columns] = cap_new_regions
+    capacities_new.loc[cap_new_regions.index, cap_new_regions.columns.intersection(capacities_new.columns)] = cap_new_regions[capacities_new.columns]
     cap_total_regions = cap_total_regions.unstack()["inst-cap"].fillna(0)
-    capacities_total.loc[cap_total_regions.index, cap_total_regions.columns] = cap_total_regions
+    capacities_total.loc[cap_total_regions.index, cap_total_regions.columns.intersection(capacities_total.columns)] = cap_total_regions[capacities_total.columns]
     
     # Retired capacity (continued)
     if year_now == 2016:
         capacities_retired.loc[cap_total.index, :] = 0
         capacities_retired.loc[cap_total_regions.index, :] = 0
     else:
-        index_past = pd.MultiIndex.from_product([[*dict_countries], [year_now-5]], names=["Site", "scenario-year"])
+        index_past = pd.MultiIndex.from_product([[*dict_countries], [scenario_years[scenario_years.index(year_now)-1]]], names=["Site", "scenario-year"])
         cap_total_past = capacities_total.loc[index_past].stack().reset_index().rename(columns={"level_2": "Technology", 0:"inst-cap-past"})
         cap_total_past["scenario-year"] = year_now
         cap_total_past = cap_total_past.set_index(["Site", "scenario-year", "Technology"])
@@ -440,9 +440,9 @@ def get_capacities_data(urbs_results):
         cap_retired_regions = cap_retired_regions.groupby(["Site", "scenario-year", "Technology"]).sum()
     
         cap_retired = cap_retired.unstack()["inst-cap"].fillna(0)
-        capacities_retired.loc[cap_retired.index, cap_retired.columns] = cap_retired
+        capacities_retired.loc[cap_retired.index, cap_retired.columns.intersection(capacities_retired.columns)] = cap_retired[capacities_retired.columns]
         cap_retired_regions = cap_retired_regions.unstack()["inst-cap"].fillna(0)
-        capacities_retired.loc[cap_retired_regions.index, cap_retired_regions.columns] = cap_retired_regions
+        capacities_retired.loc[cap_retired_regions.index, cap_retired_regions.columns.intersection(capacities_retired.columns)] = cap_retired_regions[capacities_retired.columns]
     
     # Save results
     urbs_results["Installed capacities"] = capacities_total.round(2).reset_index()
@@ -470,7 +470,6 @@ def get_storage_data(urbs_results):
         cap_c_new = df_result["cap_sto_c_new"].droplevel(3).reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "sto":"Storage type", "cap_sto_c_new":"new-inst-cap-c"}).fillna(0)
         cap_c_new = cap_c_new.set_index(["Site", "Storage type", "scenario-year"])
     except:
-        import pdb; pdb.set_trace()
         return urbs_results
         
     # Old capacity
@@ -501,7 +500,7 @@ def get_storage_data(urbs_results):
         storage_cap["retired-cap-p"] = 0
         storage_cap["retired-cap-c"] = 0
     else:
-        index_past = pd.MultiIndex.from_product([[*dict_countries], storage_types, [year_now-5]], names=["Site", "Storage type", "scenario-year"])
+        index_past = pd.MultiIndex.from_product([[*dict_countries], storage_types, [scenario_years[scenario_years.index(year_now)-1]]], names=["Site", "Storage type", "scenario-year"])
         cap_p_past = storage.loc[index_past, "inst-cap-p"].fillna(0).reset_index().rename(columns={"inst-cap-p": "retired-cap-p"})
         cap_c_past = storage.loc[index_past, "inst-cap-c"].fillna(0).reset_index().rename(columns={"inst-cap-c": "retired-cap-c"})
         cap_p_past["scenario-year"] = year_now
@@ -911,12 +910,12 @@ def get_cost_data(urbs_results, year_built):
     process.loc[process["horizon"]>1, "horizon"] = 1
     process["Annualized inv costs (incl. past)"] = process["inst-cap"] * process["inv-cost"] * process["active"] * process["invcost-factor"]
     process["Annualized inv costs (incl. past, till horizon)"] = process["Annualized inv costs (incl. past)"] * process["horizon"]
-    
+
     if "storage" in locals():
         storage["Annualized inv costs"] = (storage["cap_sto_p_new"] * storage["inv-cost-p"] + storage["cap_sto_c_new"] * storage["inv-cost-c"]) * storage["invcost-factor"] # alt for intertemporal: 'overpay-factor'
         storage["horizon"] = (2055 - year_built) / (storage["depreciation"] + 5)
         storage.loc[storage["horizon"]>1, "horizon"] = 1
-        storage["Annualized inv costs (incl. past)"] = (storage["inst-cap-p"] * storage["inv-cost-p"] + storage["inst-cap-c"] * storage["inv-cost-c"]) * storage["active"] * process["invcost-factor"]
+        storage["Annualized inv costs (incl. past)"] = (storage["inst-cap-p"] * storage["inv-cost-p"] + storage["inst-cap-c"] * storage["inv-cost-c"]) * storage["active"] * storage["invcost-factor"]
         storage["Annualized inv costs (incl. past, till horizon)"] = storage["Annualized inv costs (incl. past)"] * storage["horizon"]
         
     if "transmission" in locals():
@@ -952,7 +951,10 @@ def get_cost_data(urbs_results, year_built):
     # Reindex and plit transmission costs between regions equally
     process = process.droplevel([2]).reset_index().groupby(["Site", "scenario-year"]).sum()
     if "storage" in locals():
-        storage = storage.droplevel([2,3]).reset_index().groupby(["Site", "scenario-year"]).sum()
+        if len(storage):
+            storage = storage.droplevel([2,3]).reset_index().groupby(["Site", "scenario-year"]).sum()
+        else:
+            storage = storage.droplevel([2,3])
     if "transmission" in locals():
         transmission_1 = transmission.droplevel([2,3,4]).reset_index().rename(columns={"Site In": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
         transmission_2 = transmission.droplevel([0,2,3]).reset_index().rename(columns={"Site Out": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
@@ -960,7 +962,7 @@ def get_cost_data(urbs_results, year_built):
     # Report costs
     costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + process.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
     if "storage" in locals():
-        costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[stoarge.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + storage[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
+        costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + storage[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
     if "transmission" in locals():
         costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_1[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
         costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_2[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] 
@@ -1034,12 +1036,8 @@ def get_abatement(urbs_results):
 
 # Read in data for all scenarios
 for folder in result_folders:
-    #version = folder.split("-")[0].split("_")[0]
-    #year = folder.split("-")[0].split("_")[1]
-    #suffix = folder.split("-")[0].split("_")[2]
-    #scen = suffix#.upper()
-    year = "2016"
-    scen = "base"
+    year = folder.split("-")[0].split("_")[1]
+    scen = folder.split("-")[0].split("_")[2]
     stf_min = 2016
     
     # Read output file
@@ -1100,12 +1098,8 @@ for folder in result_folders:
     
     
 for folder in result_folders:
-    #version = folder.split("-")[0].split("_")[0]
-    #year = folder.split("-")[0].split("_")[1]
-    #suffix = folder.split("-")[0].split("_")[2]
-    #scen = suffix#.upper()
-    year = "2016"
-    scen = "base"
+    year = folder.split("-")[0].split("_")[1]
+    scen = folder.split("-")[0].split("_")[2]
     
     print(scen, year, ": Getting NTC rents data")
     urbs_results = get_NTC_rents_data(urbs_results)

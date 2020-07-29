@@ -158,6 +158,11 @@ def get_emissions_data(urbs_results):
     aux_process = filter.loc[filter["Commodity"]=="CO2", "Process"].tolist()
     pro_com = filter.loc[(filter["Process"].isin(aux_process)) & (filter["Direction"] == "In"), ["Process", "Commodity"]].set_index("Process")["Commodity"].to_dict()
     emissions_by_fuel = pd.DataFrame(0, index=multiindex, columns=list(set(pro_com.values())))
+    if "Emissions" in urbs_results.keys():
+        urbs_results["Emissions"].set_index(["Site", "scenario-year"], inplace=True)
+        urbs_results["Emissions by fuel"].set_index(["Site", "scenario-year"], inplace=True)
+        emissions.loc[urbs_results["Emissions"].index] = urbs_results["Emissions"]
+        emissions_by_fuel.loc[urbs_results["Emissions by fuel"].index] = urbs_results["Emissions by fuel"]
     
     co2 = df_result["e_pro_out"].unstack()['CO2'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
     co2 = add_weight(co2)

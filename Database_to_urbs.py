@@ -13,6 +13,16 @@ import shutil
 def write_Global(Global, year, writer):
     print("Global")
     Global.loc['Support timeframe', 'value'] = year
+    if year == 2020:
+        Global.loc['CO2 limit', 'value'] = 84825000 *1.070367
+    elif year == 2025:
+        Global.loc['CO2 limit', 'value'] = 88021000 *1.070367
+    elif year == 2030:
+        Global.loc['CO2 limit', 'value'] = 98743000 *1.070367
+    elif year == 2035:
+        Global.loc['CO2 limit', 'value'] = 102717000 *1.070367
+    elif year == 2037:
+        Global.loc['CO2 limit', 'value'] = 103845000 *1.070367
     Global.to_excel(writer, sheet_name='Global', index=True)
     
     
@@ -33,7 +43,7 @@ def write_Commodity(Commodity, year, writer):
     Commodity_year["max"] = round(Commodity_year["max"], 5)
     
     # Write
-    Commodity_year.to_excel(writer, sheet_name='Commodity', index=True)
+    Commodity_year.reset_index().to_excel(writer, sheet_name='Commodity', index=False)
     
     
 def write_Process(Process, Process_prev, EE_limits, year, writer):
@@ -57,7 +67,10 @@ def write_Process(Process, Process_prev, EE_limits, year, writer):
         Process_year.set_index(["Site", "Process"], inplace=True)
     
     # Prepare sheet
-    Process_year = Process_year.reset_index().drop(columns=["lifetime", "scenario-year", "Construction year", "Source"])
+    if (year>2016):
+        Process_year = Process_year.reset_index().drop(columns=["lifetime", "scenario-year", "Construction year", "Source"])
+    else:
+        Process_year = Process_year.reset_index()
     Process_year = Process_year.groupby(['Site','Process']).agg({'max-grad':np.mean, 'min-fraction':np.sum, 'inv-cost':np.mean, 'fix-cost':np.mean, 'var-cost':np.mean, 'startup-cost':np.mean, 'reliability':np.mean, 'cap-credit':np.mean, 'wacc':np.mean, 'depreciation':np.mean, 'area-per-cap':np.mean, 'inst-cap':np.sum, 'cap-lo':np.sum, 'cap-up':np.sum})
     
     # Correct cap-up
@@ -81,15 +94,13 @@ def write_Process(Process, Process_prev, EE_limits, year, writer):
         Process_year.drop(index=idx, inplace=True)
         Process_year = Process_year.append(Process_capped, ignore_index=True, sort=False)
         Process_year.loc[Process_year["cap-up"]<0, "cap-up"] = 0
-        
-    # Last check
-    Process_year = Process_year[Process_year['cap-up']!=0]
     
     # Round to 1e-5
     Process_year["inst-cap"] = round(Process_year["inst-cap"], 5)
     Process_year["cap-lo"] = round(Process_year["cap-lo"], 5)
     Process_year["cap-up"] = round(Process_year["cap-up"], 5)
     Process_year["var-cost"] = round(Process_year["var-cost"], 5)
+    Process_year = Process_year.loc[Process_year['cap-up']!=0]
     
     # Write
     pro = list(Process_year["Process"].unique())
@@ -300,12 +311,11 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     print("Demand")
     # Prepare sheet
     Demand = Demand.set_index('t')
-    Demand_year = (0.043494 * (year-2016) + 1) * Demand
-    Demand_year = Demand_year.loc[time_slices]
+    Demand_year = Demand.loc[time_slices]
     Demand_year.reset_index(inplace=True)
     Demand_year["t"] = Demand_year.index
     Demand_year.set_index('t', inplace=True)
-    annual_dem = Demand.sum(axis=0)
+    annual_dem = (0.043494 * (year-2016) + 1) * Demand.sum(axis=0)
     Demand_year_weighted = add_weight(Demand_year, time_slices)
     for c in Demand_year.columns:
         Demand_year[c] = (annual_dem[c] * Demand_year[c]) / Demand_year_weighted[c].sum()

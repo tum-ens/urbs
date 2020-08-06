@@ -12,7 +12,7 @@ global dict_season
 
 # User preferences
 subfolder = "Mekong"
-result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:4]=="0Run")]
+result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
 
 scenario_years = [2016, 2020, 2025, 2030, 2035, 2037]
 
@@ -24,7 +24,7 @@ def group_technologies(list_tech):
         elif elem.startswith("Gas"):
             grouped_tech[elem] = "Gas"
         else:
-            grouped_tech[elem] = elem
+            grouped_tech[elem] = elem[:-5]
     return grouped_tech
 
 def group_seasons():
@@ -54,17 +54,19 @@ def group_sites(list_sites):
     grouped_sites = {}
     for elem in list_sites:
         if elem.startswith("KHM"):
-            grouped_sites[elem] = "Cambodia"
+            grouped_sites[elem] = "cambodia"
         if elem.startswith("THA"):
-            grouped_sites[elem] = "Thailand"
+            grouped_sites[elem] = "thailand"
         if elem.startswith("LAO"):
-            grouped_sites[elem] = "Laos"
+            grouped_sites[elem] = "laos"
         if elem.startswith("CHN"):
-            grouped_sites[elem] = "China"
+            grouped_sites[elem] = "china"
         if elem.startswith("VNM"):
-            grouped_sites[elem] = "Vietnam"
+            grouped_sites[elem] = "vietnam"
         if elem.startswith("MYS"):
-            grouped_sites[elem] = "Malaysia"
+            grouped_sites[elem] = "malaysia"
+        if elem.startswith("MMR"):
+            grouped_sites[elem] = "myanmar"
     return grouped_sites
     
         
@@ -94,16 +96,16 @@ def extend_to_year(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
-    # df_empty.loc[0, "t"] = 0
-    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
-    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
-    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
+    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
     df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
+    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
+    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
+    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
+    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
+    # df_empty.loc[0, "t"] = 0
+    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
+    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
+    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
     
     df_empty = df_empty.reset_index().set_index(df.index.names)
     df_new = df_empty.join(df).dropna(axis=0).reset_index().drop(columns="t").rename(columns={"t_new":"t"})
@@ -125,16 +127,16 @@ def add_weight(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%168+1 # winter
-    # df_empty.loc[0, "t"] = 0
-    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%168+169 # Spring
-    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%168+337 # Summer
-    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%168+505 # Autumn
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
+    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
     df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
+    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
+    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
+    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
+    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
+    # df_empty.loc[0, "t"] = 0
+    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
+    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
+    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
     
     weights = df_empty["t"].value_counts().reset_index().rename(columns={"t": "weight"}).rename(columns={"index":"t"})
     weights = weights.set_index("t")
@@ -416,9 +418,9 @@ def get_capacities_data(urbs_results):
         urbs_results["Installed capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Added capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Retired capacities"].set_index(["Site", "scenario-year"], inplace=True)
-        capacities_total.loc[urbs_results["Installed capacities"].index] = urbs_results["Installed capacities"]
-        capacities_new.loc[urbs_results["Added capacities"].index] = urbs_results["Added capacities"]
-        capacities_retired.loc[urbs_results["Retired capacities"].index] = urbs_results["Retired capacities"]
+        capacities_total.loc[urbs_results["Installed capacities"].index] = urbs_results["Installed capacities"][capacities_total.columns]
+        capacities_new.loc[urbs_results["Added capacities"].index] = urbs_results["Added capacities"][capacities_new.columns]
+        capacities_retired.loc[urbs_results["Retired capacities"].index] = urbs_results["Retired capacities"][capacities_retired.columns]
     
     # New capacities
     cap_new = df_result["cap_pro_new"].reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "pro":"Process", "cap_pro_new":"inst-cap"})
@@ -1228,7 +1230,8 @@ for folder in result_folders:
     
     # Save results
     for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=False, header=True)
+        aux = urbs_results[sheet].reset_index()
+        aux.to_excel(writer, sheet_name=sheet, index=False, header=True)
     writer.save()
     
     
@@ -1241,7 +1244,7 @@ for folder in result_folders:
     
     # Save results
     for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=False, header=True)
+        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
     writer.save()
     
 for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
@@ -1254,5 +1257,5 @@ for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", 
     
     # Save results
     for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=False, header=True)
+        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
     writer.save()

@@ -738,11 +738,11 @@ def def_costs_rule(m, cost_type):
 
     # Calculate total costs by cost type.
     # Sums up process activity and capacity expansions
-    # if cost is optimal objective: sums only for tuples that includes selected sites.
-    # if objective is near_optimal and cost optimization is preliminary to real objective optimization,
-    # all tuples are included
     # and sums them in the cost types that are specified in the set
     # m.cost_type.
+    # if cost is optimal objective: sums only for selected sites.
+    # if objective is near_optimal , sums for all sites
+
     #
     # To change or add cost types, add/change entries
     # there and modify the if/elif cases in this function accordingly.

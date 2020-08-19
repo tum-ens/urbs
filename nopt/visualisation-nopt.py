@@ -158,7 +158,7 @@ def tidy_data (df):
 plot_cap = merge_processes(pro_cap, list_of_technologies, [2050])
 df = tidy_data(plot_cap)
 df_g = df[df.Process != info_dict['objective'][0]].copy(deep=True)
-order =list_of_technologies.copy(deep=True)
+order =list_of_technologies.copy()
 order.remove(info_dict['objective'][0])
 constant_cap=[]
 changing_cap=[]

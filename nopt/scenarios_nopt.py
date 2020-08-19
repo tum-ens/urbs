@@ -74,12 +74,12 @@ def scenario_RF(data) :
     demand.loc[idx[2040, :], ('Germany', 'Elec')] *= 1
     demand.loc[idx[2050, :], ('Germany', 'Elec')] *= 1
     #turn CCS off
-    pro = data['process']
-    for stf in data['global_prop'].index.levels[0].tolist():
-        pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
+    #pro = data['process']
+    #for stf in data['global_prop'].index.levels[0].tolist():
+     #   pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
+     #   pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
+     #   pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
+     #   pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
 
     return data
 
@@ -98,12 +98,12 @@ def scenario_TM80(data) :
     demand.loc[idx[2040, :], ('Germany', 'Elec')] *= 1.27
     demand.loc[idx[2050, :], ('Germany', 'Elec')] *= 1.35
     # turn CCS off
-    pro = data['process']
-    for stf in data['global_prop'].index.levels[0].tolist():
-        pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
+    #pro = data['process']
+   # for stf in data['global_prop'].index.levels[0].tolist():
+   #     pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
     return data
 
 def scenario_TM95(data) :
@@ -121,12 +121,12 @@ def scenario_TM95(data) :
     demand.loc[idx[2040, :], ('Germany', 'Elec')] *= 1.32
     demand.loc[idx[2050, :], ('Germany', 'Elec')] *= 1.38
     # turn CCS off
-    pro = data['process']
-    for stf in data['global_prop'].index.levels[0].tolist():
-        pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
+   # pro = data['process']
+   # for stf in data['global_prop'].index.levels[0].tolist():
+   #     pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
     return data
 
 def scenario_EL80(data) :
@@ -144,12 +144,12 @@ def scenario_EL80(data) :
     demand.loc[idx[2040, :], ('Germany', 'Elec')] *= 1.64
     demand.loc[idx[2050, :], ('Germany', 'Elec')] *= 1.83
     # turn CCS off
-    pro = data['process']
-    for stf in data['global_prop'].index.levels[0].tolist():
-        pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
+   # pro = data['process']
+   # for stf in data['global_prop'].index.levels[0].tolist():
+   #     pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
     return data
 
 def scenario_EL95(data) :
@@ -167,12 +167,12 @@ def scenario_EL95(data) :
     demand.loc[idx[2040, :], ('Germany', 'Elec')] *= 1.63
     demand.loc[idx[2050, :], ('Germany', 'Elec')] *= 1.82
     # turn CCS off
-    pro = data['process']
-    for stf in data['global_prop'].index.levels[0].tolist():
-        pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
-        pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
+   # pro = data['process']
+   # for stf in data['global_prop'].index.levels[0].tolist():
+   #     pro.loc[(stf, 'Germany', 'CCS PC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS Oxyfuel'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS NGCC'), 'cap-up']=0
+   #     pro.loc[(stf, 'Germany', 'CCS IGCC'), 'cap-up']=0
     return data
 
 

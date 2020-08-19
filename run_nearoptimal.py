@@ -7,9 +7,11 @@ start_time = time.time()
 input_files = 'Intertemporal-Germany'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
-objectives = [[('Onshore wind')]]      # [[('Photovoltaics')],[('Onshore wind')],[('Offshore wind')],[('Gas Turbine'),('CCGT')]] #,[('Onshore wind')]
+objectives = [[('CCGT'),('Gas Turbine'),('CCS NGCC')]] # ,[[('Photovoltaics')]] #[('Photovoltaics')], [('Onshore wind')],[('Offshore wind')],
 for objective in objectives:
-    result_name = 'Int-DE-ms-'+str(objective[0]).replace(' ','')
+    result_name = 'Int-DE-'+str(objective[0]).replace(' ','')
+    if objective == [('CCGT'),('Gas Turbine'),('CCS NGCC')]:
+        result_name='Int-DE-w-crossover-sande-noasser'+'Gas'
     result_dir = nopt.prepare_result_directory(result_name)  # name + time stamp
 
     # copy input file to result directory
@@ -75,10 +77,11 @@ for objective in objectives:
     # select scenarios to be run
     scenarios = [
         #nopt.scenario_RF,
-        nopt.scenario_TM80,
-        #nopt.scenario_EL80,
-        #nopt.scenario_TM95,
+        # nopt.scenario_TM80,
         #nopt.scenario_EL95,
+        nopt.scenario_EL80,
+        #nopt.scenario_TM95,
+
 
 
     ]

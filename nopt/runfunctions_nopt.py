@@ -45,7 +45,7 @@ def setup_solver(optim, logfile='solver.log'):
         # optim.set_options("mipgap=5e-4")  # default = 1e-4
         optim.set_options("Method=2")
         optim.set_options("Threads=8")
-        optim.set_options("Crossover=0")
+        #optim.set_options("Crossover=0")
         optim.set_options("BarHomogeneous=1")
     elif optim.name == 'glpk':
         # reference with list of options
@@ -154,6 +154,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     else:
 
         # solve cost model and read optimized cost
+
+
         prob = create_model(data, objective_dict, dt, timesteps)
         #prob.write('model.lp', io_options={'symbolic_solver_labels': True})
 
@@ -187,7 +189,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
         def res_cost_restrict_rule(m):
             assert m.cost_factor >= 0, "slack value is not defined properly. Slack value must be a positive number."
-            return (1 + m.cost_factor) * m.opt_cost_sum == pyomo.summation(m.costs)
+            return (1 + m.cost_factor) * m.opt_cost_sum >= pyomo.summation(m.costs)
 
 
         prob.slack_list.sort()
@@ -201,7 +203,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
             prob.res_cost_restrict = pyomo.Constraint(
                 rule=res_cost_restrict_rule,
-                doc='total costs == Optimum cost *(1+e)')
+                doc='total costs =< Optimum cost *(1+e)')
 
             # Minimize
             # log_filename = os.path.join(result_dir, 'minimize.log')

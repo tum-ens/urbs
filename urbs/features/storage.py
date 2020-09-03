@@ -289,11 +289,11 @@ def storage_cost(m, cost_type):
                    m.storage_dict['cost_factor'][s]
                    for s in m.sto_tuples)
     elif cost_type == 'Variable':
-        return sum(m.e_sto_con[(tm,) + s] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+        return sum(m.e_sto_con[(tm,) + s] * m.weight *
                    m.storage_dict['var-cost-c'][s] *
                    m.storage_dict['cost_factor'][s] +
                    (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
-                   m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] * m.storage_dict['var-cost-p'][s] *
+                   m.weight * m.storage_dict['var-cost-p'][s] *
                    m.storage_dict['cost_factor'][s]
                    for tm in m.tm
                    for s in m.sto_tuples)

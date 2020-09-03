@@ -99,11 +99,13 @@ def write_Process(Process, Process_prev, EE_limits, year, writer):
     Process_year["inst-cap"] = round(Process_year["inst-cap"], 5)
     Process_year["cap-lo"] = round(Process_year["cap-lo"], 5)
     Process_year["cap-up"] = round(Process_year["cap-up"], 5)
+    #Process_year["cap-up"] = 0
     Process_year["var-cost"] = round(Process_year["var-cost"], 5)
     Process_year = Process_year.loc[Process_year['cap-up']!=0]
     
     # Write
     pro = list(Process_year["Process"].unique())
+    Process_year = Process_year[["Site", "Process", "inst-cap", "cap-lo", "cap-up", "max-grad", "min-fraction", "inv-cost", "fix-cost", "var-cost", "startup-cost", "reliability", "cap-credit", "wacc", "depreciation", "area-per-cap"]]
     Process_year.to_excel(writer, sheet_name='Process', index=False)
     return pro
     
@@ -222,7 +224,8 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     Transmission = db['Transmission'].copy()
     Storage = db['Storage'].copy().set_index(["Site", "Storage", "Commodity"])
     Demand = db['Demand'].copy()
-    SupIm = db['SupIm'].copy()
+    SupIm = db['SupIm'+suffix].copy()
+    Hydro = pd.read_csv('Input' + fs + 'Mekong' + fs + 'hydro' + suffix + '_' + str(year) + '.csv', sep=';', decimal=',', index_col=0)
     db = None
     
     # Eventually read the results of the previous year
@@ -316,6 +319,11 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     Demand_year["t"] = Demand_year.index
     Demand_year.set_index('t', inplace=True)
     annual_dem = (0.043494 * (year-2016) + 1) * Demand.sum(axis=0)
+    for reg in annual_dem.index:
+        if reg[:3] == "KHM":
+            annual_dem.loc[reg] = (0.088 * (year-2016) + 1) * Demand[reg].sum(axis=0)
+        if reg[:3] == "LAO":
+            annual_dem.loc[reg] = (0.095 * (year-2016) + 1) * Demand[reg].sum(axis=0)
     Demand_year_weighted = add_weight(Demand_year, time_slices)
     for c in Demand_year.columns:
         Demand_year[c] = (annual_dem[c] * Demand_year[c]) / Demand_year_weighted[c].sum()
@@ -334,6 +342,7 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     SupIm_year = SupIm.set_index('t')
     SupIm_year.loc[0] = 0
     SupIm_year.sort_index(inplace=True)
+    SupIm_year = pd.concat([Hydro, SupIm_year], axis=1)
       
     FLH_should = SupIm_year.sum(axis=0) * (len(time_slices)-1) / 8760
     SupIm_year = SupIm_year.loc[time_slices]

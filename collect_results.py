@@ -260,8 +260,14 @@ def get_electricity_data(urbs_results, year_built):
     electricity = pd.DataFrame(index=multiindex, columns=list_cols)
     
     # Prepare dataframe of hourly prices
-    multiindex = pd.MultiIndex.from_product([range(1,8761), [int(year)]], names=["Hour", "scenario-year"])
+    multiindex = pd.MultiIndex.from_product([range(1,8761), scenario_years], names=["Hour", "scenario-year"])
     hourly_prices = pd.DataFrame(index=multiindex, columns=report_sites)
+    
+    if "Electricity" in urbs_results.keys():
+        urbs_results["Electricity"].set_index(["Site", "scenario-year"], inplace=True)
+        electricity.loc[urbs_results["Electricity"].index.intersection(electricity.index)] = urbs_results["Electricity"]
+        urbs_results["Hourly prices"].set_index(["Hour", "scenario-year"], inplace=True)
+        hourly_prices.loc[urbs_results["Hourly prices"].index.intersection(hourly_prices.index)] = urbs_results["Hourly prices"]
     
     # Get cost factor
     if year_built > stf_min:
@@ -343,18 +349,8 @@ def get_electricity_data(urbs_results, year_built):
     # Save results
     electricity.fillna(0, inplace=True)
     hourly_prices.fillna(0, inplace=True)
-    if "Electricity" in urbs_results.keys():
-        urbs_results["Electricity"].set_index(["Site", "scenario-year"], inplace=True)
-        urbs_results["Hourly prices"].set_index(["Hour", "scenario-year"], inplace=True)
-        try: # Update values in sheet
-            urbs_results["Electricity"].loc[electricity.index] = electricity.astype("float").round(2)
-            urbs_results["Hourly prices"].loc[hourly_prices.index] = hourly_prices.round(2)
-        except: # Append values in sheet
-            urbs_results["Electricity"] = urbs_results["Electricity"].append(electricity.astype("float").round(2))
-            urbs_results["Hourly prices"] = urbs_results["Hourly prices"].append(hourly_prices.round(2))
-    else: # Create sheet
-        urbs_results["Electricity"] = electricity.astype("float").round(2)
-        urbs_results["Hourly prices"] = hourly_prices.round(2)
+    urbs_results["Electricity"] = electricity.astype("float").round(2)
+    urbs_results["Hourly prices"] = hourly_prices.round(2)
     # Sort index
     urbs_results["Electricity"] = urbs_results["Electricity"].sort_index(level="scenario-year")
     urbs_results["Hourly prices"] = urbs_results["Hourly prices"].sort_index(level="scenario-year")
@@ -1230,8 +1226,11 @@ for folder in result_folders:
     
     # Save results
     for sheet in urbs_results.keys():
-        aux = urbs_results[sheet].reset_index()
-        aux.to_excel(writer, sheet_name=sheet, index=False, header=True)
+        try:
+            aux = urbs_results[sheet].reset_index()
+            aux.to_excel(writer, sheet_name=sheet, index=False, header=True)
+        except:
+            pass
     writer.save()
     
     

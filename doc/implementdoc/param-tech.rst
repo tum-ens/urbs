@@ -162,7 +162,7 @@ The user can set the paramteter in script ``runme.py`` in the line:
     dt = 1  # length of each time step (unit: hours)
 
 **Weight of Last Modeled Support Timeframe**, :math:`W`,
-``m.global_prop.loc[(min(m.stf), 'Cost budget'), 'value']``: This parameter
+``m.global_prop.loc[(max(sorted_stf), 'Weight'), 'value']``: This parameter
 specifies how long the time interval represented by the last support timeframe
 is. The unit of this parameter is years. By extension it also specifies the end
 of the modeling horizon. The parameter is set in the spreadsheet corresponding

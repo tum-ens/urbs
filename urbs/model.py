@@ -253,7 +253,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.cap_pro = pyomo.Expression(
         m.pro_tuples,
         rule=def_process_capacity_rule,
-        doc='total process capacity')
+        doc='Total process capacity (MW)')
 
     m.tau_pro = pyomo.Var(
         m.t, m.pro_tuples,
@@ -614,7 +614,7 @@ def def_partial_process_input_rule(m, tm, stf, sit, pro, coin):
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
     return (m.e_pro_in[tm, stf, sit, pro, coin] ==
-            m.dt * m.cap_pro[stf, sit, pro] * online_factor +
+            m.dt * (m.cap_pro[stf, sit, pro] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
 
@@ -629,7 +629,7 @@ def def_partial_process_output_rule(m, tm, stf, sit, pro, coo):
     throughput_factor = (R - min_fraction * r) / (1 - min_fraction)
 
     return (m.e_pro_out[tm, stf, sit, pro, coo] ==
-            m.dt * m.cap_pro[stf, sit, pro] * online_factor +
+            m.dt * (m.cap_pro[stf, sit, pro] * online_factor +
             m.tau_pro[tm, stf, sit, pro] * throughput_factor)
 
 

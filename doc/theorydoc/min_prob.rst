@@ -202,8 +202,8 @@ commodity balance is calculated in the following way:
 .. math::
    &\forall c \in C,~t\in T_m:\\\\
    &\text{CB}(c,t)=
-    \sum_{(c,p)\in C^{\mathrm{out}}_p}\epsilon^{\text{in}}_{cpt}-
-    \sum_{(c,p)\in C^{\mathrm{in}}_p}\epsilon^{\text{out}}_{cpt}.
+    \sum_{(c,p)\in C^{\mathrm{in}}_p}\epsilon^{\text{in}}_{cpt}-
+    \sum_{(c,p)\in C^{\mathrm{out}}_p}\epsilon^{\text{out}}_{cpt}.
 
 Here, the tuple sets :math:`C^{\mathrm{in,out}}_p` represent all input and
 output commodities of process :math:`p`, respectively. The commodity balance

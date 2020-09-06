@@ -181,10 +181,40 @@ is expressed in the unit Megawatts [MW].
 In script ``model.py`` this variable is defined by the model variable
 ``cap_pro`` and initialized by the following code fragment: ::
 
-    m.cap_pro = pyomo.Var(
+    m.cap_pro = pyomo.Expression(
         m.pro_tuples,
-        within=pyomo.NonNegativeReals,
+        rule=def_process_capacity_rule,
         doc='Total process capacity (MW)')
+
+The parameter is defined with *Expression* component of Pyomo. This allows the expressions
+to be re-used in multiple contexts and grants the ability to adjust the *Expression* at a later time.
+In the context of "urbs" model, Pyomo *Expression* enables :math:`\hat{\kappa}_{yvp}`, ``cap_pro_new``
+to be used as an variable. The rule ``def_process_capacity_rule`` is defined as follows::
+
+    def def_process_capacity_rule(m, stf, sit, pro):
+    if m.mode['int']:
+        if (sit, pro, stf) in m.inst_pro_tuples:
+            if (sit, pro, min(m.stf)) in m.pro_const_cap_dict:
+                cap_pro = m.process_dict['inst-cap'][(stf, sit, pro)]
+            else:
+                cap_pro = \
+                    (sum(m.cap_pro_new[stf_built, sit, pro]
+                         for stf_built in m.stf
+                         if (sit, pro, stf_built, stf)
+                         in m.operational_pro_tuples) +
+                     m.process_dict['inst-cap'][(min(m.stf), sit, pro)])
+        else:
+            cap_pro = sum(
+                m.cap_pro_new[stf_built, sit, pro]
+                for stf_built in m.stf
+                if (sit, pro, stf_built, stf) in m.operational_pro_tuples)
+    else:
+        if (sit, pro, stf) in m.pro_const_cap_dict:
+            cap_pro = m.process_dict['inst-cap'][(stf, sit, pro)]
+        else:
+            cap_pro = (m.cap_pro_new[stf, sit, pro] +
+                       m.process_dict['inst-cap'][(stf, sit, pro)])
+    return cap_pro
 
 **New Process Capacity**, :math:`\hat{\kappa}_{yvp}`, ``cap_pro_new``: The
 variable :math:`\hat{\kappa}_{yvp}` represents the capacity of a process tuple
@@ -261,10 +291,43 @@ capacity that needs to be installed. This variable is expressed in the unit MW.
 In script ``features\transmission.py`` this variable is defined by the model variable
 ``cap_tra`` and initialized by the following code fragment: ::
 
-    m.cap_tra = pyomo.Var(
+    m.cap_tra = pyomo.Expression(
         m.tra_tuples,
-        within=pyomo.NonNegativeReals,
+        rule=def_transmission_capacity_rule,
         doc='Total transmission capacity (MW)')
+    
+With ``def_transmission_capacity_rule`` defined as::
+
+    def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
+    if m.mode['int']:
+        if (sin, sout, tra, com, stf) in m.inst_tra_tuples:
+            if (min(m.stf), sin, sout, tra, com) in m.tra_const_cap_dict:
+                cap_tra = m.transmission_dict['inst-cap'][
+                    (min(m.stf), sin, sout, tra, com)]
+            else:
+                cap_tra = (
+                    sum(m.cap_tra_new[stf_built, sin, sout, tra, com]
+                        for stf_built in m.stf
+                        if (sin, sout, tra, com, stf_built, stf) in
+                        m.operational_tra_tuples) +
+                    m.transmission_dict['inst-cap']
+                    [(min(m.stf), sin, sout, tra, com)])
+        else:
+            cap_tra = (
+                sum(m.cap_tra_new[stf_built, sin, sout, tra, com]
+                    for stf_built in m.stf
+                    if (sin, sout, tra, com, stf_built, stf) in
+                    m.operational_tra_tuples))
+    else:
+        if (stf, sin, sout, tra, com) in m.tra_const_cap_dict:
+            cap_tra = \
+                m.transmission_dict['inst-cap'][(stf, sin, sout, tra, com)]
+        else:
+            cap_tra = (m.cap_tra_new[stf, sin, sout, tra, com] +
+                       m.transmission_dict['inst-cap'][
+                           (stf, sin, sout, tra, com)])
+
+    return cap_tra
 
 **New Transmission Capacity**, :math:`\hat{\kappa}_{yaf}`, ``cap_tra_new``: The
 variable :math:`\hat{\kappa}_{yaf}` represents the additional capacity, that
@@ -377,10 +440,40 @@ capacity that needs to be installed. This variable is expressed in unit MWh. In
 script ``features\storage.py`` this variable is defined by the model variable
 ``cap_sto_c`` and initialized by the following code fragment: ::
 
-    m.cap_sto_c = pyomo.Var(
+    m.cap_sto_c = pyomo.Expression(
         m.sto_tuples,
-        within=pyomo.NonNegativeReals,
+        rule=def_storage_capacity_rule,
         doc='Total storage size (MWh)')
+
+With ``def_storage_capacity_rule`` defined as::
+
+def def_storage_capacity_rule(m, stf, sit, sto, com):
+    if m.mode['int']:
+        if (sit, sto, com, stf) in m.inst_sto_tuples:
+            if (min(m.stf), sit, sto, com) in m.sto_const_cap_c_dict:
+                cap_sto_c = m.storage_dict['inst-cap-c'][
+                    (min(m.stf), sit, sto, com)]
+            else:
+                cap_sto_c = (
+                    sum(m.cap_sto_c_new[stf_built, sit, sto, com]
+                        for stf_built in m.stf
+                        if (sit, sto, com, stf_built, stf) in
+                        m.operational_sto_tuples) +
+                    m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)])
+        else:
+            cap_sto_c = (
+                sum(m.cap_sto_c_new[stf_built, sit, sto, com]
+                    for stf_built in m.stf
+                    if (sit, sto, com, stf_built, stf) in
+                    m.operational_sto_tuples))
+    else:
+        if (stf, sit, sto, com) in m.sto_const_cap_c_dict:
+            cap_sto_c = m.storage_dict['inst-cap-c'][(stf, sit, sto, com)]
+        else:
+            cap_sto_c = (m.cap_sto_c_new[stf, sit, sto, com] +
+                         m.storage_dict['inst-cap-c'][(stf, sit, sto, com)])
+
+    return cap_sto_c
 
 **New Storage Size**, :math:`\hat{\kappa}_{yvs}^\text{c}`, ``cap_sto_c_new``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the additional
@@ -404,10 +497,40 @@ needs to be installed. This variable is expressed in the unit MW. In script
 initialized by the following code fragment:
 ::
 
-    m.cap_sto_p = pyomo.Var(
+    m.cap_sto_p = pyomo.Expression(
         m.sto_tuples,
-        within=pyomo.NonNegativeReals,
+        rule=def_storage_power_rule,
         doc='Total storage power (MW)')
+
+With ``def_storage_power_rule`` defined as::
+
+def def_storage_power_rule(m, stf, sit, sto, com):
+    if m.mode['int']:
+        if (sit, sto, com, stf) in m.inst_sto_tuples:
+            if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
+                cap_sto_p = m.storage_dict['inst-cap-p'][
+                    (min(m.stf), sit, sto, com)]
+            else:
+                cap_sto_p = (
+                    sum(m.cap_sto_p_new[stf_built, sit, sto, com]
+                        for stf_built in m.stf
+                        if (sit, sto, com, stf_built, stf) in
+                        m.operational_sto_tuples) +
+                    m.storage_dict['inst-cap-p'][(min(m.stf), sit, sto, com)])
+        else:
+            cap_sto_p = (
+                sum(m.cap_sto_p_new[stf_built, sit, sto, com]
+                    for stf_built in m.stf
+                    if (sit, sto, com, stf_built, stf)
+                    in m.operational_sto_tuples))
+    else:
+        if (stf, sit, sto, com) in m.sto_const_cap_p_dict:
+            cap_sto_p = m.storage_dict['inst-cap-p'][(stf, sit, sto, com)]
+        else:
+            cap_sto_p = (m.cap_sto_p_new[stf, sit, sto, com] +
+                         m.storage_dict['inst-cap-p'][(stf, sit, sto, com)])
+
+    return cap_sto_p
 
 **New Storage Power**, :math:`\hat{\kappa}_{yvs}^\text{p}`, ``cap_sto_p_new``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{p}` represents the additional

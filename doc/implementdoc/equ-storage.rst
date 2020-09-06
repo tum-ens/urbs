@@ -201,7 +201,7 @@ storage at the beginning of the simulation. The variable storage energy content
 :math:`\epsilon_{yvst}^\text{con}` at the initial timestep :math:`t_1` is
 defined by this constraint. The constraint states that the variable
 :math:`\epsilon_{yvst_1}^\text{con}` must be equal to the product of the
-parameters storage content installed :math:`K_{yvs}^\text{c}` and  initial and
+variable total installed storage capacity :math:`\kappa_{yvs}^\text{c}` and  initial and
 final state of charge :math:`I_{yvs}`.
 
 Final storage state: Final storage represents the storage state in a storage at
@@ -209,7 +209,7 @@ the end of the simulation. The variable storage energy content
 :math:`\epsilon_{yvst}^\text{con}` at the final timestep :math:`t_N` is
 restricted by this constraint. The constraint states that the variable
 :math:`\epsilon_{yvst_N}^\text{con}` must be greater than or equal to the
-product of the parameters storage content installed :math:`K_{yvs}^\text{c}`
+product of the variable total installed storage capacity :math:`kappa_{yvs}^\text{c}`
 and initial and final state of charge :math:`I_{yvs}`. The mathematical
 explanation of this rule is given in :ref:`theory-storage`.
 
@@ -217,9 +217,9 @@ In script ``storage.py`` the constraint initial and final storage state rule is
 then defined and calculated by the following code fragment:
 ::
 
-    m.res_initial_and_final_storage_state = pyomo.Constraint(
-        m.t, m.sto_init_bound_tuples,
-        rule=res_initial_and_final_storage_state_rule,
+    m.def_initial_storage_state = pyomo.Constraint(
+        m.sto_init_bound_tuples,
+        rule=def_initial_storage_state_rule,
         doc='storage content initial == and final >= storage.init * capacity')
 
 .. literalinclude:: /../urbs/features/storage.py
@@ -237,9 +237,9 @@ In script ``storage.py`` the constraint initial and final storage state rule is
 then defined and calculated by the following code fragment:
 ::
 
-    m.res_initial_and_final_storage_state_var = pyomo.Constraint(
-        m.t, m.sto_tuples - m.sto_init_bound_tuples,
-        rule=res_initial_and_final_storage_state_var_rule,
+    m.res_storage_state_cyclicity = pyomo.Constraint(
+        m.sto_tuples,
+        rule=res_storage_state_cyclicity_rule,
         doc='storage content initial <= final, both variable')
 
 .. literalinclude:: /../urbs/features/storage.py

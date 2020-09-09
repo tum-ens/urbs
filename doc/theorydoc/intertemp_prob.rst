@@ -179,7 +179,7 @@ subset of processes that are already installed in the first modeled year
 If :math:`y_j` is the last modeled year, :math:`y_{j+1}` stands for the end of
 the model horizon. The set :math:`O_{\text{inst}}` can be found in the model implementation as :ref:`initially-installed-units`. 
 This is the set of units, that are already installed in the beginning of the model. 
-The set :math:`O` describes the set of those units, that are installed during the model and its implementation can be found at :ref:`installation-in-earlier`
+The set :math:`O` describes the set of those units, that are installed during the model and its implementation can be found at :ref:`installation-in-earlier`.
 
 With these two sets the installed process capacity in a given year is then
 given by:

@@ -532,13 +532,15 @@ following code fragment:
 
 ::
 
-    m.pro_partial_tuples = pyomo.Set(
-        within=m.stf * m.sit * m.pro,
-        initialize=[(stf, site, process)
-                    for (stf, site, process) in m.pro_tuples
-                    for (s, pro, _) in tuple(m.r_in_min_fraction_dict.keys())
+    m.pro_partial_input_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro * m.com,
+        initialize=[(stf, site, process, commodity)
+                    for (stf, site, process) in m.pro_partial_tuples
+                    for (s, pro, commodity) in tuple(m.r_in_min_fraction_dict
+                                                     .keys())
                     if process == pro and s == stf],
-        doc='Processes with partial input')
+        doc='Commodities with partial input ratio,'
+            'e.g. (2020,Mid,Coal PP,Coal)')
 
 
 Process Output Tuples

@@ -80,11 +80,12 @@ def write_Process(Process, Process_prev, EE_limits, year, writer):
         Process_group["Category"] = [x.split("_")[0] for x in Process_group["Process"]]
         Process_group = Process_group[["Site", "Category","inst-cap"]]
         Process_group = Process_group.groupby(["Site", "Category"]).sum()
-        Process_group = Process_group.join(EE_limits["cap-up"], how="right")
+        EE_limits_year = EE_limits.loc[(EE_limits["scenario-year"]=="all") | (EE_limits["scenario-year"]==year)]
+        Process_group = Process_group.join(EE_limits_year["cap-up"], how="right")
         Process_group["rest-cap-up"] = Process_group["cap-up"] - Process_group["inst-cap"]
         
         idx = Process_year[Process_year["cap-up"] == np.inf].index
-        idx = [i for i in idx if (Process_year.loc[i, "Process"].startswith("Solar") or Process_year.loc[i, "Process"].startswith("Wind"))]
+        idx = [i for i in idx if (Process_year.loc[i, "Process"].startswith("Solar") or Process_year.loc[i, "Process"].startswith("Wind") or Process_year.loc[i, "Process"].startswith("Hydro"))]
         Process_capped = Process_year.loc[idx]
         Process_capped["Category"] = [x.split("_")[0] for x in Process_capped["Process"]]
         Process_capped.set_index(["Site", "Category"], inplace=True)
@@ -214,7 +215,7 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     fs = os.path.sep
     
     # Read the database file
-    db = pd.read_excel('Input' + fs + 'Mekong' + fs + 'ASEAN_Mekong_provinces_DB.xlsx', sheet_name=None)
+    db = pd.read_excel('Input' + fs + 'Mekong' + fs + 'ASEAN_Mekong_provinces_DB_tra.xlsx', sheet_name=None)
     Global = db['Global'].copy().set_index('Property')
     Site = db['Site'].copy()
     Commodity = db['Commodity'].copy().set_index(["Site", "Commodity", "Type"])
@@ -281,7 +282,7 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     print("Transmission")
     
     # Prepare sheet
-    Transmission = Transmission[['Site In','Site Out','Transmission','Commodity','eff','inv-cost','fix-cost','var-cost','inst-cap','cap-lo','cap-up','cap-credit','wacc','depreciation']]
+    Transmission = Transmission[['Site In','Site Out','Transmission','Commodity','eff','inv-cost','fix-cost','var-cost','inst-cap','cap-lo','cap-up','cap-credit','reliability','wacc','depreciation']]
     
     # Evetually add new capacities from previous year
     if year > 2016:

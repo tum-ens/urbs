@@ -11,7 +11,7 @@ global dict_countries
 global dict_season
 
 # User preferences
-subfolder = "Mekong"
+subfolder = os.path.join("Mekong", "20200916 Short average tra")
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
 
 scenario_years = [2016, 2020, 2025, 2030, 2035, 2037]

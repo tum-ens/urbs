@@ -110,11 +110,11 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
     else:
         if (stf, sin, sout, tra, com) in m.tra_const_cap_dict:
             cap_tra = \
-                m.transmission_dict['inst-cap'][(stf, sin, sout, tra, com)]
+                m.transmission_dict['inst-cap'][(stf, sin, sout, tra, com)] * m.transmission_dict['reliability'][(stf, sin, sout, tra, com)]
         else:
             cap_tra = (m.cap_tra_new[stf, sin, sout, tra, com] +
                        m.transmission_dict['inst-cap'][
-                           (stf, sin, sout, tra, com)])
+                           (stf, sin, sout, tra, com)]) * m.transmission_dict['reliability'][(stf, sin, sout, tra, com)]
 
     return cap_tra
 

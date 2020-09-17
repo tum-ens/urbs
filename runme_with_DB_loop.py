@@ -9,7 +9,7 @@ import time
 model_type = '_long'
 suffix = "_dry"
 fs = os.path.sep
-result_folder = 'Mekong'+fs+'RRun_2016_base-20200901T0803'
+result_folder = 'Mekong'+fs+'Run_2016_dry-20200915T2328'
 if model_type == '_long':
     time_slices = [i for i in range(8761)]
 else:

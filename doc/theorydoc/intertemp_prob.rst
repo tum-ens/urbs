@@ -145,7 +145,7 @@ following form:
 
   .. math::
     C^{\text{total}}_{\text{m}}=\frac 1n \cdot (1+j)^{-m}
-    \sum_{l=0}^{k-1}(1+j)^{-l} \cdot C=\underbrace{\frac 1n \cdot (1+j)^{-m}
+    \sum_{l=0}^{k-1}(1+j)^{-l} \cdot C=\underbrace{\frac 1n \cdot (1+j)^{1-m}
     \cdot \frac{(1+j)^k-1}{(1+j)^k\cdot j}}_{=:I_{\text{m}}}\cdot C
 
 In any case the total invest costs are then given by:

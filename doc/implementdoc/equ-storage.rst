@@ -209,7 +209,7 @@ the end of the simulation. The variable storage energy content
 :math:`\epsilon_{yvst}^\text{con}` at the final timestep :math:`t_N` is
 restricted by this constraint. The constraint states that the variable
 :math:`\epsilon_{yvst_N}^\text{con}` must be greater than or equal to the
-product of the variable total installed storage capacity :math:`kappa_{yvs}^\text{c}`
+product of the variable total installed storage capacity :math:`\kappa_{yvs}^\text{c}`
 and initial and final state of charge :math:`I_{yvs}`. The mathematical
 explanation of this rule is given in :ref:`theory-storage`.
 

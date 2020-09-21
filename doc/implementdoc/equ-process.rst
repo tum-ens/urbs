@@ -245,7 +245,7 @@ following code fragment:
    :pyobject: res_throughput_by_capacity_min_rule
 
 **Partial Process Input Rule**: The link between operational state
-:math:`tau_{yvpt}` and commodity in/outputs is changed from a simple
+:math:`\tau_{yvpt}` and commodity in/outputs is changed from a simple
 linear behavior to a more complex one. Instead of constant in- and output
 ratios these are now interpolated linearly between the value for full operation
 :math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios

@@ -136,7 +136,7 @@ following code fragment: ::
         within=pyomo.NonNegativeReals,
         doc='Use of stock commodity source (MWh) at a given timestep')
 
-**Sell Commodity Source Term**, :math:`\varrho_{yvct}`, ``e_co_sell``, MWh :
+**Sell Commodity Source Term**, :math:`\varrho_{yvct}`, ``e_co_sell``, MWh:
 The variable :math:`\varrho_{yvct}` represents the energy amount in [MWh] that
 is being used by the system of commodity :math:`c` from type sell
 (:math:`\forall c \in C_\text{sell}`) in support timeframe :math:`y`
@@ -150,7 +150,7 @@ following code fragment in: ::
         within=pyomo.NonNegativeReals,
         doc='Use of sell commodity source (MWh) at a given timestep')
 
-**Buy Commodity Source Term**, :math:`\psi_{yvct}`, ``e_co_buy``, MWh : The
+**Buy Commodity Source Term**, :math:`\psi_{yvct}`, ``e_co_buy``, MWh: The
 variable :math:`\psi_{yvct}` represents the energy amount in [MWh] that is
 being used by the system of commodity :math:`c` from type buy
 (:math:`\forall c \in C_\text{buy}`) in support timeframe :math:`y`
@@ -445,33 +445,33 @@ script ``features\storage.py`` this variable is defined by the model variable
         rule=def_storage_capacity_rule,
         doc='Total storage size (MWh)')
 
-With ``def_storage_capacity_rule`` defined as::
+With ``def_storage_capacity_rule`` defined as: ::
 
-def def_storage_capacity_rule(m, stf, sit, sto, com):
-    if m.mode['int']:
-        if (sit, sto, com, stf) in m.inst_sto_tuples:
-            if (min(m.stf), sit, sto, com) in m.sto_const_cap_c_dict:
-                cap_sto_c = m.storage_dict['inst-cap-c'][
-                    (min(m.stf), sit, sto, com)]
+    def def_storage_capacity_rule(m, stf, sit, sto, com):
+        if m.mode['int']:
+            if (sit, sto, com, stf) in m.inst_sto_tuples:
+                if (min(m.stf), sit, sto, com) in m.sto_const_cap_c_dict:
+                    cap_sto_c = m.storage_dict['inst-cap-c'][
+                        (min(m.stf), sit, sto, com)]
+                else:
+                    cap_sto_c = (
+                        sum(m.cap_sto_c_new[stf_built, sit, sto, com]
+                            for stf_built in m.stf
+                            if (sit, sto, com, stf_built, stf) in
+                            m.operational_sto_tuples) +
+                        m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)])
             else:
                 cap_sto_c = (
                     sum(m.cap_sto_c_new[stf_built, sit, sto, com]
                         for stf_built in m.stf
                         if (sit, sto, com, stf_built, stf) in
-                        m.operational_sto_tuples) +
-                    m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)])
+                        m.operational_sto_tuples))
         else:
-            cap_sto_c = (
-                sum(m.cap_sto_c_new[stf_built, sit, sto, com]
-                    for stf_built in m.stf
-                    if (sit, sto, com, stf_built, stf) in
-                    m.operational_sto_tuples))
-    else:
-        if (stf, sit, sto, com) in m.sto_const_cap_c_dict:
-            cap_sto_c = m.storage_dict['inst-cap-c'][(stf, sit, sto, com)]
-        else:
-            cap_sto_c = (m.cap_sto_c_new[stf, sit, sto, com] +
-                         m.storage_dict['inst-cap-c'][(stf, sit, sto, com)])
+            if (stf, sit, sto, com) in m.sto_const_cap_c_dict:
+                cap_sto_c = m.storage_dict['inst-cap-c'][(stf, sit, sto, com)]
+            else:
+                cap_sto_c = (m.cap_sto_c_new[stf, sit, sto, com] +
+                            m.storage_dict['inst-cap-c'][(stf, sit, sto, com)])
 
     return cap_sto_c
 
@@ -502,35 +502,35 @@ initialized by the following code fragment:
         rule=def_storage_power_rule,
         doc='Total storage power (MW)')
 
-With ``def_storage_power_rule`` defined as::
+With ``def_storage_power_rule`` defined as: ::
 
-def def_storage_power_rule(m, stf, sit, sto, com):
-    if m.mode['int']:
-        if (sit, sto, com, stf) in m.inst_sto_tuples:
-            if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
-                cap_sto_p = m.storage_dict['inst-cap-p'][
-                    (min(m.stf), sit, sto, com)]
+    def def_storage_power_rule(m, stf, sit, sto, com):
+        if m.mode['int']:
+            if (sit, sto, com, stf) in m.inst_sto_tuples:
+                if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
+                    cap_sto_p = m.storage_dict['inst-cap-p'][
+                        (min(m.stf), sit, sto, com)]
+                else:
+                    cap_sto_p = (
+                        sum(m.cap_sto_p_new[stf_built, sit, sto, com]
+                            for stf_built in m.stf
+                            if (sit, sto, com, stf_built, stf) in
+                            m.operational_sto_tuples) +
+                        m.storage_dict['inst-cap-p'][(min(m.stf), sit, sto, com)])
             else:
                 cap_sto_p = (
                     sum(m.cap_sto_p_new[stf_built, sit, sto, com]
                         for stf_built in m.stf
-                        if (sit, sto, com, stf_built, stf) in
-                        m.operational_sto_tuples) +
-                    m.storage_dict['inst-cap-p'][(min(m.stf), sit, sto, com)])
+                        if (sit, sto, com, stf_built, stf)
+                        in m.operational_sto_tuples))
         else:
-            cap_sto_p = (
-                sum(m.cap_sto_p_new[stf_built, sit, sto, com]
-                    for stf_built in m.stf
-                    if (sit, sto, com, stf_built, stf)
-                    in m.operational_sto_tuples))
-    else:
-        if (stf, sit, sto, com) in m.sto_const_cap_p_dict:
-            cap_sto_p = m.storage_dict['inst-cap-p'][(stf, sit, sto, com)]
-        else:
-            cap_sto_p = (m.cap_sto_p_new[stf, sit, sto, com] +
-                         m.storage_dict['inst-cap-p'][(stf, sit, sto, com)])
+            if (stf, sit, sto, com) in m.sto_const_cap_p_dict:
+                cap_sto_p = m.storage_dict['inst-cap-p'][(stf, sit, sto, com)]
+            else:
+                cap_sto_p = (m.cap_sto_p_new[stf, sit, sto, com] +
+                            m.storage_dict['inst-cap-p'][(stf, sit, sto, com)])
 
-    return cap_sto_p
+        return cap_sto_p
 
 **New Storage Power**, :math:`\hat{\kappa}_{yvs}^\text{p}`, ``cap_sto_p_new``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{p}` represents the additional

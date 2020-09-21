@@ -126,7 +126,7 @@ of this parameter requires several case distinctions and is given by:
 * :math:`i=0,~j\neq0`:
 
   .. math::
-    I_{y}=\frac 1n \cdot (1+j)^{-m}\cdot \frac{(1+j)^k-1}{(1+j)^k\cdot j}
+    I_{y}=\frac 1n \cdot (1+j)^{1-(y-y_{\text{min}})}\cdot \frac{(1+j)^k-1}{(1+j)^k\cdot j}
 
 where :math:`k` is the number of annualized payments that have to be made
 within the modeling horizon, :math:`n` the depreciation period and :math:`i`
@@ -148,7 +148,7 @@ made. To fix this the overpay is subtracted via:
 In case of negative values this overpay factor is set to zero afterwards.
 
 **Maximum Total System Cost**, :math:`\overline{L}_{\text{cost}}`,
-``m.global_prop.loc[(min(m.stf), 'Cost budget'), 'value']``: This parameter
+``m.res_global_cost_limit``: This parameter
 restricts the total present costs over the entire modeling horizon. It is only
 sensible and active when the objective is a minimization of CO2 emissions.  
 

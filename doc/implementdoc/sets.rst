@@ -141,7 +141,7 @@ Commodities
 As explained in the :ref:`overview <commodity-def-at-overview>` section, **commodities** are goods that can be
 generated, stored, transmitted or consumed. The set of commodities represents
 all goods that are relevant to the modelled energy system, such as all energy
-carriers, inputs, outputs, intermediate substances. (e.g Coal, CO2, Electric,
+carriers, inputs, outputs, intermediate substances. (e.g. Coal, CO2, Electric,
 Wind) By default, commodities are given by their energy content (MWh). Usage of
 some commodities are limited by a maximum value or maximum value per timestep
 due to their availability or restrictions, also some commodities have a price
@@ -464,7 +464,7 @@ Storage Tuples
 ^^^^^^^^^^^^^^
 Storage tuples label storages. They are represented by the set :math:`S_{yvc}`.
 A member :math:`s_{yvc}` in set :math:`S_{yvc}` is a storage :math:`s` of
-commodity :math:`c` in site :math:`v` and support timeframe :math:`y` for
+commodity :math:`c` in site :math:`v` and support timeframe :math:`y`. For
 example, `(2020, Mid, Bat, Elec)` is interpreted as storage `Bat` for commodity
 `Elec` in site `Mid` in the year `2020`. This set is defined as ``sto_tuples``
 and given by the code fragment:
@@ -623,7 +623,7 @@ The second kind :math:`D_{t,tt,yvc}^\text{down}` refers to all possible DSM
 downshift possibilities. It is defined to overcome the difficulty caused by the
 two time indices of the DSM downshift variable. Dependend on support timeframe
 :math:`y`, site :math:`v` and commodity :math:`c` the tuples contain two time
-indices. For example `(5001, 5003, 2020, Mid, Elec)` is intepreted as the
+indices. For example, `(5001, 5003, 2020, Mid, Elec)` is intepreted as the
 downshift in timestep `5003`, which was caused by the upshift of timestep
 `5001` in year `2020` at site `Mid` for commodity `Elec`. The tuples are given
 by the following code fragment:

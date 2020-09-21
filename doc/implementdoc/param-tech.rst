@@ -201,9 +201,9 @@ related section for this parameter in the spreadsheet can be found under the
 "SupIm" sheet. Here each row represents another timestep :math:`t` and each
 column represent a commodity tuple :math:`c_{yvq}`. Rows are named after the
 timestep number :math:`n` of timesteps :math:`t_n`. Columns are named after the
-combination of site name :math:`v` and commodity name :math:`c`, respectively
- and separated by a period(.). For example (Mid.Elec)
-represents the commodity Elec in site Mid. Commodity type :math:`q` is omitted
+combination of site name :math:`v` and commodity name :math:`c`, respectively 
+and separated by a period(.). For example (Mid.Elec) represents 
+the commodity Elec in site Mid. Commodity type :math:`q` is omitted
 in column declarations, because every commodity of this parameter has to be
 from commodity type `SupIm` in any case.
 

@@ -33,7 +33,7 @@ When the process in question is a process with part load behavior the equation
 for the time variable efficiency case takes the following form:
 
 .. math::
-   &\forall p\in P^{\text{partload}}~\text{and}~ p \in P^{\text{TimeVarEff}},
+   &\forall p\in P^{\text{part load}}~\text{and}~ p \in P^{\text{TimeVarEff}},
    ~c\in C,~t\in T_m:\\\\
    &\epsilon^{\text{out}}_{ypct}=\Delta t\cdot f^{\text{out}}_{ypt}\cdot
    \left(\frac{\underline{r}^{\text{out}}_{ypc}-r^{\text{out}}_{ypc}}
@@ -55,12 +55,18 @@ except for the fact that their values, together with the value of the throughput
 between the following boundaries:
 
 .. math::
-   &\forall p\in P^{\text{partload}},~c\in C,~t\in T_m:\\\\
+   &\forall p\in P^{\text{minimum load}},~c\in C,~t\in T_m:\\\\
    &\underline{P}_p\cdot \kappa_p\cdot r^{\text{in,out}}\leq
    \epsilon^{\text{in,out}}_{pct}\leq \kappa_p\cdot r^{\text{in,out}},
    
+.. math::
+   &\forall p\in P^{\text{part load}},~c\in C,~t\in T_m:\\\\
+   &\underline{P}_p\cdot \kappa_p\cdot \underline{r}^{\text{in,out}}\leq
+   \epsilon^{\text{in,out}}_{pct}\leq \kappa_p\cdot r^{\text{in,out}},
+   
 where :math:`\underline{P}_{p}` is the minimum load fraction, :math:`\kappa_p` the 
-installed capacity and :math:`r^{\text{in,out}` the input/output ratios.
+installed capacity, :math:`r^{\text{in,out}` the input/output ratios and 
+:math:`\underline{r}^{\text{in,out}` the minimum input/output ratios.
 
 Many processes show a non-trivial part-load behavior. In particular, often a
 nonlinear reaction of the efficiency on the operational state is given.
@@ -81,7 +87,7 @@ operational state :math:`\underline{P}_{p}\kappa_p`, which are given by
 equations and exemplified with the following graphic:
 
 .. math::
-   &\forall p\in P^{\text{partload}},~c\in C,~t\in T_m:\\\\
+   &\forall p\in P^{\text{part load}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{\text{in,out}}_{pct}=\Delta t\cdot\left(
    \frac{\underline{r}^{\text{in,out}}_{pc}-r^{\text{in,out}}_{pc}}
    {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
@@ -142,7 +148,7 @@ linear function defined on two intervals. The first interval represents the star
 of a process, while the second one represents the consumed input while also producing.
 
 .. math::
-   &\forall p\in P^{\text{on/off with partload}},~c\in C,~t\in T_m:\\\\
+   &\forall p\in P^{\text{on/off with part load}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{in}_{pct}= 
    \tau_{pt}\cdot r^{\text{in}}_{pc}\cdot (1-\omicron_{pt})+
    \Delta t\cdot\left(
@@ -172,7 +178,7 @@ If the process also shows part-load behavior, the previous two equations change 
 similarly adapted version of the part-load output equation:
 
 .. math::
-   &\forall p\in P^{\text{on/off with partload}},~c\in C^{\text{environmental}},~t\in T_m:\\\\
+   &\forall p\in P^{\text{on/off with part load}},~c\in C^{\text{environmental}},~t\in T_m:\\\\
    &\epsilon^{out}_{pct}= 
    \tau_pt\cdot r^{\text{out}}_{pc}\cdot (1-\omicron_{pt})+
    \Delta t\cdot\left(
@@ -222,7 +228,7 @@ done by the following equation:
 If the process shows a part load behavior, the equation changes to:
 
 .. math::
-   &\forall p\in P^{\text{on/off with partload, case I}},~c\in C,~t\in T_m:\\\\
+   &\forall p\in P^{\text{on/off with part load, case I}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{out}_{pct}-\epsilon^{out}_{pc(t-1)}\leq 
    \Delta t\underline{P}_p\kappa_{p}\underline{r}^{\text{out}}_{pc}.
    
@@ -280,7 +286,7 @@ If the process has both a part load behavior and a time variable efficiency, the
 to:
 
 .. math::
-   &\forall p\in P^{\text{on/off with partload and TimeVarEff, case II}},~c\in C,~t\in T_m:\\\\
+   &\forall p\in P^{\text{on/off with part load and TimeVarEff, case II}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{out}_{pct}-\epsilon^{out}_{pc(t-1)}\leq 
    \Delta t (⌊\frac{\underline{P}_p}{\overline{PG}_p^\text{up}}⌋ +1)
    \overline{PG}_p\kappa_{p}\underline{r}^{\text{out}}_{pc} f^{\text{out}}_{pt}.
@@ -318,7 +324,7 @@ If the process has both a part load behavior and a time variable efficiency, the
 to:
 
 .. math::
-   &\forall p\in P^{\text{on/off with partload and TimeVarEff, case III}},~c\in C,~t\in T_m:\\\\
+   &\forall p\in P^{\text{on/off with part load and TimeVarEff, case III}},~c\in C,~t\in T_m:\\\\
    &\epsilon^{out}_{pct}-\epsilon^{out}_{pc(t-1)}\leq 
    \Delta t\overline{PG}_p^\text{up}\kappa_{p}\underline{r}^{\text{out}}_{pc} f^{\text{out}}_{pt}.
    

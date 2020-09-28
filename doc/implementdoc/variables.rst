@@ -31,6 +31,8 @@ Transmission, Storage and demand side management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\zeta_\text{pur}`               | €    | Purchase Costs                    |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\zeta_\text{start}`             | €    | Start Costs                       |
+    +----------------------------------------+------+-----------------------------------+
     | **Commodity Variables**                                                           |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\rho_{yvct}`                    | MWh  | Stock Commodity Source Term       |
@@ -45,17 +47,25 @@ Transmission, Storage and demand side management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvp}`             | MW   | New Process Capacity              |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvp}`                    | -    | New Process Capacity Units        |
+    +----------------------------------------+------+-----------------------------------+
     | :math:`\tau_{yvpt}`                    | MWh  | Process Throughput                |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvcpt}^\text{in}`     | MWh  | Process Input Commodity Flow      |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvcpt}^\text{out}`    | MWh  | Process Output Commodity Flow     |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\omicron_{yvpt}`                |-     | Process On/Off Marker             |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\sigma_{yvpt}`                  |-     | Process Start-up Marker           |
+    +----------------------------------------+------+-----------------------------------+
     | **Transmission Variables**                                                        |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\kappa_{yaf}`                   | MW   | Total transmission Capacity       |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yaf}`             | MW   | New Transmission Capacity         |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yaf}`                    |-     | New Transmission Capacity Units   |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\pi_{yaft}^\text{in}`           | MWh  | Transmission Input Commodity Flow |
     +----------------------------------------+------+-----------------------------------+
@@ -73,9 +83,13 @@ Transmission, Storage and demand side management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvs}^\text{c}`    | MWh  | New Storage Size                  |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvs}^\text{c}`           | -    | New Storage Size Units            |
+    +----------------------------------------+------+-----------------------------------+
     | :math:`\kappa_{yvs}^\text{p}`          | MW   | Total Storage Power               |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvs}^\text{p}`    | MW   | New Storage Power                 |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvs}^\text{c}`           | -    | New Storage Power Units           |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvst}^\text{in}`      | MWh  | Storage Input Commodity Flow      |
     +----------------------------------------+------+-----------------------------------+
@@ -197,6 +211,19 @@ fragment: ::
         m.pro_tuples,
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
+	
+**New Process Capacity Units**, :math:`\beta_{yvp}`, ``pro_cap_unit``: The
+variable :math:`\beta_{yvp}` represents the number of capacity blocks of a
+process tuple :math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V`) that
+needs to be installed additionally to the energy system in support timeframe
+:math:`y` in site :math:`v` in order to provide the optimal solution. In 
+script ``model.py`` this variable is defined by the model variable
+``cap_pro_new`` and initialized by the following code fragment: ::  
+
+    m.pro_cap_unit = pyomo.Var(
+        m.pro_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='Number of newly installed capacity units')
 
 **Process Throughput**, :math:`\tau_{yvpt}`, ``tau_pro`` : The variable
 :math:`\tau_{yvpt}` represents the measure of (energetic) activity of a process
@@ -245,7 +272,36 @@ initialized by the following code fragment: ::
         m.tm, m.pro_tuples, m.com,
         within=pyomo.NonNegativeReals,
         doc='Flow of commodity out of process at a given timestep')
+	
+**Process On/Off Marker**, :math:`\omicron_{yvpt}`, ``on_off``: The boolean
+variable :math:`\omicron_{yvpt}` marks whether process tuple :math:`p_{yv}` 
+(:math:`\forall p \in P^\text{on/off}, \forall v \in V, \forall y \in Y`) 
+is on and producing (:math:`\omicron_{yvpt}` is 1) or it is not 
+producing (:math:`\omicron_{yvpt}` is 0) at a timestep :math:`t`. While not 
+producing, the process is either turned off or it started, without reaching the
+minimum fraction :math:`\underline{P}_{yvp}`.
+In the script ``AdvancedProcesses.py``, this variable is defined by the model 
+variable ``on_off`` and initialized by the following code fragment: ::
 
+    m.on_off = pyomo.Var(
+        m.t, m.pro_on_off_tuples,
+        within=pyomo.Boolean,
+        doc='Turn on/off a process with minimum working load')
+	    
+**Process Start-up Marker**, :math:`\sigma_{yvpt}`, ``start_ups``: The boolean
+variable :math:`\sigma_{yvpt}` marks whether process tuple :math:`p_{yv}` 
+(:math:`\forall p \in P^\text{on/off}, \forall v \in V, \forall y \in Y`) 
+is starting (:math:`\sigma_{yvpt}` becomes 1) or not (:math:`\sigma_{yvpt}` is 0) 
+at a timestep :math:`t`. The process is considered to start when its output
+``e_pro_out`` becomes greater than 0.
+In the script ``AdvancedProcesses.py``, this variable is defined by the model 
+variable ``start_ups`` and initialized by the following code fragment: ::
+
+    m.start_up = pyomo.Var(
+            m.tm, m.pro_start_up_tuples,
+            within=pyomo.Boolean,
+            doc='Start-up marker')
+	    
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -256,7 +312,7 @@ an origin site :math:`v_\text{out}` to a destination site
 :math:`{v_\text{in}}`. The total transmission capacity includes both the
 already installed transmission capacity and the additional new transmission
 capacity that needs to be installed. This variable is expressed in the unit MW.
-In script ``model.py`` this variable is defined by the model variable
+In script ``transmission.py`` this variable is defined by the model variable
 ``cap_tra`` and initialized by the following code fragment: ::
 
     m.cap_tra = pyomo.Var(
@@ -269,13 +325,26 @@ variable :math:`\hat{\kappa}_{yaf}` represents the additional capacity, that
 needs to be installed, of a transmission tuple :math:`f_{yca}`, where :math:`a`
 represents the arc from an origin site :math:`v_\text{out}` to a destination
 site :math:`v_\text{in}`. This variable is expressed in the unit MW.
-In script ``model.py`` this variable is defined by the model variable
+In script ``transmission.py`` this variable is defined by the model variable
 ``cap_tra_new`` and initialized by the following code fragment: ::
 
     m.cap_tra_new = pyomo.Var(
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+
+**New Transmission Capacity Units**, :math:`\beta_{yaf}`, ``tra_cap_unit``: The
+variable :math:`\beta_{yaf}` represents the number of additional capacity blocks
+of a transmission tuple :math:`f_{yca}` that need to be installed , where 
+:math:`a` represents the arc from an origin site :math:`v_\text{out}` to a 
+destination site :math:`v_\text{in}`. In script ``transmission.py`` this variable
+is defined by the model variable ``cap_tra_new`` and initialized by the following 
+code fragment: ::
+
+    m.tra_cap_unit =pyomo.Var(
+        m.tra_block_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New transmission capacity blocks')
 
 **Transmission Input Commodity Flow**, :math:`\pi_{yaft}^\text{in}`,
 ``e_tra_in``: The variable :math:`\pi_{yaft}^\text{in}` represents the
@@ -393,6 +462,18 @@ following code fragment: ::
         within=pyomo.NonNegativeReals,
         doc='New storage size (MWh)')
 
+**New Storage Size Units**, :math:`\beta_{yvs}^\text{c}`, ``sto_cap_c_unit``:
+The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the number of
+additional storage load capacity blocks of a storage tuple :math:`s_{vc}` that
+needs to be installed to the energy system in order to provide the optimal solution. 
+In script ``storage.py`` this variable is defined by the model variable ``cap_sto_c_unit``
+and initialized by the following code fragment: ::
+
+    m.sto_cap_c_unit = pyomo.Var(
+        m.sto_block_c_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage size units')
+	
 **Total Storage Power**, :math:`\kappa_{yvs}^\text{p}`, ``cap_sto_p``: The
 variable :math:`\kappa_{yvs}^\text{p}` represents the total potential discharge
 power of a storage tuple :math:`s_{vc}`. The total storage power includes both
@@ -421,6 +502,19 @@ following code fragment:
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
 
+**New Storage Power Units**, :math:`\beta_{yvs}^\text{c}`, ``sto_cap_p_unit``:
+The variable :math:`\beta_{yvs}^\text{c}` represents the number of additional
+potential discharge power blocks of a storage tuple :math:`s_{vc}` that needs 
+to be installed to the energy system in order to provide the optimal solution. 
+In the script ``storage.py`` this variable is defined by the model variable
+``sto_cap_p_unit`` and initialized by the following code fragment:
+::	
+
+    m.sto_cap_p_unit = pyomo.Var(
+        m.sto_block_p_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage power units')
+	
 **Storage Input Commodity Flow**, :math:`\epsilon_{yvst}^\text{in}`,
 ``e_sto_in``: The variable :math:`\epsilon_{yvst}^\text{in}` represents the
 input commodity flow into a storage tuple :math:`s_{yvc}` at a timestep

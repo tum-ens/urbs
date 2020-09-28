@@ -29,11 +29,19 @@ def identify_mode(data):
         'bsp': False,                   # buy sell price
         'tve': False,                   # time variable efficiency
         'dpf': False,                   # dc power flow
+        'onoff': False,                 # on/off processes
+        'minfraction': False,           # processes with minimum working load
+        'chp': False,                   # chp processes
         'exp': {                        # expansion
                 'pro': True,
                 'tra': False,
                 'sto-c': False,
                 'sto-p': False}
+        # 'inv_mip':{
+        #         'pro': False,
+        #         'tra': False,
+        #         'sto-c': False,
+        #         'sto-p': False}
         }
 
     # if number of support timeframes > 1
@@ -55,6 +63,15 @@ def identify_mode(data):
     if 'reactance' in data['transmission'].keys():
         if any(data['transmission']['reactance'] > 0):
             mode['dpf'] = True
+    if 'on-off' in data['process'].keys():
+        if any(data['process']['on-off'] == 1):
+            mode['onoff'] = True
+    if 'min-fraction' in data['process'].keys():
+        if any(data['process']['min-fraction'] > 0):
+            mode['minfraction'] = True
+    # if not data['process_commodity'].empty:
+    #     if any(data['commodity'] == 'heat'):
+    #         mode['chp'] = True
 
     return mode
 

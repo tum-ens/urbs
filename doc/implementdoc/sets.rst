@@ -280,26 +280,10 @@ These are represented by the set :math:`P_v`. A member :math:`p_{yv}` in set
         initialize=m.process.index,
         doc='Combinations of possible processes, e.g. (2020,North,Coal plant)')
 
-There are three subsets defined for process tuples, which each activate a
+There are several subsets defined for process tuples, which each activate a
 different set of modeling constraints.
 
-The first subset of the process tuples ``pro_partial_tuples``
-:math:`P_{yv}^\text{partial}` is formed in order to identify processes that
-have partial operation properties. Programmatically, they are identified by
-those processes, which have the parameter ``ratio-min`` set for one of their
-input commodities in table *Process-Commodity*. The tuple set is defined as:
-        
-::
-
-    m.pro_partial_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
-        initialize=[(stf, site, process)
-                    for (stf, site, process) in m.pro_tuples
-                    for (s, pro, _) in m.r_in_min_fraction.index
-                    if process == pro and s == stf],
-        doc='Processes with partial input')        
-
-The second subset is formed in order to capture all processes that take up a
+The first subset is formed in order to capture all processes that take up a
 certain area and are thus subject to the area constraint at the given site.
 These processes are identified by the parameter ``area-per-cap`` set in table
 *Process*, if at the same time a value for ``area`` is set in table *Site*. The
@@ -311,19 +295,138 @@ tuple set is defined as:
         within=m.stf*m.sit*m.pro,
         initialize=m.proc_area.index,
         doc='Processes and Sites with area Restriction')
-
-Finally, processes that are subject to restrictions in the change of
-operational state are captured with the ``pro_maxgrad_tuples``. This subset is
-defined as:
+	
+The second subset is formed in order to capture all processes which have the 
+parameter process new capacity block ``cap-block`` :math:`{K}_{yvp}^\text{block}` 
+set in the table *Process*, used for building new capacity in blocks. The tuple 
+set is defined as:
 
 ::
 
-    m.pro_maxgrad_tuples = pyomo.Set(
-        within=m.stf*m.sit*m.pro,
+    m.pro_cap_new_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (s, si, pro) in tuple(m.cap_block_dict.keys())
+                    if process == pro and si == site and s == stf],
+                    doc='Processes with new capacities built in blocks')
+	
+The third subset of the process tuples ``pro_minfraction_tuples``
+:math:`P_{yv}^\text{minfraction}` is formed in order to identify processes
+that have a minimum fraction defined without having partial operation 
+properties and cannot be turned off. Programatically, they are identified by
+those processes which have the parameter ``min-fraction`` set and the parameter 
+``on-off`` set to 0 in the table *Process*. The tuple set is defined in 
+AdvancedProcesses.py as:
+
+::
+
+    m.pro_minfraction_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (st, sit, pro) in tuple(m.min_fraction_dict.keys())
+                    if  stf == st and sit == site and process ==pro and
+                    m.process_dict['on-off'][stf, site, process] != 1],
+        doc='Processes with constant efficiency and minimum working load which'
+            'cannot be turned off')
+	    
+The fourth subset of the process tuples ``pro_partial_tuples``
+:math:`P_{yv}^\text{partial}` is formed in order to identify processes that
+have partial operation properties and cannot be turned off. Programmatically,
+they are identified by those processes, which have the parameter ``ratio-min``
+set for one of their input and/or outputcommodities in table *Process-Commodity*
+and the parameter ``on-off`` in the table *Process* set to 0. The tuple set is 
+defined in AdvancedProcesses.py as:
+        
+::
+
+    m.pro_partial_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (s, pro, _) in tuple(m.r_in_min_fraction_dict.keys() or
+                                             m.r_out_min_fraction_dict.keys())
+                    if process == pro and s == stf and
+                    m.process_dict['on-off'][stf, site, process] != 1],
+        doc='Processes with partial input/output which cannot be turned off')
+
+The fifth subset of the process tuples ``pro_on_off_tuples`` 
+:math:`P_{yv}^\text{on/off}` is formed in order to identify processes that
+have a minimum fraction defined without having partial operation 
+properties and can be turned off. Programatically, they are identified by
+those processes which have the parameter ``min-fraction`` set and the parameter 
+``on-off`` set to 1 in the table *Process*. The tuple set is defined in 
+AdvancedProcesses.py as:
+
+::
+
+    m.pro_on_off_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in
+                                              tuple(m.min_fraction_dict.keys())
+                    for (st, sit, pro) in tuple(m.onoff_dict.keys())
+                    if stf == st and site == sit and process == pro],
+        doc='Processes with minimal fraction which can be turned off')
+	    
+The sixth subset of the process tuples ``pro_on_off_partial_tuples``
+:math:`P_{yv}^\text{partial on/off}` is formed in order to identify processes 
+that have a minimum fraction defined, partial operation 
+properties and can be turned off. Programmatically,
+they are identified by those processes, which have the parameter ``ratio-min``
+set for one of their input and/or outputcommodities in table *Process-Commodity*
+and the parameter ``on-off`` in the table *Process* set to 1. The tuple set is 
+defined in AdvancedProcesses.py as:
+
+::
+
+    m.pro_partial_on_off_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process)
+                    for (stf, site, process) in m.pro_tuples
+                    for (st, pro, _) in tuple(m.r_in_min_fraction_dict.keys()
+                                              or m.r_out_min_fraction_dict)
+                    if process == pro and stf == st and
+                    m.process_dict['on-off'][stf, site, process] == 1],
+        doc='Processes with partial input/output which can be turned off')
+
+Finally, processes that are subject to restrictions in the change of
+operational state are captured with the ``pro_rampupgrad_tuples`` and
+``pro_rampdowngrad_tuples``. This subsets are defined in AdvancedProcesses as:
+
+::
+
+    m.pro_rampupgrad_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
         initialize=[(stf, sit, pro)
                     for (stf, sit, pro) in m.pro_tuples
-                    if m.process.loc[stf, sit, pro]['max-grad'] < 1.0 / dt],
-        doc='Processes with maximum gradient smaller than timestep length')
+                    if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / dt],
+        doc='Processes with maximum ramp up gradient smaller than timestep length')
+
+::
+	
+    m.pro_rampdowngrad_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, sit, pro)
+                    for (stf, sit, pro) in m.pro_tuples
+                    if m.process_dict['ramp-down-grad'][stf, sit, pro] < 1.0 / dt],
+        doc='Processes with maximum ramp down gradient smaller than timestep length')
+
+In the case of a a process which can be turned on and off and are subject to 
+restrictions in the change of operational state while starting are captured 
+with the ``pro_rampup_start_tuples``, subset which is defined in advancedProcesses.py
+as:
+
+::
+
+    m.pro_rampup_start_tuples = pyomo.Set(
+            within=m.stf * m.sit *m.pro,
+            initialize=[(stf, sit, pro)
+                        for (stf, sit, pro) in m.pro_on_off_tuples
+                        if m.process_dict['start-time'][stf, sit, pro]
+                                                            > 1.0 / m.dt],
+            doc='Processes with different starting ramp up gradient')
 
 Transmission Tuples
 ^^^^^^^^^^^^^^^^^^^
@@ -348,6 +451,17 @@ site `Mid` carrying commodity `Elec` in year `2020`. This set is defined as
         initialize=m.transmission.index,
         doc='Combinations of possible transmissions, e.g. '
             '(2020,South,Mid,hvac,Elec)')
+
+The set :math:`F^{blocks}_{yc{v_\text{out}}{v_\text{in}}}` includes all transmission lines
+which have a defined capacity block for the building of new transmission capacities.
+
+::
+	    
+    m.tra_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=[(stf, sit, sit_, tra, com)
+                    for (stf, sit, sit_, tra, com) in tuple(m.tra_block_dict.keys())],
+        doc='Transmission with new block capacities')
 
 DCPF Transmission Tuples
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -401,7 +515,7 @@ and given by the code fragment:
         doc='Combinations of possible storage by site,'
             'e.g. (2020,Mid,Bat,Elec)')
 
-There are two subsets of storage tuples.
+There are four subsets of storage tuples.
 
 In a first subset of the storage tuples are all storages that have a user
 defined fixed value for the initial state are collected.
@@ -422,6 +536,20 @@ charging/discharging power and storage content.
         within=m.stf*m.sit*m.sto*m.com,
         initialize=tuple(m.sto_ep_ratio_dict.keys()),
         doc='storages with given energy to power ratio')
+	
+The third and fourth subsets are defined for all the storages that have a
+capacity or power expansion block defined in the input.
+
+::
+  
+    m.sto_block_c_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.sto_block_c_dict.keys()),
+        doc='storages with new energy block capacities')
+    m.sto_block_p_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.sto_block_p_dict.keys()),
+        doc='storages with new power block capacities')
 
 
 Process Input Tuples
@@ -465,7 +593,43 @@ following code fragment:
         doc='Commodities with partial input ratio,'
             'e.g. (2020,Mid,Coal PP,Coal)')
 
+Where: ``r_in_min_fraction`` represents the process input ratio as set in the input
+for the minimum load of the process.
 
+For processes in the tuple set ``pro_on_off_tuples``, the following tuple set
+``pro_on_off_input_tuples`` enumerates their input commodities. It is used to
+index the constraints that modifies a process' input commodity flow with
+respect to the standard case without the on/off feature. It is defined by the
+following code fragment in AdvancedProcesses.py:
+
+::
+
+    m.pro_on_off_input_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro * m.com,
+        initialize=[(stf, site, process, commodity)
+                    for (stf, site, process) in m.pro_on_off_tuples
+                    for (s, pro, commodity) in tuple(m.r_in_dict.keys())
+                    if process == pro and stf == s],
+        doc='Commodities for on/off input')
+
+For processes in the tuple set ``pro_partial_on_off_tuples``, the following tuple set
+``pro_partial_on_off_input_tuples`` enumerates their input commodities. It is used to
+index the constraints that modifies a process' input commodity flow with
+respect to the standard case without the on/off feature and partial operation. It is 
+defined by the following code fragment in AdvancedProcesses.py:
+
+::
+
+    m.pro_partial_on_off_input_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.pro * m.com,
+	initialize=[(stf, site, process, commodity)
+                    for (stf, site, process) in m.pro_partial_on_off_tuples
+                    for (s, pro, commodity) in tuple(m.r_in_min_fraction_dict
+		                                     .keys())
+                    if process == pro and s == stf],
+        doc='Commodities with partial input ratio which can be turned off,'
+                'e.g. (2020,Mid,Coal PP,Coal)')
+		
 Process Output Tuples
 ^^^^^^^^^^^^^^^^^^^^^
 Process output tuples represent commodities generated by processes. These are
@@ -489,7 +653,7 @@ fragment:
 		
 Where: ``r_out`` represents the process output ratio as set in the input.
 
-There are two alternative tuple sets that are active whenever their respective
+There are several alternative tuple sets that are active whenever their respective
 features are set in the input.
 
 First, for processes in the tuple set ``pro_partial_tuples``, the tuple set
@@ -508,10 +672,115 @@ following code fragment:
                     if process == pro and s == stf],
         doc='Commodities with partial input ratio, e.g. (Mid,Coal PP,CO2)')
 
-Second, the output of all processes that have a time dependent efficiency are
+Second, for processes in the tuple set ``pro_on_off_tuples``, the tuple set
+``pro_on_off_output_tuples`` enumerates their output commodities. It is used
+to index the constraints that modifies a process' output commodity flow with
+respect to the standard case without the on/off feature. It is defined by the
+following code fragment in AdvancedProcesses.py:
+
+::
+
+    m.pro_on_off_output_tuples = pyomo.Set(
+	within=m.stf * m.sit * m.pro * m.com,
+	initialize=[(stf, site, process, commodity)
+	            for (stf, site, process) in m.pro_on_off_tuples
+	            for (s, pro, commodity) in tuple(m.r_out_dict.keys())
+	            if process == pro and stf == s],
+	doc='Commodities for on/off output')
+	
+Third, for processes in the tuple set ``pro_partial_on_off_tuples``, the 
+tuple set ``pro_partial_on_off_output_tuples`` enumerates their output 
+commodities. It is used to index the constraints that modifies a process'
+output commodity flow with respect to the standard case without the on/off
+feature and partial operation. It is defined by the following code fragment
+in AdvancedProcesses.py:
+
+::
+
+    m.pro_partial_on_off_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, site, process, commodity)
+                        for (stf, site, process) in m.pro_partial_on_off_tuples
+                        for (s, pro, commodity) in tuple(m.r_out_min_fraction_dict
+                                                         .keys())
+                        if process == pro and s == stf],
+            doc='Commodities for on/off output with partial behaviour')	
+
+Fourth, the processes in the tuple sets ``pro_on_off_tuples`` and
+``pro_partial_on_off_tuples`` require another constraint to limit the 
+excessive growth of the output of a process. This is required due to the
+fact that in the point of minimum load, without these limiting constraints,
+the process on/off marker :math:`\omicron_{yvpt}` can be both on and off.
+There are three cases to be considered:
+
+The first case is represented by the tuple set 
+``pro_rampup_divides_minfraction_output_tuples``, which covers the outputs of the
+processes for which the defined ramp up gradient and is smaller than the minimum
+load fraction and is a divisor of it. It is defined by the following code fragment
+in AdvancedProcesses.py:
+
+::
+     
+        m.pro_rampup_divides_minfraction_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, sit, pro, com)
+                        for (stf, sit, pro, com) in m.pro_on_off_output_tuples
+                        if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / m.dt and
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] <=
+                           m.min_fraction_dict[stf, sit, pro] and
+                           m.min_fraction_dict[stf, sit, pro] %
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] == 0 and
+                           com not in m.com_env],
+            doc='Output commodities of processes with ramp-up-grad smaller than'
+                'timestep length and smaller equal than min-fraction and is a '
+                'divisor of min-fraction')
+
+The second case is represented by the tuple set 
+``pro_rampup_not_divides_minfraction_output_tuples``, which covers the outputs of the
+processes for which the defined ramp up gradient and is smaller than the minimum
+load fraction and is not a divisor of it. It is defined by the following code fragment
+in AdvancedProcesses.py:
+
+::
+     
+        m.pro_rampup_not_divides_minfraction_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, sit, pro, com)
+                        for (stf, sit, pro, com) in m.pro_on_off_output_tuples
+                        if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / m.dt and
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] <
+                           m.min_fraction_dict[stf, sit, pro] and
+                           m.min_fraction_dict[stf, sit, pro] %
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] != 0 and
+                           com not in m.com_env],
+            doc='Output commodities of processes with ramp-up-grad smaller than'
+                'timestep length and smaller than min-fraction and is NOT a '
+                'divisor of min-fraction')
+
+The third and last case is represented by the tuple set 
+``pro_rampup_bigger_minfraction_output_tuples``, which covers the outputs of the
+processes for which the defined ramp up gradient and is greater than the minimum
+load fraction. It is defined by the following code fragment
+in AdvancedProcesses.py:
+
+::
+     
+        m.pro_rampup_bigger_minfraction_output_tuples = pyomo.Set(
+            within=m.stf * m.sit * m.pro * m.com,
+            initialize=[(stf, sit, pro, com)
+                        for (stf, sit, pro, com) in m.pro_on_off_output_tuples
+                        if m.process_dict['ramp-up-grad'][stf, sit, pro] < 1.0 / m.dt and
+                           m.process_dict['ramp-up-grad'][stf, sit, pro] >
+                           m.min_fraction_dict[stf, sit, pro] and
+                           com not in m.com_env],
+            doc='Output commodities of processes with ramp up gradient smaller'
+                'than timestep length and greater than min-fraction')
+		
+Last, the output of all processes that have a time dependent efficiency are
 collected in an additional tuple set. The set contains all outputs
 corresponding to processes that are specified as column indices in the input
 file worksheet ``TimeVarEff``.
+
 ::
 
     m.pro_timevar_output_tuples = pyomo.Set(
@@ -521,7 +790,7 @@ file worksheet ``TimeVarEff``.
                     for (pro, commodity) in m.r_out.index
                     if process == pro],
         doc='Outputs of processes with time dependent efficiency')
-
+	
 Demand Side Management Tuples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 There are two kinds of demand side management (DSM) tuples in the model:

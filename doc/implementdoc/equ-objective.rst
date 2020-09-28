@@ -31,7 +31,7 @@ mathematical notation is as following:
 .. math::
     \zeta = (\zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} +
     \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur} +
-    \zeta_\text{startup})
+    \zeta_\text{startup} + \zeta_\{env})
 
 The calculation of the variable total system cost is given in ``model.py`` by
 the following code fragment.  
@@ -42,7 +42,7 @@ the following code fragment.
 The variable total system cost :math:`\zeta` is basically calculated by the
 summation of every type of total costs. As previously mentioned in section
 :ref:`sec-cost-types`, these cost types are : ``Investment``, ``Fix``,
-``Variable``, ``Fuel``, ``Revenue``, ``Purchase``.
+``Variable``, ``Fuel``, ``Revenue``, ``Purchase``, ``Start-up`` and ``Environmental``.
 
 In script ``model.py`` the individual cost functions are calculated by
 the following code fragment:

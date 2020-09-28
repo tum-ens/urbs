@@ -113,28 +113,30 @@ defined and calculated by the following code fragment:
 gradient rule limits the process power gradient
 :math:`\left| \tau_{yvpt} - \tau_{yvp(t-1)} \right|`. This constraint prevents
 processes from exceeding their maximal possible change in activity from one
-time step to the next. The constraint states that absolute power gradient must
-be less than or equal to the maximal power gradient :math:`\overline{PG}_{yvp}`
-parameter (scaled to capacity and by time step duration). The mathematical
+time step to the next. The constraint states that the absolute power gradient must
+be less than or equal to the maximal power ramp up gradient 
+:math:`overline{PG}_{yvp}^\text{up}` parameter when increasing power or to the
+maximal power ramp down gradient :math:`\overline{PG}_{yvp}^\text{up}` parameter
+(both scaled to capacity and by time step duration). The mathematical
 explanation of this rule is given in :ref:`theory-min`.
 
 In script ``model.py`` the constraint process throughput gradient rule is split
 into 2 parts and defined and calculated by the following code fragments:
 ::
 
-    m.res_process_maxgrad_lower = pyomo.Constraint(
-        m.tm, m.pro_maxgrad_tuples,
-        rule=res_process_maxgrad_lower_rule,
-        doc='throughput may not decrease faster than maximal gradient')
-    m.res_process_maxgrad_upper = pyomo.Constraint(
-        m.tm, m.pro_maxgrad_tuples,
-        rule=res_process_maxgrad_upper_rule,
-        doc='throughput may not increase faster than maximal gradient')
+    m.res_process_rampdown = pyomo.Constraint(
+        m.tm, m.pro_rampdowngrad_tuples,
+        rule=res_process_rampdown_rule,
+        doc='throughput may not decrease faster than maximal ramp down gradient')
+    m.res_process_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampupgrad_tuples,
+        rule=res_process_rampup_rule,
+        doc='throughput may not increase faster than maximal ramp up gradient')
 
 .. literalinclude:: /../urbs/model.py
-   :pyobject: res_process_maxgrad_lower_rule
+   :pyobject: res_process_rampdown_rule
 .. literalinclude:: /../urbs/model.py
-   :pyobject: res_process_maxgrad_upper_rule
+   :pyobject: res_process_rampup_rule
 
 **Process Capacity Limit Rule**: The constraint process capacity limit rule
 limits the variable total process capacity :math:`\kappa_{yvp}`. This
@@ -194,9 +196,9 @@ efficiency with the parameter time series :math:`f_{yvpt}^\text{out}`. The
 process output for all commodities is thus manipulated depending on time. This
 constraint is not valid for environmental commodities since these are typically
 linked to an input commodity flow rather than an output commodity flow. The
-mathematical explanation of this rule is given in :ref:`theory-TVE`.
+mathematical explanation of this rule is given in :ref:`theory-AP`.
 
-In script ``TimeVarEff.py`` the constraint process time variable output rule is
+In script ``AdvancedProcesses.py`` the constraint process time variable output rule is
 defined and calculated by the following code fragment:
 
 ::
@@ -206,7 +208,7 @@ defined and calculated by the following code fragment:
         rule=def_pro_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
-.. literalinclude:: /../urbs/features/TimeVarEff.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_pro_timevar_output_rule
 
 .. _sec-partial-startup-constr:
@@ -216,22 +218,24 @@ Process Constraints for partial operation
 -----------------------------------------
 The process constraints for partial operation described in the following are
 only activated if in the input file there is a value set in the column
-**ratio-min** for an **input commodity** in the **process-commodity** sheet for
-the process in question. Values for **output commodities** in the **ratio_min**
-column do not have any effect.
+**ratio-min** for an **input commodity** or for an **output commodity** in the
+**process-commodity** sheet for the process in question.
 
-The partial load feature can only be used for processes that are never meant
-to be shut down and are always operating only between a given part load state
-and full load. It is important to understand that this partial load formulation
+It is important to understand that this partial load formulation
 can only work if its accompanied by a non-zero value for the minimum partial
 load fraction :math:`\underline{P}_{yvp}`.
+
+Without activating the on/off feature in the **process** sheet, the partial load
+feature can only be used for processes that are never meant to be shut down and
+are always operating only between a given part load state and full load. Please
+see the next chapter for the combined on/off and partial operation features.
 
 **Throughput by Min fraction Rule**: This constraint limits the minimal
 operational state of a process downward, making sure that the minimal part load
 fraction is honored. The mathematical explanation of this rule is given in
-:ref:`theory-min`.
+:ref:`theory-AP`.
 
-In script ``model.py`` this constraint is defined and calculated by the
+In script ``AdvancedProcesses.py`` this constraint is defined and calculated by the
 following code fragment:
 
 ::
@@ -241,7 +245,7 @@ following code fragment:
         rule=res_throughput_by_capacity_min_rule,
         doc='cap_pro * min-fraction <= tau_pro')
         
-.. literalinclude:: /../urbs/model.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: res_throughput_by_capacity_min_rule
 
 **Partial Process Input Rule**: The link between operational state
@@ -250,7 +254,7 @@ linear behavior to a more complex one. Instead of constant in- and output
 ratios these are now interpolated linearly between the value for full operation
 :math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios
 :math:`\underline{r}^{\text{in/out}}_{yvp}` at the minimum operation point. The
-mathematical explanation of this rule is given in :ref:`theory-min`.   
+mathematical explanation of this rule is given in :ref:`theory-AP`.   
 
 In script `model.py` this expression is written in the following way for the
 input ratio (and analogous for the output ratios):
@@ -262,7 +266,7 @@ input ratio (and analogous for the output ratios):
         doc='e_pro_in = cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
                      '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-.. literalinclude:: /../urbs/model.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_partial_process_input_rule
 
 In case of a process where also a time variable output efficiency is given the
@@ -274,5 +278,334 @@ code for the output changes to.
         rule=def_pro_partial_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
 
-.. literalinclude:: /../urbs/features/TimeVarEff.py
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
    :pyobject: def_pro_partial_timevar_output_rule
+ 
+ 
+Process Constraints for the on/off feature
+------------------------------------------
+The process constraints for the on/off feature described in this chapter are
+only activated if, in the input file, the value „1” is set is set in the 
+column **on-off** for a process in the **process** sheet.
+
+**Process Throughput and On/Off Coupling Rule**: These two constraints couple
+the variables process throughput :math:`\tau_{yvpt}` and process on/off marker
+:math:`\omicron_{yvpt}`. This is done by turning the marker on (boolean value 1)
+when the throughput is greater than the minimum load of the process.The
+mathematical explanation of this rule is given in :ref:`theory-AP`.
+
+In script ``AdvancedProcesses.py`` this constraint is defined and calculated by the
+following code fragment:
+::
+
+    m.res_throughput_by_on_off_lower = pyomo.Constraint(
+        m.tm, m.pro_on_off_tuples | m.pro_partial_on_off_tuples,
+        rule=res_throughput_by_on_off_lower_rule,
+        doc='tau_pro >= min-fraction * cap_pro * on_off')
+    m.res_throughput_by_on_off_upper = pyomo.Constraint(
+        m.tm, m.pro_on_off_tuples | m.pro_partial_on_off_tuples,
+        rule=res_throughput_by_on_off_upper_rule,
+        doc='tau_pro <='
+            'cap_pro * on_off + min-fraction * cap_pro * (1 - on_off)')
+            
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_throughput_by_on_off_lower_rule
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_throughput_by_on_off_upper_rule
+
+**Process On/Off Output Rule**: This constraint modifies the process output 
+commodity flow :math:`\epsilon_{yvcpt}^\text{out}` when compared to the 
+original version without the on/off feature in two ways by differentiating 
+between the output **commodity type** :math:`q`. When the **commodity type**
+is ``Env``, the output remains the same as without the on/off feature. Otherwise, 
+the original output equation is multiplied with the variable process on/off 
+marker :math:`\omicron_{yvpt}`. The mathematical explanation of this rule
+is given in :ref:`theory-AP`.
+
+In script ``AdvancedProcesses.py`` the constraint process on/off output rule 
+is defined and calculated by the following code fragment:
+::
+
+    m.def_process_on_off_output = pyomo.Constraint(
+        m.tm, m.pro_on_off_output_tuples - m.pro_timevar_output_tuples -
+              m.pro_partial_on_off_output_tuples,
+        rule=def_process_on_off_output_rule,
+        doc='e_pro_out = tau_pro * r_out * on_off')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_process_on_off_output_rule
+   
+In the case of a process where also a time variable output efficiency is given the
+code for the output changes to:
+::
+
+    m.def_process_on_off_timevar_output = pyomo.Constraint(
+        m.tm, m.pro_timevar_output_tuples & m.pro_on_off_output_tuples -
+              m.pro_partial_on_off_output_tuples,
+        rule=def_process_on_off_timevar_output_rule,
+        doc='e_pro_out == tau_pro * r_out * on_off * eff_factor')
+        
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_process_on_off_timevar_output_rule
+   
+**Process On/Off Partial Input Rule**: This constraint modifies the process input 
+commodity flow :math:`\epsilon_{yvcpt}^\text{in}` when compared to the 
+original partial operation version without the on/off feature in by differentiating 
+between two possible input functions, depending on the process on/off marker
+:math:`\omicron_{yvpt}`. When the marker is on, the input function is the same as
+in the case of simple partial operation. When the marker is off, the input function
+becomes the product of the variable process throughput :math:`\tau_{yvpt}` and the 
+parameter process partial input ratio :math:`\underline{r}_{ypc}^\text{in}`.
+the output **commodity type** :math:`q`. When the **commodity type**. The mathematical
+explanation of this rule is given in :ref:`theory-AP`.
+
+In script ``AdvancedProcesses.py`` the constraint process on/off output rule 
+is defined and calculated by the following code fragment:
+::
+
+    m.def_partial_process_on_off_input = pyomo.Constraint(
+        m.tm, m.pro_partial_on_off_input_tuples,
+        rule=def_partial_process_on_off_input_rule,
+        doc='e_pro_in = '
+            ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
+            ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction))')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_partial_process_on_off_input_rule
+   
+**Process On/Off Partial Output Rule**: This constraint modifies the process output 
+commodity flow :math:`\epsilon_{yvcpt}^\text{out}` when compared to the 
+original partial operation version without the on/off feature in two ways by differentiating 
+between the output **commodity type** :math:`q`. When the **commodity type**
+is not ``Env``, the output remains the same as for the partial operation without the on/off 
+feature. Otherwise, the original output equation is changes depending on the variable process on/off 
+marker :math:`\omicron_{yvpt}`. When the marker is off, the output function
+becomes the product of the variable process throughput :math:`\tau_{yvpt}` and the 
+parameter process partial output ratio :math:`\underline{r}_{ypc}^\text{out}`. When the marker is on,
+the output function for ``Env`` type commodities remains the same as for the partial operation 
+without the on/off feature. The mathematical explanation of this rule is given in :ref:`theory-AP`.
+::
+
+    m.def_partial_process_on_off_output = pyomo.Constraint(
+        m.tm, m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=def_partial_process_on_off_output_rule,
+        doc='e_pro_out = on_off *'
+            ' (cap_pro * min_fraction * (r - R) / (1 - min_fraction) '
+            '+ tau_pro * (R - min_fraction * r) / (1 - min_fraction)) ')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_partial_process_on_off_output_rule
+
+In the case of a process where also a time variable output efficiency is given the
+code for the output changes to:
+::
+
+    m.def_process_partial_on_off_timevar_output = pyomo.Constraint(
+        m.tm, m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=def_pro_partial_on_off_timevar_output_rule,
+        doc='e_pro_out == tau_pro * r_out * on_off * eff_factor')
+        
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: def_partial_process_on_off_output_rule
+   
+**Process Starting Ramp-up Rule**: This constraint replaces the process
+throughput ramping rule when the parameter process starting time 
+:math:`\overline{ST}_{yvp}^\text{start}` is defined in the input 
+**process** sheet. This is done only until the variable process throughput 
+:math:`\tau_{yvpt}` reaches the minimum load value and only while increasing
+the process throughput :math:`\tau_{yvpt}`. The mathematical explanation of 
+this rule is given in :ref:`theory-AP`.
+
+In script ``AdvancedProcesses.py`` the constraint process starting ramp-up rule
+is defined and calculated by the following code fragment:
+::
+
+    m.res_starting_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_start_tuples,
+        rule=res_starting_rampup_rule,
+        doc='throughput may not increase faster than maximal starting ramp up '
+            'gradient until reaching minimum capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_starting_rampup_rule
+   
+**Process Output Ramping Rule**: These constraints act as a limiter for the
+process output :math:`\epsilon_{yvcpt}^\text{out}` with the on/off feature 
+because the process on/off marker :math:`\omicron_{yvpt}` can be both on and off
+in the minimum load point. There are three possible cases, as follows, defined in
+the script ``AdvanceProcesses.py``. The mathematical explanation of this rule is 
+given in :ref:`theory-AP`
+
+Case I: The parameter process minimum load fraction :math:`\underline{P}_{yvp}`
+is greater than the parameter process maximum power ramp up gradient 
+:math:`\overline{PG}_{yvp}^\text{up}` and is divisible with it. It is defined
+and calculated by the following code fragment:
+::
+
+    m.res_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+        
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_output_minfraction_rampup_rule        
+   
+If the process has partial operation, the code changes to:
+::
+
+    m.res_partial_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_partial_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_output_minfraction_rampup_rule
+   
+If the process has time variable efficiency, the code changes to:
+::
+
+    m.res_timevar_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples &
+              m.pro_timevar_output_tuples - m.pro_partial_on_off_output_tuples,
+        rule=res_timevar_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_timevar_output_minfraction_rampup_rule
+   
+If the process has both partial operation and time variable efficiency, the code changes to:
+::
+
+    m.res_partial_timevar_output_minfraction_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=res_partial_timevar_output_minfraction_rampup_rule,
+        doc='Output may not increase faster than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_timevar_output_minfraction_rampup_rule
+   
+Case II: The parameter process minimum load fraction :math:`\underline{P}_{yvp}`
+is greater than the parameter process maximum power ramp up gradient 
+:math:`\overline{PG}_{yvp}^\text{up}`, but is not divisible with it. It is defined
+and calculated by the following code fragment:
+::
+
+    m.res_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_output_minfraction_rampup_rampup_rule
+   
+If the process has partial operation, the code changes to:
+::
+
+    m.res_partial_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_partial_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_output_minfraction_rampup_rampup_rule
+   
+If the process has time variable efficiency, the code changes to:
+::
+
+    m.res_timevar_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples &
+              m.pro_timevar_output_tuples - m.pro_partial_on_off_output_tuples,
+        rule=res_timevar_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_timevar_output_minfraction_rampup_rampup_rule
+   
+If the process has both partial operation and time variable efficiency, the code changes to:
+::
+
+    m.res_partial_timevar_output_minfraction_rampup_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_not_divides_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=res_partial_timevar_output_minfraction_rampup_rampup_rule,
+        doc='Output may not increase faster than the first multiple of the'
+            'ramping up gradient greater than the minimal working capacity')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_timevar_output_minfraction_rampup_rampup_rule
+   
+Case III: The parameter process minimum load fraction :math:`\underline{P}_{yvp}`
+is smaller than the parameter process maximum power ramp up gradient 
+:math:`\overline{PG}_{yvp}^\text{up}`. It is defined and calculated by the following 
+code fragment:
+::
+
+    m.res_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples -
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_output_rampup_rule
+   
+If the process has partial operation, the code changes to:
+::
+
+    m.res_partial_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples - m.pro_timevar_output_tuples,
+        rule=res_partial_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_output_rampup_rule
+   
+If the process has time variable efficiency, the code changes to:
+::
+
+    m.res_timevar_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples &
+              m.pro_timevar_output_tuples - m.pro_partial_on_off_output_tuples,
+        rule=res_timevar_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_timevar_output_rampup_rule
+   
+If the process has both partial operation and time variable efficiency, the code changes to:
+::
+
+    m.res_partial_timevar_output_rampup = pyomo.Constraint(
+        m.tm, m.pro_rampup_bigger_minfraction_output_tuples &
+              m.pro_partial_on_off_output_tuples & m.pro_timevar_output_tuples,
+        rule=res_partial_timevar_output_rampup_rule,
+        doc='Output may not increase faster than the ramping up gradient')
+
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_partial_timevar_output_rampup_rule
+   
+**Process Start-Up Rule**: The constraint process start-up rule marks in the
+variable process start marker :math:`\sigma_{yvpt}` whether a process :math:`p`
+started in timestep :math:`t` or not. The mathematical explanation of 
+this rule is given in :ref:`theory-AP`.
+
+In script ``AdvancedProcesses.py`` the constraint process start ups rule
+is defined and calculated by the following code fragment:
+::
+
+    m.res_start_up = pyomo.Constraint(
+        m.tm, m.pro_start_up_tuples,
+        rule=res_start_ups_rule,
+        doc='start >= on_off(t) - on_off(t-1)')
+        
+.. literalinclude:: /../urbs/features/AdvancedProcesses.py
+   :pyobject: res_start_up_rule

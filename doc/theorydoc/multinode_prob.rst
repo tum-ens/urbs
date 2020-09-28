@@ -23,7 +23,7 @@ variable vector of the optimization problem reads:
    \pi^{\text{out}}_{aft}}_{\text{transmission variables}}).
 
 Here, :math:`\zeta` represents the total annualized system cost across all 
-modeled vertices :math:`v\in V`, :math:`\rho_vct` the amount of commodities
+modeled vertices :math:`v\in V`, :math:`\rho_{vct}` the amount of commodities
 :math:`c` taken from a virtual, infinite stock at vertex :math:`v` and time
 :math:`t`, :math:`\kappa_{vp}` and :math:`\widehat{\kappa}_{vp}` the total
 and the newly installed process capacities of processes :math:`p` at vertex
@@ -63,7 +63,12 @@ capacity is then calculated similar to process capacities in the minimal model:
 
 where :math:`K_{af}` represents the already installed and
 :math:`\widehat{\kappa}_{af}` the new capacity of transmission :math:`f`
-installed in arc :math:`a`.
+installed in arc :math:`a`. The new capacity can also be expressed as the product
+of the parameter transmission capacity block :math:`{K}_{yaf}^\text{block}` 
+and the variable new transmission capacity units :math:`\beta_{yaf}`:
+
+.. math::
+   \widehat{\kappa}_{af}={K}_{yaf}^\text{block}\cdot \beta_{yaf}
 
 Transmission capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

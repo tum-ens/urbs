@@ -5,125 +5,141 @@ Technical Parameters
 
 .. table:: *Table: Technical Model Parameters*
     
-    +---------------------------------------------+----+--------------------------------------------+
-    |Parameter                                    |Unit|Description                                 |
-    +=============================================+====+============================================+
-    |**General Technical Parameters**                                                               |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`w`                                    | _  |Fraction of 1 year of modeled timesteps     |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\Delta t`                             | h  |Timestep Size                               |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`W`                                    | a  |Weight of last support timeframe            |
-    +---------------------------------------------+----+--------------------------------------------+
-    |**Commodity Technical Parameters**                                                             |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`d_{yvct}`                             |MWh |Demand for Commodity                        |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`s_{yvct}`                             | _  |Intermittent Supply Capacity Factor         |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{l}_{yvc}`                   |MW  |Maximum Stock Supply Limit Per Hour         |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{L}_{yvc}`                   |MWh |Maximum Annual Stock Supply Limit Per Vertex|
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{m}_{yvc}`                   |t/h |Maximum Environmental Output Per Hour       |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{M}_{yvc}`                   | t  |Maximum Annual Environmental Output         |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{g}_{yvc}`                   |MW  |Maximum Sell Limit Per Hour                 |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{G}_{yvc}`                   |MWh |Maximum Annual Sell Limit                   |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{b}_{yvc}`                   |MW  |Maximum Buy Limit Per Hour                  |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{B}_{yvc}`                   |MWh |Maximum Annual Buy Limit                    |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{L}_{\text{CO}_2,y}`         | t  |Maximum Global Annual CO2 Emission Limit    |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{\overline{L}}_{\text{CO}_2}`| t  |CO2 Emission Budget for modeling horizon    |
-    +---------------------------------------------+----+--------------------------------------------+
-    |**Process Technical Parameters**                                                               |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{K}_{yvp}`                  |MW  |Process Capacity Lower Bound                |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`K_{vp}`                               |MW  |Process Capacity Installed                  |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{yvp}`                   |MW  |Process Capacity Upper Bound                |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{vp}`                               |MW  |Remaining lifetime of installed processes   |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{PG}_{yvp}`                  |1/h |Process Maximal Power Gradient (relative)   |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{P}_{yvp}`                  | _  |Process Minimum Part Load Fraction          |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`f_{yvpt}^\text{out}`                  | _  |Process Output Ratio multiplyer             |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`r_{ypc}^\text{in}`                    | _  |Process Input Ratio                         |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{r}_{ypc}^\text{in}`        | _  |Process Partial Input Ratio                 |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{r}_{ypc}^\text{out}`       | _  |Process Partial Output Ratio                |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`r_{ypc}^\text{out}`                   | _  |Process Output Ratio                        |
-    +---------------------------------------------+----+--------------------------------------------+
-    |**Storage Technical Parameters**                                                               |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`I_{yvs}`                              | _  |Initial and Final State of Charge           |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`e_{yvs}^\text{in}`                    | _  |Storage Efficiency During Charge            |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`e_{yvs}^\text{out}`                   | _  |Storage Efficiency During Discharge         |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`d_{yvs}`                              |1/h |Storage Self-discharge Per Hour             |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{K}_{yvs}^\text{c}`         |MWh |Storage Capacity Lower Bound                |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`K_{yvs}^\text{c}`                     |MWh |Storage Capacity Installed                  |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{yvs}^\text{c}`          |MWh |Storage Capacity Upper Bound                |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{K}_{yvs}^\text{p}`         |MW  |Storage Power Lower Bound                   |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`K_{yvs}^\text{p}`                     |MW  |Storage Power Installed                     |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{yvs}^\text{p}`          |MW  |Storage Power Upper Bound                   |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{vs}`                               |MW  |Remaining lifetime of installed storages    |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`k_{yvs}^\text{E/P}`                   |h   |Storage Energy to Power Ratio               |    
-    +---------------------------------------------+----+--------------------------------------------+
-    |**Transmission Technical Parameters**                                                          |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`e_{yaf}`                              | _  |Transmission Efficiency                     |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\underline{K}_{yaf}`                  |MW  |Transmission Capacity Lower Bound           |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`K_{yaf}`                              |MW  |Transmission Capacity Installed             |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{yaf}`                   |MW  |Transmission Capacity Upper Bound           |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{af}`                               |MW  |Remaining lifetime of installed transmission|
-    +---------------------------------------------+----+--------------------------------------------+
-    |**DCPF Transmission Technical Parameters**                                                     |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`X_{yaf}`                              |p.u |Transmission Reactance                      |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{dl}_{yaf}`                  |deg.|Voltage Angle Difference Limit              |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`V_{yaf\text{base}}`                   |kV  |Transmission Base Voltage                   |
-    +---------------------------------------------+----+--------------------------------------------+
-    |**Demand Side Management Parameters**                                                          |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`e_{yvc}`                              | _  |DSM Efficiency                              |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`y_{yvc}`                              | _  |DSM Delay Time                              |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`o_{yvc}`                              | _  |DSM Recovery Time                           |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{yvc}^\text{up}`         |MW  |DSM Maximal Upshift Per Hour                |
-    +---------------------------------------------+----+--------------------------------------------+
-    |:math:`\overline{K}_{yvc}^\text{down}`       |MW  |DSM Maximal Downshift Per Hour              |
-    +---------------------------------------------+----+--------------------------------------------+
+    +---------------------------------------------+----+---------------------------------------------------+
+    |Parameter                                    |Unit|Description                                        |
+    +=============================================+====+===================================================+
+    |**General Technical Parameters**                                                                      |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`w`                                    | _  |Fraction of 1 year of modeled timesteps            |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\Delta t`                             | h  |Timestep Size                                      |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`W`                                    | a  |Weight of last support timeframe                   |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |**Commodity Technical Parameters**                                                                    |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`d_{yvct}`                             |MWh |Demand for Commodity                               |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`s_{yvct}`                             | _  |Intermittent Supply Capacity Factor                |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{l}_{yvc}`                   |MW  |Maximum Stock Supply Limit Per Hour                |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{L}_{yvc}`                   |MWh |Maximum Annual Stock Supply Limit Per Vertex       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{m}_{yvc}`                   |t/h |Maximum Environmental Output Per Hour              |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{M}_{yvc}`                   | t  |Maximum Annual Environmental Output                |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{g}_{yvc}`                   |MW  |Maximum Sell Limit Per Hour                        |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{G}_{yvc}`                   |MWh |Maximum Annual Sell Limit                          |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{b}_{yvc}`                   |MW  |Maximum Buy Limit Per Hour                         |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{B}_{yvc}`                   |MWh |Maximum Annual Buy Limit                           |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{L}_{\text{CO}_2,y}`         | t  |Maximum Global Annual CO2 Emission Limit           |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{\overline{L}}_{\text{CO}_2}`| t  |CO2 Emission Budget for modeling horizon           |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |**Process Technical Parameters**                                                                      |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\underline{K}_{yvp}`                  |MW  |Process Capacity Lower Bound                       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`K_{vp}`                               |MW  |Process Capacity Installed                         |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{K}_{yvp}`                   |MW  |Process Capacity Upper Bound                       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`T_{vp}`                               |MW  |Remaining lifetime of installed processes          |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{PG}_{yvp}^\text{up}`        |1/h |Process Maximal Power Ramp Up Gradient (relative)  |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{PG}_{yvp}^\text{down}`      |1/h |Process Maximal Power Ramp Down Gradient (relative)|
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{ST}_{yvp}`                  |h   |Process Starting Time                              |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{SR}_{yvp}`                  |1/h |Process Starting Ramp                              |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\underline{P}_{yvp}`                  | _  |Process Minimum Part Load Fraction                 |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`f_{yvpt}^\text{out}`                  | _  |Process Output Ratio multiplyer                    |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`r_{ypc}^\text{in}`                    | _  |Process Input Ratio                                |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\underline{r}_{ypc}^\text{in}`        | _  |Process Partial Input Ratio                        |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\underline{r}_{ypc}^\text{out}`       | _  |Process Partial Output Ratio                       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`r_{ypc}^\text{out}`                   | _  |Process Output Ratio                               |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yvp}^\text{block}`               |MW  |Process New Capacity Block                         |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |**Storage Technical Parameters**                                                                      |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`I_{yvs}`                              | _  |Initial and Final State of Charge                  |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`e_{yvs}^\text{in}`                    | _  |Storage Efficiency During Charge                   |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`e_{yvs}^\text{out}`                   | _  |Storage Efficiency During Discharge                |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`d_{yvs}`                              |1/h |Storage Self-discharge Per Hour                    |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\underline{K}_{yvs}^\text{c}`         |MWh |Storage Capacity Lower Bound                       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`K_{yvs}^\text{c}`                     |MWh |Storage Capacity Installed                         |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{K}_{yvs}^\text{c}`          |MWh |Storage Capacity Upper Bound                       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\underline{K}_{yvs}^\text{p}`         |MW  |Storage Power Lower Bound                          |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`K_{yvs}^\text{p}`                     |MW  |Storage Power Installed                            |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{K}_{yvs}^\text{p}`          |MW  |Storage Power Upper Bound                          |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`T_{vs}`                               |MW  |Remaining lifetime of installed storages           |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`k_{yvs}^\text{E/P}`                   |h   |Storage Energy to Power Ratio                      |    
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yvs}^\text{c,block}`             |MWh |Storage New Capacity Block                         |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yvs}^\text{p,block}`             |MW  |Storage New Power Block                            |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |**Transmission Technical Parameters**                                                                 |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`e_{yaf}`                              | _  |Transmission Efficiency                            |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\underline{K}_{yaf}`                  |MW  |Transmission Capacity Lower Bound                  |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`K_{yaf}`                              |MW  |Transmission Capacity Installed                    |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{K}_{yaf}`                   |MW  |Transmission Capacity Upper Bound                  |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`T_{af}`                               |year|Remaining lifetime of installed transmission       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yaf}^\text{block}`               |MW  |Transmission New Capacity Block                    |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |**DCPF Transmission Technical Parameters**                                                            |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`X_{yaf}`                              |p.u |Transmission Reactance                             |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{dl}_{yaf}`                  |deg.|Voltage Angle Difference Limit                     |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`V_{yaf\text{base}}`                   |kV  |Transmission Base Voltage                          |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`{K}_{yaf}^\text{block}`               | _  |Transmission New Capacity Block                    |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |**Demand Side Management Parameters**                                                                 |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`e_{yvc}`                              | _  |DSM Efficiency                                     |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`y_{yvc}`                              | _  |DSM Delay Time                                     |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`o_{yvc}`                              | _  |DSM Recovery Time                                  |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{K}_{yvc}^\text{up}`         |MW  |DSM Maximal Upshift Per Hour                       |
+    +---------------------------------------------+----+---------------------------------------------------+
+    |:math:`\overline{K}_{yvc}^\text{down}`       |MW  |DSM Maximal Downshift Per Hour                     |
+    +---------------------------------------------+----+---------------------------------------------------+
 
 General Technical Parameters
 ----------------------------
@@ -402,19 +418,51 @@ limit for the process capacities, both input parameters can be simply set to
 :math:`T_{vp}` represents the remaining lifetime of already installed units. It
 is used to determine the set `m.inst_pro_tuples`, i.e. to identify for which
 support timeframes the installed unit can still be used.
-
-**Process Maximal Gradient**, :math:`\overline{PG}_{yvp}`,
-``m.process_dict['max-grad'][(stf, sit, pro)]``: The parameter
-:math:`\overline{PG}_{yvp}` represents the maximal power gradient of a process
+    
+**Process Maximal Power Ramp Up Gradient**, :math:`\overline{PG}_{yvp}^\text{up}`,
+``m.process_dict['ramp-up-grad'][(stf, sit, pro)]``: The parameter
+:math:`\overline{PG}_{yvp}^\text{up}` represents the maximal power ramp up gradient of a process
 :math:`p` at a site :math:`v` in support timeframe :math:`y`, that energy model
 is allowed to have. The unit of this parameter is 1/h. The related section for
 this parameter in the spreadsheet can be found under the "Process" sheet. Here
 each row represents another process :math:`p` in a site :math:`v` and the
-column with the header label "max-grad" represents the parameters
-:math:`\overline{PG}_{yvp}` of the corresponding process :math:`p` and site
+column with the header label "ramp-up-grad" represents the parameters
+:math:`\overline{PG}_{yvp}^\text{up}` of the corresponding process :math:`p` and site
 :math:`v` combinations. If there is no desired maximum limit for the process
-power gradient, this parameter can be simply set to a value larger or equal to
+power ramp up gradient, this parameter can be simply set to a value larger or equal to
 1.
+
+**Process Maximal Power Ramp Down Gradient**, :math:`\overline{PG}_{yvp}^\text{down}`,
+``m.process_dict['ramp-down-grad'][(stf, sit, pro)]``: The parameter
+:math:`\overline{PG}_{yvp}^\text{down}` represents the maximal power ramp down gradient of a process
+:math:`p` at a site :math:`v` in support timeframe :math:`y`, that energy model
+is allowed to have. The unit of this parameter is 1/h. The related section for
+this parameter in the spreadsheet can be found under the "Process" sheet. Here
+each row represents another process :math:`p` in a site :math:`v` and the
+column with the header label "ramp-down-grad" represents the parameters
+:math:`\overline{PG}_{yvp}^\text{up}` of the corresponding process :math:`p` and site
+:math:`v` combinations. If there is no desired maximum limit for the process
+power ramp down gradient, this parameter can be simply set to a value larger or equal to
+1.
+
+**Process Starting Time**, :math:`\overline{ST}_{yvp}`,
+``m.process_dict['start-time'][(stf, sit, pro)]``: The parameter
+:math:`\overline{ST}_{yvp}` represents the time required by a process
+:math:`p` at a site :math:`v` in support timeframe :math:`y` to start.
+The unit of this parameter is h. The related section for
+this parameter in the spreadsheet can be found under the "Process" sheet. Here
+each row represents another process :math:`p` in a site :math:`v` and the
+column with the header label "start-time" represents the parameters
+:math:`\overline{ST}_{yvp}` of the corresponding process :math:`p` and site
+:math:`v` combinations.
+
+**Process Starting Ramp**, :math:`\overline{SR}_{yvp}`:
+The parameter :math:`\overline{SR}_{yvp}` represents the ramp of a process
+:math:`p` at a site :math:`v` in support timeframe :math:`y` while starting.
+The unit of this parameter is 1/h. This parameter is not declared directly in the input,
+being only a derived parameter, calculated as the ratio between the process minimum part 
+load fraction :math:`\underline{P}_{yvp}` and the process starting time 
+:math:`\overline{ST}_{yvp}`.
 
 **Process Minimum Part Load Fraction**, :math:`\underline{P}_{yvp}`,
 ``m.process_dict['min-fraction'][(stf, sit, pro)]``: The parameter
@@ -507,6 +555,17 @@ output ratio of "1" to at least one commodity. The flow of this commodity then
 tracks the throughput and can be used as a reference. All other values of in-
 and output ratios can then be adjusted by scaling them by an appropriate factor
 to the reference commodity flow. 
+
+**Process New Capacity Block**, :math:`{K}_{yvp}^\text{block}`,
+``m.process_dict['cap-block'][(stf, sit, pro)]``: The parameter 
+:math:`{K}_{yvp}^\text{block}` represents the capacity of all newly installed
+units of a process :math:`p` at a site :math:`v` in the support timeframe
+:math:`y`. The unit of this parameter is MW. The related section for
+this parameter in the spreadsheet can be found under the "Process" sheet. Here
+each row represents another process :math:`p` in a site :math:`v` and the
+column with the header label "cap-block" represents the parameters
+:math:`{K}_{yvp}^\text{block}` of the corresponding process :math:`p` and site
+:math:`v` combinations.
 
 Storage Technical Parameters
 ----------------------------
@@ -663,6 +722,28 @@ there is no desired set ratio for the storage energy and power capacities
 (which means the storage energy and power capacities can be sized independently
 from each other), this cell can be left empty.
 
+**Storage New Capacity Block**, :math:`{K}_{yvs}^\text{c,block}`,
+``m.storage_dict['c-block'][(stf, sit, sto, com)]``: The parameter 
+:math:`{K}_{yvs}^\text{c,block}` represents the capacity of all newly installed
+units of a storage :math:`s` at a site :math:`v` in the support timeframe
+:math:`y`. The unit of this parameter is MWh. The related section for
+this parameter in the spreadsheet can be found under the "Storage" sheet. Here
+each row represents another storage :math:`s` in a site :math:`v` and the
+column with the header label "c-block" represents the parameters
+:math:`{K}_{yvs}^\text{c,block}` of the corresponding storage :math:`s` and site
+:math:`v` combinations.
+
+**Storage New Power Block**, :math:`{K}_{yvs}^\text{p,block}`,
+``m.storage_dict['p-block'][(stf, sit, sto, com)]``: The parameter 
+:math:`{K}_{yvs}^\text{p,block}` represents the power of all newly installed
+units of a storage :math:`s` at a site :math:`v` in the support timeframe
+:math:`y`. The unit of this parameter is MW. The related section for
+this parameter in the spreadsheet can be found under the "Storage" sheet. Here
+each row represents another storage :math:`s` in a site :math:`v` and the
+column with the header label "c-block" represents the parameters
+:math:`{K}_{yvs}^\text{p,block}` of the corresponding storage :math:`s` and site
+:math:`v` combinations.
+
 Transmission Technical Parameters
 ---------------------------------
 
@@ -724,6 +805,17 @@ tuples.
 parameter :math:`T_{af}` represents the remaining lifetime of already installed
 units. It is used to determine the set `m.inst_tra_tuples`, i.e. to identify
 for which support timeframes the installed units can still be used.
+
+**Transmission New Capacity Block**, :math:`{K}_{yaf}^\text{block}`,
+``m.transmission_dict['tra-block'][(stf, sin, sout,tra, com)]``: The parameter 
+:math:`{K}_{yaf}^\text{block}` represents the capacity of all newly installed
+units of a transmission :math:`f` transferring a commodity :math:`c` through an arc
+:math:`a` in support timeframe :math:`y`.The unit of this parameter is MW.
+The related section for this parameter in the spreadsheet can be found under the 
+"Transmission" sheet. Here each row represents another transmission :math:`f`,
+arc :math:`a` combination. The column with the header label "tra-block" represents
+the parameters :math:`{K}_{yaf}^\text{block}` of the corresponding transmission
+tuples.
 
 DCPF Transmission Technical Parameters
 --------------------------------------

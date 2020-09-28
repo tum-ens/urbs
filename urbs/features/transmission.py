@@ -42,6 +42,11 @@ def add_transmission(m):
         initialize=tuple(m.transmission_dict["eff"].keys()),
         doc='Combinations of possible transmissions, e.g. '
             '(2020,South,Mid,hvac,Elec)')
+    m.tra_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=[(stf, sit, sit_, tra, com)
+                    for (stf, sit, sit_, tra, com) in tuple(m.tra_block_dict.keys())],
+        doc='Transmission with new block capacities')
 
     if m.mode['int']:
         m.operational_tra_tuples = pyomo.Set(
@@ -65,6 +70,10 @@ def add_transmission(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+    m.tra_cap_unit =pyomo.Var(
+        m.tra_block_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New transmission capacity blocks')
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(
@@ -82,6 +91,10 @@ def add_transmission(m):
         doc='Power flow out of transmission line (MW) per timestep')
 
     # transmission
+    m.def_cap_tra_new = pyomo.Constraint(
+        m.tra_block_tuples,
+        rule=def_cap_tra_new_rule,
+        doc='cap_tra_new = tra-block * cap_tra_new')
     m.def_transmission_output = pyomo.Constraint(
         m.tm, m.tra_tuples,
         rule=def_transmission_output_rule,
@@ -167,6 +180,10 @@ def add_transmission_dc(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+    m.tra_cap_unit =pyomo.Var(
+        m.tra_block_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New transmission capacity blocks')
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(
@@ -193,6 +210,10 @@ def add_transmission_dc(m):
         doc='Voltage angle of a site')
 
     # transmission
+    m.def_cap_tra_new = pyomo.Constraint(
+        m.tra_block_tuples,
+        rule=def_cap_tra_new_rule,
+        doc='cap_tra_new = tra-block * cap_tra_new')
     m.def_transmission_output = pyomo.Constraint(
         m.tm, m.tra_tuples,
         rule=def_transmission_output_rule,
@@ -244,7 +265,7 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
         if (sin, sout, tra, com, stf) in m.inst_tra_tuples:
             if (min(m.stf), sin, sout, tra, com) in m.tra_const_cap_dict:
                 cap_tra = m.transmission_dict['inst-cap'][
-                    (stf, sin, sout, tra, com)]
+                    (min(m.stf), sin, sout, tra, com)]
             else:
                 cap_tra = (
                     sum(m.cap_tra_new[stf_built, sin, sout, tra, com]
@@ -270,9 +291,13 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 
     return cap_tra
 
+# new capacity built in blocks
+def def_cap_tra_new_rule(m, stf, sin, sout, tra, com):
+    return(m.cap_tra_new[stf, sin, sout, tra, com] ==
+           m.tra_cap_unit[stf, sin, sout, tra, com] *
+           m.transmission_dict['tra-block'][(stf, sin, sout, tra, com)])
+
 # transmission output == transmission input * efficiency
-
-
 def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_out[tm, stf, sin, sout, tra, com] ==
             m.e_tra_in[tm, stf, sin, sout, tra, com] *

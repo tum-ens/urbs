@@ -66,8 +66,9 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
                     [created, consumed, stored, imported, exported, overprod,
                      dsm, voltage_angle],
                     axis=1,
-                    keys=['Created', 'Consumed', 'Storage', 'Import from',
-                          'Export to', 'Balance', 'DSM', 'Voltage Angle'])
+                    keys=['Created', 'Consumed', 'Storage',
+                          'Import from', 'Export to', 'Balance', 'DSM',
+                          'Voltage Angle'])
                 help_ts[(stf, lv, com)] = tableau.copy()
 
                 # timeseries sums

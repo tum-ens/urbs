@@ -153,7 +153,7 @@ environmental commodity is then given by:
    k^{\text{env}}_{c}\text{CB}(c,t),
 
 where :math:`k^{\text{env}}_{c}` are the specific costs per unit of
-environmental commodity and :math:`CB` is the momentary commodity balnce of
+environmental commodity and :math:`CB` is the momentary commodity balance of
 commodity :math:`c` at time :math:`t`. The minus sign is due to the sign
 convention used for the commodity balance which is positive when the system
 takes in a unit of a commodity.
@@ -173,10 +173,16 @@ process is simply given by:
    &\kappa_{p}=K_p + \widehat{\kappa}_p,
 
 where :math:`K_p` is the already installed capacity of process :math:`p`.
+The newly installed capacity can also be an integer, expressed as the product 
+between the parameter process new capacity block :math:`{K}_p^\text{block}` 
+and the variable new process capacity units :math:`\beta_{p}`:
+
+.. math::
+   \widehat{\kappa}_p= {K}_p^\text{block}\cdot \beta_p 
 
 Process capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The capacity pf each process :math:`p` is limited by a maximal and minimal
+The capacity of each process :math:`p` is limited by a maximal and minimal
 capacity, :math:`\overline{K}_p` and :math:`\underline{K}_p`, respectively,
 which are both given to the model as parameters:
 
@@ -266,7 +272,7 @@ Process dispatch constraints
 So far, apart from the commodity balance function, the interaction between
 processes and commodities have not been discussed. It is perhaps in order to
 start with the general idea behind the modeling of the process operation. In
-urbs all processes are mimo-processes, i.e., in general they in take in
+urbs all processes are mimo-processes, i.e., in general they take in
 multiple commodities as inputs and give out multiple commodities as outputs.
 The respective ratios between the respective commodity flows remain normally
 fixed. The operational state of the process is then captured in just one
@@ -296,13 +302,15 @@ switching speed of a process can be limited:
    &\forall p\in P,~t\in T_m:\\
    &\tau_{pt}\leq \kappa_{p}\\
    &\tau_{pt}\geq \underline{P}_{p}\kappa_{p}\\
-   &|\tau_{pt}-\tau_{p(t-1)}|\leq \Delta t\overline{PG}_p\kappa_{p},
+   &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^\text{up}\kappa_{p}\\
+   &\tau_{pt}-\tau_{p(t-1)}\geq - \Delta t\overline{PG}_p^\text{down}\kappa_{p}\\,
 
 where :math:`\underline{P}_{p}` is the normalized, minimal operational state of
-the process and :math:`\overline{PG}_p` the normalized, maximal gradient of the
+the process and :math:`\overline{PG}_p^\text{up}` and :math:`\overline{PG}_p^\text{down}`
+are the normalized, maximal ramping up gradient, respectively ramping down gradient of the
 operational state in full capacity per timestep.
 
-Intermittend supply rule
+Intermittent supply rule
 ~~~~~~~~~~~~~~~~~~~~~~~~
 If the input commodity is of type 'SupIm', which means that it represents an
 operational state rather than a proper material flow, the operational state of
@@ -317,43 +325,5 @@ a given process is desired
 Here, :math:`s_{ct}` is the time series that governs the exact operation of
 process :math:`p`, leaving only its capacity :math:`\kappa_{p}` as a free
 variable.
-
-Part load behavior
-~~~~~~~~~~~~~~~~~~
-Many processes show a non-trivial part-load behavior. In particular, often a
-nonlinear reaction of the efficiency on the operational state is given.
-Although urbs itself is a linear program this can with some caveats be captured
-in many cases. The reason for this is, that the efficiency of a process is
-itself not modeled but only the ratio between input and output multipliers. It
-is thus possible to use purely linear functions to get a nonlinear behavior of
-the efficiency of the form:
-
-.. math::
-   \eta=\frac{a+b\tau_{pt}}{c+d\tau_{pt}},
-
-where a,b,c and d are some constants. Specifically, the input and output ratios
-can be set to vary linearly between their respective values at full load
-:math:`r^{\text{in,out}}_{pc}` and their values at the minimal allowed
-operational state :math:`\underline{P}_{p}\kappa_p`, which are given by
-:math:`\underline{r}^{\text{in,out}}_{pc}`. This is achieved with the following
-equations:
-
-.. math::
-   &\forall p\in P^{\text{partload}},~c\in C,~t\in T_m:\\\\
-   &\epsilon^{\text{in,out}}_{pct}=\Delta t\cdot\left(
-   \frac{\underline{r}^{\text{in,out}}_{pc}-r^{\text{in,out}}_{pc}}
-   {1-\underline{P}_p}\cdot \underline{P}_p\cdot \kappa_p+
-   \frac{r^{\text{in,out}}_{pc}-
-   \underline{P}_p\underline{r}^{\text{in,out}}_{pc}}
-   {1-\underline{P}_p}\cdot \tau_{pt}\right).
-
-A few restrictions have to be kept in mind when using this feature:
-
-* :math:`\underline{P}_p` has to be set larger than 0 otherwise the feature
-  will work but not have any effect.
-* Environmental output commodities have to mimic the behavior of the inputs by
-  which they are generated. Otherwise the emissions per unit of input would
-  change together with the efficiency, which is typically not the desired
-  behavior.
 
 This concludes the minimal model.

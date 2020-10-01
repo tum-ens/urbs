@@ -615,7 +615,7 @@ def def_partial_process_input_rule(m, tm, stf, sit, pro, coin):
 
     return (m.e_pro_in[tm, stf, sit, pro, coin] ==
             m.dt * (m.cap_pro[stf, sit, pro] * online_factor +
-            m.tau_pro[tm, stf, sit, pro] * throughput_factor)
+            m.tau_pro[tm, stf, sit, pro] * throughput_factor))
 
 
 def def_partial_process_output_rule(m, tm, stf, sit, pro, coo):
@@ -630,7 +630,7 @@ def def_partial_process_output_rule(m, tm, stf, sit, pro, coo):
 
     return (m.e_pro_out[tm, stf, sit, pro, coo] ==
             m.dt * (m.cap_pro[stf, sit, pro] * online_factor +
-            m.tau_pro[tm, stf, sit, pro] * throughput_factor)
+            m.tau_pro[tm, stf, sit, pro] * throughput_factor))
 
 
 # lower bound <= process capacity <= upper bound

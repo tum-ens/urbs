@@ -102,7 +102,7 @@ Technical Parameters
     +---------------------------------------------+----+--------------------------------------------+
     |:math:`\overline{K}_{yaf}`                   |MW  |Transmission Capacity Upper Bound           |
     +---------------------------------------------+----+--------------------------------------------+
-    |:math:`T_{af}`                               |MW  |Remaining Lifetime of Installed Transmission|
+    |:math:`T_{af}`                               |a   |Remaining Lifetime of Installed Transmission|
     +---------------------------------------------+----+--------------------------------------------+
     |**DCPF Transmission Technical Parameters**                                                     |
     +---------------------------------------------+----+--------------------------------------------+

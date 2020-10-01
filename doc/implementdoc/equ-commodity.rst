@@ -408,12 +408,12 @@ restricts the total amount of CO2 emission to environment. The constraint states
 the sum of released CO2 across all support timeframe :math:`y\in Y`, sites
 :math:`v\in V` and timesteps :math:`t \in T_m` must be less than or equal to
 the parameter maximum global CO2 emission budget
-:math:`\overline{\overline{L}}_{CO_{2},y}`, where the amount of released CO2 in
+:math:`\overline{\overline{L}}_{CO_{2}}`, where the amount of released CO2 in
 a single support timeframe :math:`y` in a single site :math:`v` and at a single
 timestep :math:`t` is calculated by the product of the commodity balance of
 environmental commodities :math:`\mathrm{CB}(y,v,CO_{2},t)` and the parameter
 weight :math:`w`. This constraint is skipped if the value of the parameter
-:math:`\overline{\overline{L}}_{CO_{2},y}` is set to ``inf``. The mathematical
+:math:`\overline{\overline{L}}_{CO_{2}}` is set to ``inf``. The mathematical
 explanation of this rule is given in :ref:`theory-intertemp`.
 
 In script ``model.py`` the constraint global CO2 budget is defined and

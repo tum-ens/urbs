@@ -5,7 +5,8 @@ from xlrd import XLRDError
 import pyomo.core as pyomo
 from .features.modelhelper import *
 from .identify import *
-
+from datetime import datetime, date
+import numpy as np
 
 def read_input(input_files, year):
     """Read Excel input file and prepare URBS input dict.
@@ -180,7 +181,7 @@ def read_input(input_files, year):
 
 
 # preparing the pyomo model
-def pyomo_model_prep(data, timesteps):
+def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
     '''Performs calculations on the data frames in dictionary "data" for
     further usage by the model.
 
@@ -201,9 +202,31 @@ def pyomo_model_prep(data, timesteps):
     #
     #     storage.loc[site, storage, commodity][attribute]
     #
-
     m.mode = identify_mode(data)
     m.timesteps = timesteps
+    data['site_all']=data['site']
+    if type =='sub':
+        m.global_prop = data['global_prop'].drop('description', axis=1)
+        #import pdb; pdb.set_trace()
+        if isinstance(sites,tuple):
+            data['site'] = data['site'].loc(axis=0)[:,list(sites)]
+            data['commodity'] = data['commodity'].loc(axis=0)[:,list(sites)]        
+            data['process'] = data['process'].loc(axis=0)[:,list(sites)]
+            data['storage'] = data['storage'].loc(axis=0)[:,list(sites)]
+            data['demand'] = data['demand'][list(sites)]
+            data['supim']= data['supim'][list(sites)]      
+            data['transmission'] = data_transmission
+        else:
+            #import pdb; pdb.set_trace()
+            data['site'] = data['site'][data['site'].index == sites]
+            data['commodity'] = data['commodity'][data['commodity'].index.get_level_values(1) == sites] 
+            data['process'] = data['process'][data['process'].index.get_level_values(1) == sites]        
+            data['storage'] = data['storage'][data['storage'].index.get_level_values(1) == sites]
+            data['demand'] = data['demand'].filter(like=sites, axis=1)
+            data['supim'] = data['supim'].filter(like=sites, axis=1)
+            data['transmission'] = data_transmission
+            
+
     m.global_prop = data['global_prop']
     commodity = data['commodity']
     process = data['process']
@@ -216,7 +239,9 @@ def pyomo_model_prep(data, timesteps):
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Start-up',
                         'Environmental']
-
+    if type == 'sub':
+        m.cost_type_list.extend(['ADMM_Linear','ADMM_Quadratic'])
+        
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification
     m.site_dict = data['site'].to_dict()
@@ -510,6 +535,7 @@ def pyomo_model_prep(data, timesteps):
             storage['cost_factor'] = (storage['discount-factor'] *
                                       storage['eff-distance'])
     else:
+
         # for one year problems
         process['invcost-factor'] = (
             process.apply(
@@ -584,7 +610,7 @@ def pyomo_model_prep(data, timesteps):
         m.sto_block_c_dict = sto_block_c[sto_block_c > 0].to_dict()
         sto_block_p = storage['p-block']
         m.sto_block_p_dict = sto_block_p[sto_block_p > 0].to_dict()
-
+        
     return m
 
 
@@ -638,3 +664,71 @@ def get_input(prob, name):
     else:
         # unknown
         raise ValueError("Unknown input DataFrame name!")
+
+def add_carbon_supplier(data,clusters):
+    """Read Excel input file and prepare URBS input dict.
+
+    Reads an Excel spreadsheet that adheres to the structure shown in
+    mimo-example.xlsx. Two preprocessing steps happen here:
+    1. Column titles in 'Demand' and 'SupIm' are split, so that
+    'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
+    2. The attribute 'annuity-factor' is derived here from the columns 'wacc'
+    and 'depreciation' for 'Process', 'Transmission' and 'Storage'.
+
+    Args:
+        filename: filename to an Excel spreadsheet with the required sheets
+            'Commodity', 'Process', 'Transmission', 'Storage', 'Demand' and
+            'SupIm'.
+
+    Returns:
+        a dict of 6 DataFrames
+
+    Example:
+        >>> data = read_excel('mimo-example.xlsx')
+        >>> data['global_prop'].loc['CO2 limit', 'value']
+        150000000
+    """
+    year = date.today().year
+    # add site Carbon_site
+    data['site'].loc[(year,'Carbon_site'),:]=np.nan
+    
+    
+    #add dummy process X to Carbon_site (to avoid errors)
+    data['process'].loc[year,'Carbon_site','X']=(0,0,np.inf,0,0,0,0,0,0,0,0,1,0,0,0,0)
+    
+    #add dummy storage X to Carbon_site (to avoid errors)
+    data['storage'].loc[year,'Carbon_site','X','Carbon']=(0,0,np.inf,0,0,np.inf,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0)    
+    
+    # add carbon-connection from Carbon_site to the first site in each cluster
+    for cluster in clusters:
+        if type(cluster) == tuple:    
+            #import pdb;pdb.set_trace()
+            data['transmission'].loc[year,'Carbon_site',cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
+            data['transmission'].loc[year,cluster[0],'Carbon_site','CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
+            # add Carbon commodity to each site
+            for site in cluster:
+                data['commodity'].loc[year,site,'Carbon','Stock']=(0,0,0)
+        else:
+            data['transmission'].loc[year,'Carbon_site',cluster,'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
+            data['transmission'].loc[year,cluster,'Carbon_site','CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)            
+            data['commodity'].loc[year,cluster,'Carbon','Stock']=(0,0,0)
+
+
+    # add commodity Carbon to Carbon_site
+    data['commodity'].loc[year,'Carbon_site','Carbon','Stock']=(0,data['global_prop'].loc[2020].loc['CO2 limit','value'],np.inf)
+     
+        
+    # add free-movement carbon-connections within each cluster
+    for cluster in clusters:
+        if type(cluster) == tuple:
+            for site in cluster[1:]:
+                data['transmission'].loc[year,cluster[0],site,'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
+                data['transmission'].loc[year,site,cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)            
+
+    for (y,a,b,c) in data['process_commodity'].index.values:
+        if b == 'CO2' and c == 'Out':
+            data['process_commodity'].loc[y,a,'Carbon','In'] = data['process_commodity'].loc[y,a,'CO2','Out'].values
+    with pd.ExcelWriter('output.xlsx') as writer:
+        for key, val in data.items():
+           val.to_excel(writer, sheet_name=key)
+    return data

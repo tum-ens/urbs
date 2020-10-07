@@ -46,7 +46,7 @@ def write_Commodity(Commodity, year, writer):
     Commodity_year.reset_index().to_excel(writer, sheet_name='Commodity', index=False)
     
     
-def write_Process(Process, Process_prev, EE_limits, year, writer):
+def write_Process(Process, Process_prev, EE_limits, suffix, year, writer):
     print("Process")
     
     # Filter possible expansion for that year
@@ -80,7 +80,7 @@ def write_Process(Process, Process_prev, EE_limits, year, writer):
         Process_group["Category"] = [x.split("_")[0] for x in Process_group["Process"]]
         Process_group = Process_group[["Site", "Category","inst-cap"]]
         Process_group = Process_group.groupby(["Site", "Category"]).sum()
-        EE_limits_year = EE_limits.loc[(EE_limits["scenario-year"]=="all") | (EE_limits["scenario-year"]==year)]
+        EE_limits_year = EE_limits.loc[(EE_limits["scenario-year"]=="all") | ((EE_limits["scenario-year"]==year) & (EE_limits["scenario"]==suffix[1:]))]
         Process_group = Process_group.join(EE_limits_year["cap-up"], how="right")
         Process_group["rest-cap-up"] = Process_group["cap-up"] - Process_group["inst-cap"]
         
@@ -215,7 +215,7 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     fs = os.path.sep
     
     # Read the database file
-    db = pd.read_excel('Input' + fs + 'Mekong' + fs + 'ASEAN_Mekong_provinces_DB_tra.xlsx', sheet_name=None)
+    db = pd.read_excel('Input' + fs + 'Mekong' + fs + 'ASEAN_Mekong_provinces_DB.xlsx', sheet_name=None)
     Global = db['Global'].copy().set_index('Property')
     Site = db['Site'].copy()
     Commodity = db['Commodity'].copy().set_index(["Site", "Commodity", "Type"])
@@ -225,8 +225,12 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     Transmission = db['Transmission'].copy()
     Storage = db['Storage'].copy().set_index(["Site", "Storage", "Commodity"])
     Demand = db['Demand'].copy()
-    SupIm = db['SupIm'+suffix].copy()
-    Hydro = pd.read_csv('Input' + fs + 'Mekong' + fs + 'hydro' + suffix + '_' + str(year) + '.csv', sep=';', decimal=',', index_col=0)
+    try:
+        SupIm = db['SupIm'+suffix].copy()
+        Hydro = pd.read_csv('Input' + fs + 'Mekong' + fs + 'hydro' + suffix + '_' + str(year) + '.csv', sep=';', decimal=',', index_col=0)
+    except:
+        SupIm = db['SupIm_average'].copy()
+        Hydro = pd.read_csv('Input' + fs + 'Mekong' + fs + 'hydro_average_' + str(year) + '.csv', sep=';', decimal=',', index_col=0)
     db = None
     
     # Eventually read the results of the previous year
@@ -273,7 +277,7 @@ def Database_to_urbs(model_type, suffix, year, result_folder, time_slices):
     annual = write_Commodity(Commodity, year, writer)
     
     ### Process
-    pro = write_Process(Process, Process_prev, EE_limits, year, writer)
+    pro = write_Process(Process, Process_prev, EE_limits, suffix, year, writer)
     
     ### Process-Commodity
     write_ProCom(ProCom, pro, year, writer)

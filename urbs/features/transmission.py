@@ -71,10 +71,10 @@ def add_transmission(m):
         rule=res_transmission_capacity_rule,
         doc='transmission.cap-lo <= total transmission capacity <= '
             'transmission.cap-up')
-    # m.res_transmission_symmetry = pyomo.Constraint(
-        # m.tra_tuples,
-        # rule=res_transmission_symmetry_rule,
-        # doc='total transmission capacity must be symmetric in both directions')
+    m.res_transmission_symmetry = pyomo.Constraint(
+        m.tra_tuples,
+        rule=res_transmission_symmetry_rule,
+        doc='total transmission capacity must be symmetric in both directions')
         
     # capacity credit
     m.cap_credit_transmission = pyomo.Expression(

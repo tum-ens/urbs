@@ -7,16 +7,16 @@ import time
 # # User preferences
 
 model_type = '_long'
-suffix = "_dry"
+suffix = "_base"
 fs = os.path.sep
-result_folder = 'Mekong'+fs+'Run_2016_dry-20200915T2328'
+result_folder = 'Mekong'+fs+'RRun_2016_base-20200901T0803'
 if model_type == '_long':
     time_slices = [i for i in range(8761)]
 else:
     #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
-for year in [2020, 2025, 2030, 2035, 2037]:
+for year in [2016]:
     
     # Generate input file from database
     Database_to_urbs(model_type, suffix, year, result_folder, time_slices)
@@ -102,6 +102,8 @@ for year in [2020, 2025, 2030, 2035, 2037]:
     # select scenarios to be run
     scenarios = [
                 urbs.scenario_base
+                #urbs.scenario_20pc_cheaper_lines,
+                #urbs.scenario_50pc_cheaper_lines
                 ]
     
     for scenario in scenarios:
@@ -113,5 +115,5 @@ for year in [2020, 2025, 2030, 2035, 2037]:
                                 report_tuples=report_tuples,
                                 report_sites_name=report_sites_name)
     del prob
-    time.sleep(2*60)
+    time.sleep(0.5*60)
     

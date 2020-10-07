@@ -8,6 +8,20 @@ import pandas as pd
 def scenario_base(data):
     # do nothing
     return data
+    
+def scenario_20pc_cheaper_lines(data):
+    # change maximum installable capacity
+    tra = data['transmission']
+    tra['inv-cost'] *= 0.8
+    tra['fix-cost'] *= 0.8
+    return data
+    
+def scenario_50pc_cheaper_lines(data):
+    # change maximum installable capacity
+    tra = data['transmission']
+    tra['inv-cost'] *= 0.5
+    tra['fix-cost'] *= 0.5
+    return data
 
 
 def scenario_stock_prices(data):

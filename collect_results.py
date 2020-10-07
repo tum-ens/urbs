@@ -11,7 +11,7 @@ global dict_countries
 global dict_season
 
 # User preferences
-subfolder = os.path.join("Mekong", "20200916 Short average tra")
+subfolder = os.path.join("Mekong", "20200923 Hydro scenarios long")
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
 
 scenario_years = [2016, 2020, 2025, 2030, 2035, 2037]
@@ -127,16 +127,16 @@ def add_weight(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
-    df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
-    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
+    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
     # df_empty.loc[0, "t"] = 0
-    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
-    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
-    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
+    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
+    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
+    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
+    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
+    df_empty.loc[0, "t"] = 0
+    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
+    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
+    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
     
     weights = df_empty["t"].value_counts().reset_index().rename(columns={"t": "weight"}).rename(columns={"index":"t"})
     weights = weights.set_index("t")
@@ -510,7 +510,10 @@ def get_storage_data(urbs_results):
     
     # Prepare dataframe of storage
     storage = pd.DataFrame(0, index=multiindex, columns=["inst-cap-p", "new-inst-cap-p", "retired-cap-p", "inst-cap-c", "new-inst-cap-c", "retired-cap-c", "avg-state-of-charge", "full-load cycles", "stored-energy"])
-    
+    if "Storage" in urbs_results.keys():
+        urbs_results["Storage"].set_index(["Site", "Storage type", "scenario-year"], inplace=True)
+        storage.loc[urbs_results["Storage"].index.intersection(storage.index)] = urbs_results["Storage"]
+        
     try:
         # New capacities
         cap_p_new = df_result["cap_sto_p_new"].droplevel(3).reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "sto":"Storage type", "cap_sto_p_new":"new-inst-cap-p"}).fillna(0)
@@ -611,14 +614,7 @@ def get_storage_data(urbs_results):
     storage.loc[storage_in_regions.index, storage_in_regions.columns] = storage_in_regions
     
     storage.fillna(0, inplace=True)
-    if "Storage" in urbs_results.keys():
-        urbs_results["Storage"].set_index(["Site", "Storage type", "scenario-year"], inplace=True)
-        try: # Update values in sheet
-            urbs_results["Storage"].loc[storage.index] = storage.round(2)
-        except: # Append values in sheet
-            urbs_results["Storage"] = urbs_results["Storage"].append(storage.round(2))
-    else: # Create sheet
-        urbs_results["Storage"] = storage.round(2)
+    urbs_results["Storage"] = storage.round(2)
     # Sort index
     urbs_results["Storage"] = urbs_results["Storage"].sort_index(level="scenario-year")
     
@@ -675,21 +671,17 @@ def get_curtailment_data(urbs_results):
     curtailed_regions = curtailed_regions.groupby(["Site", "scenario-year"]).sum()
     
     # Save results
-    curtailment = pd.DataFrame(index=multiindex, columns=list_columns).reset_index()
-    curtailment.loc[curtailment["scenario-year"]==year_now] = curtailment.loc[curtailment["scenario-year"]==year_now].fillna(0)
-    curtailment = curtailment.set_index(["Site", "scenario-year"])
+    curtailment = pd.DataFrame(index=multiindex, columns=list_columns)
+    if "Curtailment" in urbs_results.keys():
+        curtailment = pd.DataFrame(index=multiindex, columns=list(set(list_columns).union(set(urbs_results["Curtailment"].columns))))
+        urbs_results["Curtailment"].set_index(["Site", "scenario-year"], inplace=True)
+        curtailment.loc[urbs_results["Curtailment"].index.intersection(curtailment.index), urbs_results["Curtailment"].columns] = urbs_results["Curtailment"]
+    curtailment.fillna(0, inplace=True)
     curtailment.loc[curtailed.index, curtailed.columns] = curtailed
     curtailment.loc[curtailed_regions.index, curtailed_regions.columns] = curtailed_regions
     
     curtailment.fillna(0, inplace=True)
-    if "Curtailment" in urbs_results.keys():
-        urbs_results["Curtailment"].set_index(["Site", "scenario-year"], inplace=True)
-        try: # Update values in sheet
-            urbs_results["Curtailment"].loc[curtailment.index] = curtailment.round(2)
-        except: # Append values in sheet
-            urbs_results["Curtailment"] = urbs_results["Curtailment"].append(curtailment.round(2))
-    else: # Create sheet
-        urbs_results["Curtailment"] = curtailment.round(2)
+    urbs_results["Curtailment"] = curtailment.round(2)
     # Sort index
     urbs_results["Curtailment"] = urbs_results["Curtailment"].sort_index(level="scenario-year")
     

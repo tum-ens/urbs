@@ -77,7 +77,7 @@ def write_Process(Process, Process_prev, EE_limits, suffix, year, writer):
     Process_year.reset_index(inplace=True)
     if (year>2016):
         Process_group = Process_year.copy()
-        Process_group["Category"] = [x.split("_")[0] for x in Process_group["Process"]]
+        Process_group["Category"] = ['_'.join(x.split("_")[:-1]) for x in Process_group["Process"]]
         Process_group = Process_group[["Site", "Category","inst-cap"]]
         Process_group = Process_group.groupby(["Site", "Category"]).sum()
         EE_limits_year = EE_limits.loc[(EE_limits["scenario-year"]=="all") | ((EE_limits["scenario-year"]==year) & (EE_limits["scenario"]==suffix[1:]))]
@@ -87,10 +87,13 @@ def write_Process(Process, Process_prev, EE_limits, suffix, year, writer):
         idx = Process_year[Process_year["cap-up"] == np.inf].index
         idx = [i for i in idx if (Process_year.loc[i, "Process"].startswith("Solar") or Process_year.loc[i, "Process"].startswith("Wind") or Process_year.loc[i, "Process"].startswith("Hydro"))]
         Process_capped = Process_year.loc[idx]
-        Process_capped["Category"] = [x.split("_")[0] for x in Process_capped["Process"]]
+        Process_capped["Category"] = ['_'.join(x.split("_")[:-1]) for x in Process_capped["Process"]]
         Process_capped.set_index(["Site", "Category"], inplace=True)
         Process_capped = Process_capped.join(Process_group["rest-cap-up"])
-        Process_capped["cap-up"] = Process_group["rest-cap-up"]
+        try:
+            Process_capped["cap-up"] = Process_group["rest-cap-up"]
+        except:
+            import pdb; pdb.set_trace()
         Process_capped = Process_capped.reset_index().drop(columns=["Category", "rest-cap-up"])
         Process_year.drop(index=idx, inplace=True)
         Process_year = Process_year.append(Process_capped, ignore_index=True, sort=False)

@@ -175,7 +175,7 @@ def read_input(input_files, year):
 
     # sort nested indexes to make direct assignments work
     for key in data:
-        if isinstance(data[key].index, pd.core.index.MultiIndex):
+        if isinstance(data[key].index, pd.core.indexes.multi.MultiIndex):
             data[key].sort_index(inplace=True)
     return data
 
@@ -207,25 +207,14 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
     data['site_all']=data['site']
     if type =='sub':
         m.global_prop = data['global_prop'].drop('description', axis=1)
-        #import pdb; pdb.set_trace()
-        if isinstance(sites,tuple):
-            data['site'] = data['site'].loc(axis=0)[:,list(sites)]
-            data['commodity'] = data['commodity'].loc(axis=0)[:,list(sites)]        
-            data['process'] = data['process'].loc(axis=0)[:,list(sites)]
-            data['storage'] = data['storage'].loc(axis=0)[:,list(sites)]
-            data['demand'] = data['demand'][list(sites)]
-            data['supim']= data['supim'][list(sites)]      
-            data['transmission'] = data_transmission
-        else:
-            #import pdb; pdb.set_trace()
-            data['site'] = data['site'][data['site'].index == sites]
-            data['commodity'] = data['commodity'][data['commodity'].index.get_level_values(1) == sites] 
-            data['process'] = data['process'][data['process'].index.get_level_values(1) == sites]        
-            data['storage'] = data['storage'][data['storage'].index.get_level_values(1) == sites]
-            data['demand'] = data['demand'].filter(like=sites, axis=1)
-            data['supim'] = data['supim'].filter(like=sites, axis=1)
-            data['transmission'] = data_transmission
-            
+        data['site'] = data['site'].loc(axis=0)[:,sites]
+        data['commodity'] = data['commodity'].loc(axis=0)[:,sites]
+        data['process'] = data['process'].loc(axis=0)[:,sites]
+        data['storage'] = data['storage'].loc(axis=0)[:,sites]
+        if sites != ['Carbon_site']:
+            data['demand'] = data['demand'][sites]
+            data['supim']= data['supim'][sites]
+        data['transmission'] = data_transmission
 
     m.global_prop = data['global_prop']
     commodity = data['commodity']
@@ -694,41 +683,34 @@ def add_carbon_supplier(data,clusters):
     
     
     #add dummy process X to Carbon_site (to avoid errors)
-    data['process'].loc[year,'Carbon_site','X']=(0,0,np.inf,0,0,0,0,0,0,0,0,1,0,0,0,0)
+    data['process'].loc[year,'Carbon_site','X']=(0,0,np.inf,0,0,0,0,0,0,0,0,1,np.nan,np.nan,np.nan,np.nan)
     
     #add dummy storage X to Carbon_site (to avoid errors)
-    data['storage'].loc[year,'Carbon_site','X','Carbon']=(0,0,np.inf,0,0,np.inf,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0)    
+    data['storage'].loc[year,'Carbon_site','X','Carbon']=(0,0,np.inf,0,0,np.inf,0,1,0,0,0,0,0,0,1,0,0,0,np.nan,np.nan,np.nan)
     
     # add carbon-connection from Carbon_site to the first site in each cluster
     for cluster in clusters:
-        if type(cluster) == tuple:    
-            #import pdb;pdb.set_trace()
-            data['transmission'].loc[year,'Carbon_site',cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
-            data['transmission'].loc[year,cluster[0],'Carbon_site','CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
-            # add Carbon commodity to each site
-            for site in cluster:
-                data['commodity'].loc[year,site,'Carbon','Stock']=(0,0,0)
-        else:
-            data['transmission'].loc[year,'Carbon_site',cluster,'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
-            data['transmission'].loc[year,cluster,'Carbon_site','CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)            
-            data['commodity'].loc[year,cluster,'Carbon','Stock']=(0,0,0)
+        data['transmission'].loc[year,'Carbon_site',cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+        data['transmission'].loc[year,cluster[0],'Carbon_site','CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+        # add Carbon commodity to each site
+        for site in cluster:
+            data['commodity'].loc[year,site,'Carbon','Stock']=(0,0,0)
 
 
     # add commodity Carbon to Carbon_site
     data['commodity'].loc[year,'Carbon_site','Carbon','Stock']=(0,data['global_prop'].loc[2020].loc['CO2 limit','value'],np.inf)
      
-        
     # add free-movement carbon-connections within each cluster
     for cluster in clusters:
-        if type(cluster) == tuple:
+        if len(cluster) > 1:
             for site in cluster[1:]:
-                data['transmission'].loc[year,cluster[0],site,'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)
-                data['transmission'].loc[year,site,cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, 0, 0, 0, 0)            
-
+                data['transmission'].loc[year,cluster[0],site,'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+                data['transmission'].loc[year,site,cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+    #import pdb;pdb.set_trace()
     for (y,a,b,c) in data['process_commodity'].index.values:
         if b == 'CO2' and c == 'Out':
             data['process_commodity'].loc[y,a,'Carbon','In'] = data['process_commodity'].loc[y,a,'CO2','Out'].values
-    with pd.ExcelWriter('output.xlsx') as writer:
-        for key, val in data.items():
-           val.to_excel(writer, sheet_name=key)
+    #with pd.ExcelWriter('output.xlsx') as writer:
+    #    for key, val in data.items():
+    #       val.to_excel(writer, sheet_name=key)
     return data

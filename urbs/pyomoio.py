@@ -251,6 +251,7 @@ def _get_onset_names(entity):
                 labels.extend(_get_onset_names(domain_set))
 
         elif entity.dimen == 1:
+            import pdb;pdb.set_trace()
             if entity.domain:
                 # 1D subset; add domain name
                 labels.append(entity.domain.name)

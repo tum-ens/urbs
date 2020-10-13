@@ -1,4 +1,4 @@
-import os
+﻿import os
 import shutil
 import urbs
 import time as t 
@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from urbs.runfunctions import *
 
 input_files = 'mimo-example_internal.xlsx'  # for single year file name, for intertemporal folder name
+#input_files = 'germany.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
@@ -65,9 +66,12 @@ plot_tuples = [
 #    ('South','Elec'),('North','Elec'),('Mid'),('Elec')
     ]
 
-#    clusters = [(('Schleswig-Holstein'),('Hamburg'),('Mecklenburg-Vorpommern'),('Offshore'),('Lower Saxony'),('Bremen'),('Saxony-Anhalt'),('Brandenburg'),('Berlin'),('North Rhine-Westphalia')),
+#clusters = [(('Schleswig-Holstein'),('Hamburg'),('Mecklenburg-Vorpommern'),('Offshore'),('Lower Saxony'),('Bremen'),('Saxony-Anhalt'),('Brandenburg'),('Berlin'),('North Rhine-Westphalia')),
 #                (('Baden-Württemberg'),('Hesse'),('Bavaria'),('Rhineland-Palatinate'),('Saarland'),('Saxony'),('Thuringia'))]
-clusters = [(('Mid'),('South'),('Mid_int')),('North')]
+#clusters = [[('Schleswig-Holstein')],[('Hamburg')],[('Mecklenburg-Vorpommern')],[('Offshore')],[('Lower Saxony')],[('Bremen')],[('Saxony-Anhalt')],[('Brandenburg')],[('Berlin')],[('North Rhine-Westphalia')],
+#                [('Baden-Württemberg')],[('Hesse')],[('Bavaria')],[('Rhineland-Palatinate')],[('Saarland')],[('Saxony')],[('Thuringia')]]
+
+clusters = [[('Mid')],[('Mid_int')],[('South')],[('North')]]
 # optional: define names for plot_tuples
 # plot_sites_name = {
     # ('Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 'Bremen',
@@ -158,11 +162,11 @@ test_scenarios = [
     #test_tra_var
     ]
 
-for scenario in test_scenarios:
-    #import pdb;pdb.set_trace()
-    prob = urbs.run_regional(input_path, solver, sub_input_files, timesteps,
-                             scenario,result_dir,dt,objective, 
-                             plot_tuples=plot_tuples,
-                             plot_periods=plot_periods,
-                             report_tuples=report_tuples,
-                             clusters=clusters)
+if __name__ == '__main__':
+    for scenario in test_scenarios:
+        prob = urbs.run_regional(input_path, solver, sub_input_files, timesteps,
+                                 scenario,result_dir,dt,objective, 
+                                 plot_tuples=plot_tuples,
+                                 plot_periods=plot_periods,
+                                 report_tuples=report_tuples,
+                                 clusters=clusters)

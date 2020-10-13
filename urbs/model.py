@@ -28,7 +28,6 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=True, type='
         m = pyomo_model_prep(data, timesteps, sites, type, pd.concat([data_transmission_boun,data_transmission_int]))  # preparing pyomo model
     elif type =='normal':
         m = pyomo_model_prep(data, timesteps, sites, type)  
-    
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data

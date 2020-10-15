@@ -4,7 +4,7 @@ Transmission Constraints
 **Transmission Capacity Rule**: The constraint transmission capacity rule
 defines the variable total transmission capacity :math:`\kappa_{yaf}`. The
 variable total transmission capacity is defined by the constraint as the sum of
-the variable transmission capacity installed :math:`K_{yaf}` and the variable
+the parameter transmission capacity installed :math:`K_{yaf}` and the variable
 new transmission capacity :math:`\hat{\kappa}_{yaf}`. The mathematical
 explanation of this rule is given in :ref:`theory-multinode`.
 
@@ -40,14 +40,14 @@ defined and calculated by the following code fragment:
 .. literalinclude:: /../urbs/features/transmission.py
    :pyobject: def_transmission_output_rule
 
-**Transmission Input By Capacity Rule**: The constraint transmission input by
+**Transmission Input by Capacity Rule**: The constraint transmission input by
 capacity rule limits the variable transmission input commodity flow
 :math:`\pi_{yaft}^\text{in}`. This constraint prevents the transmission power
 from exceeding the possible power input capacity of the line. The constraint
 states that the variable transmission input commodity flow
 :math:`\pi_{yaft}^\text{in}` must be less than or equal to the variable total
-transmission capacity :math:`\kappa_{yaf}`, scaled by the size of the time
-steps :math: `\Delta t`. The mathematical explanation of this rule is given in
+transmission capacity :math:`\kappa_{yaf}`, scaled by the size of the timesteps 
+:math:`\Delta t`. The mathematical explanation of this rule is given in
 :ref:`theory-multinode`.
 
 In script ``transmission.py`` the constraint transmission input by capacity

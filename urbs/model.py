@@ -253,7 +253,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.cap_pro = pyomo.Expression(
         m.pro_tuples,
         rule=def_process_capacity_rule,
-        doc='total process capacity')
+        doc='Total process capacity (MW)')
 
     m.tau_pro = pyomo.Var(
         m.t, m.pro_tuples,

@@ -72,7 +72,7 @@ a commodity is an intermittent supply commodity :math:`c \in C_\text{sup}`. The
 variable process input commodity flow is defined by the constraint as the
 product of the variable total process capacity :math:`\kappa_{yvp}` and the
 parameter intermittent supply capacity factor :math:`s_{yvct}`, scaled by the 
-size of the time steps :math: `\Delta t`. The mathematical explanation of this
+size of the timesteps :math:`\Delta t`. The mathematical explanation of this
 rule is given in :ref:`theory-min`.
 
 In script ``model.py`` the constraint intermittent supply rule is defined and
@@ -88,12 +88,12 @@ calculated by the following code fragment:
 .. literalinclude:: /../urbs/model.py
    :pyobject: def_intermittent_supply_rule
 
-**Process Throughput By Capacity Rule**: The constraint process throughput by
+**Process Throughput by Capacity Rule**: The constraint process throughput by
 capacity rule limits the variable process throughput :math:`\tau_{yvpt}`. This
 constraint prevents processes from exceeding their capacity. The constraint
 states that the variable process throughput must be less than or equal to the
 variable total process capacity :math:`\kappa_{yvp}`, scaled by the size
-of the time steps :math: `\Delta t`. The mathematical explanation of this rule
+of the timesteps :math:`\Delta t`. The mathematical explanation of this rule
 is given in :ref:`theory-min`.
 
 In script ``model.py`` the constraint process throughput by capacity rule is
@@ -115,7 +115,7 @@ gradient rule limits the process power gradient
 processes from exceeding their maximal possible change in activity from one
 time step to the next. The constraint states that absolute power gradient must
 be less than or equal to the maximal power gradient :math:`\overline{PG}_{yvp}`
-parameter (scaled to capacity and by time step duration). The mathematical
+parameter (scaled to capacity and by timestep duration). The mathematical
 explanation of this rule is given in :ref:`theory-min`.
 
 In script ``model.py`` the constraint process throughput gradient rule is split
@@ -189,7 +189,7 @@ and calculated by the following code fragment:
    :pyobject: res_sell_buy_symmetry_rule
 
 
-**Process time variable output rule**: This constraint multiplies the process
+**Process Time Variable Output Rule**: This constraint multiplies the process
 efficiency with the parameter time series :math:`f_{yvpt}^\text{out}`. The
 process output for all commodities is thus manipulated depending on time. This
 constraint is not valid for environmental commodities since these are typically
@@ -212,7 +212,7 @@ defined and calculated by the following code fragment:
 .. _sec-partial-startup-constr:
 
 
-Process Constraints for partial operation
+Process Constraints for Partial Operation
 -----------------------------------------
 The process constraints for partial operation described in the following are
 only activated if in the input file there is a value set in the column
@@ -226,7 +226,7 @@ and full load. It is important to understand that this partial load formulation
 can only work if its accompanied by a non-zero value for the minimum partial
 load fraction :math:`\underline{P}_{yvp}`.
 
-**Throughput by Min fraction Rule**: This constraint limits the minimal
+**Throughput by Min Fraction Rule**: This constraint limits the minimal
 operational state of a process downward, making sure that the minimal part load
 fraction is honored. The mathematical explanation of this rule is given in
 :ref:`theory-min`.
@@ -245,14 +245,14 @@ following code fragment:
    :pyobject: res_throughput_by_capacity_min_rule
 
 **Partial Process Input Rule**: The link between operational state
-:math:`tau_{yvpt}` and commodity in/outputs is changed from a simple
+:math:`\tau_{yvpt}` and commodity in/outputs is changed from a simple
 linear behavior to a more complex one. Instead of constant in- and output
 ratios these are now interpolated linearly between the value for full operation
 :math:`r^{\text{in/out}}_{yvp}` at full load and the minimum in/output ratios
 :math:`\underline{r}^{\text{in/out}}_{yvp}` at the minimum operation point. The
 mathematical explanation of this rule is given in :ref:`theory-min`.   
 
-In script `model.py` this expression is written in the following way for the
+In script ``model.py`` this expression is written in the following way for the
 input ratio (and analogous for the output ratios):
 ::
 

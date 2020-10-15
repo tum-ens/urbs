@@ -3,7 +3,7 @@
 Commodity Constraints
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Commodity Balance** The function commodity balance calculates the in- and
+**Commodity Balance**: The function commodity balance calculates the in- and
 outflows into all processes, storages and transmission of a commodity :math:`c`
 in a site :math:`v` in support timeframe :math:`y` at a timestep :math:`t`. The
 value of the function :math:`\mathrm{CB}` being greater than zero
@@ -93,7 +93,7 @@ annually by the energy system in the site :math:`v` and support timeframe
 :math:`y`. This amount is limited by the parameter maximum annual stock supply
 limit per vertex :math:`\overline{L}_{yvc}`. The annual usage of stock
 commodity is calculated by the sum of the products of the parameter weight
-:math:`w` and the parameter stock commodity source term :math:`\rho_{yvct}`,
+:math:`w` and the variable stock commodity source term :math:`\rho_{yvct}`,
 summed over all timesteps :math:`t \in T_m`. The mathematical explanation of
 this rule is given in :ref:`theory-min`.
 
@@ -119,7 +119,7 @@ at the timestep :math:`t`. The limit is defined by the parameter maximum sell
 supply limit per hour :math:`\overline{g}_{yvc}`. To satisfy this constraint,
 the value of the variable sell commodity source term :math:`\varrho_{yvct}`
 must be less than or equal to the value of the parameter maximum sell supply
-limit per hour :math:`\overline{g}_{vc}` multiplied with the length of the
+limit per hour :math:`\overline{g}_{yvc}` multiplied with the length of the
 time steps :math:`\Delta t`. The mathematical explanation of this rule is given
 in :ref:`theory-buysell`.
 
@@ -142,7 +142,7 @@ sold annually by the energy system in the site :math:`v` and support timeframe
 :math:`y`. The limit is defined by the parameter maximum annual sell supply
 limit per vertex :math:`\overline{G}_{yvc}`. The annual usage of sell commodity
 is calculated by the sum of the products of the parameter weight :math:`w` and
-the parameter sell commodity source term :math:`\varrho_{yvct}`, summed over
+the variable sell commodity source term :math:`\varrho_{yvct}`, summed over
 all timesteps :math:`t \in T_m`. The mathematical explanation of this rule is
 given in :ref:`theory-buysell`.
 
@@ -166,7 +166,7 @@ timestep :math:`t`. The limit is defined by the parameter maximum buy
 supply limit per time step :math:`\overline{b}_{yvc}`. To satisfy this
 constraint, the value of the variable buy commodity source term
 :math:`\psi_{yvct}` must be less than or equal to the value of the parameter
-maximum buy supply limit per time step :math:`\overline{b}_{vc}`, multiplied by
+maximum buy supply limit per time step :math:`\overline{b}_{yvc}`, multiplied by
 the length of the time steps :math:`\Delta t`. The mathematical explanation of
 this rule is given in :ref:`theory-buysell`.
 
@@ -189,9 +189,9 @@ energy system in the site :math:`v` in support timeframe :math:`y`. The limit
 is defined by the parameter maximum annual buy supply limit per vertex
 :math:`\overline{B}_{yvc}`. To satisfy this constraint, the annual usage of buy
 commodity must be less than or equal to the value of the parameter buy supply
-limit per vertex :math:`\overline{B}_{vc}`. The annual usage of buy commodity
+limit per vertex :math:`\overline{B}_{yvc}`. The annual usage of buy commodity
 is calculated by the sum of the products of the parameter weight :math:`w` and
-the parameter buy commodity source term :math:`\psi_{yvct}`, summed over all
+the variable buy commodity source term :math:`\psi_{yvct}`, summed over all
 modeled timesteps :math:`t \in T_m`. The mathematical explanation of this rule
 is given in :ref:`theory-buysell`.
 
@@ -209,7 +209,7 @@ calculated by the following code fragment:
 
 
 **Environmental Output Per Step Rule**: The constraint environmental output per
-step rule applies only for commodities of type "Env"
+step rule applies only for commodities of type ":ref:`Env <env-commodity-def>`"
 (:math:`c \in C_\text{env}`). This constraint limits the amount of
 environmental commodity :math:`c \in C_\text{env}`, that can be released to
 environment by the energy system in the site :math:`v` in support timeframe
@@ -218,7 +218,7 @@ maximum environmental output per time step :math:`\overline{m}_{yvc}`. To
 satisfy this constraint, the negative value of the commodity balance for the
 given environmental commodity :math:`c \in C_\text{env}` must be less than or
 equal to the value of the parameter maximum environmental output per time step
-:math:`\overline{m}_{vc}`, multiplied by the length of the time steps
+:math:`\overline{m}_{yvc}`, multiplied by the length of the time steps
 :math:`\Delta t`. The mathematical explanation of this rule is given
 in :ref:`theory-min`.
 
@@ -243,7 +243,7 @@ energy system in the site :math:`v` in support timeframe :math:`y`. The limit
 is defined by the parameter maximum annual environmental output limit per
 vertex :math:`\overline{M}_{yvc}`. To satisfy this constraint, the annual
 release of environmental commodity must be less than or equal to the value of
-the parameter maximum annual environmental output :math:`\overline{M}_{vc}`.
+the parameter maximum annual environmental output :math:`\overline{M}_{yvc}`.
 The annual release of environmental commodity is calculated by the sum of the
 products of the parameter weight :math:`w` and the negative value of commodity
 balance function, summed over all modeled time steps :math:`t \in T_m`. The
@@ -364,7 +364,7 @@ a set recovery period :math:`o_{yvc}`. Since the recovery period
 by the length of the time steps :math:`\Delta t`. The mathematical explanation
 of this rule is given in :ref:`theory-dsm`.
     
-In script ``dsm.py`` the constraint DSM Recovery rule is defined by the
+In script ``dsm.py`` the constraint DSM recovery rule is defined by the
 following code fragment:
 
 ::
@@ -384,16 +384,16 @@ Global Environmental Constraint
 
 **Global CO2 Limit Rule**: The constraint global CO2 limit rule applies to the
 whole energy system in one support timeframe :math:`y`, that is to say it
-applies to every site and timestep. This constraints restricts the total amount
-of CO2 to environment. The constraint states that the sum of released CO2
-across all sites :math:`v\in V` and timesteps :math:`t \in t_m` must be less
+applies to every site and timestep. This constraint restricts the total amount
+of CO2 emission to environment. The constraint states that the sum of released CO2
+across all sites :math:`v\in V` and timesteps :math:`t \in T_m` must be less
 than or equal to the parameter maximum global annual CO2 emission limit
 :math:`\overline{L}_{CO_{2},y}`, where the amount of released CO2 in a single
 site :math:`v` at a single timestep :math:`t` is calculated by the product of
 commodity balance of environmental commodities :math:`\mathrm{CB}(y,v,CO_{2},t)`
 and the parameter weight :math:`w`. This constraint is skipped if the value of
-the parameter :math:`\overline{L}_{CO_{2}}` is set to ``inf``. The mathematical
-explanation of this rule is given in :ref:`theory-min`.
+the parameter :math:`\overline{L}_{CO_{2},y}` is set to ``inf``. The mathematical
+explanation of this rule is given in :ref:`Multinode Optimization Model<Global CO2 Limit>` .
 
 In script ``model.py`` the constraint annual global CO2 limit rule is defined
 and calculated by the following code fragment:
@@ -403,12 +403,12 @@ and calculated by the following code fragment:
 
 **Global CO2 Budget Rule**: The constraint global CO2 budget rule applies to
 the whole energy system over the entire modeling horizon, that is to say it
-applies to every support timeframe, site and timestep. This constraints
-restricts the total amount of CO2 to environment. The constraint states that
+applies to every support timeframe, site and timestep. This constraint
+restricts the total amount of CO2 emission to environment. The constraint states that
 the sum of released CO2 across all support timeframe :math:`y\in Y`, sites
-:math:`v\in V` and timesteps :math:`t \in t_m` must be less than or equal to
+:math:`v\in V` and timesteps :math:`t \in T_m` must be less than or equal to
 the parameter maximum global CO2 emission budget
-:math:`\overline{\overline{L}}_{CO_{2},y}`, where the amount of released CO2 in
+:math:`\overline{\overline{L}}_{CO_{2}}`, where the amount of released CO2 in
 a single support timeframe :math:`y` in a single site :math:`v` and at a single
 timestep :math:`t` is calculated by the product of the commodity balance of
 environmental commodities :math:`\mathrm{CB}(y,v,CO_{2},t)` and the parameter

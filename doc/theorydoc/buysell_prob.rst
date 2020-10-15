@@ -2,10 +2,10 @@
 
 .. _theory-buysell:
 
-Trading with an external market
+Trading with an External Market
 ===============================
 In urbs it is possible to model the trade with an external market. For this two
-new commodity types, buy and sell commodities, are introduced. For each a time
+new commodity types, :ref:`buy and sell commodities<buy-sell-commodity-def>` are introduced. For each a time
 series representing the momentary cost at each timestep is given. This time
 series is of course known to the model in advance, which has two implications.
 First, the modeled system is considered too small to influence the external
@@ -44,14 +44,14 @@ The two new cost types are then specified by the following equations:
 .. math::
    \zeta_{\text{rev}}=&-w\Delta t
    \sum_{y\in Y\\v\in V\\c\in C_{sell}\\ t\in T_m}D_{m}\cdot
-   k^{\text{bs}}_{yvct}\cdot \varrho_{yvct}\\\\
+   k^{\text{s}}_{yvct}\cdot \varrho_{yvct}\\\\
    \zeta_{\text{pur}}=&w\Delta t\sum_{y\in Y\\v\in V\\c\in C_{buy}\\ t\in T_m}
-   D_{m}\cdot k^{\text{bs}}_{yvct}\cdot \psi_{yvct},
+   D_{m}\cdot k^{\text{b}}_{yvct}\cdot \psi_{yvct},
 
-where :math:`k^{\text{bs}}_{yvct}` represents the time series of the given
-buy and sell commodity prices.
+where :math:`k^{\text{b}}_{yvct}` and :math:`k^{\text{s}}_{yvct}` represents the time series of the given
+buy and sell commodity prices respectively.
 
-Commodity dispatch constraints
+Commodity Dispatch Constraints
 ------------------------------
 Buy and sell commodities change the vertex rule (Kirchhoff's current law), by
 adding a new way for in- an output flows of commodities. The rule is thus
@@ -68,7 +68,7 @@ amount of energy sold needs to be provided to (negative CB) the system via
 processes, storages or transmission lines, while buy commodity consumed by
 processes, storages or transmission lines in the system has to be replenished. 
 
-Buy/sell commodity limitations
+Buy/Sell Commodity Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The trade with the market in each modeled year and each vertex can be limited
 per time step and for an entire year. This introduces the following constraints:
@@ -77,7 +77,7 @@ per time step and for an entire year. This introduces the following constraints:
    &\forall y\in Y,~v\in V,~c \in C_{\text{sell}}:\\
    &w\sum_{t\in T_{m}}\varrho_{ct}\leq \overline{G}_{yvc}\\\\
    &\forall y\in Y,~v\in V,~c \in C_{\text{sell}},~t\in T_m:\\
-   & \varrho_{yvct}\leq \overline{g}_{yvc}
+   & \varrho_{yvct}\leq \Delta t \cdot \overline{g}_{yvc}
 
 and
 
@@ -85,7 +85,7 @@ and
    &\forall y\in Y,~v\in V,~c \in C_{\text{buy}}:\\
    &w \sum_{t\in T_{m}}\psi_{ct}\leq \overline{B}_{yvc}\\\\
    &\forall y\in Y,~v\in V,~c \in C_{\text{buy}},~t\in T_m:\\
-   & \varrho_{yvct}\leq \overline{b}_{yvc}.
+   & \psi_{yvct}\leq \Delta t \cdot \overline{b}_{yvc}.
 
 Here, the parameters :math:`\overline{b}_{yvc}` and :math:`\overline{B}_{yvc}`
 limit the hourly and yearly maximums of buy from and :math:`\overline{g}_{yvc}`

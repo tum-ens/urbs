@@ -9,7 +9,7 @@ constraint calculates the storage energy content at a timestep :math:`t` by
 adding or subtracting differences, such as ingoing and outgoing energy, to/from
 a storage energy content at a previous timestep :math:`t-1` multiplied by 1
 minus the self-discharge rate :math:`d_{yvs}` (which is scaled exponentially
-with the timestep size :math:`\delta t`). Here ingoing energy is given by the
+with the timestep size :math:`\Delta t`). Here ingoing energy is given by the
 product of the variable storage input commodity flow
 :math:`\epsilon_{yvst}^\text{in}` and the parameter storage efficiency during
 charge :math:`e_{yvs}^\text{in}`. Outgoing energy is given by the variable
@@ -33,7 +33,7 @@ calculated by the following code fragment:
 **Storage Power Rule**: The constraint storage power rule defines the variable
 total storage power :math:`\kappa_{yvs}^\text{p}`. The variable total storage
 power is defined by the constraint as the sum of the parameter storage power
-installed :math:`K_{yvs}^\text{p}` and the variable new storage power
+installed :math:`K_{vs}^\text{p}` and the variable new storage power
 :math:`\hat{\kappa}_{yvs}^\text{p}`. The mathematical explanation of this rule
 is given in :ref:`theory-storage`.
 
@@ -52,7 +52,7 @@ calculated by the following code fragment:
 **Storage Capacity Rule**: The constraint storage capacity rule defines the
 variable total storage size :math:`\kappa_{yvs}^\text{c}`. The variable total
 storage size is defined by the constraint as the sum of the parameter storage
-content installed :math:`K_{yvs}^\text{c}` and the variable new storage size
+content installed :math:`K_{vs}^\text{c}` and the variable new storage size
 :math:`\hat{\kappa}_{yvs}^\text{c}`. The mathematical explanation of this rule
 is given in :ref:`theory-storage`.
 
@@ -68,15 +68,15 @@ calculated by the following code fragment:
 .. literalinclude:: /../urbs/features/storage.py
    :pyobject: def_storage_capacity_rule
 
-**Storage Input By Power Rule**: The constraint storage input by power rule
+**Storage Input by Power Rule**: The constraint storage input by power rule
 limits the variable storage input commodity flow
 :math:`\epsilon_{yvst}^\text{in}`. This constraint restricts a storage
 :math:`s` in a site :math:`v` and support timeframe :math:`y` at a timestep
 :math:`t` from having more input power than the storage power capacity. The
 constraint states that the variable :math:`\epsilon_{yvst}^\text{in}` must be
 less than or equal to the variable total storage power
-:math:`\kappa_{yvs}^\text{p}`, scaled by the size of the time steps
-:math: `\Delta t`. The mathematical explanation of this rule is given in
+:math:`\kappa_{yvs}^\text{p}`, scaled by the size of the timesteps
+:math:`\Delta t`. The mathematical explanation of this rule is given in
 :ref:`theory-storage`.
 
 In script ``storage.py`` the constraint storage input by power rule is defined
@@ -91,14 +91,14 @@ and calculated by the following code fragment:
 .. literalinclude:: /../urbs/features/storage.py
    :pyobject: res_storage_input_by_power_rule
 
-**Storage Output By Power Rule**: The constraint storage output by power rule
+**Storage Output by Power Rule**: The constraint storage output by power rule
 limits the variable storage output commodity flow
 :math:`\epsilon_{yvst}^\text{out}`. This constraint restricts a storage
 :math:`s` in a site :math:`v` and support timeframe :math:`y` at a timestep
 :math:`t` from having more output power than the storage power capacity. The
-constraint states that the variable :math:`\epsilon_{vst}^\text{out}` must be
+constraint states that the variable :math:`\epsilon_{yvst}^\text{out}` must be
 less than or equal to the variable total storage power
-:math:`\kappa_{yvs}^\text{p}`, scaled by the size of the time steps
+:math:`\kappa_{yvs}^\text{p}`, scaled by the size of the timesteps
 :math:`\Delta t`. The mathematical explanation of this rule is given in
 :ref:`theory-storage`.
 
@@ -114,7 +114,7 @@ and calculated by the following code fragment:
 .. literalinclude:: /../urbs/features/storage.py
    :pyobject: res_storage_output_by_power_rule
 
-**Storage State By Capacity Rule**: The constraint storage state by capacity
+**Storage State by Capacity Rule**: The constraint storage state by capacity
 rule limits the variable storage energy content
 :math:`\epsilon_{yvst}^\text{con}`. This constraint restricts a storage
 :math:`s` in a site :math:`v` and support timeframe :math:`y` at a timestep
@@ -182,18 +182,17 @@ and calculated by the following code fragment:
 .. literalinclude:: /../urbs/features/storage.py
    :pyobject: res_storage_capacity_rule
 
-**Initial And Final Storage State Rule**:
+**Initial and Final Storage State Rule**:
 The constraint initial and final storage state rule defines and restricts the
 variable storage energy content :math:`\epsilon_{yvst}^\text{con}` of a storage
 :math:`s` in a site :math:`v` and support timeframe :math:`y` at the initial
 timestep :math:`t_1` and at the final timestep :math:`t_N`. There are two
 distinct cases:
 
-1. The initial and final storage states are specified by a value of the
-parameter :math:`I_{yvs}` between 0 and 1.
-2. :math:`I_{yvs}` is not specified (e.g. by setting it '#NV' in the input
-sheet). In this case the initial and final storage state are still equal but
-variable.
+#. The initial and final storage states are specified by a value of the 
+   parameter :math:`I_{yvs}` between 0 and 1.  
+#. :math:`I_{yvs}` is not specified (e.g. by setting it '#NV' in the input sheet). 
+   In this case the initial and final storage state are still equal but variable.
 
 In case 1 the constraints are written in the following way:
 
@@ -201,8 +200,8 @@ Initial storage state:  Initial storage represents the storage state in a
 storage at the beginning of the simulation. The variable storage energy content
 :math:`\epsilon_{yvst}^\text{con}` at the initial timestep :math:`t_1` is
 defined by this constraint. The constraint states that the variable
-:math:`\epsilon_{vst_1}^\text{con}` must be equal to the product of the
-parameters storage content installed :math:`K_{yvs}^\text{c}` and  initial and
+:math:`\epsilon_{yvst_1}^\text{con}` must be equal to the product of the
+variable total installed storage capacity :math:`\kappa_{yvs}^\text{c}` and  initial and
 final state of charge :math:`I_{yvs}`.
 
 Final storage state: Final storage represents the storage state in a storage at
@@ -210,7 +209,7 @@ the end of the simulation. The variable storage energy content
 :math:`\epsilon_{yvst}^\text{con}` at the final timestep :math:`t_N` is
 restricted by this constraint. The constraint states that the variable
 :math:`\epsilon_{yvst_N}^\text{con}` must be greater than or equal to the
-product of the parameters storage content installed :math:`K_{yvs}^\text{c}`
+product of the variable total installed storage capacity :math:`\kappa_{yvs}^\text{c}`
 and initial and final state of charge :math:`I_{yvs}`. The mathematical
 explanation of this rule is given in :ref:`theory-storage`.
 
@@ -218,9 +217,9 @@ In script ``storage.py`` the constraint initial and final storage state rule is
 then defined and calculated by the following code fragment:
 ::
 
-    m.res_initial_and_final_storage_state = pyomo.Constraint(
-        m.t, m.sto_init_bound_tuples,
-        rule=res_initial_and_final_storage_state_rule,
+    m.def_initial_storage_state = pyomo.Constraint(
+        m.sto_init_bound_tuples,
+        rule=def_initial_storage_state_rule,
         doc='storage content initial == and final >= storage.init * capacity')
 
 .. literalinclude:: /../urbs/features/storage.py
@@ -238,9 +237,9 @@ In script ``storage.py`` the constraint initial and final storage state rule is
 then defined and calculated by the following code fragment:
 ::
 
-    m.res_initial_and_final_storage_state_var = pyomo.Constraint(
-        m.t, m.sto_tuples - m.sto_init_bound_tuples,
-        rule=res_initial_and_final_storage_state_var_rule,
+    m.res_storage_state_cyclicity = pyomo.Constraint(
+        m.sto_tuples,
+        rule=res_storage_state_cyclicity_rule,
         doc='storage content initial <= final, both variable')
 
 .. literalinclude:: /../urbs/features/storage.py

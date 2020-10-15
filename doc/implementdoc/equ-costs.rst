@@ -10,8 +10,8 @@ the following expression:
 
 .. math::
     \zeta = \zeta_\text{inv} + \zeta_\text{fix} + \zeta_\text{var} +
-    \zeta_\text{fuel} + \zeta_\text{rev} + \zeta_\text{pur} +
-    \zeta_\text{startup} \leq \overline{L}_{cost}
+    \zeta_\text{fuel} + \zeta_\text{env} + \zeta_\text{rev} +
+    \zeta_\text{pur} \leq \overline{L}_{cost}
 
 This constraint is given in ``model.py`` by the following code fragment.  
 

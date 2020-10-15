@@ -2,7 +2,7 @@
 
 .. _theory-dsm:
 
-Demand side management
+Demand Side Management
 ======================
 Demand side management allows for the shifting of demands in time. It thus
 gives the model the possibility to divert from the strict restriction that all
@@ -30,7 +30,7 @@ cannot in general be shifted indefinitely. As it is modeled in urbs, DSM does
 not introduce any costs. To clarify the terms used for the DSM feature the
 following illustrative example is helpful.
 
-Example of a DSM process
+Example of a DSM Process
 ~~~~~~~~~~~~~~~~~~~~~~~~
 An example scenario with parameters below can be used to clarify the
 mathematical structure of a DSM process.
@@ -86,7 +86,7 @@ the total DSM downshifts is given by the sum of all column elements for every
 index :math:`tt`. This sum may not exceed 2000 as well, due to given
 parameters.  
 
-Commodity dispatch constraints
+Commodity Dispatch Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Demand side management changes the vertex rule. Every upshift
 :math:`\delta^{\text{up}}_{yvct}` leads to an additional demand, i.e., to an
@@ -97,7 +97,7 @@ commodities with DSM to:
 .. math::
    &\forall y\in Y,~v\in V,~c \in C_{\text{dem}},~ t \in T_m:\\\\
    &-d_{yvct}-\delta^{\text{up}}_{yvct} \geq \text{CB}(y,v,c,t)\\
-   &-d_{yvct}+\sum_{tt\in [t - y_{yvc},t + y_{yvc}]}
+   &-d_{yvct}+\sum_{tt\in [(t - y_{yvc})/\Delta t,(t + y_{yvc})/\Delta t]}
    \delta^{\text{down}}_{yvc(tt)t} \geq \text{CB}(y,v,c,t).
 
 The downshift equation requires a little elaboration. Here, the total downshift
@@ -106,7 +106,7 @@ different upshifts, which in the notation above occur at times :math:`tt`. All
 downshift contributions within the delay time :math:`y_{yvc}` of their
 respective upshifts are then summed up.   
 
-DSM variables rule
+DSM Variables Rule
 ------------------
 This central constraint rule for DSM in urbs links the up- and down shifts of
 DSM events. An upshift (multiplied with the DSM efficiency) at time :math:`t`
@@ -121,7 +121,7 @@ noted like this:
 
 .. math::
    &\forall y\in Y,~v\in V,~c\in C^{\text{DSM}}_{dem},~t\in T_m:\\\\
-   &e_{yvc}\delta^{\text{up}}_{yvct}=\sum_{tt\in [t - y_{yvc},t + y_{yvc}]}
+   &e_{yvc}\delta^{\text{up}}_{yvct}=\sum_{tt\in [(t - y_{yvc})/\Delta t,(t + y_{yvc})/\Delta t]}
    \delta^{\text{down}}_{yvct(tt)},
 
 where :math:`e_{yvc}` is the DSM efficiency. Note here, that the summation is
@@ -129,15 +129,15 @@ over the timesteps where the downshifts are occurring as opposed to the vertex
 rule above, where the summation is over the timesteps of the corresponding
 upshifts.
 
-DSM shift limitations
+DSM Shift Limitations
 ---------------------
 DSM shifts are limited in size in both directions. This is modeled by
 
 .. math::
    &\forall y\in Y,~v\in V,~c\in C^{\text{DSM}}_{\text{dem}}, t\in T_m:\\\\
-   &\delta^{\text{up}}_{yvct}\leq \overline{K}^{\text{up}}_{yvc}\\\\
-   &\sum_{tt\in [t - y_{yvc},t + y_{yvc}]}\delta^{\text{down}}_{yvc(tt)t}\leq
-   \overline{K}^{\text{down}}_{yvc},
+   &\delta^{\text{up}}_{yvct}\leq \Delta t \cdot \overline{K}^{\text{up}}_{yvc}\\\\
+   &\sum_{tt\in [(t - y_{yvc})/\Delta t,(t + y_{yvc})/\Delta t]}\delta^{\text{down}}_{yvc(tt)t}\leq
+   \Delta t \cdot \overline{K}^{\text{down}}_{yvc},
 
 where again the downshifts are summed over the corresponding upshifts, making
 sure that at no time there is a total downshift sum larger than the set maximum
@@ -149,11 +149,11 @@ of shifts is also limited in an urbs model via:
 .. math::
    &\forall y\in Y,~v\in V,~c\in C^{\text{DSM}}_{\text{dem}}, t\in T_m:\\\\
    &\delta^{\text{up}}_{yvct}+
-   \sum_{tt\in [t - y_{yvc},t + y_{yvc}]}\delta^{\text{down}}_{yvc(tt)t} \leq
+   \sum_{tt\in [(t - y_{yvc})/\Delta t,(t + y_{yvc})/\Delta t]}\delta^{\text{down}}_{yvc(tt)t} \leq
    \text{max}
    \{\overline{K}^{\text{up}}_{yvc},\overline{K}^{\text{down}}_{yvc}\}.
 
-DSM recovery
+DSM Recovery
 ------------
 Assuming that DSM is linked to some real physical devices, it is necessary to
 allow these devices to have some minimal time between DSM events, where, e.g.,

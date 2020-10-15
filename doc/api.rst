@@ -1,4 +1,4 @@
-'urbs' module description
+'urbs' Module Description
 =========================
 This part gives a brief overview over the architecture of the program.
 The data flow in an urbs model is visualized in the following graph:
@@ -16,7 +16,7 @@ functions will be discussed. The scripts used for these are the following
 
 identify.py
 ~~~~~~~~~~~
-In this scripts the dictionary of input dataframes 'data' is parsed to conclude
+In this script the dictionary of input dataframes 'data' is parsed to conclude
 the structure of the problem to be built.
 
 .. automodule:: urbs.identify

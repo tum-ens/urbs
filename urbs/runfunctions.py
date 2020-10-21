@@ -1,6 +1,7 @@
 import os
-import pyomo.environ
-from pyomo.opt.base import SolverFactory
+#import pyomo.environ as pyomo
+from pyomo.environ import SolverFactory
+import pyomo.environ as pyomo
 from datetime import datetime, date
 from .model import create_model
 from .report import *
@@ -154,7 +155,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     return prob
 
-@profile
+#@profile
 def run_regional(input_files, solver, sub_input_files, timesteps, scenario, result_dir,
                  dt, objective, 
                  plot_tuples=None, plot_periods=None, report_tuples=None, clusters=None):
@@ -202,20 +203,6 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         sub_data[item] = scenario(sub_data[item])
         # if 'test_timesteps' is stored in data dict, replace the timesteps parameter with that value
         timesteps = sub_data[item].pop('test_timesteps', timesteps)
-
-    # init parameters for ADMM
-#    class CouplingVars:
-#        flow_global= {}
-#        rhos= {}
-#        lambdas = {}  
-#        cap_global= {}
-#        rhos_cap = {}
-#        lambdas_cap = {}
-#        residdual = {}
-#        residprim = {}  
-#        caps_coupling = False
-#        residdual_cap = {}
-#        residprim_cap = {}  
         
     coup_vars = CouplingVars() 
     coup_vars.caps_coupling = caps_coupling
@@ -274,13 +261,14 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
             coup_vars.flow_global[year,j,sit_from,sit_to]=0            
 
        
-    sub = {}         
+    sub = {}
+    sub_persistent = {}
     prob = create_model(data, timesteps, dt, type='normal')
     prob.write('orig.lp', io_options={'symbolic_solver_labels':True})
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
-    maxit = 101
+    maxit = 201
     mu = 10;
     tau = 0.1;
  
@@ -324,15 +312,20 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                                     coup_vars=coup_vars,
                                     data_transmission_boun=boundarying_lines[cluster_idx],
                                     data_transmission_int=internal_lines[cluster_idx],
-                                    cluster=cluster_idx)   
-        sub[cluster_idx].write(str(cluster_idx) +' sub.lp',
-                               io_options={'symbolic_solver_labels':True})
+                                    cluster=cluster_idx)
+        #sub[cluster_idx].write(str(cluster_idx) +' sub.lp',
+        #                       io_options={'symbolic_solver_labels':True})
+        #import pdb;pdb.set_trace()
+        sub_persistent[cluster_idx] = SolverFactory('gurobi_persistent')
+        sub_persistent[cluster_idx].set_instance(sub[cluster_idx],symbolic_solver_labels=True)
 
+        #sub_persistent[cluster_idx].set_options("logfile={}".format(logfile))
+        sub_persistent[cluster_idx].set_options("method=2")
     if parallel:
         jobs = []
         manager = mp.Manager()
         return_dict = manager.dict()
-        
+
     t1 = t.time()
     
     cost_history= np.zeros(maxit)
@@ -348,9 +341,13 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
             #adjust the global flows as mutable parameters            
             for key in coup_vars.flow_global:
                 if not isinstance(coup_vars.flow_global[key],np.ndarray):
-                    sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key]
+                    #sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key]
+                    sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key])
+                    sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
                 else:
-                    sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key][0]
+                    #sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key][0]
+                    sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key][0])
+                    sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
             #adjsut the global capacities as mutable parameters (if enabled)    
             if caps_coupling:                            
                 for key in coup_vars.cap_global:
@@ -365,14 +362,24 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
             
             for key in lambdas_temp:
                 if not isinstance(lambdas_temp[key],np.ndarray):
-                    sub[cluster_idx].lamda[key] = lambdas_temp[key]
+                    #sub[cluster_idx].lamda[key] = lambdas_temp[key]
+                    sub[cluster_idx].lamda[key].fix(lambdas_temp[key])
+                    sub_persistent[cluster_idx].update_var(sub[cluster_idx].lamda[key])
                 else:
-                    sub[cluster_idx].lamda[key] = lambdas_temp[key][0]
+                    #sub[cluster_idx].lamda[key] = lambdas_temp[key][0]
+                    sub[cluster_idx].lamda[key].fix(lambdas_temp[key][0])
+                    sub_persistent[cluster_idx].update_var(sub[cluster_idx].lamda[key])
             for key in rhos_temp:
                 if not isinstance(rhos_temp[key],np.ndarray):
-                    sub[cluster_idx].rho[key] = rhos_temp[key]
+                    pass
+                    #sub[cluster_idx].rho[key] = rhos_temp[key]
+                    #sub[cluster_idx].rho[key].fix(rhos_temp[key])
+                    #sub_persistent[cluster_idx].update_var(sub[cluster_idx].rho[key])
                 else:
-                    sub[cluster_idx].rho[key] = rhos_temp[key][0]
+                    pass
+                    #sub[cluster_idx].rho[key] = rhos_temp[key][0]
+                    #sub[cluster_idx].rho[key].fix(rhos_temp[key][0])
+                    #sub_persistent[cluster_idx].update_var(sub[cluster_idx].rho[key])
             if caps_coupling:                            
                 lambdas_temp = dict((key[1:],value) for key, value 
                                     in coup_vars.lambdas_cap.items() 
@@ -383,16 +390,44 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                 for key in lambdas_temp:            
                     sub[cluster_idx].lamda_cap[key] = lambdas_temp[key]
                 for key in rhos_temp:            
-                    sub[cluster_idx].rho_cap[key] = rhos_temp[key]        
- 
+                    sub[cluster_idx].rho_cap[key] = rhos_temp[key]
         flows_from_subs_in = []
         caps_from_subs = []
         result_sub = {}
 
+        if iteration > 1:
+            #adjust objective function by changes in rho
+            for cluster_idx in range(0,len(clusters)):
+                rhos_temp = dict((key[1:],value) for key, value
+                                 in coup_vars.rhos.items()
+                                 if key[0] == cluster_idx)
+                old_quadratic_penalty = 0;
+                new_quadratic_penalty = 0;
+                for key in rhos_temp:
+                    old_quadratic_penalty += 0.5*rhos_old[tuple([cluster_idx] + list(key))] * \
+                                             (sum(sub[cluster_idx].e_tra_in[key[1],key[0],key[2],key[3],:,:]) - sub[cluster_idx].flow_global[key])**2
+                    new_quadratic_penalty += 0.5*coup_vars.rhos[tuple([cluster_idx] + list(key))] * \
+                                             (sum(sub[cluster_idx].e_tra_in[key[1],key[0],key[2],key[3],:,:]) - sub[cluster_idx].flow_global[key])**2
+
+                for key in coup_vars.flow_global:
+                    if not isinstance(coup_vars.flow_global[key], np.ndarray):
+                        # sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key]
+                        sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key])
+                        sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
+                    else:
+                        # sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key][0]
+                        sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key][0])
+                        sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
+                sub_persistent[cluster_idx]._pyomo_model.objective_function = pyomo.Objective(expr=sub_persistent[cluster_idx]._pyomo_model.objective_function.expr-old_quadratic_penalty + new_quadratic_penalty,sense=pyomo.minimize)
+               # import pdb;pdb.set_trace()
+                sub_persistent[cluster_idx].set_objective(sub_persistent[cluster_idx]._pyomo_model.objective_function)
+                sub_persistent[cluster_idx]._solver_model.update()
+
         if parallel:
             #import pdb;pdb.set_trace()
             #### Parallel solution
-            jobs = [mp.Process(target=optim_solve_tee_false, args=(sub[inst],inst,return_dict,log_filename)) for inst in sub]
+            jobs = [mp.Process(target=optim_solve_tee_false,
+                               args=(sub[inst],inst,return_dict,log_filename)) for inst in sub]
             for p in jobs:
                 p.start()
             for p in jobs:
@@ -401,10 +436,11 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                 sub[key] = return_dict[key]
         else:
             for inst in sub:
-                result_sub[inst] = optim.solve(sub[inst], tee=False)
-                sub[inst].write(str(inst) + ' ' +str(iteration)+' sub.lp',
-                               io_options={'symbolic_solver_labels':True})
+                sub_persistent[inst].solve(save_results=False,load_solutions=False)
+
         for inst in sub:
+            sub_persistent[inst].load_vars(sub[inst].e_tra_in[:, :, :, :, :, :])
+            #import pdb;pdb.set_trace()
             flows_from_a_sub_in = dict((name, entity.value) for (name, entity) in sub[inst].e_tra_in.items())
             flows_from_a_sub_in = pd.DataFrame(list(flows_from_a_sub_in.values()),index=pd.MultiIndex.from_tuples(flows_from_a_sub_in.keys()),columns=['Sub '+str(inst)]).rename_axis(['t','stf','sit','sit_','tra','com'])
             #flows_from_a_sub_in = pd.DataFrame.from_dict(flows_from_a_sub_in, orient='index',columns=['Sub '+str(inst)])
@@ -433,6 +469,9 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         #import pdb;
         #pdb.set_trace()
         flow_global_history[iteration]=flows_from_subs_in
+        flow_global_old = dict(coup_vars.flow_global)
+        rhos_old = dict(coup_vars.rhos)
+
         if caps_coupling:           
            cap_global_history[iteration]=caps_from_subs
        
@@ -476,7 +515,7 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                 for j in timesteps[1:]: 
                     if iteration >1:
                         coup_vars.residprim[cluster_idx,year,j,sit_from,sit_to]= \
-                            (sub[cluster_idx].e_tra_in[j,year,sit_from,sit_to,:,:]()[0] -
+                            ([values for values in sub[cluster_idx].e_tra_in[j,year,sit_from,sit_to,:,:].value][0] -
                              flows_from_subs_in.loc[year,j,sit_from,sit_to].values[0])**2
                         coup_vars.residdual[cluster_idx,year,j,sit_from,sit_to]= \
                              coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to]**2 * \
@@ -494,7 +533,7 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                     coup_vars.lambdas[cluster_idx,year,j,sit_from,sit_to] = \
                     coup_vars.lambdas[cluster_idx,year,j,sit_from,sit_to] + \
                         coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] * \
-                        (sub[cluster_idx].e_tra_in[j,year,sit_from,sit_to,:,:]()[0] - flows_from_subs_in.loc[year,j,sit_from,sit_to].values[0])
+                        ([values for values in sub[cluster_idx].e_tra_in[j,year,sit_from,sit_to,:,:].value][0] - flows_from_subs_in.loc[year,j,sit_from,sit_to].values[0])
                         
                 if caps_coupling:                            
                     coup_vars.lambdas_cap[cluster_idx,year,sit_from,sit_to] = \
@@ -508,15 +547,19 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         aaa=pd.concat([flows_from_subs_in0,flows_from_original_problem],axis=1)
         aaa=aaa.reset_index(level=0).loc[all_boundary_lines.index]
         print(sum(prob.costs[ct]() for ct in prob.cost_type))
-        print(sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub))
-        cost_history[iteration-1]= sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub)
-        # if iteration >= 2:
-            # plt.plot(cost_history[1:iteration-1])
-            # plt.figure();
-            # flow_global_history.T.plot(legend=False)
-            # plt.pause(0.01)
-            # plt.show()
-        if abs(sum(prob.costs[ct]() for ct in prob.cost_type)-sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub)) <= 0.1:
+        #import pdb;pdb.set_trace()
+        #print(sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub))
+        print(sum(sub_persistent[i]._solver_model.objval for i in sub))
+        #cost_history[iteration-1]= sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub)#
+        cost_history[iteration - 1] = sum(sub_persistent[i]._solver_model.objval for i in sub)
+        #if iteration >= 2:
+        #     plt.plot(cost_history[1:iteration-1])
+        #     plt.figure();
+        #     #flow_global_history.plot(legend=False)
+        #     plt.pause(0.001)
+        #     plt.show()
+        #if abs(sum(prob.costs[ct]() for ct in prob.cost_type)-sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub)) <= 0.1:
+        if abs(sum(prob.costs[ct]() for ct in prob.cost_type) - cost_history[iteration - 1]) <= 0.1:
             print(str(iteration)+' iterations to solve '+ '(parallel '+str(parallel)+')'+ '(capacities coupled '+str(caps_coupling)+')')
         #import pdb;pdb.set_trace()   
         amko=[(b,a,c,d) for a,b,c,d,e,f in flows_from_subs_in0.index.tolist()]
@@ -535,10 +578,10 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
 
         t2 = t.time()                
         print(str(t2-t1)+' seconds elapsed, '+str(iteration)+' iterations')
-        if iteration % 100== 0:
+        if iteration % 300== 0:
             t2 = t.time()         
             print(str(t2-t1)+' seconds to solve '+ '(parallel '+str(parallel)+')'+ '(capacities coupled '+str(caps_coupling)+')')            
-            #import pdb;pdb.set_trace()                      
+            import pdb;pdb.set_trace()
   
     return sub
 #

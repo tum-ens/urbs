@@ -1,10 +1,11 @@
 import math
-import pyomo.core as pyomo
+#import pyomo.environ as pyomo
 from datetime import datetime
 from .features import *
 from .input import *
+import pyomo.environ as pyomo
 
-def create_model(data, timesteps=None, dt=1, objective='cost', dual=True, type='normal', sites = None, coup_vars=None, data_transmission_boun=None, data_transmission_int=None, cluster=None):
+def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type='normal', sites = None, coup_vars=None, data_transmission_boun=None, data_transmission_int=None, cluster=None):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -41,7 +42,9 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=True, type='
     
         lamda = dict((key[1:],value) for key, value in coup_vars.lambdas.items() if key[0] == cluster)   
         rho = dict((key[1:],value) for key, value in coup_vars.rhos.items() if key[0] == cluster)   
-        
+        m.fixed_flow_global = flow_global
+        m.fixed_lamda = lamda
+        m.fixed_rho = rho
         if coup_vars.caps_coupling:        
             lamda_cap = dict((key[1:],value) for key, value in coup_vars.lambdas_cap.items() if key[0] == cluster)   
             rho_cap = dict((key[1:],value) for key, value in coup_vars.rhos_cap.items() if key[0] == cluster)  
@@ -107,6 +110,7 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=True, type='
         doc='Set of all sites')
     
     m.sit_inside = pyomo.Set(
+    m.sit_inside = pyomo.Set(
         initialize=m._data['commodity'].index.get_level_values('Site').unique(),
         doc='Set of sites belonging to the cluster')
     
@@ -134,23 +138,35 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=True, type='
         initialize=indexlist,
         doc='Set of conversion processes')
 
-    if type=='sub':  
-        m.flow_global = pyomo.Param(
+    if type=='sub':
+        m.flow_global = pyomo.Var(
             m.stf,m.tm,m.sit,m.sit,
-            initialize=flow_global,
-            mutable=True,
+            within=pyomo.Reals,
             doc='flow global in')
-        m.lamda = pyomo.Param(
+        m.lamda = pyomo.Var(
             m.stf,m.tm,m.sit,m.sit,
-            initialize=lamda,
-            mutable=True,
-            doc='lambda in')                   
+            within=pyomo.Reals,
+            doc='lambda in')
         m.rho = pyomo.Param(
             m.stf,m.tm,m.sit,m.sit,
             initialize=rho,
-            mutable=True,
-            doc='rho in')   
-        
+            doc='rho in')
+        # m.flow_global = pyomo.Param(
+        #     m.stf,m.tm,m.sit,m.sit,
+        #     initialize=flow_global,
+        #     mutable=True,
+        #     doc='flow global in')
+        # m.lamda = pyomo.Param(
+        #     m.stf,m.tm,m.sit,m.sit,
+        #     initialize=lamda,
+        #     mutable=True,
+        #     doc='lambda in')
+        # m.rho = pyomo.Param(
+        #     m.stf,m.tm,m.sit,m.sit,
+        #     initialize=rho,
+        #     mutable=True,
+        #     doc='rho in')
+
         if coup_vars.caps_coupling:                        
             m.cap_global = pyomo.Param(
                 m.stf,m.sit,m.sit,
@@ -1003,7 +1019,18 @@ def def_costs_rule_sub(m, cost_type):
         raise NotImplementedError("Unknown cost type.")
 
 def cost_rule(m):
-    return pyomo.summation(m.costs)
+    if m.type =='sub':
+        return (pyomo.summation(m.costs) + sum(0.5 * m.rho[(stf, tm, sit_in, sit_out)] *
+                        (m.e_tra_in[(tm,stf, sit_in,sit_out,tra,com)]
+                        -m.flow_global[(stf, tm,sit_in,sit_out)])**2
+                        for tm in m.tm
+                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun) + sum(m.lamda[(stf, tm, sit_in, sit_out)] *
+                        (m.e_tra_in[(tm,stf, sit_in,sit_out,tra,com)]
+                        -m.flow_global[(stf, tm,sit_in,sit_out)])
+                        for tm in m.tm
+                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun)      )
+    else:
+        return pyomo.summation(m.costs)
 
 
 # CO2 output in entire period <= Global CO2 budget

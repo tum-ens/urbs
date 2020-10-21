@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import glob
 from xlrd import XLRDError
-import pyomo.core as pyomo
+from pyomo.environ import ConcreteModel
 from .features.modelhelper import *
 from .identify import *
 from datetime import datetime, date
@@ -193,7 +193,7 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
         a rudimentary pyomo.CancreteModel instance
     '''
 
-    m = pyomo.ConcreteModel()
+    m = ConcreteModel()
 
     # Preparations
     # ============
@@ -228,8 +228,8 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
     # creating list wih cost types
     m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Start-up',
                         'Environmental']
-    if type == 'sub':
-        m.cost_type_list.extend(['ADMM_Linear','ADMM_Quadratic'])
+    #if type == 'sub':
+        #m.cost_type_list.extend(['ADMM_Linear','ADMM_Quadratic'])
         
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification

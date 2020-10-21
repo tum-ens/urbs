@@ -11,7 +11,7 @@ global dict_countries
 global dict_season
 
 # User preferences
-subfolder = os.path.join("Mekong", "20200923 Hydro scenarios long")
+subfolder = os.path.join("Mekong", "not done") #20201013 Hydro scenarios long
 result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
 
 scenario_years = [2016, 2020, 2025, 2030, 2035, 2037]
@@ -369,7 +369,7 @@ def get_generation_data(urbs_results):
     generation = pd.DataFrame(0, index=multiindex, columns=sorted(list(set(dict_tech.values()))))
     if "Electricity generation" in urbs_results.keys():
         urbs_results["Electricity generation"].set_index(["Site", "scenario-year"], inplace=True)
-        generation.loc[urbs_results["Electricity generation"].index.intersection(generation.index)] = urbs_results["Electricity generation"]
+        generation.loc[urbs_results["Electricity generation"].index.intersection(generation.index), urbs_results["Electricity generation"].columns] = urbs_results["Electricity generation"]
     
     prod = df_result["e_pro_out"].unstack()['Elec'].reorder_levels(['sit', 'stf', 'pro', 't']).sort_index().fillna(0)
     prod = add_weight(prod)
@@ -414,9 +414,9 @@ def get_capacities_data(urbs_results):
         urbs_results["Installed capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Added capacities"].set_index(["Site", "scenario-year"], inplace=True)
         urbs_results["Retired capacities"].set_index(["Site", "scenario-year"], inplace=True)
-        capacities_total.loc[urbs_results["Installed capacities"].index] = urbs_results["Installed capacities"][capacities_total.columns]
-        capacities_new.loc[urbs_results["Added capacities"].index] = urbs_results["Added capacities"][capacities_new.columns]
-        capacities_retired.loc[urbs_results["Retired capacities"].index] = urbs_results["Retired capacities"][capacities_retired.columns]
+        capacities_total.loc[urbs_results["Installed capacities"].index, urbs_results["Installed capacities"].columns] = urbs_results["Installed capacities"]
+        capacities_new.loc[urbs_results["Added capacities"].index, urbs_results["Added capacities"].columns] = urbs_results["Added capacities"]
+        capacities_retired.loc[urbs_results["Retired capacities"].index, urbs_results["Retired capacities"].columns] = urbs_results["Retired capacities"]
     
     # New capacities
     cap_new = df_result["cap_pro_new"].reset_index().rename(columns={"stf": "scenario-year", "sit":"Site", "pro":"Process", "cap_pro_new":"inst-cap"})

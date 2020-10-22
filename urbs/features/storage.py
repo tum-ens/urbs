@@ -10,6 +10,7 @@ def add_storage(m):
         indexlist.add(tuple(key)[2])
     m.sto = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of storage technologies')
 
     # storage tuples

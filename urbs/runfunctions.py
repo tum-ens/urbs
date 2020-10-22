@@ -180,21 +180,22 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     year = date.today().year
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
-    data = read_input(input_files, year)
-    data = scenario(data)
-    validate_input(data)
-    validate_dc_objective(data, objective)
+    data_all = read_input(input_files, year)
+    data_all = scenario(data_all)
+    validate_input(data_all)
+    validate_dc_objective(data_all, objective)
 
-    if not data['global_prop'].loc[year].loc['CO2 limit','value'] == np.inf:
-        data = add_carbon_supplier(data, clusters)
+    if not data_all['global_prop'].loc[year].loc['CO2 limit','value'] == np.inf:
+        data_all = add_carbon_supplier(data_all, clusters)
         clusters.append(['Carbon_site'])
         print(clusters)
     
     # if 'test_timesteps' is stored in data dict, replace the timesteps parameter with that value
-    timesteps = data.pop('test_timesteps', timesteps)
+    timesteps = data_all.pop('test_timesteps', timesteps)
 
     # subproblem dataprof
     sub_data = {}
+    data_sub = {}
     for item in sub_input_files:
         sub_data[item] = urbs.read_input(sub_input_files[item],year)
         # drop source lines added in Excel
@@ -210,29 +211,29 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     internal_lines = {}
     
     boundarying_lines_logic = np.zeros((len(clusters), 
-                                       data['transmission'].shape[0]), 
+                                       data_all['transmission'].shape[0]),
                                        dtype=bool)
     internal_lines_logic = np.zeros((len(clusters),
-                                    data['transmission'].shape[0]), 
+                                    data_all['transmission'].shape[0]),
                                     dtype=bool)
                
     for cluster_idx in range(0,len(clusters)):
-        for j in range(0,data['transmission'].shape[0]):
+        for j in range(0,data_all['transmission'].shape[0]):
             boundarying_lines_logic[cluster_idx,j] = (
-                    (data['transmission'].index.get_level_values('Site In')[j] 
+                    (data_all['transmission'].index.get_level_values('Site In')[j]
                     in clusters[cluster_idx]) 
-                    ^ (data['transmission'].index.get_level_values('Site Out')[j] 
+                    ^ (data_all['transmission'].index.get_level_values('Site Out')[j]
                     in clusters[cluster_idx]))
             internal_lines_logic[cluster_idx,j]=(
-                    (data['transmission'].index.get_level_values('Site In')[j] 
+                    (data_all['transmission'].index.get_level_values('Site In')[j]
                     in clusters[cluster_idx]) 
-                    and (data['transmission'].index.get_level_values('Site Out')[j]
+                    and (data_all['transmission'].index.get_level_values('Site Out')[j]
                     in clusters[cluster_idx]))
 
         boundarying_lines[cluster_idx] = \
-            data['transmission'].loc[boundarying_lines_logic[cluster_idx,:]]
+            data_all['transmission'].loc[boundarying_lines_logic[cluster_idx,:]]
         internal_lines[cluster_idx] = \
-            data['transmission'].loc[internal_lines_logic[cluster_idx,:]]
+            data_all['transmission'].loc[internal_lines_logic[cluster_idx,:]]
         
         for i in range(0,boundarying_lines[cluster_idx].shape[0]):
             sit_from=boundarying_lines[cluster_idx].iloc[i].name[1]
@@ -244,7 +245,7 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
             
             for j in timesteps[1:]:
                 coup_vars.rhos[cluster_idx, year, j, sit_from, sit_to]=2           
-                coup_vars.lambdas[cluster_idx, year, j, sit_from, sit_to]=1
+                coup_vars.lambdas[cluster_idx, year, j, sit_from, sit_to]=0
                 coup_vars.residdual[cluster_idx, year, j, sit_from, sit_to]=0        
                 coup_vars.residprim[cluster_idx, year, j, sit_from, sit_to]=0    
     all_boundary_lines = pd.concat(list(boundarying_lines.values()))
@@ -263,12 +264,12 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
        
     sub = {}
     sub_persistent = {}
-    prob = create_model(data, timesteps, dt, type='normal')
+    prob = create_model(data_all, timesteps, dt, type='normal')
     prob.write('orig.lp', io_options={'symbolic_solver_labels':True})
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
-    maxit = 201
+    maxit = 501
     mu = 10;
     tau = 0.1;
  
@@ -300,14 +301,14 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     pd.options.display.max_rows = 999
     pd.options.display.max_columns = 999
     for cluster_idx in range(0,len(clusters)):
-        data = read_input(input_files, year)
-        data = scenario(data)
-        validate_input(data)
-        validate_dc_objective(data, objective)
+        #data = read_input(input_files, year)
+        #data = scenario(data)
+        #validate_input(data)
+        #validate_dc_objective(data, objective)
 
-        if not data['global_prop'].loc[year].loc['CO2 limit','value'] == np.inf:
-            data = add_carbon_supplier(data, clusters)
-        sub[cluster_idx] = urbs.create_model(data, timesteps, type='sub',
+        #if not data['global_prop'].loc[year].loc['CO2 limit','value'] == np.inf:
+        #   data = add_carbon_supplier(data, clusters)
+        sub[cluster_idx] = urbs.create_model(data_all, timesteps, type='sub',
                                     sites=clusters[cluster_idx],
                                     coup_vars=coup_vars,
                                     data_transmission_boun=boundarying_lines[cluster_idx],
@@ -401,12 +402,9 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                 rhos_temp = dict((key[1:],value) for key, value
                                  in coup_vars.rhos.items()
                                  if key[0] == cluster_idx)
-                old_quadratic_penalty = 0;
-                new_quadratic_penalty = 0;
+                quadratic_penalty_change = 0;
                 for key in rhos_temp:
-                    old_quadratic_penalty += 0.5*rhos_old[tuple([cluster_idx] + list(key))] * \
-                                             (sum(sub[cluster_idx].e_tra_in[key[1],key[0],key[2],key[3],:,:]) - sub[cluster_idx].flow_global[key])**2
-                    new_quadratic_penalty += 0.5*coup_vars.rhos[tuple([cluster_idx] + list(key))] * \
+                    quadratic_penalty_change += 0.5*(coup_vars.rhos[tuple([cluster_idx] + list(key))]- rhos_old[tuple([cluster_idx] + list(key))]) * \
                                              (sum(sub[cluster_idx].e_tra_in[key[1],key[0],key[2],key[3],:,:]) - sub[cluster_idx].flow_global[key])**2
 
                 for key in coup_vars.flow_global:
@@ -418,7 +416,7 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                         # sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key][0]
                         sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key][0])
                         sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
-                sub_persistent[cluster_idx]._pyomo_model.objective_function = pyomo.Objective(expr=sub_persistent[cluster_idx]._pyomo_model.objective_function.expr-old_quadratic_penalty + new_quadratic_penalty,sense=pyomo.minimize)
+                sub_persistent[cluster_idx]._pyomo_model.objective_function = pyomo.Objective(expr=sub_persistent[cluster_idx]._pyomo_model.objective_function.expr + quadratic_penalty_change,sense=pyomo.minimize)
                # import pdb;pdb.set_trace()
                 sub_persistent[cluster_idx].set_objective(sub_persistent[cluster_idx]._pyomo_model.objective_function)
                 sub_persistent[cluster_idx]._solver_model.update()
@@ -508,7 +506,8 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                         >= mu * coup_vars.residdual_cap[cluster_idx,year,sit_from,sit_to]:
                             coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] = \
                             coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] * (1 + tau)
-                        else:
+                        elif coup_vars.residdual_cap[cluster_idx,year,sit_from,sit_to] \
+                        >= mu * coup_vars.residprim_cap[cluster_idx,year,sit_from,sit_to]:
                             coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] = \
                             coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] / (1 + tau)             
                             
@@ -527,7 +526,8 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                         >= mu * coup_vars.residdual[cluster_idx,year,j,sit_from,sit_to]:
                             coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] = \
                             coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] * (1 + tau)
-                        else:
+                        elif coup_vars.residdual[cluster_idx,year,j,sit_from,sit_to] \
+                        >= mu * coup_vars.residprim[cluster_idx,year,j,sit_from,sit_to]:
                             coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] = \
                             coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] / (1 + tau)                          
                     coup_vars.lambdas[cluster_idx,year,j,sit_from,sit_to] = \
@@ -578,7 +578,7 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
 
         t2 = t.time()                
         print(str(t2-t1)+' seconds elapsed, '+str(iteration)+' iterations')
-        if iteration % 300== 0:
+        if iteration % 500== 0:
             t2 = t.time()         
             print(str(t2-t1)+' seconds to solve '+ '(parallel '+str(parallel)+')'+ '(capacities coupled '+str(caps_coupling)+')')            
             import pdb;pdb.set_trace()

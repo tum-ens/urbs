@@ -7,6 +7,7 @@ from .features.modelhelper import *
 from .identify import *
 from datetime import datetime, date
 import numpy as np
+from copy import deepcopy
 
 def read_input(input_files, year):
     """Read Excel input file and prepare URBS input dict.
@@ -181,7 +182,7 @@ def read_input(input_files, year):
 
 
 # preparing the pyomo model
-def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
+def pyomo_model_prep(data_all, timesteps, sites, type, data_transmission=None):
     '''Performs calculations on the data frames in dictionary "data" for
     further usage by the model.
 
@@ -202,24 +203,37 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
     #
     #     storage.loc[site, storage, commodity][attribute]
     #
-    m.mode = identify_mode(data)
+    #import pdb;pdb.set_trace()
+    data= deepcopy(data_all)
     m.timesteps = timesteps
-    data['site_all']=data['site']
+    data['site_all']=data_all['site']
     if type =='sub':
-        m.global_prop = data['global_prop'].drop('description', axis=1)
-        data['site'] = data['site'].loc(axis=0)[:,sites]
-        data['commodity'] = data['commodity'].loc(axis=0)[:,sites]
-        data['process'] = data['process'].loc(axis=0)[:,sites]
-        data['storage'] = data['storage'].loc(axis=0)[:,sites]
+        m.global_prop = data_all['global_prop'].drop('description', axis=1)
+        data['site'] = data_all['site'].loc(axis=0)[:,sites]
+        data['commodity'] = data_all['commodity'].loc(axis=0)[:,sites]
+        data['process'] = data_all['process'].loc(axis=0)[:,sites]
+        data['storage'] = data_all['storage'].loc(axis=0)[:,sites]
         if sites != ['Carbon_site']:
-            data['demand'] = data['demand'][sites]
-            data['supim']= data['supim'][sites]
+            data['demand'] = data_all['demand'][sites]
+            data['supim']= data_all['supim'][sites]
+        else:
+            data['demand'] = pd.DataFrame()
+            data['supim'] = pd.DataFrame()
         data['transmission'] = data_transmission
+    else:
+        m.global_prop = data_all['global_prop'].drop('description', axis=1)
+        data['site'] = data_all['site']
+        data['commodity'] = data_all['commodity']
+        data['process'] = data_all['process']
+        data['storage'] = data_all['storage']
+        data['demand'] = data_all['demand']
+        data['supim']= data_all['supim']
+        data['transmission'] = data_all['transmission']
 
-    m.global_prop = data['global_prop']
+    m.global_prop = data_all['global_prop']
     commodity = data['commodity']
     process = data['process']
-
+    m.mode = identify_mode(data)
     # create no expansion dataframes
     pro_const_cap = process[process['inst-cap'] == process['cap-up']]
 
@@ -234,8 +248,9 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification
     m.site_dict = data['site'].to_dict()
-    m.demand_dict = data['demand'].to_dict()
-    m.supim_dict = data['supim'].to_dict()
+    if sites != ['Carbon_site']:
+        m.demand_dict = data['demand'].to_dict()
+        m.supim_dict = data['supim'].to_dict()
 
     # additional features
     if m.mode['tra']:
@@ -286,7 +301,7 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
         # only keep those entries whose values are
         # a) positive and
         # b) numeric (implicitely, as NaN or NV compare false against 0)
-        r_in_min_fraction = data['process_commodity'].xs('In', level='Direction')
+        r_in_min_fraction = data_all['process_commodity'].xs('In', level='Direction')
         r_in_min_fraction = r_in_min_fraction['ratio-min']
         r_in_min_fraction = r_in_min_fraction[r_in_min_fraction > 0]
         m.r_in_min_fraction_dict = r_in_min_fraction.to_dict()
@@ -295,7 +310,7 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
         # only keep those entries whose values are
         # a) positive and
         # b) numeric (implicitely, as NaN or NV compare false against 0)
-        r_out_min_fraction = data['process_commodity'].xs('Out', level='Direction')
+        r_out_min_fraction = data_all['process_commodity'].xs('Out', level='Direction')
         r_out_min_fraction = r_out_min_fraction['ratio-min']
         r_out_min_fraction = r_out_min_fraction[r_out_min_fraction > 0]
         m.r_out_min_fraction_dict = r_out_min_fraction.to_dict()
@@ -325,9 +340,9 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
             m.inst_sto = m.inst_sto[m.inst_sto > 0]
 
     # process input/output ratios
-    m.r_in_dict = (data['process_commodity'].xs('In', level='Direction')
+    m.r_in_dict = (data_all['process_commodity'].xs('In', level='Direction')
                    ['ratio'].to_dict())
-    m.r_out_dict = (data['process_commodity'].xs('Out', level='Direction')
+    m.r_out_dict = (data_all['process_commodity'].xs('Out', level='Direction')
                     ['ratio'].to_dict())
 
     # process areas
@@ -521,6 +536,7 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
                                           .apply(discount_factor, m=m))
             storage['eff-distance'] = (storage['stf_dist']
                                        .apply(effective_distance, m=m))
+            import pdb;pdb.set_trace()
             storage['cost_factor'] = (storage['discount-factor'] *
                                       storage['eff-distance'])
     else:
@@ -599,8 +615,17 @@ def pyomo_model_prep(data, timesteps, sites, type, data_transmission=None):
         m.sto_block_c_dict = sto_block_c[sto_block_c > 0].to_dict()
         sto_block_p = storage['p-block']
         m.sto_block_p_dict = sto_block_p[sto_block_p > 0].to_dict()
-        
-    return m
+    #if type == 'sub':
+    #    with pd.ExcelWriter(sites[0]+'sub.xlsx') as writer:
+    #        for key, val in data.items():
+    #            if not val.empty:
+    #                val.to_excel(writer, sheet_name=key)
+   # else:
+    #    with pd.ExcelWriter('master_from_sub.xlsx') as writer:
+    #        for key, val in data.items():
+    #            if not val.empty:
+    #                val.to_excel(writer, sheet_name=key)
+    return m, data
 
 
 def split_columns(columns, sep='.'):
@@ -654,7 +679,7 @@ def get_input(prob, name):
         # unknown
         raise ValueError("Unknown input DataFrame name!")
 
-def add_carbon_supplier(data,clusters):
+def add_carbon_supplier(data_all,clusters):
     """Read Excel input file and prepare URBS input dict.
 
     Reads an Excel spreadsheet that adheres to the structure shown in
@@ -679,38 +704,38 @@ def add_carbon_supplier(data,clusters):
     """
     year = date.today().year
     # add site Carbon_site
-    data['site'].loc[(year,'Carbon_site'),:]=np.nan
+    data_all['site'].loc[(year,'Carbon_site'),:]=np.nan
     
     
     #add dummy process X to Carbon_site (to avoid errors)
-    data['process'].loc[year,'Carbon_site','X']=(0,0,np.inf,0,0,0,0,0,0,0,0,1,np.nan,np.nan,np.nan,np.nan)
+    #data_all['process'].loc[year,'Carbon_site','X']=(0,0,np.inf,0,0,0,0,0,0,0,0,1,np.nan,np.nan,np.nan,np.nan)
     
     #add dummy storage X to Carbon_site (to avoid errors)
-    data['storage'].loc[year,'Carbon_site','X','Carbon']=(0,0,np.inf,0,0,np.inf,0,1,0,0,0,0,0,0,1,0,0,0,np.nan,np.nan,np.nan)
+    #data_all['storage'].loc[year,'Carbon_site','X','Carbon']=(0,0,np.inf,0,0,np.inf,0,1,0,0,0,0,0,0,1,0,0,0,np.nan,np.nan,np.nan)
     
     # add carbon-connection from Carbon_site to the first site in each cluster
     for cluster in clusters:
-        data['transmission'].loc[year,'Carbon_site',cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
-        data['transmission'].loc[year,cluster[0],'Carbon_site','CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+        data_all['transmission'].loc[year,'Carbon_site',cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+        data_all['transmission'].loc[year,cluster[0],'Carbon_site','CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
         # add Carbon commodity to each site
         for site in cluster:
-            data['commodity'].loc[year,site,'Carbon','Stock']=(0,0,0)
+            data_all['commodity'].loc[year,site,'Carbon','Stock']=(0,0,0)
 
 
     # add commodity Carbon to Carbon_site
-    data['commodity'].loc[year,'Carbon_site','Carbon','Stock']=(0,data['global_prop'].loc[2020].loc['CO2 limit','value'],np.inf)
+    data_all['commodity'].loc[year,'Carbon_site','Carbon','Stock']=(0,data_all['global_prop'].loc[2020].loc['CO2 limit','value'],np.inf)
      
     # add free-movement carbon-connections within each cluster
     for cluster in clusters:
         if len(cluster) > 1:
             for site in cluster[1:]:
-                data['transmission'].loc[year,cluster[0],site,'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
-                data['transmission'].loc[year,site,cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+                data_all['transmission'].loc[year,cluster[0],site,'CO2_line','Carbon'] = (1, 0, 0, 0, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
+                data_all['transmission'].loc[year,site,cluster[0],'CO2_line','Carbon'] = (1, 0, 0, 999, 0, 0, np.inf, 0.01, 1, np.nan, np.nan, np.nan, np.nan)
     #import pdb;pdb.set_trace()
-    for (y,a,b,c) in data['process_commodity'].index.values:
+    for (y,a,b,c) in data_all['process_commodity'].index.values:
         if b == 'CO2' and c == 'Out':
-            data['process_commodity'].loc[y,a,'Carbon','In'] = data['process_commodity'].loc[y,a,'CO2','Out'].values
-    #with pd.ExcelWriter('output.xlsx') as writer:
-    #    for key, val in data.items():
+            data_all['process_commodity'].loc[y,a,'Carbon','In'] = data_all['process_commodity'].loc[y,a,'CO2','Out'].values
+    #with pd.ExcelWriter('master.xlsx') as writer:
+    #    for key, val in data_all.items():
     #       val.to_excel(writer, sheet_name=key)
-    return data
+    return data_all

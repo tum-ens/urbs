@@ -34,6 +34,7 @@ def add_transmission(m, data_transmission_boun):
         indexlist.add(tuple(key)[3])    
     m.tra = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of transmission technologies')
 
     # transmission tuples

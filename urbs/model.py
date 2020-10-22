@@ -5,7 +5,7 @@ from .features import *
 from .input import *
 import pyomo.environ as pyomo
 
-def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type='normal', sites = None, coup_vars=None, data_transmission_boun=None, data_transmission_int=None, cluster=None):
+def create_model(data_all, timesteps=None, dt=1, objective='cost', dual=False, type='normal', sites = None, coup_vars=None, data_transmission_boun=None, data_transmission_int=None, cluster=None):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -23,12 +23,12 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
     
     # Optional
     if not timesteps:
-        timesteps = data['demand'].index.tolist()
+        timesteps = data_all['demand'].index.tolist()
         
     if type == 'sub':
-        m = pyomo_model_prep(data, timesteps, sites, type, pd.concat([data_transmission_boun,data_transmission_int]))  # preparing pyomo model
+        m, data = pyomo_model_prep(data_all, timesteps, sites, type, pd.concat([data_transmission_boun,data_transmission_int]))  # preparing pyomo model
     elif type =='normal':
-        m = pyomo_model_prep(data, timesteps, sites, type)  
+        m, data = pyomo_model_prep(data_all, timesteps, sites, type)
     m.name = 'urbs'
     m.created = datetime.now().strftime('%Y%m%dT%H%M')
     m._data = data
@@ -74,6 +74,7 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
     # import objective function information
     m.obj = pyomo.Param(
         initialize=objective,
+        within=pyomo.Any,
         doc='Specification of minimized quantity, default: "cost"')
       
     # Sets
@@ -102,14 +103,14 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
         indexlist.add(tuple(key)[0])
     m.stf = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of modeled support timeframes (e.g. years)')
 
     # site (e.g. north, middle, south...)
     m.sit = pyomo.Set(
-        initialize = [s for (y,s) in m._data['site_all'].index.values],
+        initialize = [s for (y,s) in data['site_all'].index.values],
         doc='Set of all sites')
     
-    m.sit_inside = pyomo.Set(
     m.sit_inside = pyomo.Set(
         initialize=m._data['commodity'].index.get_level_values('Site').unique(),
         doc='Set of sites belonging to the cluster')
@@ -120,6 +121,7 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
         indexlist.add(tuple(key)[2])
     m.com = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
@@ -128,6 +130,7 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
         indexlist.add(tuple(key)[3])
     m.com_type = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
@@ -136,6 +139,7 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
         indexlist.add(tuple(key)[2])
     m.pro = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of conversion processes')
 
     if type=='sub':
@@ -151,21 +155,6 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
             m.stf,m.tm,m.sit,m.sit,
             initialize=rho,
             doc='rho in')
-        # m.flow_global = pyomo.Param(
-        #     m.stf,m.tm,m.sit,m.sit,
-        #     initialize=flow_global,
-        #     mutable=True,
-        #     doc='flow global in')
-        # m.lamda = pyomo.Param(
-        #     m.stf,m.tm,m.sit,m.sit,
-        #     initialize=lamda,
-        #     mutable=True,
-        #     doc='lambda in')
-        # m.rho = pyomo.Param(
-        #     m.stf,m.tm,m.sit,m.sit,
-        #     initialize=rho,
-        #     mutable=True,
-        #     doc='rho in')
 
         if coup_vars.caps_coupling:                        
             m.cap_global = pyomo.Param(
@@ -204,6 +193,7 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
     m.com_stock = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Stock'),
+        ordered=False,
         doc='Commodities that can be purchased at some site(s)')
 
     
@@ -230,14 +220,17 @@ def create_model(data, timesteps=None, dt=1, objective='cost', dual=False, type=
     m.com_supim = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'SupIm'),
+        ordered=False,
         doc='Commodities that have intermittent (timeseries) input')
     m.com_demand = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Demand'),
+        ordered=False,
         doc='Commodities that have a demand (implies timeseries)')
     m.com_env = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Env'),
+        ordered=False,
         doc='Commodities that (might) have a maximum creation limit')
 
     # process tuples for area rule

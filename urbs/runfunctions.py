@@ -14,6 +14,7 @@ import time as t
 import pandas as pd
 import multiprocessing as mp
 #os.system("taskset -p 0xff %d" % os.getpid())
+from math import isnan
 
 
 def optim_solve_tee_false(function,index,return_dict,logf):
@@ -22,21 +23,18 @@ def optim_solve_tee_false(function,index,return_dict,logf):
     optim = setup_solver(optim, logfile=logf)    
     result = optim.solve(function,tee=False, warmstart=True)
     return_dict[index] = function
-    
+
+def parallel_solve(sub_pro):
+    sub_pro.solve(save_results=False, load_solutions=False, warmstart=True)
 
 class CouplingVars:
     flow_global= {}
     rhos= {}
     lambdas = {}  
     cap_global= {}
-    rhos_cap = {}
-    lambdas_cap = {}
     residdual = {}
     residprim = {}  
-    caps_coupling = False
-    residdual_cap = {}
-    residprim_cap = {} 
-        
+
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder.
 
@@ -80,81 +78,6 @@ def setup_solver(optim, logfile='solver.log'):
               "'{}'!".format(optim.name))
     return optim
 
-
-def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
-                 objective, plot_tuples=None,  plot_sites_name=None,
-                 plot_periods=None, report_tuples=None,
-                 report_sites_name=None):
-    """ run an urbs model for given input, time steps and scenario
-
-    Args:
-        - input_files: filenames of input Excel spreadsheets
-        - Solver: the user specified solver
-        - timesteps: a list of timesteps, e.g. range(0,8761)
-        - scenario: a scenario function that modifies the input data dict
-        - result_dir: directory name for result spreadsheet and plots
-        - dt: length of each time step (unit: hours)
-        - objective: objective function chosen (either "cost" or "CO2")
-        - plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
-        - plot_sites_name: (optional) dict of names for sites in plot_tuples
-        - plot_periods: (optional) dict of plot periods
-          (c.f. urbs.result_figures)
-        - report_tuples: (optional) list of (sit, com) tuples
-          (c.f. urbs.report)
-        - report_sites_name: (optional) dict of names for sites in
-          report_tuples
-
-    Returns:
-        the urbs model instance
-    """
-
-    # sets a modeled year for non-intertemporal problems
-    # (necessary for consitency)
-    year = date.today().year
-
-    # scenario name, read and modify data for scenario
-    sce = scenario.__name__
-    data = read_input(input_files, year)
-    data = scenario(data)
-    validate_input(data)
-    validate_dc_objective(data, objective)
-
-    # create model
-    prob = create_model(data, dt, timesteps, objective)
-    prob.write('model.lp', io_options={'symbolic_solver_labels':True})
-
-    # refresh time stamp string and create filename for logfile
-    log_filename = os.path.join(result_dir, '{}.log').format(sce)
-
-    # solve model and read results
-    optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-    optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
-    assert str(result.solver.termination_condition) == 'optimal'
-
-    # save problem solution (and input data) to HDF5 file
-    # save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
-
-    # write report to spreadsheet
-    report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples,
-        report_sites_name=report_sites_name)
-
-    # result plots
-    result_figures(
-        prob,
-        os.path.join(result_dir, '{}'.format(sce)),
-        timesteps,
-        plot_title_prefix=sce.replace('_', ' '),
-        plot_tuples=plot_tuples,
-        plot_sites_name=plot_sites_name,
-        periods=plot_periods,
-        figure_size=(24, 9))
-
-    return prob
-
 #@profile
 def run_regional(input_files, solver, sub_input_files, timesteps, scenario, result_dir,
                  dt, objective, 
@@ -174,9 +97,9 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     Returns:
         the urbs model instances
     """
-    parallel = False
-    caps_coupling = False
-    
+    parallel = True
+
+    # hard-coded year. ADMM doesn't work with intertemporal models (yet)
     year = date.today().year
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
@@ -206,7 +129,6 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         timesteps = sub_data[item].pop('test_timesteps', timesteps)
         
     coup_vars = CouplingVars() 
-    coup_vars.caps_coupling = caps_coupling
     boundarying_lines = {}
     internal_lines = {}
     
@@ -239,15 +161,11 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
             sit_from=boundarying_lines[cluster_idx].iloc[i].name[1]
             sit_to=boundarying_lines[cluster_idx].iloc[i].name[2]
             
-            if caps_coupling:            
-                coup_vars.rhos_cap[cluster_idx, year, sit_from, sit_to]=2           
-                coup_vars.lambdas_cap[cluster_idx, year, sit_from, sit_to]=0   
-            
             for j in timesteps[1:]:
-                coup_vars.rhos[cluster_idx, year, j, sit_from, sit_to]=2           
-                coup_vars.lambdas[cluster_idx, year, j, sit_from, sit_to]=0
-                coup_vars.residdual[cluster_idx, year, j, sit_from, sit_to]=0        
-                coup_vars.residprim[cluster_idx, year, j, sit_from, sit_to]=0    
+                coup_vars.rhos[cluster_idx, j, year, sit_from, sit_to]=2
+                coup_vars.lambdas[cluster_idx, j, year, sit_from, sit_to]=0
+                coup_vars.residdual[cluster_idx, j, year, sit_from, sit_to]=0
+                coup_vars.residprim[cluster_idx, j, year, sit_from, sit_to]=0
     all_boundary_lines = pd.concat(list(boundarying_lines.values()))
     all_boundary_lines = \
         all_boundary_lines[~all_boundary_lines.index.duplicated(keep='first')]
@@ -255,33 +173,28 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     for i in range(0,all_boundary_lines.shape[0]):
         sit_from=all_boundary_lines.iloc[i].name[1]
         sit_to=all_boundary_lines.iloc[i].name[2]
-        if caps_coupling:                    
-            coup_vars.cap_global[year,sit_from,sit_to]=0   
             
         for j in timesteps[1:]:
-            coup_vars.flow_global[year,j,sit_from,sit_to]=0            
+            coup_vars.flow_global[j, year, sit_from, sit_to]=0
 
        
     sub = {}
     sub_persistent = {}
+    e_tra_in_dict = {}
     prob = create_model(data_all, timesteps, dt, type='normal')
     prob.write('orig.lp', io_options={'symbolic_solver_labels':True})
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
-    maxit = 501
-    mu = 10;
-    tau = 0.1;
- 
+    maxit = 1000
+    mu = 3
+    tau = 0.00
+    tolerance = 0.0001
+    convergence = False
     # setup solver
-    
     solver_name = 'gurobi'
     optim = SolverFactory(solver_name)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    # optim.options['OptimalityTol'] = 1e-9
-    # optim.options['FeasibilityTol'] = 1e-9
-    # optim.options['NumericFocus'] = 3
-    # optim.options['Method'] = 4
 
     # define parameters to save results of tests to files
     if 'test' in sce:
@@ -289,38 +202,22 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
 
     track_file = os.path.join(result_dir, scenario.__name__+'-tracking.txt')
 
-    # original problem solution
+    # original problem solution (not necessary for ADMM, just to compare)
     results_prob = optim.solve(prob, tee=False)
-    #flows_from_original_problem = urbs.get_entity(prob, 'e_tra_in')
     flows_from_original_problem =dict((name,entity.value) for (name,entity) in prob.e_tra_in.items())
-    flows_from_original_problem = pd.DataFrame.from_dict(flows_from_original_problem,orient='index',columns=['Original'])
-    if caps_coupling:
-        flows_from_original_problem = dict((name, entity.value) for (name, entity) in prob.cap_tra.items())
-        flows_from_original_problem = pd.DataFrame.from_dict(flows_from_original_problem, orient='index',columns=['Original'])
+    flows_from_original_problem = pd.DataFrame.from_dict(flows_from_original_problem, orient='index',columns=['Original'])
         
     pd.options.display.max_rows = 999
     pd.options.display.max_columns = 999
     for cluster_idx in range(0,len(clusters)):
-        #data = read_input(input_files, year)
-        #data = scenario(data)
-        #validate_input(data)
-        #validate_dc_objective(data, objective)
-
-        #if not data['global_prop'].loc[year].loc['CO2 limit','value'] == np.inf:
-        #   data = add_carbon_supplier(data, clusters)
         sub[cluster_idx] = urbs.create_model(data_all, timesteps, type='sub',
                                     sites=clusters[cluster_idx],
                                     coup_vars=coup_vars,
                                     data_transmission_boun=boundarying_lines[cluster_idx],
                                     data_transmission_int=internal_lines[cluster_idx],
                                     cluster=cluster_idx)
-        #sub[cluster_idx].write(str(cluster_idx) +' sub.lp',
-        #                       io_options={'symbolic_solver_labels':True})
-        #import pdb;pdb.set_trace()
         sub_persistent[cluster_idx] = SolverFactory('gurobi_persistent')
-        sub_persistent[cluster_idx].set_instance(sub[cluster_idx],symbolic_solver_labels=True)
-
-        #sub_persistent[cluster_idx].set_options("logfile={}".format(logfile))
+        sub_persistent[cluster_idx].set_instance(sub[cluster_idx],symbolic_solver_labels=False)
         sub_persistent[cluster_idx].set_options("method=2")
     if parallel:
         jobs = []
@@ -330,72 +227,34 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     t1 = t.time()
     
     cost_history= np.zeros(maxit)
-    flow_global_history = pd.DataFrame()
-    
-    if caps_coupling:
-        cap_global_history = pd.DataFrame()
-
     flow_global_history = {}
+
     # ADMM loop
     for iteration in range(1, maxit):
         for cluster_idx in range(0,len(clusters)):
-            #adjust the global flows as mutable parameters            
+            #adjust the global flows as mutable parameters
             for key in coup_vars.flow_global:
                 if not isinstance(coup_vars.flow_global[key],np.ndarray):
-                    #sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key]
                     sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key])
                     sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
                 else:
-                    #sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key][0]
                     sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key][0])
                     sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
-            #adjsut the global capacities as mutable parameters (if enabled)    
-            if caps_coupling:                            
-                for key in coup_vars.cap_global:
-                    sub[cluster_idx].cap_global[key] = coup_vars.cap_global[key]      
                     
             lambdas_temp = dict((key[1:],value) for key, value 
                                 in coup_vars.lambdas.items() 
-                                if key[0] == cluster_idx)   
-            rhos_temp = dict((key[1:],value) for key, value 
-                             in coup_vars.rhos.items() 
-                             if key[0] == cluster_idx)   
+                                if key[0] == cluster_idx)
             
             for key in lambdas_temp:
                 if not isinstance(lambdas_temp[key],np.ndarray):
-                    #sub[cluster_idx].lamda[key] = lambdas_temp[key]
                     sub[cluster_idx].lamda[key].fix(lambdas_temp[key])
                     sub_persistent[cluster_idx].update_var(sub[cluster_idx].lamda[key])
                 else:
-                    #sub[cluster_idx].lamda[key] = lambdas_temp[key][0]
                     sub[cluster_idx].lamda[key].fix(lambdas_temp[key][0])
                     sub_persistent[cluster_idx].update_var(sub[cluster_idx].lamda[key])
-            for key in rhos_temp:
-                if not isinstance(rhos_temp[key],np.ndarray):
-                    pass
-                    #sub[cluster_idx].rho[key] = rhos_temp[key]
-                    #sub[cluster_idx].rho[key].fix(rhos_temp[key])
-                    #sub_persistent[cluster_idx].update_var(sub[cluster_idx].rho[key])
-                else:
-                    pass
-                    #sub[cluster_idx].rho[key] = rhos_temp[key][0]
-                    #sub[cluster_idx].rho[key].fix(rhos_temp[key][0])
-                    #sub_persistent[cluster_idx].update_var(sub[cluster_idx].rho[key])
-            if caps_coupling:                            
-                lambdas_temp = dict((key[1:],value) for key, value 
-                                    in coup_vars.lambdas_cap.items() 
-                                    if key[0] == cluster_idx)   
-                rhos_temp = dict((key[1:],value) for key, value
-                                 in coup_vars.rhos_cap.items()
-                                 if key[0] == cluster_idx)              
-                for key in lambdas_temp:            
-                    sub[cluster_idx].lamda_cap[key] = lambdas_temp[key]
-                for key in rhos_temp:            
-                    sub[cluster_idx].rho_cap[key] = rhos_temp[key]
-        flows_from_subs_in = []
-        caps_from_subs = []
-        result_sub = {}
 
+        flows_from_subs_in = []
+        e_tra_ins_dict = pd.DataFrame()
         if iteration > 1:
             #adjust objective function by changes in rho
             for cluster_idx in range(0,len(clusters)):
@@ -403,152 +262,91 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                                  in coup_vars.rhos.items()
                                  if key[0] == cluster_idx)
                 quadratic_penalty_change = 0;
+                # Hard coded transmission name: 'hvac', commodity 'Elec' for performance.
+                # Be careful, need to be adjusted if tranmission of other commodities exists!
                 for key in rhos_temp:
-                    quadratic_penalty_change += 0.5*(coup_vars.rhos[tuple([cluster_idx] + list(key))]- rhos_old[tuple([cluster_idx] + list(key))]) * \
-                                             (sum(sub[cluster_idx].e_tra_in[key[1],key[0],key[2],key[3],:,:]) - sub[cluster_idx].flow_global[key])**2
+                    if (key[2] == 'Carbon_site') or (key[3] == 'Carbon_site'):
+                        quadratic_penalty_change += 0.5*(coup_vars.rhos[tuple([cluster_idx] + list(key))]- rhos_old[tuple([cluster_idx] + list(key))]) * \
+                                                (sub[cluster_idx].e_tra_in[key,'CO2_line','Carbon'] - sub[cluster_idx].flow_global[key])**2
+                    else:
+                        quadratic_penalty_change += 0.5*(coup_vars.rhos[tuple([cluster_idx] + list(key))]- rhos_old[tuple([cluster_idx] + list(key))]) * \
+                                                (sub[cluster_idx].e_tra_in[key,'hvac','Elec'] - sub[cluster_idx].flow_global[key])**2
 
                 for key in coup_vars.flow_global:
                     if not isinstance(coup_vars.flow_global[key], np.ndarray):
-                        # sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key]
                         sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key])
                         sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
                     else:
-                        # sub[cluster_idx].flow_global[key] = coup_vars.flow_global[key][0]
                         sub[cluster_idx].flow_global[key].fix(coup_vars.flow_global[key][0])
                         sub_persistent[cluster_idx].update_var(sub[cluster_idx].flow_global[key])
                 sub_persistent[cluster_idx]._pyomo_model.objective_function = pyomo.Objective(expr=sub_persistent[cluster_idx]._pyomo_model.objective_function.expr + quadratic_penalty_change,sense=pyomo.minimize)
-               # import pdb;pdb.set_trace()
                 sub_persistent[cluster_idx].set_objective(sub_persistent[cluster_idx]._pyomo_model.objective_function)
                 sub_persistent[cluster_idx]._solver_model.update()
 
         if parallel:
+            #al=[sub_persistent[cluster_idx] for cluster_idx in range(0,len(clusters))]
             #import pdb;pdb.set_trace()
             #### Parallel solution
-            jobs = [mp.Process(target=optim_solve_tee_false,
-                               args=(sub[inst],inst,return_dict,log_filename)) for inst in sub]
+            #jobs = [mp.Process(target=optim_solve_tee_false,
+            #                   args=(sub[inst],inst,return_dict,log_filename)) for inst in sub]
+            #import pdb;pdb.set_trace()
+            #parallel_solve(sub_persistent[0])
+            #job1 = mp.Process(target=parallel_solve,args=(sub_persistent[0],))
+            jobs = [mp.Process(target=parallel_solve,args=(sub_persistent[cluster_idx],)) for cluster_idx in range(0,len(clusters))]
             for p in jobs:
                 p.start()
             for p in jobs:
                 p.join()
-            for key in return_dict.keys():
-                sub[key] = return_dict[key]
+            #for key in return_dict.keys():
+            #   sub[key] = return_dict[key]
         else:
             for inst in sub:
-                sub_persistent[inst].solve(save_results=False,load_solutions=False)
+                sub_persistent[inst].solve(save_results=False,load_solutions=False,warmstart=True)
+                #sub_persistent[inst]._solver_model.PStart = sub_persistent[inst]._solver_model.x
 
         for inst in sub:
             sub_persistent[inst].load_vars(sub[inst].e_tra_in[:, :, :, :, :, :])
-            #import pdb;pdb.set_trace()
-            flows_from_a_sub_in = dict((name, entity.value) for (name, entity) in sub[inst].e_tra_in.items())
-            flows_from_a_sub_in = pd.DataFrame(list(flows_from_a_sub_in.values()),index=pd.MultiIndex.from_tuples(flows_from_a_sub_in.keys()),columns=['Sub '+str(inst)]).rename_axis(['t','stf','sit','sit_','tra','com'])
-            #flows_from_a_sub_in = pd.DataFrame.from_dict(flows_from_a_sub_in, orient='index',columns=['Sub '+str(inst)])
-            #flows_from_a_sub_in = flows_from_a_sub_in.rename({0: 'Sub '+str(inst)},axis=1)
-            flows_from_subs_in.append(flows_from_a_sub_in)
-            if caps_coupling:
-                caps_from_a_sub = dict((name, entity.value) for (name, entity) in sub[inst].cap_tra.items())
-                caps_from_a_sub = pd.DataFrame.from_dict(caps_from_a_sub, orient='index')
-                caps_from_a_sub = caps_from_a_sub.rename({0: 'Sub '+str(inst)},axis=1)
-                caps_from_subs.append(caps_from_a_sub)
+            boundary_lines_pairs = boundarying_lines[inst].reset_index().set_index(['Site In','Site Out']).index
+            e_tra_in_dict = {(tm, stf, sit_in, sit_out): v.value for (tm, stf, sit_in, sit_out, tra, com), v in sub[inst].e_tra_in.items() if ((sit_in,sit_out) in boundary_lines_pairs)}
 
-        flows_from_subs_in0 = pd.concat(flows_from_subs_in,axis=1)
-        flows_from_subs_in = pd.concat(flows_from_subs_in)
+            e_tra_in_dict = pd.DataFrame(list(e_tra_in_dict.values()),index=pd.MultiIndex.from_tuples(e_tra_in_dict.keys())).rename_axis(['t','stf','sit','sit_'])
+            e_tra_in_dict.set_index([inst * np.ones(len(e_tra_in_dict), dtype=np.int8), e_tra_in_dict.index],inplace=True)
+            e_tra_ins_dict = pd.concat([e_tra_ins_dict, e_tra_in_dict])
 
-        if caps_coupling:            
-            caps_from_subs0 = pd.concat(caps_from_subs,axis=1)
-            caps_from_subs = pd.concat(caps_from_subs)
-        #import pdb;pdb.set_trace()
-        flows_from_subs_in = flows_from_subs_in.groupby(
-                ['stf','t','sit','sit_','tra','com']).mean().mean(axis=1)
-        flows_from_subs_in = flows_from_subs_in.reset_index(
-                level=['com','tra'], drop=True)
-        flows_from_subs_in = flows_from_subs_in.to_frame()
+        avgs_repeated = pd.DataFrame()
+        avgs = e_tra_ins_dict.groupby(['t','stf','sit','sit_']).mean()
+        for inst in sub:
+            avgs_repeated = pd.concat([avgs_repeated, avgs.set_index([inst * np.ones(len(avgs), dtype=np.int8), avgs.index])])
 
-        #if isinstance(flows_from_subs_in,pandas.core.series.Series):
-        #import pdb;
-        #pdb.set_trace()
-        flow_global_history[iteration]=flows_from_subs_in
-        flow_global_old = dict(coup_vars.flow_global)
+        flow_global_history[iteration] = avgs_repeated
         rhos_old = dict(coup_vars.rhos)
 
-        if caps_coupling:           
-           cap_global_history[iteration]=caps_from_subs
-       
-        if caps_coupling:                       
-            caps_from_subs = caps_from_subs.groupby(
-                    ['stf','sit','sit_','tra','com']).mean()
-            caps_from_subs = caps_from_subs.reset_index(
-                    level=['com','tra'], drop=True)
-        for i in range(0,all_boundary_lines.shape[0]):
-            sit_from=all_boundary_lines.iloc[i].name[1]
-            sit_to=all_boundary_lines.iloc[i].name[2]
-            if caps_coupling:                        
-                coup_vars.cap_global[(year,sit_from,sit_to)] = \
-                    caps_from_subs[(year,sit_from,sit_to)]            
-            for j in timesteps[1:]:
-                coup_vars.flow_global[(year,j,sit_from,sit_to)] = \
-                    flows_from_subs_in.loc[(year,j,sit_from,sit_to)].values[0]
-        #adjusting rho and lambda
-        for cluster_idx in range(0,len(clusters)):
-            for i in range(0,boundarying_lines[cluster_idx].shape[0]):
-                sit_from=boundarying_lines[cluster_idx].iloc[i].name[1]
-                sit_to=boundarying_lines[cluster_idx].iloc[i].name[2]
-             
-                if (caps_coupling and iteration >1):
-                    coup_vars.residprim_cap[cluster_idx,year,sit_from,sit_to]= \
-                          (sub[cluster_idx].cap_tra[year,sit_from,sit_to,:,:]()[0] - caps_from_subs[year,sit_from,sit_to].values[0])**2
-                    coup_vars.residdual_cap[cluster_idx,year,sit_from,sit_to]= \
-                        coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to]**2 * \
-                        (cap_global_history[iteration][year,sit_from,sit_to] -
-                         cap_global_history[iteration-1][year,sit_from,sit_to])**2
-                          
-                    if iteration >= 2: 
-                        if coup_vars.residprim_cap[cluster_idx,year,sit_from,sit_to] \
-                        >= mu * coup_vars.residdual_cap[cluster_idx,year,sit_from,sit_to]:
-                            coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] = \
-                            coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] * (1 + tau)
-                        elif coup_vars.residdual_cap[cluster_idx,year,sit_from,sit_to] \
-                        >= mu * coup_vars.residprim_cap[cluster_idx,year,sit_from,sit_to]:
-                            coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] = \
-                            coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] / (1 + tau)             
-                            
-                for j in timesteps[1:]: 
-                    if iteration >1:
-                        coup_vars.residprim[cluster_idx,year,j,sit_from,sit_to]= \
-                            ([values for values in sub[cluster_idx].e_tra_in[j,year,sit_from,sit_to,:,:].value][0] -
-                             flows_from_subs_in.loc[year,j,sit_from,sit_to].values[0])**2
-                        coup_vars.residdual[cluster_idx,year,j,sit_from,sit_to]= \
-                             coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to]**2 * \
-                             (flow_global_history[iteration].loc[year,j,sit_from,sit_to].values[0] -
-                              flow_global_history[iteration-1].loc[year,j,sit_from,sit_to].values[0])**2
-                           
-                    if iteration >= 2:
-                        if coup_vars.residprim[cluster_idx,year,j,sit_from,sit_to] \
-                        >= mu * coup_vars.residdual[cluster_idx,year,j,sit_from,sit_to]:
-                            coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] = \
-                            coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] * (1 + tau)
-                        elif coup_vars.residdual[cluster_idx,year,j,sit_from,sit_to] \
-                        >= mu * coup_vars.residprim[cluster_idx,year,j,sit_from,sit_to]:
-                            coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] = \
-                            coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] / (1 + tau)                          
-                    coup_vars.lambdas[cluster_idx,year,j,sit_from,sit_to] = \
-                    coup_vars.lambdas[cluster_idx,year,j,sit_from,sit_to] + \
-                        coup_vars.rhos[cluster_idx,year,j,sit_from,sit_to] * \
-                        ([values for values in sub[cluster_idx].e_tra_in[j,year,sit_from,sit_to,:,:].value][0] - flows_from_subs_in.loc[year,j,sit_from,sit_to].values[0])
-                        
-                if caps_coupling:                            
-                    coup_vars.lambdas_cap[cluster_idx,year,sit_from,sit_to] = \
-                    coup_vars.lambdas_cap[cluster_idx,year,sit_from,sit_to] + \
-                        coup_vars.rhos_cap[cluster_idx,year,sit_from,sit_to] * \
-                        (sub[cluster_idx].cap_tra[year,sit_from,sit_to,:,:]()[0] - caps_from_subs[year,sit_from,sit_to].values[0])
-        #import pdb;pdb.set_trace()
+        #adjusting flow_global
+        coup_vars.flow_global = avgs.to_dict()[0]
+
+        #adjusting rho and lambda,
+        #adjusting lambda
+        lambdas_temp_df = pd.DataFrame(coup_vars.lambdas.values(), index=pd.MultiIndex.from_tuples(
+            coup_vars.lambdas.keys())).rename_axis([None, 't', 'stf', 'sit', 'sit_'])
+        rhos_temp_df = pd.DataFrame(coup_vars.rhos.values(), index=pd.MultiIndex.from_tuples(
+            coup_vars.rhos.keys())).rename_axis([None, 't', 'stf', 'sit', 'sit_'])
+
+        coup_vars.lambdas = (lambdas_temp_df + rhos_temp_df * (e_tra_ins_dict - avgs_repeated).dropna()).to_dict()[0]
+
+        #adjusting rho (adaptive penalty)
+        if iteration > 1:
+            coup_vars.residprim = (e_tra_ins_dict-avgs_repeated).dropna()**2 #a DF
+            coup_vars.residdual = (rhos_temp_df * (flow_global_history[iteration]-flow_global_history[iteration-1])**2).dropna()
+            coup_vars.rhos = ((coup_vars.residprim >= mu * coup_vars.residdual) * rhos_temp_df * (1 + tau) \
+                            + (coup_vars.residdual >= mu * coup_vars.residprim) * rhos_temp_df / (1 + tau) \
+                            + ~((coup_vars.residprim >= mu * coup_vars.residdual) \
+                                | (coup_vars.residdual >= mu * coup_vars.residprim)) * rhos_temp_df).to_dict()[0]
+
         pd.set_option('display.float_format', lambda x: '%.0f' % x)
         
-        #print(pd.concat([flows_from_subs_in0,flows_from_original_problem],axis=1))
-        aaa=pd.concat([flows_from_subs_in0,flows_from_original_problem],axis=1)
-        aaa=aaa.reset_index(level=0).loc[all_boundary_lines.index]
+        #aaa=pd.concat([flows_from_subs_in0,flows_from_original_problem],axis=1)
+        #aaa=aaa.reset_index(level=0).loc[all_boundary_lines.index]
         print(sum(prob.costs[ct]() for ct in prob.cost_type))
-        #import pdb;pdb.set_trace()
-        #print(sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub))
         print(sum(sub_persistent[i]._solver_model.objval for i in sub))
         #cost_history[iteration-1]= sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub)#
         cost_history[iteration - 1] = sum(sub_persistent[i]._solver_model.objval for i in sub)
@@ -560,29 +358,18 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         #     plt.show()
         #if abs(sum(prob.costs[ct]() for ct in prob.cost_type)-sum(sum(sub[i].costs[ct]() for ct in sub[inst].cost_type) for i in sub)) <= 0.1:
         if abs(sum(prob.costs[ct]() for ct in prob.cost_type) - cost_history[iteration - 1]) <= 0.1:
-            print(str(iteration)+' iterations to solve '+ '(parallel '+str(parallel)+')'+ '(capacities coupled '+str(caps_coupling)+')')
-        #import pdb;pdb.set_trace()   
-        amko=[(b,a,c,d) for a,b,c,d,e,f in flows_from_subs_in0.index.tolist()]
-        truth_list=np.zeros(len(amko), dtype=bool)
-        for j in range(0,len(amko)):
-            truth_list[j] = amko[j] in list(coup_vars.flow_global.keys())
-        flows_from_subs_in0=flows_from_subs_in0[truth_list]  
-
-        if caps_coupling:
-            amko=[(a,b,c) for a,b,c,d,e in caps_from_subs0.index.tolist()]
-            truth_list=np.zeros(len(amko), dtype=bool)
-            for j in range(0,len(amko)):
-                truth_list[j] = amko[j] in list(coup_vars.cap_global.keys())
-            caps_from_subs0=caps_from_subs0[truth_list]            
-            pd.set_option('display.max_columns', 500)
+            print(str(iteration)+' iterations to solve '+ '(parallel '+str(parallel)+')')
 
         t2 = t.time()                
         print(str(t2-t1)+' seconds elapsed, '+str(iteration)+' iterations')
-        if iteration % 500== 0:
-            t2 = t.time()         
-            print(str(t2-t1)+' seconds to solve '+ '(parallel '+str(parallel)+')'+ '(capacities coupled '+str(caps_coupling)+')')            
-            import pdb;pdb.set_trace()
-  
+        #if abs() <= tolerance:
+        #    convergence = True
+        #    break
+
+    if convergence:
+        print('Convergence achieved in '+str(iteration)+' iterations. Objective function value = '+str(cost_history[iteration - 1]))
+    else:
+        print('Maximum number of iterations '+str(maxit)+' is reached. Objective function value = '+str(cost_history[iteration - 1]))
     return sub
 #
 #    # save problem solution (and input data) to HDF5 file

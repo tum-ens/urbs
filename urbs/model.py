@@ -36,23 +36,10 @@ def create_model(data_all, timesteps=None, dt=1, objective='cost', dual=False, t
     m.type = type   
     m.coup_vars = coup_vars
     if m.type =='sub':
-        flow_global = coup_vars.flow_global
-        if coup_vars.caps_coupling:        
-            cap_global = coup_vars.cap_global
-    
-        lamda = dict((key[1:],value) for key, value in coup_vars.lambdas.items() if key[0] == cluster)   
-        rho = dict((key[1:],value) for key, value in coup_vars.rhos.items() if key[0] == cluster)   
-        m.fixed_flow_global = flow_global
-        m.fixed_lamda = lamda
-        m.fixed_rho = rho
-        if coup_vars.caps_coupling:        
-            lamda_cap = dict((key[1:],value) for key, value in coup_vars.lambdas_cap.items() if key[0] == cluster)   
-            rho_cap = dict((key[1:],value) for key, value in coup_vars.rhos_cap.items() if key[0] == cluster)  
-        
+        rho = dict((key[1:],value) for key, value in coup_vars.rhos.items() if key[0] == cluster)
         print("urbs Regional-" + str(sites) + " is created.")
     elif m.type =='normal':
         print("urbs Original is created.")
-        
         
     # Parameters
     # weight = length of year (hours) / length of simulation (hours)
@@ -144,34 +131,18 @@ def create_model(data_all, timesteps=None, dt=1, objective='cost', dual=False, t
 
     if type=='sub':
         m.flow_global = pyomo.Var(
-            m.stf,m.tm,m.sit,m.sit,
+            m.tm,m.stf,m.sit,m.sit,
             within=pyomo.Reals,
             doc='flow global in')
         m.lamda = pyomo.Var(
-            m.stf,m.tm,m.sit,m.sit,
+            m.tm,m.stf,m.sit,m.sit,
             within=pyomo.Reals,
             doc='lambda in')
         m.rho = pyomo.Param(
-            m.stf,m.tm,m.sit,m.sit,
+            m.tm,m.stf,m.sit,m.sit,
             initialize=rho,
             doc='rho in')
 
-        if coup_vars.caps_coupling:                        
-            m.cap_global = pyomo.Param(
-                m.stf,m.sit,m.sit,
-                initialize=cap_global,
-                mutable=True,
-                doc='flow global in')
-            m.lamda_cap = pyomo.Param(
-                m.stf,m.sit,m.sit,
-                initialize=lamda_cap,
-                mutable=True,
-                doc='lambda in')                   
-            m.rho_cap = pyomo.Param(
-                m.stf,m.sit,m.sit,
-                initialize=rho_cap,
-                mutable=True,
-                doc='rho in')      
     # cost_type
     m.cost_type = pyomo.Set(
         initialize=m.cost_type_list,
@@ -968,58 +939,19 @@ def def_costs_rule_sub(m, cost_type):
 
     elif cost_type == 'Purchase':
         return m.costs[cost_type] == purchase_costs(m)
-    
-    elif cost_type is 'ADMM_Linear':
-        if m.coup_vars.caps_coupling == True:
-            return m.costs[cost_type] == \
-                sum(m.lamda[(stf, tm, sit_in, sit_out)] *
-                        (m.e_tra_in[(tm, stf, sit_in,sit_out,tra,com)]
-                        -m.flow_global[(stf, tm,sit_in,sit_out)])
-                        for tm in m.tm
-                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun) + \
-                sum(m.lamda_cap[(stf, sit_in, sit_out)] *
-                        (m.cap_tra[(stf, sit_in,sit_out,tra,com)]
-                        -m.cap_global[(stf, sit_in,sit_out)])
-                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun)
-        else:
-            return m.costs[cost_type] == \
-                sum(m.lamda[(stf, tm, sit_in, sit_out)] *
-                        (m.e_tra_in[(tm,stf, sit_in,sit_out,tra,com)]
-                        -m.flow_global[(stf, tm,sit_in,sit_out)])
-                        for tm in m.tm
-                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun)                        
-        
-    elif cost_type is 'ADMM_Quadratic':
-        if m.coup_vars.caps_coupling == True:
-            return m.costs[cost_type] == \
-                sum(0.5 * m.rho[(stf, tm, sit_in, sit_out)] *
-                        (m.e_tra_in[(tm,stf, sit_in,sit_out,tra,com)]
-                        -m.flow_global[(stf, tm,sit_in,sit_out)])**2
-                        for tm in m.tm
-                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun) + \
-                sum(0.5 * m.rho_cap[(stf, sit_in, sit_out)] *
-                        (m.cap_tra[(stf, sit_in,sit_out,tra,com)]
-                        -m.cap_global[(stf, sit_in,sit_out)])**2
-                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun)      
-        else:
-            return m.costs[cost_type] == \
-                sum(0.5 * m.rho[(stf, tm, sit_in, sit_out)] *
-                        (m.e_tra_in[(tm,stf, sit_in,sit_out,tra,com)]
-                        -m.flow_global[(stf, tm,sit_in,sit_out)])**2
-                        for tm in m.tm
-                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun)        
+
     else:
         raise NotImplementedError("Unknown cost type.")
 
 def cost_rule(m):
     if m.type =='sub':
-        return (pyomo.summation(m.costs) + sum(0.5 * m.rho[(stf, tm, sit_in, sit_out)] *
-                        (m.e_tra_in[(tm,stf, sit_in,sit_out,tra,com)]
-                        -m.flow_global[(stf, tm,sit_in,sit_out)])**2
+        return (pyomo.summation(m.costs) + sum(0.5 * m.rho[(tm, stf, sit_in, sit_out)] *
+                        (m.e_tra_in[(tm, stf, sit_in,sit_out, tra, com)]
+                        -m.flow_global[(tm, stf, sit_in,sit_out)])**2
                         for tm in m.tm
-                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun) + sum(m.lamda[(stf, tm, sit_in, sit_out)] *
+                        for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun) + sum(m.lamda[(tm, stf, sit_in, sit_out)] *
                         (m.e_tra_in[(tm,stf, sit_in,sit_out,tra,com)]
-                        -m.flow_global[(stf, tm,sit_in,sit_out)])
+                        -m.flow_global[(tm, stf, sit_in,sit_out)])
                         for tm in m.tm
                         for stf, sit_in, sit_out, tra, com in m.tra_tuples_boun)      )
     else:

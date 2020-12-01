@@ -130,7 +130,7 @@ def compare_scenarios(result_files, output_filename):
             esum = xls.parse('Commodity sums')
 
             # repair broken MultiIndex in the first column
-            esum.reset_index(inplace=True)
+            esum.reset_index(drop=True, inplace=True)
             esum.fillna(method='ffill', inplace=True)
             esum.set_index(['Unnamed: 0','Unnamed: 1'], inplace=True)
 

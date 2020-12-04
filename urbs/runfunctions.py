@@ -8,6 +8,7 @@ from .plot import *
 from .input import *
 from .validation import *
 from .saveload import *
+from .transdisthelper import *
 
 
 def prepare_result_directory(result_name):
@@ -54,7 +55,7 @@ def setup_solver(optim, logfile='solver.log'):
 
 
 def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
-                 objective, plot_tuples=None,  plot_sites_name=None,
+                 objective, microgrid_files = None, plot_tuples=None,  plot_sites_name=None,
                  plot_periods=None, report_tuples=None,
                  report_sites_name=None):
     """ run an urbs model for given input, time steps and scenario
@@ -91,6 +92,20 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     validate_input(data)
     validate_dc_objective(data, objective)
 
+    # read and modify microgrid data for scenario
+    needmicro = identify_mode(data)
+    if needmicro['transdist']:
+        microgrid_data_initial =[]
+        for i, microgrid_file in enumerate(microgrid_files):
+            microgrid_data_initial.append(read_input(microgrid_file, year))
+            microgrid_data_initial[i] = scenario(microgrid_data_initial[i])
+            validate_input(microgrid_data_initial[i])
+            validate_dc_objective(microgrid_data_initial[i], objective)
+                #todo: add slack bus in excel? with connection to all microgrids of a county
+                #todo: add connection between slack bus and supper county node
+
+    # Join microgrid data to model data
+    data = create_transdist_data(data, microgrid_data_initial)
     # create model
     prob = create_model(data, dt, timesteps, objective)
     prob.write('model.lp', io_options={'symbolic_solver_labels':True})

@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import glob
 from xlrd import XLRDError
-import pyomo.core as pyomo
+import pyomo.environ as pyomo #from pyomo.environ import ConcreteModel #todo nachfragen
 from .features.modelhelper import *
 from .identify import *
 
@@ -174,7 +174,7 @@ def read_input(input_files, year):
 
     # sort nested indexes to make direct assignments work
     for key in data:
-        if isinstance(data[key].index, pd.core.index.MultiIndex):
+        if isinstance(data[key].index, pd.core.indexes.multi.MultiIndex): #todo nachfragen indexes.multi.
             data[key].sort_index(inplace=True)
     return data
 

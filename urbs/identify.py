@@ -36,7 +36,8 @@ def identify_mode(data):
                 'pro': True,
                 'tra': False,
                 'sto-c': False,
-                'sto-p': False}
+                'sto-p': False},
+        'transdist': False              # transmission-distribution interface
         # 'inv_mip':{
         #         'pro': False,
         #         'tra': False,
@@ -69,6 +70,8 @@ def identify_mode(data):
     if 'min-fraction' in data['process'].keys():
         if any(data['process']['min-fraction'] > 0):
             mode['minfraction'] = True
+    if data['global_prop'][data['global_prop'].keys()[0]][2] == 1:
+        mode['transdist'] = True
     # if not data['process_commodity'].empty:
     #     if any(data['commodity'] == 'heat'):
     #         mode['chp'] = True

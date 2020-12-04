@@ -1,5 +1,5 @@
 import math
-import pyomo.core as pyomo
+import pyomo.environ as pyomo
 from datetime import datetime
 from .features import *
 from .input import *

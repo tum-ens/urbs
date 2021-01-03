@@ -256,6 +256,178 @@ def add_transmission_dc(m):
 
     return m
 
+# adds the transmission features to model with ACPF model features
+def add_transmission_ac(m):
+    # defining transmission tuple sets for transport and DCPF model separately
+    tra_tuples = set()
+    tra_tuples_dc = set()
+    tra_tuples_ac = set()
+    for key in m.transmission_dict['reactance']:
+        tra_tuples.add(tuple(key))
+    for key in m.transmission_dc_dict['reactance']:
+        tra_tuples_dc.add(tuple(key))
+    for key in m.transmission_ac_dict['resistance']:
+        tra_tuples_ac.add(tuple(key))
+
+    tra_tuples_tp = tra_tuples - tra_tuples_ac - tra_tuples_dc
+    tra_tuples_ac = remove_duplicate_transmission(tra_tuples_ac)
+    tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
+    tra_tuples_ac_dc = tra_tuples_ac | tra_tuples_dc
+    tra_tuples = tra_tuples_ac | tra_tuples_dc | tra_tuples_tp
+
+    # tranmission (e.g. hvac, hvdc, pipeline...)
+    indexlist = set()
+    for key in m.transmission_dict["eff"]:
+        indexlist.add(tuple(key)[3])
+    m.tra = pyomo.Set(
+        initialize=indexlist,
+        doc='Set of transmission technologies')
+
+    # Transport and DCPF transmission tuples
+    m.tra_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(tra_tuples),
+        doc='Combinations of possible transmissions,'
+            'without duplicate dc transmissions'
+            ' e.g. (2020,South,Mid,hvac,Elec)')
+
+    # DCPF transmission tuples
+    m.tra_tuples_dc = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(tra_tuples_dc),
+        doc='Combinations of possible bidirectional dc'
+            'transmissions, e.g. (2020,South,Mid,hvac,Elec)')
+
+    # ACPF transmission tuples
+    m.tra_tuples_ac = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(tra_tuples_ac),
+        doc='Combinations of possible bidirectional ac'
+            'transmissions, e.g. (2020,node1_A,node2_A,hvac,Elec)')
+
+    # DCPF&ACPF transmission tuples together
+    m.tra_tuples_ac_dc = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(tra_tuples_ac_dc),
+        doc='Combinations of possible bidirectional ac'
+            'transmissions, e.g. (2020,node1_A,node2_A,hvac,Elec)')
+
+    m.tra_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=[(stf, sit, sit_, tra, com)
+                    for (stf, sit, sit_, tra, com) in tuple(m.tra_block_dict.keys())],
+        doc='Transmission with new block capacities')
+
+    # Transport transmission tuples
+    m.tra_tuples_tp = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=tuple(tra_tuples_tp),
+        doc='Combinations of possible transport transmissions,'
+            'e.g. (2020,South,Mid,hvac,Elec)')
+
+    if m.mode['int']:
+        m.operational_tra_tuples = pyomo.Set(
+            within=m.sit * m.sit * m.tra * m.com * m.stf * m.stf,
+            initialize=[(sit, sit_, tra, com, stf, stf_later)
+                        for (sit, sit_, tra, com, stf, stf_later)
+                        in op_tra_tuples(m.tra_tuples, m)],
+            doc='Transmissions that are still operational through stf_later'
+                '(and the relevant years following), if built in stf'
+                'in stf.')
+        m.inst_tra_tuples = pyomo.Set(
+            within=m.sit * m.sit * m.tra * m.com * m.stf,
+            initialize=[(sit, sit_, tra, com, stf)
+                        for (sit, sit_, tra, com, stf)
+                        in inst_tra_tuples(m)],
+            doc='Installed transmissions that are still operational'
+                'through stf')
+
+    # Variables
+    m.cap_tra_new = pyomo.Var(
+        m.tra_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='New transmission capacity (MW)')
+    m.tra_cap_unit = pyomo.Var(
+        m.tra_block_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New transmission capacity blocks')
+
+    # transmission capacity as expression object
+    m.cap_tra = pyomo.Expression(
+        m.tra_tuples,
+        rule=def_transmission_capacity_rule,
+        doc='total transmission capacity')
+
+    m.e_tra_abs = pyomo.Var(
+        m.tm, m.tra_tuples_ac_dc,
+        within=pyomo.NonNegativeReals,
+        doc='Absolute power flow on transmission line (MW) per timestep')
+    m.e_tra_in = pyomo.Var(
+        m.tm, m.tra_tuples,
+        within=e_tra_domain_rule,
+        doc='Power flow into transmission line (MW) per timestep')
+    m.e_tra_out = pyomo.Var(
+        m.tm, m.tra_tuples,
+        within=e_tra_domain_rule,
+        doc='Power flow out of transmission line (MW) per timestep')
+
+    m.voltage_angle = pyomo.Var(
+        m.tm, m.stf, m.sit,
+        within=pyomo.Reals,
+        doc='Voltage angle of a site')
+    # m.voltage_squared = pyomo.Var(
+    #     m.tm, m.sit_tuples_ac,
+    #     within=pyomo.Reals,
+    #     doc='Voltage^2 of a site')
+
+    # transmission
+    m.def_cap_tra_new = pyomo.Constraint(
+        m.tra_block_tuples,
+        rule=def_cap_tra_new_rule,
+        doc='cap_tra_new = tra-block * cap_tra_new')
+    m.def_transmission_output = pyomo.Constraint(
+        m.tm, m.tra_tuples,
+        rule=def_transmission_output_rule,
+        doc='transmission output = transmission input * efficiency')
+    m.def_dc_power_flow = pyomo.Constraint(
+        m.tm, m.tra_tuples_dc,
+        rule=def_dc_power_flow_rule,
+        doc='transmission output = (angle(in)-angle(out))/ 57.2958 '
+            '* -1 *(-1/reactance) * (base voltage)^2')
+
+
+    m.def_angle_limit = pyomo.Constraint(
+        m.tm, m.tra_tuples_ac_dc,
+        rule=def_angle_limit_rule,
+        doc='-angle limit < angle(in) - angle(out) < angle limit')
+    m.e_tra_abs1 = pyomo.Constraint(
+        m.tm, m.tra_tuples_ac_dc,
+        rule=e_tra_abs_rule1,
+        doc='transmission ac_dc input <= absolute transmission ac_dc input')
+    m.e_tra_abs2 = pyomo.Constraint(
+        m.tm, m.tra_tuples_ac_dc,
+        rule=e_tra_abs_rule2,
+        doc='-transmission ac_dc input <= absolute transmission acdc input')
+
+    m.res_transmission_input_by_capacity = pyomo.Constraint(
+        m.tm, m.tra_tuples,
+        rule=res_transmission_input_by_capacity_rule,
+        doc='transmission input <= total transmission capacity')
+    m.res_transmission_ac_dc_input_by_capacity = pyomo.Constraint(
+        m.tm, m.tra_tuples_ac_dc,
+        rule=res_transmission_ac_dc_input_by_capacity_rule,
+        doc='-ac_dc_pf transmission input <= total transmission capacity')
+    m.res_transmission_capacity = pyomo.Constraint(
+        m.tra_tuples,
+        rule=res_transmission_capacity_rule,
+        doc='transmission.cap-lo <= total transmission capacity <= '
+            'transmission.cap-up')
+    m.res_transmission_symmetry = pyomo.Constraint(
+        m.tra_tuples_tp,
+        rule=res_transmission_symmetry_rule,
+        doc='total transmission capacity must be symmetric in both directions')
+
+    return m
 
 # constraints
 

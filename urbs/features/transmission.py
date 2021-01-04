@@ -1,9 +1,18 @@
 import math
 import pyomo.core as pyomo
 
-def e_tra_domain_rule(m, tm, stf, sin, sout, tra, com):
+def e_tra_domain_rule1(m, tm, stf, sin, sout, tra, com):
     # assigning e_tra_in and e_tra_out variable domains for transport and DCPF
     if (stf, sin, sout, tra, com) in m.tra_tuples_dc:
+        return pyomo.Reals
+    elif (stf, sin, sout, tra, com) in m.tra_tuples_tp:
+        return pyomo.NonNegativeReals
+
+def e_tra_domain_rule2(m, tm, stf, sin, sout, tra, com):
+    # assigning e_tra_in and e_tra_out variable domains for transport and DCPF
+    if (stf, sin, sout, tra, com) in m.tra_tuples_dc:
+        return pyomo.Reals
+    elif (stf, sin, sout, tra, com) in m.tra_tuples_ac:
         return pyomo.Reals
     elif (stf, sin, sout, tra, com) in m.tra_tuples_tp:
         return pyomo.NonNegativeReals
@@ -12,6 +21,7 @@ def e_tra_domain_rule(m, tm, stf, sin, sout, tra, com):
 def remove_duplicate_transmission(transmission_keys):
     # removing duplicate transmissions for DCPF
     tra_tuple_list = list(transmission_keys)
+    tra_tuple_list = sorted(tra_tuple_list, key=lambda x: x[1])
     i = 0
     while i < len(tra_tuple_list):
         for k in range(len(tra_tuple_list)):
@@ -151,6 +161,12 @@ def add_transmission_dc(m):
         doc='Combinations of possible bidirectional dc'
             'transmissions, e.g. (2020,South,Mid,hvac,Elec)')
 
+    m.tra_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=[(stf, sit, sit_, tra, com)
+                    for (stf, sit, sit_, tra, com) in tuple(m.tra_block_dict.keys())],
+        doc='Transmission with new block capacities')
+
     # Transport transmission tuples
     m.tra_tuples_tp = pyomo.Set(
         within=m.stf * m.sit * m.sit * m.tra * m.com,
@@ -197,11 +213,11 @@ def add_transmission_dc(m):
         doc='Absolute power flow on transmission line (MW) per timestep')
     m.e_tra_in = pyomo.Var(
         m.tm, m.tra_tuples,
-        within=e_tra_domain_rule,
+        within=e_tra_domain_rule1,
         doc='Power flow into transmission line (MW) per timestep')
     m.e_tra_out = pyomo.Var(
         m.tm, m.tra_tuples,
-        within=e_tra_domain_rule,
+        within=e_tra_domain_rule1,
         doc='Power flow out of transmission line (MW) per timestep')
 
     m.voltage_angle = pyomo.Var(
@@ -242,7 +258,7 @@ def add_transmission_dc(m):
         doc='transmission input <= total transmission capacity')
     m.res_transmission_dc_input_by_capacity = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
-        rule=res_transmission_dc_input_by_capacity_rule,
+        rule=res_transmission_ac_dc_input_by_capacity_rule,
         doc='-dcpf transmission input <= total transmission capacity')
     m.res_transmission_capacity = pyomo.Constraint(
         m.tra_tuples,
@@ -364,21 +380,21 @@ def add_transmission_ac(m):
         doc='Absolute power flow on transmission line (MW) per timestep')
     m.e_tra_in = pyomo.Var(
         m.tm, m.tra_tuples,
-        within=e_tra_domain_rule,
+        within=e_tra_domain_rule2,
         doc='Power flow into transmission line (MW) per timestep')
     m.e_tra_out = pyomo.Var(
         m.tm, m.tra_tuples,
-        within=e_tra_domain_rule,
+        within=e_tra_domain_rule2,
         doc='Power flow out of transmission line (MW) per timestep')
 
     m.voltage_angle = pyomo.Var(
         m.tm, m.stf, m.sit,
         within=pyomo.Reals,
         doc='Voltage angle of a site')
-    # m.voltage_squared = pyomo.Var(
-    #     m.tm, m.sit_tuples_ac,
-    #     within=pyomo.Reals,
-    #     doc='Voltage^2 of a site')
+    m.voltage_squared = pyomo.Var(
+        m.tm, m.sit_tuples_ac,
+        within=pyomo.Reals,
+        doc='Voltage^2 of a site')
 
     # transmission
     m.def_cap_tra_new = pyomo.Constraint(
@@ -394,7 +410,18 @@ def add_transmission_ac(m):
         rule=def_dc_power_flow_rule,
         doc='transmission output = (angle(in)-angle(out))/ 57.2958 '
             '* -1 *(-1/reactance) * (base voltage)^2')
+    # Power flow constraint for ac transmission lines
+    m.def_ac_power_flow = pyomo.Constraint(
+        m.tm, m.tra_tuples_ac,
+        rule=def_ac_power_flow_rule,
+        doc='voltage(in) = voltage(out) + 2 * (resistance * Power_active + reactance * Power_reactive)')
 
+    m.def_voltage_limit = pyomo.Constraint(
+        m.tm, m.sit_tuples_ac,
+        rule=def_voltage_limit_rule,
+        doc='(base_voltage * min-voltage)^2 <= V^2 <= (base_voltage * max-voltage)^2')
+
+    # todo: conStraint: Referenzknoten voltage_angle = 0
 
     m.def_angle_limit = pyomo.Constraint(
         m.tm, m.tra_tuples_ac_dc,
@@ -480,10 +507,21 @@ def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] ==
             (m.voltage_angle[tm, stf, sin] - m.voltage_angle[tm, stf, sout]) / 57.2958 * -1 *
             (-1 / m.transmission_dict['reactance'][(stf, sin, sout, tra, com)])
-            * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)]
-            * m.transmission_dict['base_voltage'][(stf, sin, sout, tra, com)])
+            * m.site_dict['base-voltage'][(stf, sin)]**2)
 
-# voltage angle difference rule for DCPF transmissions
+def def_ac_power_flow_rule(m, tm, stf, sin, sout, tra, com):
+    return (m.voltage_squared[tm, stf, sin] == m.voltage_squared[tm, stf, sout] +
+            2 * (m.transmission_dict['resistance'][(stf, sin, sout, tra, 'Elec')]
+                 * m.e_tra_in[tm, stf, sin, sout, tra, 'Elec'] +
+            m.transmission_dict['reactance'][(stf, sin, sout, tra, 'Elec-Reactive')]
+                 * m.e_tra_in[tm, stf, sin, sout, tra, 'Elec-Reactive']))
+
+def def_voltage_limit_rule(m, tm, stf, sin):
+    return ((m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['min-voltage'][(stf, sin)]) **2,
+            m.voltage_squared[tm, stf, sin],
+            (m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['max-voltage'][(stf, sin)]) **2)
+
+# voltage angle difference rule for ACPF & DCPF transmissions
 def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)],
             (m.voltage_angle[tm, stf, sin] - m.voltage_angle[tm, stf, sout]),
@@ -506,8 +544,8 @@ def res_transmission_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
             m.dt * m.cap_tra[stf, sin, sout, tra, com])
 
 
-# - dc transmission input <= transmission capacity
-def res_transmission_dc_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
+# - ac_dc transmission input <= transmission capacity
+def res_transmission_ac_dc_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.e_tra_in[tm, stf, sin, sout, tra, com] <=
             m.dt * m.cap_tra[stf, sin, sout, tra, com])
 
@@ -523,7 +561,6 @@ def res_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 def res_transmission_symmetry_rule(m, stf, sin, sout, tra, com):
     return m.cap_tra[stf, sin, sout, tra, com] == (m.cap_tra
                                                    [stf, sout, sin, tra, com])
-
 
 # transmission balance
 def transmission_balance(m, tm, stf, sit, com):
@@ -566,7 +603,7 @@ def transmission_cost(m, cost_type):
                    m.transmission_dict['cost_factor'][t]
                    for t in m.tra_tuples)
     elif cost_type == 'Variable':
-        if m.mode['dpf']:
+        if m.mode['dcpf']:
             return sum(m.e_tra_in[(tm,) + t] * m.weight *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]

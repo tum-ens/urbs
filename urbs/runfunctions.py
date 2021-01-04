@@ -93,21 +93,27 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     validate_dc_objective(data, objective)
 
     # read and modify microgrid data for scenario
-    needmicro = identify_mode(data)
-    if needmicro['transdist']:
+    if identify_mode(data)['transdist']:
         microgrid_data_initial =[]
         for i, microgrid_file in enumerate(microgrid_files):
             microgrid_data_initial.append(read_input(microgrid_file, year))
             microgrid_data_initial[i] = scenario(microgrid_data_initial[i])
             validate_input(microgrid_data_initial[i])
-            validate_dc_objective(microgrid_data_initial[i], objective)
-                #todo: add slack bus in excel? with connection to all microgrids of a county
-                #todo: add connection between slack bus and supper county node
+            validate_dc_objective(microgrid_data_initial[i], objective) #braucht es das?
+        # join microgrid data to model data
+        data = create_transdist_data(data, microgrid_data_initial)
 
-    # Join microgrid data to model data
-    data = create_transdist_data(data, microgrid_data_initial)
-    # create model
-    prob = create_model(data, dt, timesteps, objective)
+        # ## Excel Datei zum validieren der create_transdist_data todo: delete
+        # with pd.ExcelWriter(os.path.join(result_dir, '{}.xlsx').format(sce)) as writer:
+        #     for i, sheet in enumerate(data):
+        #         data[sheet].to_excel(writer, str(i))
+
+        # create model
+        prob = create_model(data, dt, timesteps, objective)
+    else:
+        prob = create_model(data, dt, timesteps, objective)
+
+    # write lp file
     prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile

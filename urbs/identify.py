@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def identify_mode(data):
     """ Identify the urbs mode that is needed for running the current Input
 
@@ -28,7 +27,8 @@ def identify_mode(data):
         'dsm': False,                   # demand site management
         'bsp': False,                   # buy sell price
         'tve': False,                   # time variable efficiency
-        'dpf': False,                   # dc power flow
+        'dcpf': False,                  # dc power flow
+        'acpf': False,                  # ac power flow
         'onoff': False,                 # on/off processes
         'minfraction': False,           # processes with minimum working load
         'chp': False,                   # chp processes
@@ -61,16 +61,20 @@ def identify_mode(data):
         mode['bsp'] = True
     if not data['eff_factor'].empty:
         mode['tve'] = True
+    if 'resistance' in data['transmission'].keys():
+        if any(data['transmission']['resistance'] > 0):
+            mode['acpf'] = True
     if 'reactance' in data['transmission'].keys():
         if any(data['transmission']['reactance'] > 0):
-            mode['dpf'] = True
+            mode['dcpf'] = True
     if 'on-off' in data['process'].keys():
         if any(data['process']['on-off'] == 1):
             mode['onoff'] = True
     if 'min-fraction' in data['process'].keys():
         if any(data['process']['min-fraction'] > 0):
             mode['minfraction'] = True
-    if data['global_prop'][data['global_prop'].keys()[0]][2] == 1:
+    # checking TransDist input value
+    if data['global_prop'].loc[pd.IndexSlice[:,'TransDist'],'value'][0]:
         mode['transdist'] = True
     # if not data['process_commodity'].empty:
     #     if any(data['commodity'] == 'heat'):

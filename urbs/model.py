@@ -2,6 +2,7 @@ import math
 import pyomo.environ as pyomo
 from datetime import datetime
 from .features import *
+from .features.transmission import add_transmission_ac #neu -  kann ich das nach dem commit löschen?
 from .input import *
 
 
@@ -123,6 +124,15 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         within=m.stf * m.sit,
         initialize=tuple(m.site_dict["area"].keys()),
         doc='Combinations of support timeframes and sites')
+
+    # tuple sets relevant for ac rules
+    m.sit_tuples_ac = pyomo.Set(
+        within=m.stf * m.sit,
+        initialize=[(stf, site)
+                    for (stf, site) in m.sit_tuples
+                    if m.site_dict['min-voltage'][(stf, site)] > 0],
+        doc='Combinations of support timeframes and sites with ac characteristics')
+
     m.com_tuples = pyomo.Set(
         within=m.stf * m.sit * m.com * m.com_type,
         initialize=tuple(m.commodity_dict["price"].keys()),
@@ -193,6 +203,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                     if process == pro and s == stf],
         doc='Commodities consumed by process by site,'
             'e.g. (2020,Mid,PV,Solar)')
+
     m.pro_output_tuples = pyomo.Set(
         within=m.stf * m.sit * m.pro * m.com,
         initialize=[(stf, site, process, commodity)
@@ -200,6 +211,13 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                     for (s, pro, commodity) in tuple(m.r_out_dict.keys())
                     if process == pro and s == stf],
         doc='Commodities produced by process by site, e.g. (2020,Mid,PV,Elec)')
+
+    m.pro_output_tuples_reactive = pyomo.Set(
+        within=m.stf * m.sit * m.pro,
+        initialize=[(stf, site, process) #todo: einfachere Variante möglich
+                    for (stf, site, process) in m.pro_tuples
+                    if m.process_dict['power-factor-min'][(stf, site, process)] > 0],
+        doc='Commodities produced by process by site, e.g. (2020,Mid,PV,Elec-Reactive)')
 
     # process tuples for maximum gradient feature
     m.pro_rampupgrad_tuples = pyomo.Set(
@@ -253,7 +271,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='Power flow of commodity into process (MW) per timestep')
     m.e_pro_out = pyomo.Var(
         m.tm, m.pro_output_tuples,
-        within=pyomo.NonNegativeReals,
+        within=pyomo.Reals, #zuvor NonNegativeReals
         doc='Power flow out of process (MW) per timestep')
 
     # process new capacity expansion unit
@@ -265,7 +283,9 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # Add additional features
     # called features are declared in distinct files in features folder
     if m.mode['tra']:
-        if m.mode['dpf']:
+        if m.mode['acpf']:
+            m = add_transmission_ac(m)
+        elif m.mode['dcpf']:
             m = add_transmission_dc(m)
         else:
             m = add_transmission(m)
@@ -364,6 +384,19 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.pro_timevar_output_tuples,
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
+
+    # constraint für die Erzeugung von Blindleistung
+    m.def_process_output_reactive1 = pyomo.Constraint(
+        m.tm, m.pro_output_tuples_reactive,
+        rule=def_process_output_reactive_rule1,
+        doc='Q <= P * tan(phi_min)')
+
+    # constraint für die Erzeugung von Blindleistung
+    m.def_process_output_reactive2 = pyomo.Constraint(
+        m.tm, m.pro_output_tuples_reactive,
+        rule=def_process_output_reactive_rule2,
+        doc='Q >= -tan(phi_min)')
+
     m.def_intermittent_supply = pyomo.Constraint(
         m.tm, m.pro_input_tuples,
         rule=def_intermittent_supply_rule,
@@ -593,9 +626,20 @@ def def_process_input_rule(m, tm, stf, sit, pro, com):
 
 # process output power = process throughput * output ratio
 def def_process_output_rule(m, tm, stf, sit, pro, com):
-    return (m.e_pro_out[tm, stf, sit, pro, com] ==
+    if com == 'Elec-Reactive':
+        return pyomo.Constraint.Skip #todo: geht das schöner?
+    else:
+        return (m.e_pro_out[tm, stf, sit, pro, com] ==
             m.tau_pro[tm, stf, sit, pro] * m.r_out_dict[(stf, pro, com)])
 
+
+def def_process_output_reactive_rule1(m, tm, stf, sit, pro):
+    return (m.e_pro_out[tm, stf, sit, pro, 'Elec-Reactive'] <=
+             m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['power-factor-min'][(stf, sit, pro)])))
+
+def def_process_output_reactive_rule2(m, tm, stf, sit, pro):
+    return (m.e_pro_out[tm, stf, sit, pro, 'Elec-Reactive'] >=
+             -m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['power-factor-min'][(stf, sit, pro)])))
 
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, stf, sit, pro, coin):

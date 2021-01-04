@@ -23,12 +23,6 @@ for i, microgrid_file in enumerate(microgrid_files):
 result_name = 'Trans-Dist'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
-#microgrid_files = {
-  # 'Microgrid_A': 'Microgrid_A.xlsx'
-  # 'Microgrid_B': 'Microgrid_B.xlsx'
-#    }
-
-
 # #copy input file to result directory
 try:
     shutil.copytree(input_path, os.path.join(result_dir, input_dir))
@@ -45,12 +39,16 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (0, 10)  # time step selection
+(offset, length) = (0, 164)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = [
+    (2021, 'Bayern', 'Elec'),
+    (2021, 'Hessen', 'Elec'),
+    (2021, 'node2_A1_Bayern', 'Elec'),
+    (2021, ['Bayern','Hessen','node2_A1_Bayern'], 'Elec')
     # ('Baden-Württemberg', 'Elec'),
     # ('Bavaria', 'Elec'),
     # ('Berlin', 'Elec'),
@@ -76,15 +74,19 @@ report_tuples = [
 
 # optional: define names for sites in report_tuples
 report_sites_name = {
-                      # ('Baden-Württemberg', 'Bavaria', 'Berlin',
-                      # 'Brandenburg', 'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony',
-                      # 'Mecklenburg-Vorpommern', 'North Rhine-Westphalia',
-                      # 'Rhineland-Palatinate', 'Saarland', 'Saxony', 'Saxony-Anhalt',
-                      # 'Schleswig-Holstein',    'Thuringia', 'Offshore'): 'Germany'}
-                    }
+    ('Bayern','Hessen','node2_A1_Bayern'): 'Germany'
+  # ('Baden-Württemberg', 'Bavaria', 'Berlin',
+  # 'Brandenburg', 'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony',
+  # 'Mecklenburg-Vorpommern', 'North Rhine-Westphalia',
+  # 'Rhineland-Palatinate', 'Saarland', 'Saxony', 'Saxony-Anhalt',
+  # 'Schleswig-Holstein',    'Thuringia', 'Offshore'): 'Germany'}
+  }
 
 # plotting commodities/sites
 plot_tuples = [
+    (2021, 'Bayern', 'Elec'),
+    (2021, 'Hessen', 'Elec'),
+    (2021, ['Bayern', 'Hessen'], 'Elec')
     # ('Baden-Württemberg', 'Elec'),
     # ('Bavaria', 'Elec'),
     # ('Berlin', 'Elec'),
@@ -110,6 +112,7 @@ plot_tuples = [
 
 # optional: define names for sites in plot_tuples
 plot_sites_name = {
+     ('Bayern','Hessen'): 'Germany'
      # ('Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 'Bremen',
      # 'Hamburg', 'Hesse', 'Lower Saxony', 'Mecklenburg-Vorpommern', 'North Rhine-Westphalia',
      # 'Rhineland-Palatinate', 'Saarland', 'Saxony', 'Saxony-Anhalt', 'Schleswig-Holstein',
@@ -134,7 +137,7 @@ scenarios = [
              urbs.scenario_base#,
              #urbs.scenario_co2_limit,
             ]
-#if __name__ == '__main__': # todo - nachfragen: wo ist Name main definiert?
+#if __name__ == '__main__':
 for scenario in scenarios:
     prob = urbs.run_scenario(input_path, solver, timesteps, scenario,
                              result_dir, dt, objective, microgrid_paths,

@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import glob
 from xlrd import XLRDError
-import pyomo.environ as pyomo #from pyomo.environ import ConcreteModel #todo nachfragen
+import pyomo.environ as pyomo #from pyomo.environ import ConcreteModel #todo nachfragen neu in persistant
 from .features.modelhelper import *
 from .identify import *
 
@@ -548,12 +548,19 @@ def pyomo_model_prep(data, timesteps):
         m.transmission_dict = transmission.to_dict()
         # DCPF transmission lines are bidirectional and do not have symmetry
         # fix-cost and inv-cost should be multiplied by 2
-        if m.mode['dpf']:
-            transmission_dc = transmission[transmission['reactance'] > 0]
+        if m.mode['acpf']:
+            transmission_ac = transmission[transmission['resistance'] > 0]
+            m.transmission_ac_dict = transmission_ac.to_dict()
+            for entry in m.transmission_ac_dict['resistance']:
+                m.transmission_dict['inv-cost'][entry] = 2 * m.transmission_dict['inv-cost'][entry]
+                m.transmission_dict['fix-cost'][entry] = 2 * m.transmission_dict['fix-cost'][entry]
+
+        if m.mode['dcpf']:
+            transmission_dc = transmission[(transmission['reactance'] > 0) & ((transmission['resistance'] == 0) | pd.isna(transmission['resistance']))]
             m.transmission_dc_dict = transmission_dc.to_dict()
-            for t in m.transmission_dc_dict['reactance']:
-                m.transmission_dict['inv-cost'][t] = 2 * m.transmission_dict['inv-cost'][t]
-                m.transmission_dict['fix-cost'][t] = 2 * m.transmission_dict['fix-cost'][t]
+            for entry in m.transmission_dc_dict['reactance']:
+                m.transmission_dict['inv-cost'][entry] = 2 * m.transmission_dict['inv-cost'][entry]
+                m.transmission_dict['fix-cost'][entry] = 2 * m.transmission_dict['fix-cost'][entry]
                 
     if m.mode['sto']:
         m.storage_dict = storage.to_dict()

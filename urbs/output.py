@@ -146,8 +146,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         df_transmission = get_input(instance, 'transmission')
         if com in set(df_transmission.index.get_level_values('Commodity')):
             imported = get_entity(instance, 'e_tra_out')
-            # avoid negative value import for DCPF transmissions
-            if instance.mode['dpf']:
+            # avoid negative value import for DCPF transmissions #todo: acpf similar to dcpf?
+            if instance.mode['dcpf']:
                 # -0.01 to avoid numerical errors such as -0
                 minus_imported = imported[(imported < -0.01)]
                 minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
@@ -162,7 +162,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = imported.unstack(level='sit')
 
             internal_import = imported[sites].sum(axis=1)  # ...from sites
-            if instance.mode['dpf']:
+            if instance.mode['dcpf']:
                 imported = imported[[x for x in other_sites if x in imported.keys()]]  # ...to existing other_sites
             else:
                 imported = imported[other_sites]  # ...from other_sites
@@ -170,7 +170,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             exported = get_entity(instance, 'e_tra_in')
             # avoid negative value export for DCPF transmissions
-            if instance.mode['dpf']:
+            if instance.mode['dcpf']:
                 # -0.01 to avoid numerical errors such as -0
                 minus_exported = exported[(exported < -0.01)]
                 minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
@@ -186,7 +186,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             internal_export = exported[sites].sum(
                 axis=1)  # ...to sites (internal)
-            if instance.mode['dpf']:
+            if instance.mode['dcpf']:
                 exported = exported[[x for x in other_sites if x in exported.keys()]]  # ...to existing other_sites
             else:
                 exported = exported[other_sites]  # ...to other_sites

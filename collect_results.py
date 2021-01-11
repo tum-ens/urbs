@@ -11,8 +11,11 @@ global dict_countries
 global dict_season
 
 # User preferences
-subfolder = os.path.join("Mekong", "not done") #20201013 Hydro scenarios long
-result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
+#subfolder = os.path.join("Mekong", "not done") #20201013 Hydro scenarios long
+#result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
+subfolder = "C:\\Users\\siala\\Documents\\Mekong\\20201016 Hydro scenarios long"
+result_folders = [f.name for f in os.scandir(subfolder) if (f.is_dir() and f.name[0:3]=="Run")]
+
 
 scenario_years = [2016, 2020, 2025, 2030, 2035, 2037]
 
@@ -200,7 +203,7 @@ def get_emissions_data(urbs_results):
     
     co2_regions = co2.reset_index()
     co2_regions["Site"] = [dict_countries[x] for x in co2_regions["Site"]]
-    co2_regions = co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
+    co2_regions = co2_regions.groupby(["Site", "scenario-year"]).sum()
     emissions.loc[co2_regions.index, "CO2 emissions (Mt)"] = co2_regions.sum(axis=1)
     
     for pro in pro_com.keys():
@@ -212,7 +215,7 @@ def get_emissions_data(urbs_results):
     try: # Bio_CCS negative
         co2_neg_regions = co2_neg.reset_index()
         co2_neg_regions["Site"] = [dict_countries[x] for x in co2_neg_regions["Site"]]
-        co2_neg_regions = co2_neg_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
+        co2_neg_regions = co2_neg_regions.groupby(["Site", "scenario-year"]).sum()
         emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2 emissions (Mt)"] = emissions.loc[co2_neg_regions.index.difference(co2_neg.index), "CO2 emissions (Mt)"] - co2_neg_regions.sum(axis=1)
     
         for pro in pro_com.keys():
@@ -235,7 +238,7 @@ def get_emissions_data(urbs_results):
         
         ccs_co2_regions = ccs_co2.reset_index()
         ccs_co2_regions["Site"] = [dict_countries[x] for x in ccs_co2_regions["Site"]]
-        ccs_co2_regions = ccs_co2_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
+        ccs_co2_regions = ccs_co2_regions.groupby(["Site", "scenario-year"]).sum()
         emissions.loc[ccs_co2_regions.index, "CO2 captured (Mt)"] = ccs_co2_regions["CCS_CO2"]
     except KeyError:
         pass
@@ -311,10 +314,10 @@ def get_electricity_data(urbs_results, year_built):
     
     # Repeat for groups of countries
     prices_weighted = prices.set_index(["Site", "scenario-year", "t"])["res_vertex"]
-    prices_weighted = demand.set_index(["Site", "scenario-year", "t"]).loc[prices_weighted.index][0] * prices_weighted
+    prices_weighted = demand.set_index(["Site", "scenario-year", "t"]).reindex(prices_weighted.index)[0] * prices_weighted
     prices_weighted_regions = prices_weighted.reset_index()
     prices_weighted_regions["Site"] = [dict_countries[x] for x in prices_weighted_regions["Site"]]
-    prices_weighted_regions = prices_weighted_regions.groupby(["Site", "scenario-year", "t"]).sum(axis=0)
+    prices_weighted_regions = prices_weighted_regions.groupby(["Site", "scenario-year", "t"]).sum()
     
     dem_regions = demand.drop(columns=["season"])
     dem_regions["Site"] = [dict_countries[x] for x in dem_regions["Site"]]
@@ -386,7 +389,7 @@ def get_generation_data(urbs_results):
     
     prod_regions = prod.reset_index()
     prod_regions["Site"] = [dict_countries[x] for x in prod_regions["Site"]]
-    prod_regions = prod_regions.groupby(["Site", "scenario-year"]).sum(axis=0)
+    prod_regions = prod_regions.groupby(["Site", "scenario-year"]).sum()
     generation.loc[prod_regions.index, prod_regions.columns] = prod_regions
     generation.loc[prod_regions.index] = generation.loc[prod_regions.index].fillna(0)
     
@@ -1077,6 +1080,7 @@ def get_cost_data(urbs_results, year_built):
     costs.loc[costs_regions.index] = costs_regions
     
     # Save results
+    import pdb; pdb.set_trace()
     costs.fillna(0, inplace=True)
     if "System costs" in urbs_results.keys():
         urbs_results["System costs"].set_index(["Site", "scenario-year"], inplace=True)

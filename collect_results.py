@@ -1072,6 +1072,7 @@ def get_cost_data(urbs_results, year_built):
     costs['Annualized total costs'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs"]
     costs['Annualized total costs (incl. past)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs (incl. past)"]
     costs['Annualized total costs (incl. past, till horizon)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs (incl. past, till horizon)"]
+    costs.fillna(0, inplace=True)
     
     # Regions
     costs_regions = costs.loc[list(set(dict_countries.keys()))].reset_index()
@@ -1080,8 +1081,6 @@ def get_cost_data(urbs_results, year_built):
     costs.loc[costs_regions.index] = costs_regions
     
     # Save results
-    import pdb; pdb.set_trace()
-    costs.fillna(0, inplace=True)
     if "System costs" in urbs_results.keys():
         urbs_results["System costs"].set_index(["Site", "scenario-year"], inplace=True)
         try: # Update values in sheet
@@ -1180,7 +1179,7 @@ for folder in result_folders:
     df_data = helpdf._data
     
     if os.path.exists(writer_path):
-        urbs_results = pd.read_excel(writer_path, sheet_name=None)
+        urbs_results = pd.read_excel(writer_path, sheet_name=None, engine='openpyxl')
     else:
         urbs_results = {}
     

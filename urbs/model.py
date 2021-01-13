@@ -133,6 +133,13 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                     if m.site_dict['min-voltage'][(stf, site)] > 0],
         doc='Combinations of support timeframes and sites with ac characteristics')
 
+    m.sit_slackbus = pyomo.Set(
+        within=m.stf * m.sit,
+        initialize=[(stf, site)
+                    for (stf, site) in m.sit_tuples
+                    if m.site_dict['ref-node'][(stf, site)] == 1],
+        doc='Combinations of support timeframes and sites with ac characteristics')
+
     m.com_tuples = pyomo.Set(
         within=m.stf * m.sit * m.com * m.com_type,
         initialize=tuple(m.commodity_dict["price"].keys()),
@@ -216,7 +223,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         within=m.stf * m.sit * m.pro,
         initialize=[(stf, site, process) #todo: einfachere Variante möglich
                     for (stf, site, process) in m.pro_tuples
-                    if m.process_dict['power-factor-min'][(stf, site, process)] > 0],
+                    if m.process_dict['pf-min'][(stf, site, process)] > 0],
         doc='Commodities produced by process by site, e.g. (2020,Mid,PV,Elec-Reactive)')
 
     # process tuples for maximum gradient feature
@@ -635,11 +642,11 @@ def def_process_output_rule(m, tm, stf, sit, pro, com):
 
 def def_process_output_reactive_rule1(m, tm, stf, sit, pro):
     return (m.e_pro_out[tm, stf, sit, pro, 'Elec-Reactive'] <=
-             m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['power-factor-min'][(stf, sit, pro)])))
+             m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['pf-min'][(stf, sit, pro)])))
 
 def def_process_output_reactive_rule2(m, tm, stf, sit, pro):
     return (m.e_pro_out[tm, stf, sit, pro, 'Elec-Reactive'] >=
-             -m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['power-factor-min'][(stf, sit, pro)])))
+             -m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['pf-min'][(stf, sit, pro)])))
 
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, stf, sit, pro, coin):

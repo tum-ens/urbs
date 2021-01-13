@@ -414,14 +414,22 @@ def add_transmission_ac(m):
     m.def_ac_power_flow = pyomo.Constraint(
         m.tm, m.tra_tuples_ac,
         rule=def_ac_power_flow_rule,
-        doc='voltage(in) = voltage(out) + 2 * (resistance * Power_active + reactance * Power_reactive)')
+        doc='voltage^2(in) = voltage^2(out) + 2 * (resistance(in_out) * Power_active(in_out) + reactance(in_out) * Power_reactive(in_out))')
 
     m.def_voltage_limit = pyomo.Constraint(
         m.tm, m.sit_tuples_ac,
         rule=def_voltage_limit_rule,
         doc='(base_voltage * min-voltage)^2 <= V^2 <= (base_voltage * max-voltage)^2')
 
-    # todo: conStraint: Referenzknoten voltage_angle = 0
+    m.def_slackbus_voltage = pyomo.Constraint(
+        m.tm, m.sit_slackbus,
+        rule=def_slackbus_voltage_rule,
+        doc='(voltage_slack_squared = base voltage^2')
+
+    m.def_slackbus_angle = pyomo.Constraint(
+        m.tm, m.sit_slackbus,
+        rule=def_slackbus_angle_rule,
+        doc='(angle_slack_squared = 0')
 
     m.def_angle_limit = pyomo.Constraint(
         m.tm, m.tra_tuples_ac_dc,
@@ -520,6 +528,12 @@ def def_voltage_limit_rule(m, tm, stf, sin):
     return ((m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['min-voltage'][(stf, sin)]) **2,
             m.voltage_squared[tm, stf, sin],
             (m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['max-voltage'][(stf, sin)]) **2)
+
+def def_slackbus_voltage_rule(m, tm, stf, sin):
+    return (m.voltage_squared[tm, stf, sin] == m.site_dict['base-voltage'][(stf, sin)]**2)
+
+def def_slackbus_angle_rule(m, tm, stf, sin):
+    return (m.voltage_angle[tm, stf, sin] == 0)
 
 # voltage angle difference rule for ACPF & DCPF transmissions
 def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):

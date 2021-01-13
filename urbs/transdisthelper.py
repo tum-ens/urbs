@@ -114,7 +114,7 @@ def add_reactive_transmission_lines(microgrid_data_input):
 
 # In this function according to predefined power factors for processes, reactive power outputs are implemented as commodity
 def add_reactive_output_ratios(microgrid_data_input):
-    pro_Q = microgrid_data_input['process'][microgrid_data_input['process'].loc[:, 'power-factor-min'] > 0]
+    pro_Q = microgrid_data_input['process'][microgrid_data_input['process'].loc[:, 'pf-min'] > 0]
     ratios_elec = microgrid_data_input['process_commodity'].loc[pd.IndexSlice[:, :, 'Elec', 'Out'], :]
     for process_idx, process in pro_Q.iterrows():
         for ratio_P_idx, ratio_P in ratios_elec.iterrows():
@@ -122,6 +122,8 @@ def add_reactive_output_ratios(microgrid_data_input):
                 ratio_Q = ratios_elec.loc[pd.IndexSlice[:, ratio_P_idx[1], 'Elec', 'Out'], :].copy(deep = True)
                 ratio_Q.rename(index={'Elec': 'Elec-Reactive'}, level=2, inplace=True)
                 microgrid_data_input['process_commodity'] = microgrid_data_input['process_commodity'].append(ratio_Q)
+                microgrid_data_input['process_commodity'] = microgrid_data_input['process_commodity']\
+                [~microgrid_data_input['process_commodity'].index.duplicated(keep='first')]
     return microgrid_data_input
 
 # In this function the main data and the microgrid data are merged

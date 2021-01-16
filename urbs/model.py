@@ -38,7 +38,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # costs are annual by default, variable costs are scaled by weight) and
     # among different simulation durations meaningful.
     m.weight = pyomo.Param(
-        initialize=float(8760) / (len(m.timesteps) * dt),
+        initialize=float(8760) / ((len(m.timesteps) - 1) * dt),
         doc='Pre-factor for variable costs and emissions for an annual result')
 
     # dt = spacing between timesteps. Required for storage equation that

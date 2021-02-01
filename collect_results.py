@@ -880,7 +880,7 @@ def get_cost_data(urbs_results, year_built):
     """
     multiindex = pd.MultiIndex.from_product([report_sites, [int(year)]], names=["Site", "scenario-year"])
     # Prepare dataframe of costs
-    costs = pd.DataFrame(0, index=multiindex, columns=["Fix costs", "Variable costs", "Fuel costs", "Environmental costs",
+    costs = pd.DataFrame(0, index=multiindex, columns=["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Absolute inv costs",
                                                     "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)",
                                                     "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)"])
     
@@ -1008,6 +1008,7 @@ def get_cost_data(urbs_results, year_built):
     
     # Investment costs
     process["Annualized inv costs"] = process["cap_pro_new"] * process["inv-cost"] * process["invcost-factor"] # alt for intertemporal: 'overpay-factor'
+    process["Absolute inv costs"] = process["Annualized inv costs"] * np.minimum(process["depreciation"], 2037 - year_built + 1)
     process["horizon"] = (2055 - year_built) / (process["depreciation"] + 5)
     process.loc[process["horizon"]>1, "horizon"] = 1
     process["Annualized inv costs (incl. past)"] = process["inst-cap"] * process["inv-cost"] * process["active"] * process["invcost-factor"]
@@ -1015,6 +1016,7 @@ def get_cost_data(urbs_results, year_built):
 
     if "storage" in locals():
         storage["Annualized inv costs"] = (storage["cap_sto_p_new"] * storage["inv-cost-p"] + storage["cap_sto_c_new"] * storage["inv-cost-c"]) * storage["invcost-factor"] # alt for intertemporal: 'overpay-factor'
+        storage["Absolute inv costs"] = storage["Annualized inv costs"] * np.minimum(storage["depreciation"], 2037 - year_built + 1)
         storage["horizon"] = (2055 - year_built) / (storage["depreciation"] + 5)
         storage.loc[storage["horizon"]>1, "horizon"] = 1
         storage["Annualized inv costs (incl. past)"] = (storage["inst-cap-p"] * storage["inv-cost-p"] + storage["inst-cap-c"] * storage["inv-cost-c"]) * storage["active"] * storage["invcost-factor"]
@@ -1022,6 +1024,7 @@ def get_cost_data(urbs_results, year_built):
         
     if "transmission" in locals():
         transmission["Annualized inv costs"] = transmission["cap_tra_new"] * transmission["inv-cost"] * transmission["invcost-factor"] # alt for intertemporal: 'overpay-factor'
+        transmission["Absolute inv costs"] = transmission["Annualized inv costs"] * np.minimum(transmission["depreciation"], 2037 - year_built + 1)
         transmission["horizon"] = (2055 - year_built) / (transmission["depreciation"] + 5)
         transmission.loc[transmission["horizon"]>1, "horizon"] = 1
         transmission["Annualized inv costs (incl. past)"] = transmission["inst-cap"] * transmission["inv-cost"] * transmission["active"] * transmission["invcost-factor"]
@@ -1050,7 +1053,7 @@ def get_cost_data(urbs_results, year_built):
     # Fuel costs
     process["Fuel costs"] = process["e_pro_in"] * process["price"] * cost_factor
     
-    # Reindex and plit transmission costs between regions equally
+    # Reindex and split transmission costs between regions equally
     process = process.droplevel([2]).reset_index().groupby(["Site", "scenario-year"]).sum()
     if "storage" in locals():
         if len(storage):
@@ -1058,16 +1061,16 @@ def get_cost_data(urbs_results, year_built):
         else:
             storage = storage.droplevel([2,3])
     if "transmission" in locals():
-        transmission_1 = transmission.droplevel([2,3,4]).reset_index().rename(columns={"Site In": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
-        transmission_2 = transmission.droplevel([0,2,3]).reset_index().rename(columns={"Site Out": "Site"}).groupby(["Site", "scenario-year"]).agg({"Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
+        transmission_1 = transmission.droplevel([2,3,4]).reset_index().rename(columns={"Site In": "Site"}).groupby(["Site", "scenario-year"]).agg({"Absolute inv costs": "sum", "Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
+        transmission_2 = transmission.droplevel([0,2,3]).reset_index().rename(columns={"Site Out": "Site"}).groupby(["Site", "scenario-year"]).agg({"Absolute inv costs": "sum", "Annualized inv costs": "sum", "Annualized inv costs (incl. past)": "sum", "Annualized inv costs (incl. past, till horizon)": "sum", "Fix costs": "sum", "Variable costs": "sum"})/2
     
     # Report costs
-    costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + process.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
+    costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + process.loc[process.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
     if "storage" in locals():
-        costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[storage.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + storage[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
+        costs.loc[storage.index, ["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[storage.index, ["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + storage[["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
     if "transmission" in locals():
-        costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_1[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
-        costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_2[["Fix costs", "Variable costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] 
+        costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_1.index, ["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_1[["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]]
+        costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] = costs.loc[transmission_2.index, ["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] + transmission_2[["Fix costs", "Variable costs", "Absolute inv costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)"]] 
     
     costs['Annualized total costs'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs"]
     costs['Annualized total costs (incl. past)'] = costs["Fix costs"] + costs["Variable costs"] + costs["Fuel costs"] + costs["Environmental costs"] + costs["Annualized inv costs (incl. past)"]
@@ -1094,73 +1097,6 @@ def get_cost_data(urbs_results, year_built):
     
     return urbs_results
 
-
-def get_marginal_generation_data(urbs_results):
-    # import pdb; pdb.set_trace()
-    # marginal = reader["Marg. elec. generation process"].set_index(["Site", "scenario-year"])
-    return urbs_results
-    
-
-def get_FLH_data(reader, writer):
-    # Generation
-    capacities_total = reader["Installed capacities"].set_index(["Site", "scenario-year"]).dropna(axis=0, how="all")
-    generation = reader["Electricity generation"].set_index(["Site", "scenario-year"]).loc[capacities_total.index]
-    FLH_generation = reader["Full-load hours generation"].set_index(["Site", "scenario-year"])
-    
-    FLH_generation.loc[capacities_total.index] = generation / capacities_total
-    FLH_generation.round(2).reset_index().to_excel(writer, sheet_name='Full-load hours generation', index=False)
-    
-    # Transmission
-    NTC = reader["NTC"].set_index(["Site", "scenario-year"]).dropna(axis=0, how="all")
-    transfers = reader["Transfers"].set_index(["Site", "scenario-year"]).loc[NTC.index]
-    FLH_transmission = reader["Full-load hours transmission"].set_index(["Site", "scenario-year"])
-    
-    FLH_transmission.loc[NTC.index] = transfers / NTC
-    FLH_transmission.round(2).reset_index().to_excel(writer, sheet_name='Full-load hours transmission', index=False)
-    
-def get_abatement(urbs_results):
-    """
-    description
-    """
-    simpleindex = pd.Index(scenario_years, name="scenario-year")
-    # Prepare dataframe of abatement
-    abatement = pd.DataFrame(index=simpleindex, columns=["Fix costs", "Variable costs", "Fuel costs", "Environmental costs",
-                                                    "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)",
-                                                    "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)",
-                                                    "CO2 emissions (Mt)"])
-
-    # Emissions
-    emissions = urbs_results["Emissions by fuel"].set_index(["Site"])
-    emissions = emissions.loc[dict_countries.keys()].reset_index()
-    emissions = emissions.drop(columns=["Site"]).set_index(["scenario-year"]).sum(axis=1).reset_index().groupby("scenario-year").sum()
-    
-    # System costs
-    costs = urbs_results["System costs"].set_index(["Site"])
-    costs = costs.loc[dict_countries.keys()].reset_index().drop(columns=["Site"]).groupby(["scenario-year"]).sum()
-    
-    # Fill Abatement sheet
-    abatement.loc[emissions.index, "CO2 emissions (Mt)"] = emissions[0]
-    abatement.loc[costs.index, ["Fix costs", "Variable costs", "Fuel costs", "Environmental costs", "Annualized inv costs", "Annualized inv costs (incl. past)", "Annualized inv costs (incl. past, till horizon)", "Annualized total costs", "Annualized total costs (incl. past)", "Annualized costs (incl. past, till horizon)"]] = costs / 10**6
-    
-    # Save results
-    abatement.dropna(inplace=True)
-    if "Abatement" in urbs_results.keys():
-        urbs_results["Abatement"].set_index(["scenario-year"], inplace=True)
-        try: # Update values in sheet
-            urbs_results["Abatement"].loc[abatement.index] = abatement.round(2)
-        except: # Append values in sheet
-            urbs_results["Abatement"] = urbs_results["Abatement"].append(abatement.round(2))
-    else: # Create sheet
-        urbs_results["Abatement"] = abatement.round(2)
-    # Sort index
-    urbs_results["Abatement"] = urbs_results["Abatement"].sort_index()
-    # Calculate total
-    urbs_results["Abatement"].loc["total"] = urbs_results["Abatement"].iloc[0]
-    for ind in range(1, len(urbs_results["Abatement"])-1):
-        n_years = urbs_results["Abatement"].iloc[ind].index - urbs_results["Abatement"].iloc[ind-1].index
-        urbs_results["Abatement"].loc["total"] = urbs_results["Abatement"].loc["total"] + urbs_results["Abatement"].iloc[ind] * n_years
-    
-    return urbs_results
 
 # Read in data for all scenarios
 for folder in result_folders:
@@ -1226,30 +1162,4 @@ for folder in result_folders:
             aux.to_excel(writer, sheet_name=sheet, index=False, header=True)
         except:
             pass
-    writer.save()
-    
-    
-for folder in result_folders:
-    year = folder.split("-")[0].split("_")[1]
-    scen = folder.split("-")[0].split("_")[2]
-    
-    print(scen, year, ": Getting NTC rents data")
-    urbs_results = get_NTC_rents_data(urbs_results)
-    
-    # Save results
-    for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
-    writer.save()
-    
-for scen in ["base"]:#, "base+CO2", "baseCO2", "base+NTC"]: #["v1", "v3", "v4", "v13", "v134", "v34"]: #
-
-    # print(scen, ": Getting FLH data")
-    # get_FLH_data(reader, writer)
-    
-    print(scen, ": Getting abatement data")
-    urbs_results = get_abatement(urbs_results)
-    
-    # Save results
-    for sheet in urbs_results.keys():
-        urbs_results[sheet].to_excel(writer, sheet_name=sheet, index=True, header=True)
     writer.save()

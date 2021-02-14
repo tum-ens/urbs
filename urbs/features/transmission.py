@@ -41,7 +41,7 @@ def add_transmission(m, data_transmission_boun):
     #if m.type == 'normal':
     m.tra_tuples = pyomo.Set(
         within=m.stf * m.sit * m.sit * m.tra * m.com,
-        initialize=m.transmission_dict["eff"].keys(),
+        initialize=tuple(m.transmission_dict["eff"].keys()),
         doc='Combinations of possible transmissions, e.g. '
             '(2020,South,Mid,hvac,Elec)')
     m.tra_block_tuples = pyomo.Set(

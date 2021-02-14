@@ -8,6 +8,7 @@ import multiprocessing as mp
 from os import getpid
 import matplotlib.pyplot as plt
 from urbs.runfunctions import *
+from multiprocessing import freeze_support
 
 input_files = 'mimo-example_internal.xlsx'  # for single year file name, for intertemporal folder name
 #input_files = 'germany.xlsx'  # for single year file name, for intertemporal folder name
@@ -72,7 +73,7 @@ plot_tuples = [
 #clusters = [[('Schleswig-Holstein')],[('Hamburg')],[('Mecklenburg-Vorpommern')],[('Offshore')],[('Lower Saxony')],[('Bremen')],[('Saxony-Anhalt')],[('Brandenburg')],[('Berlin')],[('North Rhine-Westphalia')],
 #                [('Baden-Württemberg')],[('Hesse')],[('Bavaria')],[('Rhineland-Palatinate')],[('Saarland')],[('Saxony')],[('Thuringia')]]
 
-clusters = [[('Mid')],[('Mid_int')],[('South')],[('North')]]
+clusters = [[('Mid'),('Mid_int')],[('South'),('North')]]
 # optional: define names for plot_tuples
 # plot_sites_name = {
     # ('Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 'Bremen',
@@ -164,6 +165,7 @@ test_scenarios = [
     ]
 
 if __name__ == '__main__':
+    freeze_support()
     for scenario in test_scenarios:
         prob = urbs.run_regional(input_path, solver, sub_input_files, timesteps,
                                  scenario,result_dir,dt,objective, 

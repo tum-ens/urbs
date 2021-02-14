@@ -723,7 +723,7 @@ def add_carbon_supplier(data_all,clusters):
 
 
     # add commodity Carbon to Carbon_site
-    data_all['commodity'].loc[year,'Carbon_site','Carbon','Stock']=(0,data_all['global_prop'].loc[2020].loc['CO2 limit','value'],np.inf)
+    data_all['commodity'].loc[year,'Carbon_site','Carbon','Stock']=(0,data_all['global_prop'].loc[2021].loc['CO2 limit','value'],np.inf)
      
     # add free-movement carbon-connections within each cluster
     for cluster in clusters:

@@ -182,7 +182,7 @@ Power flow on a transmission line modelled with DCPF:
 
 Here :math:`\theta_{v_{\text{in}}t}` and :math:`\theta_{v_{\text{out}}t}` are the voltage angles of the source site
 :math:`{v_{\text{in}}}` and destinaton site :math:`v_{\text{out}}`. These are converted to radian from degrees by
-dividing by 57,2958. :math:`{X_{af}}` is the reactance of the transmission line in per unit system and
+dividing by 57,2958. :math:`{X_{af}}` is the reactance of the transmission line in Ohms and
 :math:`(-\frac{-1}{X_{af}})` is the admittance of the transmission line.
 
 Constraints

@@ -366,9 +366,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-
-
-
     # if m.mode['int']:
         # m.res_global_co2_limit = pyomo.Constraint(
             # m.stf,
@@ -381,18 +378,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         rule=def_costs_rule,
         doc='main cost function by cost type')
         
-    
-    # # Peak demand
-    # m.peak_demand = pyomo.Expression(
-        # m.sit_tuples, m.com_demand,
-        # rule=def_peak_demand,
-        # doc='Peak demand for each site')
-        
-    # # capacity credit
-    # m.res_capacity_credit = pyomo.Constraint(
-        # m.sit_tuples, m.com_demand,
-        # rule=res_capacity_credit_rule,
-        # doc='sum of cap-credit >= peak demand')
 
     # objective and global constraints
     if m.obj.value == 'cost':

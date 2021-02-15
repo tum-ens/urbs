@@ -11,9 +11,7 @@ global dict_countries
 global dict_season
 
 # User preferences
-#subfolder = os.path.join("Mekong", "not done") #20201013 Hydro scenarios long
-#result_folders = [f.name for f in os.scandir(os.path.join("result", subfolder)) if (f.is_dir() and f.name[0:3]=="Run")]
-subfolder = "C:\\Users\\siala\\Documents\\Mekong\\20201016 Hydro scenarios long"
+subfolder = "result"
 result_folders = [f.name for f in os.scandir(subfolder) if (f.is_dir() and f.name[0:3]=="Run")]
 
 
@@ -32,14 +30,6 @@ def group_technologies(list_tech):
 
 def group_seasons():
     dict_season = {}
-    # # Europe
-    # for t in range(0, 8761):
-        # if (t <= 2184) or (t>=7897):
-            # dict_season[t] = "winter"
-        # elif (t <= 6552) and (t>=3529):
-            # dict_season[t] = "summer"
-        # else:
-            # dict_season[t] = "midseason"
          
     # Laos / Mekong?
     for t in range(0, 8761):
@@ -99,16 +89,11 @@ def extend_to_year(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
+    df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
     df_empty.loc[0, "t"] = 0
-    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
-    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
-    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
-    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
-    # df_empty.loc[0, "t"] = 0
-    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
-    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
-    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
+    df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
+    df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)])# Summer
+    df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]) # Autumn
     
     df_empty = df_empty.reset_index().set_index(df.index.names)
     df_new = df_empty.join(df).dropna(axis=0).reset_index().drop(columns="t").rename(columns={"t_new":"t"})
@@ -130,11 +115,6 @@ def add_weight(df):
     df_empty = df_empty.reset_index().set_index("t_new")
     
     t = df_empty.index
-    # df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]-1)%96+1 # winter
-    # df_empty.loc[0, "t"] = 0
-    # df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]-1)%96+97 # Spring
-    # df_empty.loc[(t <= 5832) & (t>=3625), "t"] = (df_empty.index[(t <= 5832) & (t>=3625)]-1)%96+193 # Summer
-    # df_empty.loc[(t <= 8016) & (t>=5833), "t"] = (df_empty.index[(t <= 8016) & (t>=5833)]-1)%96+289 # Autumn
     df_empty.loc[(t <= 1416) | (t>=8017), "t"] = (df_empty.index[(t <= 1416) | (t>=8017)]) # winter
     df_empty.loc[0, "t"] = 0
     df_empty.loc[(t <= 3624) & (t>=1417), "t"] = (df_empty.index[(t <= 3624) & (t>=1417)]) # Spring
@@ -596,13 +576,6 @@ def get_storage_data(urbs_results):
     # Get stored in energy
     storage_in = add_weight(df_result["e_sto_in"]).droplevel([0,4]).reset_index().rename(columns={"stf":"scenario-year", "sit":"Site", "e_sto_in":"stored-energy", "sto": "Storage type"})
     storage_in = storage_in.groupby(["Site", "Storage type", "scenario-year"]).sum()
-    
-    # Correct storage type
-    # storage_in = storage_in.reset_index()
-    # for idx in storage_in.index:
-        # if storage_in.loc[idx, "Storage type"].startswith("Storage_"):
-            # storage_in.loc[idx, "Storage type"] = storage_in.loc[idx, "Storage type"][:-5]
-    # storage_in = storage_in.set_index(["Site", "Storage type", "scenario-year"])
     
     storage_in_regions = storage_in.reset_index()
     storage_in_regions["Site"] = [dict_countries[x] for x in storage_in_regions["Site"]]

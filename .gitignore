@@ -5,3 +5,7 @@ result/*
 results/*
 doc/_build/*
 *.lp
+
+Input/Validierungen/*
+run_transdist-jupyter.py
+.ipynb_checkpoints/*

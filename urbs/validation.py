@@ -69,11 +69,17 @@ def validate_input(data):
                 if data['transmission'].loc[index]['reactance'] > 0:
                     if data['transmission'].loc[index]['eff'] != 1:
                         raise ValueError('Ensure efficiency of DCPF Transmission Lines are 1')
-                    if not data['transmission'].loc[index]['base_voltage'] > 0:
-                        raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
                     if not (0 < data['transmission'].loc[index]['difflimit'] <= 90):
                         raise ValueError('Ensure angle difference of DCPF transmission lines are between 90 and 0 '
                                          'degrees')
+            for index in data['site'].index:
+                if not data['site'].loc[index]['base-voltage'] > 0:
+                    raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
+            # Oder in global prop?:
+            # if not data['global_prop'].loc[pd.IndexSlice[:, 'Base Voltage'], 'value'][0] > 0:
+            #    raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
+
+            #todo: Validate input for ACPF
 
     if not data['storage'].empty:
         for index in data['storage'].index:

@@ -3,6 +3,7 @@ from .input import get_input
 from .pyomoio import get_entity, get_entities
 from .util import is_string
 
+import numpy as np
 
 def get_constants(instance):
     """Return summary DataFrames for important variables
@@ -261,7 +262,6 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     consumed = consumed.join(shifted.rename('Demand'))
 
     # VOLTAGE ANGLE of sites
-
     try:
         voltage_angle = get_entity(instance, 'voltage_angle')
         voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
@@ -270,7 +270,19 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         voltage_angle = pd.DataFrame(index=timesteps)
     voltage_angle.name = 'Voltage Angle'
 
-    return created, consumed, stored, imported, exported, dsm, voltage_angle
+    # Squred Voltage Magnitudes of sites
+    try:
+        voltage_squared = get_entity(instance, 'voltage_squared')
+        voltage_squared = voltage_squared.xs([stf], level=['stf']).loc[timesteps]
+        base_voltage = instance.site_dict['base-voltage'][(instance.stf.value_list[0], voltage_squared.index[0][1])]
+        voltage_squared = voltage_squared.unstack(level='sit')[sites]
+        voltage_magnitude = np.sqrt(voltage_squared)/base_voltage
+
+    except (KeyError, AttributeError):
+        voltage_magnitude = pd.DataFrame(index=timesteps)
+    voltage_magnitude.name = 'Voltage Magnitude'
+
+    return created, consumed, stored, imported, exported, dsm, voltage_angle, voltage_magnitude
 
 
 def drop_all_zero_columns(df):

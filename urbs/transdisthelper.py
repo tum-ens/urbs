@@ -1,12 +1,6 @@
-import pandas as pd
-import os
-import glob
-from xlrd import XLRDError
-import pyomo.core as pyomo #from pyomo.environ import ConcreteModel
-from .features.modelhelper import *
 from .identify import *
 import copy
-import numpy as np
+import math
 
 def create_transdist_data(data, microgrid_data_initial):
     microgrid_set_list = build_set_list(data)
@@ -29,7 +23,7 @@ def create_transdist_data(data, microgrid_data_initial):
                 add_reactive_transmission_lines(microgrid_data_input)
                 # add reactive output ratios for ac sites
                 add_reactive_output_ratios(microgrid_data_input)
-                # concatenate microgrid data with the main data
+                # concatenate main data with microgrid data with
                 concatenate_with_micros(data, microgrid_data_input)
 
     return data
@@ -64,6 +58,14 @@ def create_microgrid_data(microgrid_data_input, entry, n, top_region_name):
         columns={entry: entry + str(n + 1) + '_' + top_region_name}, level=0, inplace=True)
     microgrid_data_input['supim'].rename(
         columns={entry: entry + str(n + 1) + '_' + top_region_name}, level=0, inplace=True)
+    microgrid_data_input['storage'].rename(
+        index={entry: entry + str(n + 1) + '_' + top_region_name}, level=1, inplace=True)
+    microgrid_data_input['dsm'].rename(
+        index={entry: entry + str(n + 1) + '_' + top_region_name}, level=1, inplace=True)
+    microgrid_data_input['buy_sell_price'].rename(
+        columns={entry: entry + str(n + 1) + '_' + top_region_name}, level=0, inplace=True)
+    microgrid_data_input['eff_factor'].rename(
+        columns={entry: entry + str(n + 1) + '_' + top_region_name}, level=0, inplace=True)
     # for transmission data indexes on two levels must be changed
     microgrid_data_input['transmission'].rename(
         index={entry: entry + str(n + 1) + '_' + top_region_name}, level=1, inplace=True)
@@ -74,19 +76,12 @@ def create_microgrid_data(microgrid_data_input, entry, n, top_region_name):
         index={'top_region_dummy': top_region_name}, level=1, inplace=True)
     microgrid_data_input['transmission'].rename(
         index={'top_region_dummy': top_region_name}, level=2, inplace=True)
-    microgrid_data_input['storage'].rename(
-        index={entry: entry + str(n + 1) + '_' + top_region_name}, level=1, inplace=True)
-    microgrid_data_input['dsm'].rename(
-        index={entry: entry + str(n + 1) + '_' + top_region_name}, level=1, inplace=True)
-    microgrid_data_input['buy_sell_price'].rename(
-        columns={entry: entry + str(n + 1) + '_' + top_region_name}, level=0, inplace=True)
-    microgrid_data_input['eff_factor'].rename(
-        index={entry: entry + str(n + 1) + '_' + top_region_name}, level=1, inplace=True)
     return microgrid_data_input
 
 # In this function according to the multiplicator list microgrid types are being scaled
 def multiplicator_scaling(microgrid_data_input, microgrid_multiplicator_list, set_number, type_nr):
     microgrid_data_input['site'].loc[:, 'area'] *= microgrid_multiplicator_list[set_number][type_nr]
+    microgrid_data_input['site'].loc[:, 'base-voltage'] *= math.sqrt(microgrid_multiplicator_list[set_number][type_nr])
     microgrid_data_input['commodity'].loc[:, 'max':'maxperhour'] *= microgrid_multiplicator_list[set_number][type_nr]
     microgrid_data_input['process'].loc[:, ['inst-cap', 'cap-lo', 'cap-up', 'area-per-cap', 'cap-block']] *= \
         microgrid_multiplicator_list[set_number][type_nr]

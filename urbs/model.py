@@ -1,8 +1,12 @@
 import math
+
+#import pyomo.core as pyomo
+
 import pyomo.environ as pyomo
+
 from datetime import datetime
 from .features import *
-from .features.transmission import add_transmission_ac #neu -  kann ich das nach dem commit löschen?
+from .features.transmission import *
 from .input import *
 
 
@@ -138,7 +142,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         initialize=[(stf, site)
                     for (stf, site) in m.sit_tuples
                     if m.site_dict['ref-node'][(stf, site)] == 1],
-        doc='Combinations of support timeframes and sites with ac characteristics')
+        doc='Set of all reference nodes in defined subsystems')
 
     m.com_tuples = pyomo.Set(
         within=m.stf * m.sit * m.com * m.com_type,

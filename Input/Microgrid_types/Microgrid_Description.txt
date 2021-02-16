@@ -1,0 +1,2 @@
+Microgrid A: PV + Battery
+Microgrid B: Wind + Hydrogen

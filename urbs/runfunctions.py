@@ -1,6 +1,12 @@
 import os
-import pyomo.environ
-from pyomo.opt.base import SolverFactory
+import time
+
+# import pyomo.environ
+# from pyomo.opt.base import SolverFactory
+
+from pyomo.environ import SolverFactory
+import pyomo.environ as pyomo
+
 from datetime import datetime, date
 from .model import create_model
 from .report import *
@@ -38,6 +44,9 @@ def setup_solver(optim, logfile='solver.log'):
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
         optim.set_options("logfile={}".format(logfile))
+        optim.set_options("Crossover=0")
+        optim.set_options("Method=2") # ohne method concurrent optimization
+        optim.set_options("Threads=4")
         # optim.set_options("timelimit=7200")  # seconds
         # optim.set_options("mipgap=5e-4")  # default = 1e-4
     elif optim.name == 'glpk':
@@ -93,10 +102,10 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     validate_dc_objective(data, objective)
 
 
-    # read and modify microgrid data for scenario
+    # read and modify microgrid data
     mode = identify_mode(data)
     if mode['transdist']:
-        microgrid_data_initial =[]
+        microgrid_data_initial =[] #todo: hieraus auch eine Funktion in trandisthelper?
         for i, microgrid_file in enumerate(microgrid_files):
             microgrid_data_initial.append(read_input(microgrid_file, year))
             microgrid_data_initial[i] = scenario(microgrid_data_initial[i])
@@ -114,7 +123,9 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         #         data[sheet].to_excel(writer, str(i))
 
     # create model
+    tt = time.time()
     prob = create_model(data, dt, timesteps, objective)
+    print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt,4))
 
     # write lp file
     prob.write('model.lp', io_options={'symbolic_solver_labels':True})
@@ -125,7 +136,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
+    result = optim.solve(prob, tee=True,report_timing=True)
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file

@@ -243,6 +243,10 @@ def add_transmission_dc(m):
         m.tm, m.tra_tuples_dc,
         rule=def_angle_limit_rule,
         doc='-angle limit < angle(in) - angle(out) < angle limit')
+    m.def_slackbus_angle = pyomo.Constraint( #todo: test if this works without any problems
+        m.tm, m.sit_slackbus,
+        rule=def_slackbus_angle_rule,
+        doc='(angle_slackbus = 0')
     m.e_tra_abs1 = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=e_tra_abs_rule1,
@@ -405,11 +409,14 @@ def add_transmission_ac(m):
         m.tm, m.tra_tuples,
         rule=def_transmission_output_rule,
         doc='transmission output = transmission input * efficiency')
+
+    # Power flow constraint for dc transmission lines
     m.def_dc_power_flow = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
         rule=def_dc_power_flow_rule,
         doc='transmission output = (angle(in)-angle(out))/ 57.2958 '
             '* -1 *(-1/reactance) * (base voltage)^2')
+
     # Power flow constraint for ac transmission lines
     m.def_ac_power_flow = pyomo.Constraint(
         m.tm, m.tra_tuples_ac,
@@ -425,11 +432,6 @@ def add_transmission_ac(m):
         m.tm, m.sit_slackbus,
         rule=def_slackbus_voltage_rule,
         doc='(voltage_slack_squared = base voltage^2')
-
-    m.def_slackbus_angle = pyomo.Constraint(
-        m.tm, m.sit_slackbus,
-        rule=def_slackbus_angle_rule,
-        doc='(angle_slack_squared = 0')
 
     m.def_angle_limit = pyomo.Constraint(
         m.tm, m.tra_tuples_ac_dc,
@@ -525,13 +527,14 @@ def def_ac_power_flow_rule(m, tm, stf, sin, sout, tra, com):
                  * m.e_tra_in[tm, stf, sin, sout, tra, 'Elec-Reactive']))
 
 def def_voltage_limit_rule(m, tm, stf, sin):
-    return ((m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['min-voltage'][(stf, sin)]) **2,
+    return ((m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['min-voltage'][(stf, sin)])**2,
             m.voltage_squared[tm, stf, sin],
-            (m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['max-voltage'][(stf, sin)]) **2)
+            (m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['max-voltage'][(stf, sin)])**2)
 
 def def_slackbus_voltage_rule(m, tm, stf, sin):
     return (m.voltage_squared[tm, stf, sin] == m.site_dict['base-voltage'][(stf, sin)]**2)
 
+# reference nodes' voltage angle in subsystems are set to zero (not necessary but for more clear)
 def def_slackbus_angle_rule(m, tm, stf, sin):
     return (m.voltage_angle[tm, stf, sin] == 0)
 

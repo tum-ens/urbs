@@ -1,4 +1,4 @@
-name: urbs
+name: urbs_tum
 channels:
   - defaults
   - conda-forge

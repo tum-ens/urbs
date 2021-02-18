@@ -29,6 +29,7 @@ def identify_mode(data):
         'tve': False,                   # time variable efficiency
         'dcpf': False,                  # dc power flow
         'acpf': False,                  # ac power flow
+        'tdy': False,                   # type days
         'onoff': False,                 # on/off processes
         'minfraction': False,           # processes with minimum working load
         'chp': False,                   # chp processes
@@ -67,6 +68,8 @@ def identify_mode(data):
     if 'reactance' in data['transmission'].keys():
         if any(data['transmission']['reactance'] > 0):
             mode['dcpf'] = True
+    if any(data['type day']['weight_typeday'] > 0):
+        mode['tdy'] = True
     if 'on-off' in data['process'].keys():
         if any(data['process']['on-off'] == 1):
             mode['onoff'] = True

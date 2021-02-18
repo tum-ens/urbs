@@ -43,7 +43,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # costs are annual by default, variable costs are scaled by weight) and
     # among different simulation durations meaningful.
     m.weight = pyomo.Param(
-        initialize=float(8760) / (len(m.timesteps) * dt),
+        initialize=float(8760) / (len(m.timesteps) - 1 * dt), #todo: typeday fragen
         doc='Pre-factor for variable costs and emissions for an annual result')
 
     # dt = spacing between timesteps. Required for storage equation that
@@ -84,6 +84,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[0])
     m.stf = pyomo.Set(
         initialize=indexlist,
+        ordered=True,
         doc='Set of modeled support timeframes (e.g. years)')
 
     # site (e.g. north, middle, south...)
@@ -306,6 +307,9 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m = add_dsm(m)
     if m.mode['bsp']:
         m = add_buy_sell_price(m)
+    if m.mode['tdy']:
+        m = add_typeday(m)
+
     if (m.mode['tve'] or m.mode['onoff'] or #m.mode['chp'] or
         m.mode['minfraction']):
         m = add_advanced_processes(m)
@@ -443,11 +447,11 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='cap_pro_new = pro_cap_unit * cap-block')
 
 
-    if m.mode['int']:
-        m.res_global_co2_limit = pyomo.Constraint(
-            m.stf,
-            rule=res_global_co2_limit_rule,
-            doc='total co2 commodity output <= global.prop CO2 limit')
+    # if m.mode['int']:
+    #     m.res_global_co2_limit = pyomo.Constraint(
+    #         m.stf,
+    #         rule=res_global_co2_limit_rule,
+    #         doc='total co2 commodity output <= global.prop CO2 limit')
 
     # costs
     m.def_costs = pyomo.Constraint(
@@ -457,16 +461,20 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # objective and global constraints
     if m.obj.value == 'cost':
+        m.res_global_co2_limit = pyomo.Constraint(
+            m.stf,
+            rule=res_global_co2_limit_rule,
+            doc='total co2 commodity output <= Global CO2 limit')
 
         if m.mode['int']:
             m.res_global_co2_budget = pyomo.Constraint(
                 rule=res_global_co2_budget_rule,
                 doc='total co2 commodity output <= global.prop CO2 budget')
-        else:
-            m.res_global_co2_limit = pyomo.Constraint(
+
+            m.res_global_cost_limit = pyomo.Constraint(
                 m.stf,
-                rule=res_global_co2_limit_rule,
-                doc='total co2 commodity output <= Global CO2 limit')
+                rule=res_global_cost_limit_rule,
+                doc='total costs <= Global cost limit')
 
         m.objective_function = pyomo.Objective(
             rule=cost_rule,
@@ -476,8 +484,17 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     elif m.obj.value == 'CO2':
 
         m.res_global_cost_limit = pyomo.Constraint(
+            m.stf,
             rule=res_global_cost_limit_rule,
             doc='total costs <= Global cost limit')
+        if m.mode['int']:
+            m.res_global_cost_budget = pyomo.Constraint(
+                rule=res_global_cost_budget_rule,
+                doc='total costs <= global.prop Cost budget')
+            m.res_global_co2_limit = pyomo.Constraint(
+                m.stf,
+                rule=res_global_co2_limit_rule,
+                doc='total co2 commodity output <= Global CO2 limit')
 
         m.objective_function = pyomo.Objective(
             rule=co2_rule,
@@ -565,7 +582,7 @@ def res_stock_total_rule(m, stf, sit, com, com_type):
         total_consumption = 0
         for tm in m.tm:
             total_consumption += (
-                m.e_co_stock[tm, stf, sit, com, com_type])
+                m.e_co_stock[tm, stf, sit, com, com_type] * m.typeday['weight_typeday'][(stf,tm)])
         total_consumption *= m.weight
         return (total_consumption <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -594,7 +611,7 @@ def res_env_total_rule(m, stf, sit, com, com_type):
         # calculate total creation of environmental commodity com
         env_output_sum = 0
         for tm in m.tm:
-            env_output_sum += (- commodity_balance(m, tm, stf, sit, com))
+            env_output_sum += (- commodity_balance(m, tm, stf, sit, com)* m.typeday['weight_typeday'][(stf,tm)])
         env_output_sum *= m.weight
         return (env_output_sum <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -719,7 +736,7 @@ def res_global_co2_limit_rule(m, stf):
                 # minus because negative commodity_balance represents creation
                 # of that commodity.
                 co2_output_sum += (- commodity_balance(m, tm,
-                                                       stf, sit, 'CO2'))
+                                                       stf, sit, 'CO2')* m.typeday['weight_typeday'][(stf,tm)])
 
         # scaling to annual output (cf. definition of m.weight)
         co2_output_sum *= m.weight
@@ -742,6 +759,7 @@ def res_global_co2_budget_rule(m):
                     # creation of that commodity.
                     co2_output_sum += (- commodity_balance
                                        (m, tm, stf, sit, 'CO2') *
+                                       m.typeday['weight_typeday'][(stf,tm)] *
                                        m.weight *
                                        stf_dist(stf, m))
 
@@ -751,12 +769,24 @@ def res_global_co2_budget_rule(m):
         return pyomo.Constraint.Skip
 
 
-def res_global_cost_limit_rule(m):
-    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost limit"]):
+# total cost of one year <= Global cost limit
+def res_global_cost_limit_rule(m, stf):
+    if math.isinf(m.global_prop_dict["value"][stf, "Cost limit"]):
         return pyomo.Constraint.Skip
-    elif m.global_prop_dict["value"][min(m.stf), "Cost limit"] >= 0:
+    elif m.global_prop_dict["value"][stf, "Cost limit"] >= 0:
         return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
-               [min(m.stf), "Cost limit"])
+               [stf, "Cost limit"])
+    else:
+        return pyomo.Constraint.Skip
+
+
+# total cost in entire period <= Global cost budget
+def res_global_cost_budget_rule(m):
+    if math.isinf(m.global_prop_dict["value"][min(m.stf), "Cost budget"]):
+        return pyomo.Constraint.Skip
+    elif m.global_prop_dict["value"][min(m.stf), "Cost budget"] >= 0:
+        return(pyomo.summation(m.costs) <= m.global_prop_dict["value"]
+               [min(m.stf), "Cost budget"])
     else:
         return pyomo.Constraint.Skip
 
@@ -810,7 +840,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Variable':
         cost = \
-            sum(m.tau_pro[(tm,) + p] * m.weight *
+            sum(m.tau_pro[(tm,) + p] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
                 m.process_dict['var-cost'][p] *
                 m.process_dict['cost_factor'][p]
                 for tm in m.tm
@@ -823,7 +853,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Fuel':
         return m.costs[cost_type] == sum(
-            m.e_co_stock[(tm,) + c] * m.weight *
+            m.e_co_stock[(tm,) + c] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm for c in m.com_tuples
@@ -844,7 +874,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Environmental':
         return m.costs[cost_type] == sum(
-            - commodity_balance(m, tm, stf, sit, com) * m.weight *
+            - commodity_balance(m, tm, stf, sit, com) * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
             m.commodity_dict['price'][(stf, sit, com, com_type)] *
             m.commodity_dict['cost_factor'][(stf, sit, com, com_type)]
             for tm in m.tm
@@ -874,9 +904,12 @@ def co2_rule(m):
             for sit in m.sit:
                 # minus because negative commodity_balance represents
                 # creation of that commodity.
-                co2_output_sum += (- commodity_balance
-                                   (m, tm, stf, sit, 'CO2') *
-                                   m.weight *
-                                   stf_dist(stf, m))
+                if m.mode['int']:
+                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
+                                       m.typeday['weight_typeday'][(stf, tm)] *
+                                       m.weight * stf_dist(stf, m))
+                else:
+                    co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
+                                       m.weight)
 
     return (co2_output_sum)

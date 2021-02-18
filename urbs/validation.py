@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def validate_input(data):
@@ -31,6 +32,21 @@ def validate_input(data):
                                  com + ') is not in commodity input sheet.'
                                  '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')
+    # Add global parameters if necessary
+    for stf in data['global_prop'].index.get_level_values(0):
+        if 'Cost limit' not in data['global_prop'].loc[stf].index:
+            data['global_prop'].loc[(stf, 'Cost limit'), :] = np.inf
+            print('Added a global Cost limit for ' + str(stf) + ' with the value: inf.')
+        if 'CO2 limit' not in data['global_prop'].loc[stf].index:
+            data['global_prop'].loc[(stf, 'CO2 limit'), :] = np.inf
+            print('Added a global CO2 limit for ' + str(stf) + ' with the value: inf.')
+        if stf == min(data['global_prop'].index.get_level_values(0)):
+            if 'Cost budget' not in data['global_prop'].loc[stf].index:
+                data['global_prop'].loc[(stf, 'Cost budget'), :] = np.inf
+                print('Added a global Cost budget for the entire period with the value: inf.')
+            if 'CO2 budget' not in data['global_prop'].loc[stf].index:
+                data['global_prop'].loc[(stf, 'CO2 budget'), :] = np.inf
+                print('Added a global CO2 budget for the entire period with the value: inf.')
 
     # Find ducplicate index
     for key in data:
@@ -144,6 +160,21 @@ def validate_input(data):
                 raise KeyError("All names in the column 'Site' in input "
                                "worksheet 'DSM' must be from the list of site "
                                "names specified in the worksheet 'Site'.")
+
+    if any(data['type day']['weight_typeday'] > 0):
+        if not data['dsm'].empty:
+            print('Warning: Typeday and DSM active!')
+
+        if not (len(data['type day'].dropna(axis=0, how='all').index) % 24 == 0 or
+                len(data['type day'].dropna(axis=0, how='all').index) % 24 - 1 == 0):
+            print('Warning: Weighting of the typeday does not end at the end of a day, please check the length of '
+                  '-Demand-weight_typeday')
+
+        if min(data['type day'].iloc[1:,0]) < 1:
+            print('Warning: weighting_typeday < 1')
+
+        if sum(data['type day'].loc[:,'weight_typeday'].dropna(axis=0, how='all')) != 8760:
+            print('Warning: The sum of weighting_typeday does not equal a year')
 
 # report that variable costs may have error if used with CO2 minimization and DCPF
 def validate_dc_objective(data, objective):

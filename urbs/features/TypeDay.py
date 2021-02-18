@@ -4,7 +4,7 @@ import pyomo.core as pyomo
 def add_typeday(m):
 
     # Validation:
-    if not (len(m.timesteps) % 168 == 0 or len(m.timesteps) % 168 == 1):
+    if not (len(m.timesteps) % 120 == 0 or len(m.timesteps) % 120 == 1):
         print('Warning: length of timesteps does not end at the end of a day!')
 
     # change weight parameter to 1, since the whole year is representated by weight_typeday
@@ -15,7 +15,7 @@ def add_typeday(m):
 
     m.t_endofday = pyomo.Set(
         within=m.t,
-        initialize=[i * 168 * m.dt for i in list(range(1,1+int(len(m.timesteps) / m.dt / 168)))],
+        initialize=[i * 120 * m.dt for i in list(range(1,1+int(len(m.timesteps) / m.dt / 120)))],
         ordered=True,
         doc='timestep at the end of each day')
 

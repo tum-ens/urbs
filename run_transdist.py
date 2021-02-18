@@ -14,7 +14,7 @@ input_files = 'Bundesländer_Trans.xlsx'  # for single year file name, for inter
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-microgrid_files = ['Microgrid_A_Dorf.xlsx', 'Microgrid_B_Dorf.xlsx']
+microgrid_files = ['Microgrid_A_Dorf.xlsx','Microgrid_A_Dorf.xlsx']
 microgrid_dir = 'Input/microgrid_types'
 microgrid_paths = []
 for i, microgrid_file in enumerate(microgrid_files):

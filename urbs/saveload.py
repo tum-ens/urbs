@@ -3,7 +3,7 @@ from .pyomoio import get_entity, list_entities
 
 
 def create_result_cache(prob):
-    entity_types = ['set', 'par', 'var', 'exp']
+    entity_types = ['set', 'par', 'var']
     if hasattr(prob, 'dual'):
         entity_types.append('con')
 

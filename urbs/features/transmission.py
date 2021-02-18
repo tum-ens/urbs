@@ -631,6 +631,17 @@ def transmission_cost(m, cost_type):
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_dc)
+        if m.mode['acpf']:
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+                       m.transmission_dict['var-cost'][t] *
+                       m.transmission_dict['cost_factor'][t]
+                       for tm in m.tm
+                       for t in m.tra_tuples_tp) + \
+                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+                       m.transmission_dict['var-cost'][t] *
+                       m.transmission_dict['cost_factor'][t]
+                       for tm in m.tm
+                       for t in m.tra_tuples_ac_dc)
         else:
             return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
                        m.transmission_dict['var-cost'][t] *

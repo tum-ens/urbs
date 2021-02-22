@@ -1,7 +1,5 @@
 import os
-# import pyomo.environ as pyomo
 from pyomo.environ import SolverFactory
-import pyomo.environ as pyomo
 from datetime import datetime, date
 from .model import create_model
 from .report import *
@@ -10,20 +8,14 @@ from .input import *
 from .validation import *
 from .saveload import *
 import urbs
-import time as t
 import pandas as pd
-
-#from multiprocessing import Process, Pipe, Queue, freeze_support, Pool
 import multiprocessing as mp
 
-# from pathos.multiprocessing import ProcessingPool as Pool
 import queue
 # os.system("taskset -p 0xff %d" % os.getpid())
-from math import isnan
 from .ADMM_async.run_Worker import run_Worker
 from .ADMM_async.urbs_admm_model import urbs_admm_model
 import time
-import copy
 import numpy as np
 from math import ceil
 
@@ -64,9 +56,6 @@ def create_pipes(clusters, boundarying_lines):
     return edges, pipes
 
 
-def parallel_solve(sub_pro):
-    sub_pro.solve(save_results=False, load_solutions=False, warmstart=True)
-
 
 class CouplingVars:
     flow_global = {}
@@ -75,6 +64,7 @@ class CouplingVars:
     cap_global = {}
     residdual = {}
     residprim = {}
+
 
 
 def prepare_result_directory(result_name):
@@ -214,13 +204,12 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         all_boundary_lines[~all_boundary_lines.index.duplicated(keep='first')]
 
     sub = {}
+    # (optional) create the central problem to compare results
     prob = create_model(data_all, timesteps, dt, type='normal')
     prob.write('orig.lp', io_options={'symbolic_solver_labels': True})
 
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
-
-    maxit = 1000
 
     # setup solver
     solver_name = 'gurobi'
@@ -245,7 +234,6 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     problems = []
 
     for cluster_idx in range(0, len(clusters)):
-        print(cluster_idx)
         problem = urbs_admm_model()
         sub[cluster_idx] = urbs.create_model(data_all, timesteps, type='sub',
                                              sites=clusters[cluster_idx],
@@ -292,9 +280,11 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
                                                                                                  cluster_idx,
                                                                                                  clusters)
         problem.boundarying_lines = boundarying_lines[cluster_idx]
+        problem.na = len(clusters)
         problems.append(problem)
 
     edges, pipes = create_pipes(clusters, boundarying_lines)
+    #import pdb;pdb.set_trace()
     for cluster_idx in range(0, len(clusters)):
         problems[cluster_idx].neighbors = sorted(set(boundarying_lines[cluster_idx].neighbor_cluster.to_list()))
         problems[cluster_idx].nneighbors = len(problems[cluster_idx].neighbors)
@@ -307,7 +297,6 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     #run_Worker(1, problems[0], output) #for test
     for cluster_idx in range(0, len(clusters)):
         procs += [mp.Process(target=run_Worker, args=(cluster_idx + 1, problems[cluster_idx], output))]
-
 
     start_time = time.time()
     start_clock = time.clock()

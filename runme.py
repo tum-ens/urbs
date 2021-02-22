@@ -39,7 +39,7 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (0, 10)  # time step selection
+(offset, length) = (0,1)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 

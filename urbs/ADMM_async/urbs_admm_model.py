@@ -25,8 +25,7 @@ class urbs_admm_model(object):
         self.pipes = None
         self.admmopt = admmoption()
         self.recvmsg = {}
-        self.na = 3
-        self.gapAll = [10 ** 8] * self.na
+        #self.na = 17
         self.primalgap = [9999]
         self.dualgap = [9999]
 
@@ -89,9 +88,11 @@ class urbs_admm_model(object):
             msg.config(self.ID, k, self.flows_with_neighbor[k], self.rho,
                        self.lamda[self.lamda.index.isin(self.flows_with_neighbor[k].index)],
                        self.gapAll)
+            print('stuck at sending to %d' % k)
             self.pipes[k].send(msg)
+            print('sent to %d' % k)
 
-    def recv(self):
+    def recv(self, pollrounds=5):
         twait = self.admmopt.pollWaitingtime
         dest = list(self.pipes.keys())
         recvFlag = [0] * self.nneighbors
@@ -99,9 +100,12 @@ class urbs_admm_model(object):
         pollround = 0
 
         # keep receiving from nbor 1 to nbor K in round until nwait neighbors arrived
-        while arrived < self.nwait and pollround < 5:
+        while arrived < self.nwait and pollround < pollrounds:
             for i in range(len(dest)):
                 k = dest[i]
+                print('stuck at recv before poll abfrage')
+                #if self.pipes[k].poll(0):
+                print('stuck at recv after poll abfrage')
                 while self.pipes[k].poll(twait):  # read from pipe until get the last message
                     self.recvmsg[k] = self.pipes[k].recv()
                     recvFlag[i] = 1
@@ -120,7 +124,7 @@ class urbs_admm_model(object):
                         (self.lamda.loc[self.lamda.index.isin(self.flows_with_neighbor[k].index)] +
                          nborvar['lambda'] + self.flows_with_neighbor[k] * self.rho + nborvar['flow'] * nborvar['rho']) \
                         / (self.rho + nborvar['rho'])
-                    print('z updated at %d using messages received from %d !' % (self.ID, k))
+                    print('z updated at %d using messages received from %d !' % (self.ID + 1, k + 1))
         # self.dualgap += [((self.flow_global - flow_global_old).abs()).max()[0]]
         self.dualgap += [self.rho * (np.sqrt(np.square(self.flow_global - flow_global_old).sum(axis=0)[0]))]
         # if np.sqrt(np.square(self.lamda).sum(axis=0)[0]) == 0:
@@ -163,7 +167,9 @@ class urbs_admm_model(object):
             elif self.dualgap[-1] > self.admmopt.mu * self.primalgap[-1]:
                 self.rho = min(self.rho / self.admmopt.tau, self.admmopt.rho_max)
         # update local converge table
-        self.gapAll[self.ID - 1] = self.primalgap[-1]
+        self.ID
+        len(self.gapAll)
+        self.gapAll[self.ID] = self.primalgap[-1]
 
     #   # use the maximum rho among neighbors for local update
     def choose_max_rho(self):
@@ -175,12 +181,17 @@ class urbs_admm_model(object):
     #
     def converge(self):
         # first update local converge table using received converge tables
+        print(self.gapAll)
         if self.recvmsg is not None:
             for k in self.recvmsg:
                 table = self.recvmsg[k].fields['convergeTable']
+                print('table: '+str(table))
                 self.gapAll = list(map(min, zip(self.gapAll, table)))
         # check if all local primal gaps < tolerance
         if max(self.gapAll) < self.admmopt.convergetol:
+            dest = self.pipes.keys()
+            for k in dest:
+                self.pipes[k].close()
             return True
         else:
             return False
@@ -229,7 +240,7 @@ class admmoption(object):
         self.pollWaitingtime = 0.001  # waiting time of receiving from one pipe
         self.nwaitPercent = 0.1  # waiting percentage of neighbors (0, 1]
         self.iterMaxlocal = 1000  # local maximum iteration
-        self.convergetol = 10 ** 1  # convergence criteria for maximum primal gap
+        self.convergetol = 5* 10 ** 2  # convergence criteria for maximum primal gap
 
 
 #

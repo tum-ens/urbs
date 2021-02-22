@@ -6,3 +6,4 @@ results/*
 doc/_build/*
 *.lp
 gurobi.log
+solver.log

@@ -55,6 +55,26 @@ def create_pipes(clusters, boundarying_lines):
         pipes[edge[1]][edge[0]] = tend
     return edges, pipes
 
+def create_queues(clusters, boundarying_lines):
+    edges = np.empty((1, 2))
+    for cluster_idx in range(0, len(clusters)):
+        edges = np.concatenate((edges, np.stack([boundarying_lines[cluster_idx].cluster_from.to_numpy(),
+                                                 boundarying_lines[cluster_idx].cluster_to.to_numpy()], axis=1)))
+    edges = np.delete(edges, (0), axis=0)
+    edges = np.unique(edges, axis=0)
+    edges = np.array(list({tuple(sorted(item)) for item in edges}))
+
+    queues = {}
+    for edge in edges.tolist():
+        fend = mp.Manager().Queue()
+        tend = mp.Manager().Queue()
+        if edge[0] not in queues:
+            queues[edge[0]] = {}
+        queues[edge[0]][edge[1]] = fend
+        if edge[1] not in queues:
+            queues[edge[1]] = {}
+        queues[edge[1]][edge[0]] = tend
+    return edges, queues
 
 
 class CouplingVars:
@@ -223,8 +243,10 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
     track_file = os.path.join(result_dir, scenario.__name__ + '-tracking.txt')
 
     # original problem solution (not necessary for ADMM, just to compare)
+    orig_time_before_solve = time.time()
     results_prob = optim.solve(prob, tee=False)
-
+    orig_time_after_solve = time.time()
+    orig_duration = orig_time_after_solve - orig_time_before_solve
     flows_from_original_problem = dict((name, entity.value) for (name, entity) in prob.e_tra_in.items())
     flows_from_original_problem = pd.DataFrame.from_dict(flows_from_original_problem, orient='index',
                                                          columns=['Original'])
@@ -283,12 +305,17 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         problem.na = len(clusters)
         problems.append(problem)
 
-    edges, pipes = create_pipes(clusters, boundarying_lines)
+    #edges, pipes = create_pipes(clusters, boundarying_lines)
+    edges, queues = create_queues(clusters, boundarying_lines)
+
     #import pdb;pdb.set_trace()
     for cluster_idx in range(0, len(clusters)):
         problems[cluster_idx].neighbors = sorted(set(boundarying_lines[cluster_idx].neighbor_cluster.to_list()))
         problems[cluster_idx].nneighbors = len(problems[cluster_idx].neighbors)
-        problems[cluster_idx].pipes = pipes[cluster_idx]
+        #problems[cluster_idx].pipes = pipes[cluster_idx]
+
+        problems[cluster_idx].queues = dict((key,value) for (key,value) in queues.items() if key==cluster_idx)
+        problems[cluster_idx].queues.update(dict((key0,{key: value}) for (key0,n) in queues.items() for (key,value) in n.items() if key==cluster_idx).items())
         problems[cluster_idx].nwait = ceil(problems[cluster_idx].nneighbors * problems[cluster_idx].admmopt.nwaitPercent)
 
     output = mp.Manager().Queue()
@@ -340,12 +367,13 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
         objTotal += results[cluster_idx][1]['cost']
 
     gap = (objTotal - objCent) / objCent * 100
-    print('The convergence time is %f' % (totaltime,))
+    print('The convergence time for original problem is %f' % (orig_duration,))
+    print('The convergence time for ADMM is %f' % (totaltime,))
     print('The convergence clock time is %f' % (clocktime,))
     print('The objective function value is %f' % (objTotal,))
     print('The central objective function value is %f' % (objCent,))
-
     print('The gap in objective function is %f %%' % (gap,))
+    import pdb;pdb.set_trace()
 
     ## ------------ plots of convergence -----------------
     fig = plt.figure()
@@ -355,14 +383,13 @@ def run_regional(input_files, solver, sub_input_files, timesteps, scenario, resu
             break
         pgap = results[cluster_idx][1]['primal_residual']
         dgap = results[cluster_idx][1]['dual_residual']
-        curfig = fig.add_subplot(1, 3, cluster_idx + 1)
+        curfig = fig.add_subplot(1, len(clusters), cluster_idx + 1)
         curfig.plot(pgap, color='red', linewidth=2.5, label='primal residual')
         curfig.plot(dgap, color='blue', linewidth=2.5, label='dual residual')
         curfig.set_yscale('log')
         curfig.legend(loc='upper right')
 
     plt.show()
-    import pdb;pdb.set_trace()
 
 
     return sub

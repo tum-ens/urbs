@@ -23,6 +23,7 @@ class urbs_admm_model(object):
         self.ID = None
         self.nbor = {}
         self.pipes = None
+        self.queues = None
         self.admmopt = admmoption()
         self.recvmsg = {}
         #self.na = 17
@@ -81,20 +82,18 @@ class urbs_admm_model(object):
                     self.sub_pyomo.flow_global[key])
 
     def send(self):
-        dest = self.pipes.keys()
+        dest = self.queues[self.ID].keys()
         for k in dest:
             # prepare the message to be sent to neighbor k
             msg = message()
             msg.config(self.ID, k, self.flows_with_neighbor[k], self.rho,
                        self.lamda[self.lamda.index.isin(self.flows_with_neighbor[k].index)],
                        self.gapAll)
-            print('stuck at sending to %d' % k)
-            self.pipes[k].send(msg)
-            print('sent to %d' % k)
+            self.queues[self.ID][k].put(msg)
 
     def recv(self, pollrounds=5):
         twait = self.admmopt.pollWaitingtime
-        dest = list(self.pipes.keys())
+        dest = list(self.queues[self.ID].keys())
         recvFlag = [0] * self.nneighbors
         arrived = 0  # number of arrived neighbors
         pollround = 0
@@ -103,18 +102,15 @@ class urbs_admm_model(object):
         while arrived < self.nwait and pollround < pollrounds:
             for i in range(len(dest)):
                 k = dest[i]
-                print('stuck at recv before poll abfrage')
-                #if self.pipes[k].poll(0):
-                print('stuck at recv after poll abfrage')
-                while self.pipes[k].poll(twait):  # read from pipe until get the last message
-                    self.recvmsg[k] = self.pipes[k].recv()
+                while not self.queues[k][self.ID].empty():  # read from pipe until get the last message
+                    self.recvmsg[k] = self.queues[k][self.ID].get(timeout=twait)
                     recvFlag[i] = 1
                     # print("Message received at %d from %d" % (self.ID, k))
             arrived = sum(recvFlag)
             pollround += 1
 
     def update_z(self):
-        srcs = self.pipes.keys()
+        srcs = self.queues[self.ID].keys()
         flow_global_old = deepcopy(self.flow_global)
         for k in srcs:
             if k in self.recvmsg:
@@ -124,7 +120,7 @@ class urbs_admm_model(object):
                         (self.lamda.loc[self.lamda.index.isin(self.flows_with_neighbor[k].index)] +
                          nborvar['lambda'] + self.flows_with_neighbor[k] * self.rho + nborvar['flow'] * nborvar['rho']) \
                         / (self.rho + nborvar['rho'])
-                    print('z updated at %d using messages received from %d !' % (self.ID + 1, k + 1))
+                    #print('z updated at %d using messages received from %d !' % (self.ID + 1, k + 1))
         # self.dualgap += [((self.flow_global - flow_global_old).abs()).max()[0]]
         self.dualgap += [self.rho * (np.sqrt(np.square(self.flow_global - flow_global_old).sum(axis=0)[0]))]
         # if np.sqrt(np.square(self.lamda).sum(axis=0)[0]) == 0:
@@ -167,8 +163,6 @@ class urbs_admm_model(object):
             elif self.dualgap[-1] > self.admmopt.mu * self.primalgap[-1]:
                 self.rho = min(self.rho / self.admmopt.tau, self.admmopt.rho_max)
         # update local converge table
-        self.ID
-        len(self.gapAll)
         self.gapAll[self.ID] = self.primalgap[-1]
 
     #   # use the maximum rho among neighbors for local update
@@ -181,17 +175,15 @@ class urbs_admm_model(object):
     #
     def converge(self):
         # first update local converge table using received converge tables
-        print(self.gapAll)
         if self.recvmsg is not None:
             for k in self.recvmsg:
                 table = self.recvmsg[k].fields['convergeTable']
-                print('table: '+str(table))
                 self.gapAll = list(map(min, zip(self.gapAll, table)))
         # check if all local primal gaps < tolerance
         if max(self.gapAll) < self.admmopt.convergetol:
-            dest = self.pipes.keys()
-            for k in dest:
-                self.pipes[k].close()
+            #dest = self.queues.keys()
+            #for k in dest:
+            #    self.queues[k].close()
             return True
         else:
             return False
@@ -240,7 +232,7 @@ class admmoption(object):
         self.pollWaitingtime = 0.001  # waiting time of receiving from one pipe
         self.nwaitPercent = 0.1  # waiting percentage of neighbors (0, 1]
         self.iterMaxlocal = 1000  # local maximum iteration
-        self.convergetol = 5* 10 ** 2  # convergence criteria for maximum primal gap
+        self.convergetol = 4/5 * 365 * 10 ** 2  # convergence criteria for maximum primal gap
 
 
 #

@@ -8,8 +8,8 @@ import numpy as np
 def run_Worker(ID, s, output):
     s.sub_persistent = SolverFactory('gurobi_persistent')
     s.sub_persistent.set_instance(s.sub_pyomo, symbolic_solver_labels=False)
-    s.sub_persistent.set_options("method=2")
-
+    s.sub_persistent.set_gurobi_param('Method', 2)
+    s.sub_persistent.set_gurobi_param('Threads', 1)
     s.neighbor_clusters = s.boundarying_lines.neighbor_cluster.unique()
 
     # pack necessary structures into the problem object
@@ -59,8 +59,7 @@ def run_Worker(ID, s, output):
         if s.flag:
             print("Worker %d converged!" % (ID,))
         s.send()
-        if not s.flag:
-            s.recv(pollrounds=5)
+        s.recv(pollrounds=5)
 
         #if nu % 50 == 0:
             #plt.plot(s.primalgap[1:nu])

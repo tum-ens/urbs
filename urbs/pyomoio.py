@@ -180,6 +180,8 @@ def list_entities(instance, entity_type):
             return isinstance(entity, pyomo.Constraint)
         elif entity_type == 'obj':
             return isinstance(entity, pyomo.Objective)
+        elif entity_type == 'exp':
+            return isinstance(entity, pyomo.Expression)
         else:
             raise ValueError("Unknown entity_type '{}'".format(entity_type))
 

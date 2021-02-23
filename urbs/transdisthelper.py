@@ -15,7 +15,6 @@ def create_transdist_data(data, microgrid_data_initial):
                 for entry in microgrid_entries:
                     # microgrids are derived from the predefined microgrid types and setting
                     create_microgrid_data(microgrid_data_input, entry, n, top_region_name)
-                    # todo: Hier könnte eine Funktion für die Variation mit Abweichung der Input Zeitreihen entstehen
                 n += 1
                 # scale capacities, commodities, demand & areas with multiplicator number of the microgrid
                 multiplicator_scaling(microgrid_data_input, microgrid_multiplicator_list, set_number, type_nr)

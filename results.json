@@ -1,0 +1,51 @@
+{
+    "Problem": [
+        {
+            "Lower bound": 1.309,
+            "Name": "unknown",
+            "Number of constraints": 3,
+            "Number of nonzeros": 7,
+            "Number of objectives": 1,
+            "Number of variables": 4,
+            "Sense": "minimize",
+            "Upper bound": 1.309
+        }
+    ],
+    "Solution": [
+        {
+            "number of solutions": 1,
+            "number of solutions displayed": 1
+        },
+        {
+            "Constraint": "No values",
+            "Gap": 0.0,
+            "Message": null,
+            "Objective": {
+                "OBJ": {
+                    "Value": 1.309000000000001
+                }
+            },
+            "Problem": {},
+            "Status": "feasible",
+            "Variable": {
+                "x[John]": {
+                    "Value": 0.416666666666667
+                }
+            }
+        }
+    ],
+    "Solver": [
+        {
+            "Error rc": 0,
+            "Statistics": {
+                "Branch and bound": {
+                    "Number of bounded subproblems": 0,
+                    "Number of created subproblems": 0
+                }
+            },
+            "Status": "ok",
+            "Termination condition": "optimal",
+            "Time": 0.026940345764160156
+        }
+    ]
+}

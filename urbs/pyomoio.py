@@ -1,5 +1,6 @@
 import pandas as pd
-import pyomo.core as pyomo
+import pyomo.environ as pyomo
+#import pyomo.core as pyomo
 
 
 def get_entity(instance, name):
@@ -27,10 +28,10 @@ def get_entity(instance, name):
     # extract values
     if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
-            results = pd.DataFrame([v + (1,) for v in entity.value])
+            results = pd.DataFrame([v + (1,) for v in entity.data()])
         else:
             # Pyomo sets don't have values, only elements
-            results = pd.DataFrame([(v, 1) for v in entity.value])
+            results = pd.DataFrame([(v, 1) for v in entity.data()])
 
         # for unconstrained sets, the column label is identical to their index
         # hence, make index equal to entity name and append underscore to name
@@ -232,28 +233,28 @@ def _get_onset_names(entity):
             # N-dimensional set tuples, possibly with nested set tuples within
             if entity.domain:
                 # retreive list of domain sets, which itself could be nested
-                domains = entity.domain.set_tuple
+                domains = entity.domain.subsets()#set_tuple
             else:
                 try:
                     # if no domain attribute exists, some
-                    domains = entity.set_tuple
+                    domains = entity.subsets()#set_tuple
                 except AttributeError:
                     # if that fails, too, a constructed (union, difference,
                     # intersection, ...) set exists. In that case, the
                     # attribute _setA holds the domain for the base set
                     try:
-                        domains = entity._setA.domain.set_tuple
+                        domains = entity._setA.domain.subsets()#set_tuple
                     except AttributeError:
                         # if that fails, too, a constructed (union, difference,
                         # intersection, ...) set exists. In that case, the
                         # attribute _setB holds the domain for the base set
-                        domains = entity._setB.domain.set_tuple
+                        domains = entity._setB.domain.subsets()#set_tuple
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))
 
         elif entity.dimen == 1:
-            if entity.domain:
+            if not entity.domain.name == 'Any':
                 # 1D subset; add domain name
                 labels.append(entity.domain.name)
             else:

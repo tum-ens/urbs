@@ -262,25 +262,24 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     consumed = consumed.join(shifted.rename('Demand'))
 
     # VOLTAGE ANGLE of sites
-    try:
-        voltage_angle = get_entity(instance, 'voltage_angle')
-        voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
-        voltage_angle = voltage_angle.unstack(level='sit')[sites]
-    except (KeyError, AttributeError):
+    if instance.mode['dcpf']:
+            voltage_angle = get_entity(instance, 'voltage_angle')
+            voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
+            voltage_angle = voltage_angle.unstack(level='sit')[sites]
+    else:
         voltage_angle = pd.DataFrame(index=timesteps)
-    voltage_angle.name = 'Voltage Angle'
+        voltage_angle.name = 'Voltage Angle'
 
     # Squred Voltage Magnitudes of sites
-    try:
-        voltage_squared = get_entity(instance, 'voltage_squared')
-        voltage_squared = voltage_squared.xs([stf], level=['stf']).loc[timesteps]
-        base_voltage = instance.site_dict['base-voltage'][(instance.stf.value_list[0], voltage_squared.index[0][1])]
-        voltage_squared = voltage_squared.unstack(level='sit')[sites]
-        voltage_magnitude = np.sqrt(voltage_squared)/base_voltage
-
-    except (KeyError, AttributeError):
+    if instance.mode['acpf']:
+            voltage_squared = get_entity(instance, 'voltage_squared')
+            voltage_squared = voltage_squared.xs([stf], level=['stf']).loc[timesteps]
+            base_voltage = instance.site_dict['base-voltage'][(instance.stf.value_list[0], voltage_squared.index[0][1])]
+            voltage_squared = voltage_squared.unstack(level='sit')[sites]
+            voltage_magnitude = np.sqrt(voltage_squared)/base_voltage
+    else:
         voltage_magnitude = pd.DataFrame(index=timesteps)
-    voltage_magnitude.name = 'Voltage Magnitude'
+        voltage_magnitude.name = 'Voltage Magnitude'
 
     return created, consumed, stored, imported, exported, dsm, voltage_angle, voltage_magnitude
 

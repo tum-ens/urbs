@@ -14,7 +14,7 @@ from .plot import *
 from .input import *
 from .validation import *
 from .saveload import *
-from .transdisthelper import *
+from .features import *
 
 
 def prepare_result_directory(result_name):
@@ -63,10 +63,10 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
+def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
                  objective, microgrid_files = None, plot_tuples=None,  plot_sites_name=None,
                  plot_periods=None, report_tuples=None,
-                 report_sites_name=None):
+                 report_sites_name=None,noTypicalPeriods=None, hoursPerPeriod=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
@@ -105,26 +105,29 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     # read and modify microgrid data
     mode = identify_mode(data)
     if mode['transdist']:
-        microgrid_data_initial =[] #todo: hieraus auch eine Funktion in trandisthelper?
+        microgrid_data_initial =[]
         for i, microgrid_file in enumerate(microgrid_files):
             microgrid_data_initial.append(read_input(microgrid_file, year))
             microgrid_data_initial[i] = scenario(microgrid_data_initial[i])
             validate_input(microgrid_data_initial[i])
-            validate_dc_objective(microgrid_data_initial[i], objective) #braucht es das?
+            validate_dc_objective(microgrid_data_initial[i], objective) #todo: braucht es das?
         # join microgrid data to model data
         data = create_transdist_data(data, microgrid_data_initial)
     elif mode['acpf']:
         add_reactive_transmission_lines(data)
         add_reactive_output_ratios(data)
 
-        # ## Excel Datei zum validieren der create_transdist_data todo: delete at the end
-        # with pd.ExcelWriter(os.path.join(result_dir, '{}.xlsx').format(sce)) as writer:
-        #     for i, sheet in enumerate(data):
-        #         data[sheet].to_excel(writer, str(i))
+    if mode['tsam']:
+        data, timesteps, weighting_order = run_tsam(data, noTypicalPeriods, hoursPerPeriod)
+
+    ## Excel Datei zum validieren der create_transdist_data todo: delete at the end
+    # with pd.ExcelWriter(os.path.join(result_dir, '{}.xlsx').format(sce)) as writer:
+    #     for i, sheet in enumerate(data):
+    #         data[sheet].to_excel(writer, str(i))
 
     # create model
     tt = time.time()
-    prob = create_model(data, dt, timesteps, objective)
+    prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order)
     print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt,4))
 
     # write lp file
@@ -134,16 +137,16 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+    optim = SolverFactory(solver_name)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True,report_timing=True)
     assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
-    save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    # save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
     #save(prob, os.path.join('C:/Users/beneh/Documents/Dokumente/Beneharos_Dokumente/01_Uni/00_Master/4_Semester/Masterarbeit/3_Postprocessing/h5 analysis/case_Test_AC', '{}.h5'.format(sce)))
 
-    # write report to spreadsheet
+    # write report to spreadsheet #todo: wieder aktivieren wenn Problem in pyomoio gelöst
     report(
         prob,
         os.path.join(result_dir, '{}.xlsx').format(sce),

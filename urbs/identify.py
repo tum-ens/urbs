@@ -29,7 +29,8 @@ def identify_mode(data):
         'tve': False,                   # time variable efficiency
         'dcpf': False,                  # dc power flow
         'acpf': False,                  # ac power flow
-        'tdy': False,                   # type days
+        'tdy': False,                   # type periods
+        'tsam': False,                  # time series aggregation method
         'onoff': False,                 # on/off processes
         'minfraction': False,           # processes with minimum working load
         'chp': False,                   # chp processes
@@ -68,8 +69,10 @@ def identify_mode(data):
     if 'reactance' in data['transmission'].keys():
         if any(data['transmission']['reactance'] > 0):
             mode['dcpf'] = True
-    if any(data['type day']['weight_typeday'] > 0):
+    if any(data['type period']['weight_typeperiod'] > 0):
         mode['tdy'] = True
+    if data['global_prop'].loc[pd.IndexSlice[:,'tsam'],'value'].iloc[0]:
+        mode['tsam'] = True
     if 'on-off' in data['process'].keys():
         if any(data['process']['on-off'] == 1):
             mode['onoff'] = True
@@ -77,7 +80,7 @@ def identify_mode(data):
         if any(data['process']['min-fraction'] > 0):
             mode['minfraction'] = True
     # checking TransDist input value
-    if data['global_prop'].loc[pd.IndexSlice[:,'TransDist'],'value'][0]:
+    if data['global_prop'].loc[pd.IndexSlice[:,'TransDist'],'value'].iloc[0]:
         mode['transdist'] = True
     # if not data['process_commodity'].empty:
     #     if any(data['commodity'] == 'heat'):

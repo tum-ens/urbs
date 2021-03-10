@@ -1,5 +1,6 @@
 import math
 import pyomo.core as pyomo
+from .typeperiod import get_stf
 
 
 def add_storage(m):
@@ -10,6 +11,7 @@ def add_storage(m):
         indexlist.add(tuple(key)[2])
     m.sto = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of storage technologies')
 
     # storage tuples
@@ -331,11 +333,11 @@ def storage_cost(m, cost_type):
                    m.storage_dict['cost_factor'][s]
                    for s in m.sto_tuples)
     elif cost_type == 'Variable':
-        return sum(m.e_sto_con[(tm,) + s] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+        return sum(m.e_sto_con[(tm,) + s] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
                    m.storage_dict['var-cost-c'][s] *
                    m.storage_dict['cost_factor'][s] +
                    (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
-                   m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] * m.storage_dict['var-cost-p'][s] *
+                   m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] * m.storage_dict['var-cost-p'][s] *
                    m.storage_dict['cost_factor'][s]
                    for tm in m.tm
                    for s in m.sto_tuples)

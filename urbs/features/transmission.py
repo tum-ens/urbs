@@ -1,5 +1,7 @@
 import math
+from .typeperiod import get_stf
 import pyomo.core as pyomo
+
 
 def e_tra_domain_rule1(m, tm, stf, sin, sout, tra, com):
     # assigning e_tra_in and e_tra_out variable domains for transport and DCPF
@@ -44,6 +46,7 @@ def add_transmission(m):
         indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of transmission technologies')
 
     # transmission tuples
@@ -144,6 +147,7 @@ def add_transmission_dc(m):
         indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of transmission technologies')
 
     # Transport and DCPF transmission tuples
@@ -301,6 +305,7 @@ def add_transmission_ac(m):
         indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of transmission technologies')
 
     # Transport and DCPF transmission tuples
@@ -621,29 +626,29 @@ def transmission_cost(m, cost_type):
                    for t in m.tra_tuples)
     elif cost_type == 'Variable':
         if m.mode['dcpf']:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_tp) + \
-                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_dc)
         if m.mode['acpf']:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_tp) + \
-                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_ac_dc)
         else:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm

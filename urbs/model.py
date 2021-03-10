@@ -1,17 +1,11 @@
 import math
-
-#import pyomo.core as pyomo
-
-import pyomo.environ as pyomo
-
 from datetime import datetime
 from .features import *
 from .features.transmission import *
 from .input import *
+import pyomo.environ as pyomo
 
-
-def create_model(data, dt=1, timesteps=None, objective='cost',
-                 dual=True):
+def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=None, weighting_order=None,dual=True):
     """Create a pyomo ConcreteModel urbs object from given input data.
 
     Args:
@@ -43,7 +37,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # costs are annual by default, variable costs are scaled by weight) and
     # among different simulation durations meaningful.
     m.weight = pyomo.Param(
-        initialize=float(8760) / (len(m.timesteps) - 1 * dt), #todo: typeday fragen
+        initialize=float(8760) / (len(m.timesteps) - 1 * dt),
         doc='Pre-factor for variable costs and emissions for an annual result')
 
     # dt = spacing between timesteps. Required for storage equation that
@@ -56,6 +50,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # import objective function information
     m.obj = pyomo.Param(
         initialize=objective,
+        within=pyomo.Any,
         doc='Specification of minimized quantity, default: "cost"')
 
     # Sets
@@ -84,7 +79,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[0])
     m.stf = pyomo.Set(
         initialize=indexlist,
-        ordered=True,
+        ordered=False,
         doc='Set of modeled support timeframes (e.g. years)')
 
     # site (e.g. north, middle, south...)
@@ -93,6 +88,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[1])
     m.sit = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of sites')
 
     # commodity (e.g. solar, wind, coal...)
@@ -101,6 +97,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[2])
     m.com = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
@@ -109,6 +106,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[3])
     m.com_type = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
@@ -117,6 +115,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[2])
     m.pro = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of conversion processes')
 
     # cost_type
@@ -137,7 +136,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
                     for (stf, site) in m.sit_tuples
                     if m.site_dict['min-voltage'][(stf, site)] > 0],
         doc='Combinations of support timeframes and sites with ac characteristics')
-
     m.sit_slackbus = pyomo.Set(
         within=m.stf * m.sit,
         initialize=[(stf, site)
@@ -156,6 +154,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.com_stock = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Stock'),
+        ordered=False,
         doc='Commodities that can be purchased at some site(s)')
 
     
@@ -182,14 +181,17 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.com_supim = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'SupIm'),
+        ordered=False,
         doc='Commodities that have intermittent (timeseries) input')
     m.com_demand = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Demand'),
+        ordered=False,
         doc='Commodities that have a demand (implies timeseries)')
     m.com_env = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Env'),
+        ordered=False,
         doc='Commodities that (might) have a maximum creation limit')
 
     # process tuples for area rule
@@ -308,7 +310,9 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     if m.mode['bsp']:
         m = add_buy_sell_price(m)
     if m.mode['tdy']:
-        m = add_typeday(m)
+        if m.mode['tsam']:
+            store_typeperiod_parameter(m, hoursPerPeriod, weighting_order)
+        m = add_typeperiod(m)
 
     if (m.mode['tve'] or m.mode['onoff'] or #m.mode['chp'] or
         m.mode['minfraction']):
@@ -582,7 +586,7 @@ def res_stock_total_rule(m, stf, sit, com, com_type):
         total_consumption = 0
         for tm in m.tm:
             total_consumption += (
-                m.e_co_stock[tm, stf, sit, com, com_type] * m.typeday['weight_typeday'][(stf,tm)])
+                m.e_co_stock[tm, stf, sit, com, com_type] * m.typeperiod['weight_typeperiod'][(stf,tm)])
         total_consumption *= m.weight
         return (total_consumption <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -611,7 +615,7 @@ def res_env_total_rule(m, stf, sit, com, com_type):
         # calculate total creation of environmental commodity com
         env_output_sum = 0
         for tm in m.tm:
-            env_output_sum += (- commodity_balance(m, tm, stf, sit, com)* m.typeday['weight_typeday'][(stf,tm)])
+            env_output_sum += (- commodity_balance(m, tm, stf, sit, com)* m.typeperiod['weight_typeperiod'][(stf,tm)])
         env_output_sum *= m.weight
         return (env_output_sum <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -736,7 +740,7 @@ def res_global_co2_limit_rule(m, stf):
                 # minus because negative commodity_balance represents creation
                 # of that commodity.
                 co2_output_sum += (- commodity_balance(m, tm,
-                                                       stf, sit, 'CO2')* m.typeday['weight_typeday'][(stf,tm)])
+                                                       stf, sit, 'CO2')* m.typeperiod['weight_typeperiod'][(stf,tm)])
 
         # scaling to annual output (cf. definition of m.weight)
         co2_output_sum *= m.weight
@@ -759,7 +763,7 @@ def res_global_co2_budget_rule(m):
                     # creation of that commodity.
                     co2_output_sum += (- commodity_balance
                                        (m, tm, stf, sit, 'CO2') *
-                                       m.typeday['weight_typeday'][(stf,tm)] *
+                                       m.typeperiod['weight_typeperiod'][(stf,tm)] *
                                        m.weight *
                                        stf_dist(stf, m))
 
@@ -840,7 +844,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Variable':
         cost = \
-            sum(m.tau_pro[(tm,) + p] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            sum(m.tau_pro[(tm,) + p] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
                 m.process_dict['var-cost'][p] *
                 m.process_dict['cost_factor'][p]
                 for tm in m.tm
@@ -853,7 +857,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Fuel':
         return m.costs[cost_type] == sum(
-            m.e_co_stock[(tm,) + c] * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            m.e_co_stock[(tm,) + c] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm for c in m.com_tuples
@@ -874,7 +878,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Environmental':
         return m.costs[cost_type] == sum(
-            - commodity_balance(m, tm, stf, sit, com) * m.weight * m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            - commodity_balance(m, tm, stf, sit, com) * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
             m.commodity_dict['price'][(stf, sit, com, com_type)] *
             m.commodity_dict['cost_factor'][(stf, sit, com, com_type)]
             for tm in m.tm
@@ -906,7 +910,7 @@ def co2_rule(m):
                 # creation of that commodity.
                 if m.mode['int']:
                     co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *
-                                       m.typeday['weight_typeday'][(stf, tm)] *
+                                       m.typeperiod['weight_typeperiod'][(stf, tm)] *
                                        m.weight * stf_dist(stf, m))
                 else:
                     co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2') *

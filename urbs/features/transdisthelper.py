@@ -1,4 +1,4 @@
-from .identify import *
+from urbs.identify import *
 import copy
 import math
 

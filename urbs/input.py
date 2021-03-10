@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import glob
 from xlrd import XLRDError
-import pyomo.environ as pyomo #from pyomo.environ import ConcreteModel #todo nachfragen neu in persistant
+import pyomo.environ as pyomo
 from .features.modelhelper import *
 from .identify import *
 
@@ -82,8 +82,8 @@ def read_input(input_files, year):
             demand = xls.parse('Demand').set_index(['t'])
             demand = pd.concat([demand], keys=[support_timeframe],
                                names=['support_timeframe'])
-            typeday = demand.loc[:, ['weight_typeday']]
-            demand = demand.drop(columns=['weight_typeday'])
+            typeperiod = demand.loc[:, ['weight_typeperiod']]
+            demand = demand.drop(columns=['weight_typeperiod'])
             # split columns by dots '.', so that 'DE.Elec' becomes
             # the two-level column index ('DE', 'Elec')
             demand.columns = split_columns(demand.columns, '.')
@@ -165,7 +165,7 @@ def read_input(input_files, year):
         'commodity': commodity,
         'process': process,
         'process_commodity': process_commodity,
-        'type day': typeday,
+        'type period': typeperiod,
         'demand': demand,
         'supim': supim,
         'transmission': transmission,
@@ -250,12 +250,12 @@ def pyomo_model_prep(data, timesteps):
         m.eff_factor_dict = \
             data["eff_factor"].dropna(axis=0, how='all').to_dict()
     if m.mode['tdy']:
-        m.typeday = data['type day'].dropna(axis=0, how='all').to_dict()
+        m.typeperiod = data['type period'].dropna(axis=0, how='all').to_dict()
     else:
-        # if mode 'typeday' is not active, create a dict with ones
+        # if mode 'typeperiod' is not active, create a dict with ones
         temp = pd.DataFrame(index=data['demand'].dropna(axis=0, how='all').index)
-        temp['weight_typeday']=1
-        m.typeday = temp.to_dict()
+        temp['weight_typeperiod']=1
+        m.typeperiod = temp.to_dict()
 
     if m.mode['onoff']:
         # on/off option

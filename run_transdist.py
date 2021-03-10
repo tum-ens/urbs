@@ -10,6 +10,7 @@ from os import getpid
 import matplotlib.pyplot as plt
 from urbs.runfunctions import *
 
+
 input_files = 'Transmission_Level.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
@@ -39,34 +40,39 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (0,120)  # time step selection
+(offset, length) = (0,336)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
+
+# input data for tsam method
+noTypicalPeriods = 4
+hoursPerPeriod = 168
 
 # detailed reporting commodity/sites
 report_tuples = [
      (2021, 'Bayern', 'Elec'),
      (2021, 'Hessen', 'Elec'),
-     (2021, 'node0_A1_Bayern', 'Elec'),
-     (2021, 'node1_A1_Bayern', 'Elec'),
-     (2021, 'node2_A1_Bayern', 'Elec'),
-     (2021, 'node3_A1_Bayern', 'Elec'),
-     (2021, 'node4_A1_Bayern', 'Elec'),
-     (2021, 'node5_A1_Bayern', 'Elec'),
-     (2021, 'node6_A1_Bayern', 'Elec'),
-     (2021, 'node7_A1_Bayern', 'Elec'),
-     (2021, 'node8_A1_Bayern', 'Elec'),
-     (2021, 'node9_A1_Bayern', 'Elec'),
-    (2021, 'node0_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node1_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node2_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node3_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node4_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node5_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node6_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node7_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node8_A1_Bayern', 'Elec-Reactive'),
-    (2021, 'node9_A1_Bayern', 'Elec-Reactive')
+    #  (2021, 'node0_A1_Bayern', 'Elec'),
+    #  (2021, 'node1_A1_Bayern', 'Elec'),
+    #  (2021, 'node2_A1_Bayern', 'Elec'),
+    #  (2021, 'node3_A1_Bayern', 'Elec'),
+    #  (2021, 'node4_A1_Bayern', 'Elec'),
+    #  (2021, 'node5_A1_Bayern', 'Elec'),
+    #  (2021, 'node6_A1_Bayern', 'Elec'),
+    #  (2021, 'node7_A1_Bayern', 'Elec'),
+    #  (2021, 'node8_A1_Bayern', 'Elec'),
+    #  (2021, 'node9_A1_Bayern', 'Elec'),
+    # (2021, 'node0_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node1_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node2_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node3_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node4_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node5_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node6_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node7_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node8_A1_Bayern', 'Elec-Reactive'),
+    # (2021, 'node9_A1_Bayern', 'Elec-Reactive')
+
     # ('Baden-Württemberg', 'Elec'),
     # ('Bavaria', 'Elec'),
     # ('Berlin', 'Elec'),
@@ -92,9 +98,10 @@ report_tuples = [
 
 # optional: define names for sites in report_tuples
 report_sites_name = {
-  ('Bayern','Hessen','node0_A1_Bayern','node1_A1_Bayern','node2_A1_Bayern',
-   'node3_A1_Bayern','node4_A1_Bayern','node5_A1_Bayern','node6_A1_Bayern',
-   'node7_A1_Bayern','node8_A1_Bayern','node9_A1_Bayern'):'Germany'
+  ('Bayern','Hessen'):'Germany'#
+   #,'node0_A1_Bayern','node1_A1_Bayern','node2_A1_Bayern',
+   #'node3_A1_Bayern','node4_A1_Bayern','node5_A1_Bayern','node6_A1_Bayern',
+   #'node7_A1_Bayern','node8_A1_Bayern','node9_A1_Bayern'):'Germany'
   # ('Baden-Württemberg', 'Bavaria', 'Berlin',
   # 'Brandenburg', 'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony',
   # 'Mecklenburg-Vorpommern', 'North Rhine-Westphalia',
@@ -165,5 +172,7 @@ for scenario in scenarios:
                              plot_sites_name=plot_sites_name,
                              plot_periods=plot_periods,
                              report_tuples=report_tuples,
-                             report_sites_name=report_sites_name)
+                             report_sites_name=report_sites_name,
+                             noTypicalPeriods=noTypicalPeriods,
+                             hoursPerPeriod=hoursPerPeriod)
 

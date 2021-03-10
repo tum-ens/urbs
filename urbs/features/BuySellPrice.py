@@ -1,6 +1,7 @@
 import math
 import pyomo.core as pyomo
 from .modelhelper import commodity_subset
+from .typeperiod import get_stf
 
 
 def add_buy_sell_price(m):
@@ -9,10 +10,12 @@ def add_buy_sell_price(m):
     m.com_sell = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Sell'),
+        ordered=False,
         doc='Commodities that can be sold')
     m.com_buy = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Buy'),
+        ordered=False,
         doc='Commodities that can be purchased')
 
     # Variables
@@ -73,7 +76,7 @@ def res_sell_total_rule(m, stf, sit, com, com_type):
         total_consumption = 0
         for tm in m.tm:
             total_consumption += (
-                m.e_co_sell[tm, stf, sit, com, com_type] * m.typeday['weight_typeday'][(stf,tm)])
+                m.e_co_sell[tm, stf, sit, com, com_type] * m.typeperiod['weight_typeperiod'][(stf,tm)])
         total_consumption *= m.weight
         return (total_consumption <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -99,7 +102,7 @@ def res_buy_total_rule(m, stf, sit, com, com_type):
         total_consumption = 0
         for tm in m.tm:
             total_consumption += (
-                m.e_co_buy[tm, stf, sit, com, com_type] * m.typeday['weight_typeday'][(stf,tm)])
+                m.e_co_buy[tm, stf, sit, com, com_type] * m.typeperiod['weight_typeperiod'][(stf,tm)])
         total_consumption *= m.weight
         return (total_consumption <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -130,7 +133,7 @@ def search_sell_buy_tuple(m, stf, sit_in, pro_in, coin):
     Returns:
         a process
     """
-    pro_output_tuples = [x for x in list(m.pro_output_tuples.value) if x[1] == sit_in] #todo: typeday fragen
+    pro_output_tuples = [x for x in list(m.pro_output_tuples.value) if x[1] == sit_in]
     pro_input_tuples = [x for x in list(m.pro_input_tuples.value) if x[1] == sit_in]
     # search the output commodities for the "buy" process
     # buy_out = (stf, site, output_commodity)
@@ -174,7 +177,7 @@ def revenue_costs(m):
     try:
         return -sum(
             m.e_co_sell[(tm,) + c] *
-            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *  m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm
@@ -182,7 +185,7 @@ def revenue_costs(m):
     except KeyError:
         return -sum(
             m.e_co_sell[(tm,) + c] *
-            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *  m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm
@@ -194,7 +197,7 @@ def purchase_costs(m):
     try:
         return sum(
             m.e_co_buy[(tm,) + c] *
-            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *  m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm
@@ -202,7 +205,7 @@ def purchase_costs(m):
     except KeyError:
         return sum(
             m.e_co_buy[(tm,) + c] *
-            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *  m.typeday['weight_typeday'][(m.stf[1],tm)] *
+            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm

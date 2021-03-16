@@ -26,7 +26,7 @@ def run_worker(ID, s, output):
     s.flag = False
     s.gapAll = [10 ** 8] * s.na
     cost_history = np.zeros(maxit)
-    s.convergetol = s.conv_rel * (len(s.flow_global)+1) #  # convergence criteria for maximum primal gap
+    s.convergetol = s.admmopt.conv_rel * (len(s.flow_global)+1) #  # convergence criteria for maximum primal gap
 
     while nu <= maxit-1 and not s.flag:
         print('Subproblem %d is at iteration %d right now.' % (ID, nu))

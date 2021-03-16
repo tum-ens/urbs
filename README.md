@@ -1,9 +1,15 @@
-# urbs
+# eXtremOS - urbs
 
 urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming) optimisation model for capacity expansion planning and unit commitment for distributed energy systems. Its name, latin for city, stems from its origin as a model for optimisation for urban energy systems. Since then, it has been adapted to multiple scales from neighbourhoods to continents.
 
 [![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](http://urbs.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.594200.svg)](https://doi.org/10.5281/zenodo.594200)
+
+## eXtremOS project
+This branch features the further development of urbs during the project eXtremOS. It includes a new optimazation mode: asynchronous ADMM for regional devomposition.
+
+## Contributors
+The code basis is, of course, urbs. Next to the urbs contributors the work in the project was conducted by Soner Candas.
 
 ## Features
 
@@ -31,9 +37,9 @@ There are 2 ways to get all required packages under Windows. We recommend using 
   2. **Packages and Solver**: [GLPK](http://winglpk.sourceforge.net/).
      1. Download the [environment file](https://github.com/tum-ens/urbs/blob/master/urbs-env.yml).
      2. Launch a new command prompt (Windows: Win+R, type "cmd", Enter)
-     3. Install it via conda by `conda env create -f urbs-env.yml`.
+     3. Install it via conda by `conda env create -f urbs-extremos.yml`.
      4. Each time you open a new terminal for running urbs, you can activate the environment by `conda activate urbs`.
-
+     5. Important for the ADMM mode of operation: a slight adjustment in the internals of ``pyomo`` has to be made to be able to build the ADMM subproblems: please  .
 Continue at [Get Started](#get-started).
 
 ### Manually (the hard way)

@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import pyomo.environ as pyomo
 from copy import deepcopy
-from numpy import Inf, maximum
+from numpy import maximum
 
 
-class urbs_admm_model(object):
+class urbsADMMmodel(object):
     """This class encapsulates the local urbs subproblem and implements admm steps
     including x-update(solving subproblem), send data to neighbors, receive data
     from neighbors, z-update (global flows) and y-update (lambdas)
@@ -19,6 +19,15 @@ class urbs_admm_model(object):
 
     def __init__(self):
         # initialize all the fields
+        self.boundarying_lines = None
+        self.flows_all = None
+        self.flows_with_neighbor = None
+        self.flow_global = None
+        self.sub_pyomo = None
+        self.sub_persistent = None
+        self.neighbors = None
+        self.nneighbors = None
+        self.nwait = None
         self.var = {'flow_global': None, 'rho': None}
         self.ID = None
         self.nbor = {}
@@ -26,12 +35,25 @@ class urbs_admm_model(object):
         self.queues = None
         self.admmopt = admmoption()
         self.recvmsg = {}
-        #self.na = 17
         self.primalgap = [9999]
         self.dualgap = [9999]
+        self.gapAll = None
+        self.rho = None
+        self.lamda = None
 
     def solve_problem(self):
         self.sub_persistent.solve(save_results=False, load_solutions=False, warmstart=True)
+
+    def fix_flow_global(self):
+        for key in self.flow_global.index:
+            if not isinstance(self.flow_global.loc[key], pd.core.series.Series):
+                self.sub_pyomo.flow_global[key].fix(self.flow_global.loc[key])
+                self.sub_persistent.update_var(
+                    self.sub_pyomo.flow_global[key])
+            else:
+                self.sub_pyomo.flow_global[key].fix(self.flow_global.loc[key, 0])
+                self.sub_persistent.update_var(
+                    self.sub_pyomo.flow_global[key])
 
     def fix_lambda(self):
         for key in self.lamda.index:
@@ -39,7 +61,7 @@ class urbs_admm_model(object):
                 self.sub_pyomo.lamda[key].fix(self.lamda.loc[key])
                 self.sub_persistent.update_var(self.sub_pyomo.lamda[key])
             else:
-                self.sub_pyomo.lamda[key].fix(self.lamda.loc[key,0])
+                self.sub_pyomo.lamda[key].fix(self.lamda.loc[key, 0])
                 self.sub_persistent.update_var(self.sub_pyomo.lamda[key])
 
     def set_quad_cost(self, rhos_old):
@@ -62,24 +84,12 @@ class urbs_admm_model(object):
         old_expression = self.sub_persistent._pyomo_model.objective_function.expr
         self.sub_persistent._pyomo_model.del_component('objective_function')
         self.sub_persistent._pyomo_model.add_component('objective_function',
-                                                       pyomo.Objective(expr=old_expression + quadratic_penalty_change,
+                                                       pyomo.Objective(expr = old_expression + quadratic_penalty_change,
                                                                        sense=pyomo.minimize))
-        # self.sub_persistent._pyomo_model.objective_function = pyomo.Objective(expr=self.sub_persistent._pyomo_model.objective_function.expr + quadratic_penalty_change,
-        #                                                                                        sense=pyomo.minimize)
         self.sub_persistent.set_objective(
             self.sub_persistent._pyomo_model.objective_function)
         self.sub_persistent._solver_model.update()
 
-    def fix_flow_global(self):
-        for key in self.flow_global.index:
-            if not isinstance(self.flow_global.loc[key], pd.core.series.Series):
-                self.sub_pyomo.flow_global[key].fix(self.flow_global.loc[key])
-                self.sub_persistent.update_var(
-                    self.sub_pyomo.flow_global[key])
-            else:
-                self.sub_pyomo.flow_global[key].fix(self.flow_global.loc[key,0])
-                self.sub_persistent.update_var(
-                    self.sub_pyomo.flow_global[key])
 
     def send(self):
         dest = self.queues[self.ID].keys()
@@ -94,7 +104,7 @@ class urbs_admm_model(object):
     def recv(self, pollrounds=5):
         twait = self.admmopt.pollWaitingtime
         dest = list(self.queues[self.ID].keys())
-        recvFlag = [0] * self.nneighbors
+        recv_flag = [0] * self.nneighbors
         arrived = 0  # number of arrived neighbors
         pollround = 0
 
@@ -102,62 +112,33 @@ class urbs_admm_model(object):
         while arrived < self.nwait and pollround < pollrounds:
             for i in range(len(dest)):
                 k = dest[i]
-                while not self.queues[k][self.ID].empty():  # read from pipe until get the last message
+                while not self.queues[k][self.ID].empty():  # read from queue until get the last message
                     self.recvmsg[k] = self.queues[k][self.ID].get(timeout=twait)
-                    recvFlag[i] = 1
+                    recv_flag[i] = 1
                     # print("Message received at %d from %d" % (self.ID, k))
-            arrived = sum(recvFlag)
+            arrived = sum(recv_flag)
             pollround += 1
 
     def update_z(self):
         srcs = self.queues[self.ID].keys()
         flow_global_old = deepcopy(self.flow_global)
         for k in srcs:
-            if k in self.recvmsg:
-                if self.recvmsg[k].tID == self.ID:  # target is this Cluster
-                    nborvar = self.recvmsg[k].fields  # nborvar['flow'], nborvar['convergeTable']
-                    self.flow_global.loc[self.flow_global.index.isin(self.flows_with_neighbor[k].index)] = \
-                        (self.lamda.loc[self.lamda.index.isin(self.flows_with_neighbor[k].index)] +
-                         nborvar['lambda'] + self.flows_with_neighbor[k] * self.rho + nborvar['flow'] * nborvar['rho']) \
-                        / (self.rho + nborvar['rho'])
-                    #print('z updated at %d using messages received from %d !' % (self.ID + 1, k + 1))
-        # self.dualgap += [((self.flow_global - flow_global_old).abs()).max()[0]]
+            if k in self.recvmsg and self.recvmsg[k].tID == self.ID:  # target is this Cluster
+                nborvar = self.recvmsg[k].fields  # nborvar['flow'], nborvar['convergeTable']
+                self.flow_global.loc[self.flow_global.index.isin(self.flows_with_neighbor[k].index)] = \
+                    (self.lamda.loc[self.lamda.index.isin(self.flows_with_neighbor[k].index)] +
+                     nborvar['lambda'] + self.flows_with_neighbor[k] * self.rho + nborvar['flow'] * nborvar['rho']) \
+                    / (self.rho + nborvar['rho'])
         self.dualgap += [self.rho * (np.sqrt(np.square(self.flow_global - flow_global_old).sum(axis=0)[0]))]
-        # if np.sqrt(np.square(self.lamda).sum(axis=0)[0]) == 0:
-        #     self.dualgap += [1]
-        # else:
-        #     self.dualgap += [self.rho * (np.sqrt(np.square(self.flow_global - flow_global_old).sum(axis=0)[0])) \
-        #                     / (np.sqrt(np.square(self.lamda).sum(axis=0)[0]))]
 
     def update_y(self):
         self.lamda = self.lamda + self.rho * (self.flows_all.loc[:, [0]] - self.flow_global)
 
-        #   # update rho and primal gap locally
-
-    def update_rho(self,nu):
-        # calculate and update primal gap first
-        # primalgap_old = deepcopy(self.primalgap[-1])
-        #self.primalgap += [((self.flows_all - self.flow_global).abs()).max()[0]]
+    # update rho and primal gap locally
+    def update_rho(self, nu):
         self.primalgap += [np.sqrt(np.square(self.flows_all - self.flow_global).sum(axis=0)[0])]
-        # self.primalgap += [np.sqrt(np.square(self.flows_all - self.flow_global).sum(axis=0)[0]) \
-        #                   / maximum(np.sqrt(np.square(self.flows_all).sum(axis=0)[0]),
-        #                             np.sqrt(np.square(self.flow_global).sum(axis=0)[0]))]
-        # (for residual balancing: https://arxiv.org/pdf/1704.06209.pdf) update tau
-        # if 1 <= np.sqrt(self.admmopt.zeta ** -1 * self.primalgap[-1] / self.dualgap[-1]) < self.admmopt.tau_max:
-        #     self.admmopt.tau = np.sqrt(self.admmopt.zeta ** -1 * self.primalgap[-1] / self.dualgap[-1])
-        # elif self.admmopt.tau_max ** -1 < np.sqrt(self.admmopt.zeta ** -1 * self.primalgap[-1] / self.dualgap[-1]) < 1:
-        #     self.admmopt.tau = np.sqrt(self.admmopt.zeta * self.dualgap[-1] / self.primalgap[-1])
-        # else:
-        #     self.admmopt.tau = self.admmopt.tau_max
-        # update rho if necessary
-        # if self.primalgap[-1] > self.admmopt.theta * primalgap_old:
-        # if self.primalgap[-1] > self.admmopt.zeta * self.dualgap[-1]:
-        #     self.rho = min(self.admmopt.rho_max, self.rho * self.admmopt.tau)
-        # elif self.dualgap[-1] > self.admmopt.zeta ** -1 * self.primalgap[-1]:
-        #     self.rho = self.rho / self.admmopt.tau
-            # self.rho = minimum(self.rho, self.admmopt.rho_max)
-        # if self.primalgap[-1] > self.admmopt.theta * primalgap_old:
-        if nu <= 50:
+        # update rho (only in the first rho_iter_nu iterations)
+        if nu <= self.admmopt.rho_update_nu:
             if self.primalgap[-1] > self.admmopt.mu * self.dualgap[-1]:
                 self.rho = min(self.admmopt.rho_max, self.rho * self.admmopt.tau)
             elif self.dualgap[-1] > self.admmopt.mu * self.primalgap[-1]:
@@ -180,10 +161,7 @@ class urbs_admm_model(object):
                 table = self.recvmsg[k].fields['convergeTable']
                 self.gapAll = list(map(min, zip(self.gapAll, table)))
         # check if all local primal gaps < tolerance
-        if max(self.gapAll) < self.admmopt.convergetol:
-            #dest = self.queues.keys()
-            #for k in dest:
-            #    self.queues[k].close()
+        if max(self.gapAll) < self.convergetol:
             return True
         else:
             return False
@@ -217,25 +195,20 @@ class admmoption(object):
     """ This class defines all the parameters to use in admm """
 
     def __init__(self):
-        self.beta_diff = 2  # weight for (Vi - Vj) of tie line
-        self.beta_sum = 0.5  # weight for (Vi + Vj) of tie line
-        self.rho_0 = 1 * 10 ** 4  # initial value for penalty rho, at the same order of initial cost function
         self.rho_max = 10  # upper bound for penalty rho
         self.tau_max = 1.5  # parameter for residual balancing of rho
         self.tau = 1.05  # multiplier for increasing rho
         self.zeta = 1  # parameter for residual balancing of rho
         self.theta = 0.99  # multiplier for determining whether to update rho
         self.mu = 10  # multiplier for determining whether to update rho
-        self.init = 'flat'  # starting point
-        self.ymax = 10 ** 16  # maximum y
-        self.ymin = -10 ** 16  # minimum y
         self.pollWaitingtime = 0.001  # waiting time of receiving from one pipe
-        self.nwaitPercent = 0.1  # waiting percentage of neighbors (0, 1]
-        self.iterMaxlocal = 1000  # local maximum iteration
-        self.convergetol = 4/5 * 365 * 10 ** 2  # convergence criteria for maximum primal gap
+        self.nwaitPercent = 0.2  # waiting percentage of neighbors (0, 1]
+        self.iterMaxlocal = 20  # local maximum iteration
+        #self.convergetol = 365 * 10 ** 1#  convergence criteria for maximum primal gap
+        self.rho_update_nu = 50 # rho is updated only for the first 50 iterations
+        self.conv_rel = 0.1 # the relative convergece tolerance, to be multiplied with len(s.flow_global)
 
 
-#
 class message(object):
     """ This class defines the message region i sends to/receives from j """
 
@@ -245,13 +218,14 @@ class message(object):
         self.fields = {
             'flow': None,
             'rho': None,
+            'lambda': None,
             'convergeTable': None}
 
-    def config(self, f, t, var_flow, var_rho, var_lambda, gapAll):  # AVall and var are local variables of f region
+    def config(self, f, t, var_flow, var_rho, var_lambda, gapall):  # AVall and var are local variables of f region
         self.fID = f
         self.tID = t
 
         self.fields['flow'] = var_flow
         self.fields['rho'] = var_rho
         self.fields['lambda'] = var_lambda
-        self.fields['convergeTable'] = gapAll
+        self.fields['convergeTable'] = gapall

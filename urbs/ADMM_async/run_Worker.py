@@ -1,29 +1,34 @@
 from time import time
-
+from ..saveload import *
 from pyomo.environ import SolverFactory
-import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
-def run_Worker(ID, s, output):
+def run_worker(ID, s, output):
+    """
+
+    Args:
+        ID: the ordinality of the subproblem
+        s: the urbsADMMmodel instance corresponding to the subproblem
+        output: the Queue() object where the results are delivered to
+
+    """
     s.sub_persistent = SolverFactory('gurobi_persistent')
     s.sub_persistent.set_instance(s.sub_pyomo, symbolic_solver_labels=False)
     s.sub_persistent.set_gurobi_param('Method', 2)
     s.sub_persistent.set_gurobi_param('Threads', 1)
     s.neighbor_clusters = s.boundarying_lines.neighbor_cluster.unique()
 
-    # pack necessary structures into the problem object
-
     print("Worker %d initialized successfully!" % (ID,))
     nu = 0  # iteration count
     maxit = s.admmopt.iterMaxlocal  # get maximum iteration
     s.flag = False
     s.gapAll = [10 ** 8] * s.na
-    # while not s.pb['converge']:
     cost_history = np.zeros(maxit)
-    # while nu <= itermax and not flag:
+    s.convergetol = s.conv_rel * (len(s.flow_global)+1) #  # convergence criteria for maximum primal gap
 
-    while nu <= maxit and not s.flag:
+    while nu <= maxit-1 and not s.flag:
         print('Subproblem %d is at iteration %d right now.' % (ID, nu))
         if s.recvmsg:
             s.update_z()  # update global flows
@@ -50,7 +55,8 @@ def run_Worker(ID, s, output):
             s.update_rho(nu)
 
         if nu % 1 == 0:
-            print('Subproblem %d at iteration %d solved!. Local cost at %d is: %d. Residprim is: %d' % (ID, nu, ID, cost_history[nu - 1], s.primalgap[-1]))
+            print('Subproblem %d at iteration %d solved!. Local cost at %d is: %d. Residprim is: %d'
+                  % (ID, nu, ID, cost_history[nu - 1], s.primalgap[-1]))
         print("Time for solving subproblem %d: %ssecs to %ssecs" % (ID, start_time, end_time))
 
         # check convergence
@@ -58,25 +64,13 @@ def run_Worker(ID, s, output):
         s.recvmsg = {}  # clear the received messages
         if s.flag:
             print("Worker %d converged!" % (ID,))
+
         s.send()
         s.recv(pollrounds=5)
-
-        #if nu % 50 == 0:
-            #plt.plot(s.primalgap[1:nu])
-            #plt.figure()
-            ## flow_global_history.plot(legend=False)
-            #plt.pause(0.001)
-            #plt.show()
         nu += 1
 
-    #close pipe connections
-    #dest = s.pipes.keys()
-    #for k in dest:
-    #    s.pipes[k].close()
-
-    # record results
-
     print("Local iteration of worker %d is %d" % (ID, nu))
+    # save(s.sub_pyomo, os.path.join(s.result_dir, '_{}_'.format(ID),'{}.h5'.format(s.sce)))
     output_package = {'cost': cost_history[nu - 1], 'coupling_flows': s.flow_global,
                       'primal_residual': s.primalgap, 'dual_residual': s.dualgap}
     output.put((ID - 1, output_package))

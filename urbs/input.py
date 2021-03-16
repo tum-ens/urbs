@@ -203,11 +203,11 @@ def pyomo_model_prep(data_all, timesteps, sites, type, data_transmission=None):
     #
     #     storage.loc[site, storage, commodity][attribute]
     #
-    #import pdb;pdb.set_trace()
-    data= deepcopy(data_all)
+
+    data = deepcopy(data_all)
     m.timesteps = timesteps
     data['site_all']=data_all['site']
-    if type =='sub':
+    if type == 'sub':
         m.global_prop = data_all['global_prop'].drop('description', axis=1)
         data['site'] = data_all['site'].loc(axis=0)[:,sites]
         data['commodity'] = data_all['commodity'].loc(axis=0)[:,sites]
@@ -215,7 +215,7 @@ def pyomo_model_prep(data_all, timesteps, sites, type, data_transmission=None):
         data['storage'] = data_all['storage'].loc(axis=0)[:,sites]
         if sites != ['Carbon_site']:
             data['demand'] = data_all['demand'][sites]
-            data['supim']= data_all['supim'][sites]
+            data['supim'] = data_all['supim'][sites]
         else:
             data['demand'] = pd.DataFrame()
             data['supim'] = pd.DataFrame()
@@ -227,7 +227,7 @@ def pyomo_model_prep(data_all, timesteps, sites, type, data_transmission=None):
         data['process'] = data_all['process']
         data['storage'] = data_all['storage']
         data['demand'] = data_all['demand']
-        data['supim']= data_all['supim']
+        data['supim'] = data_all['supim']
         data['transmission'] = data_all['transmission']
 
     m.global_prop = data_all['global_prop']

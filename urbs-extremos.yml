@@ -1,6 +1,9 @@
-name: urbs
+name: urbs-admm
 channels:
   - defaults
+  - conda-forge
+  - anaconda
+  - gurobi
 dependencies:
   - alabaster=0.7.12=py36_0
   - appdirs=1.4.4=py_0
@@ -156,11 +159,6 @@ dependencies:
   - zipp=3.3.0=py_0
   - zlib=1.2.11=h62dcd97_4
   - zstd=1.4.5=h04227a9_0
-  - pip:
-    - dill==0.3.3
-    - gurobipy==9.1.0
-    - multiprocess==0.70.11.1
-    - pathos==0.2.7
-    - pox==0.2.9
-    - ppft==1.6.6.3
-    - pyomo==5.7.3
+  - pyomo==5.7.3
+  - gurobi==9.1.1
+  - multiprocess==0.70.11.1

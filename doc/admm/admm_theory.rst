@@ -39,7 +39,7 @@ Then the following steps are applied for each iteration :math:`\nu=\{1,\dots, \n
 
 .. math::
 
- (\boldsymbol x^{\nu+1}_1,\boldsymbol y^{\nu+1}_1)=\text{arg}\min_{\boldsymbol x_1,\boldsymbol y_1}  & f_1(\boldsymbol x_1,\boldsymbol y_1)+(\boldsymbol \lambda^\nu_1)^T(\boldsymbol y_1-{\boldsymbol y^\nu_g})+\dfrac{\rho}{2}\left\lVert \boldsymbol y_1 - \boldsymbol y_{g}\right\rVert_2^2 \text{s.t.} \ \  \boldsymbol x_1 \in \chi_1 \\
+ (\boldsymbol x^{\nu+1}_1,\boldsymbol y^{\nu+1}_1)=\text{arg}\min_{\boldsymbol x_1,\boldsymbol y_1}  & f_1(\boldsymbol x_1,\boldsymbol y_1)+(\boldsymbol \lambda^\nu_1)^T(\boldsymbol y_1-{\boldsymbol y^\nu_g})+\dfrac{\rho}{2}\left\lVert \boldsymbol y_1 - \boldsymbol y_{g}^\nu\right\rVert_2^2 \text{s.t.} \ \  \boldsymbol x_1 \in \chi_1 \\
  (\boldsymbol x^{\nu+1}_2,\boldsymbol y^{\nu+1}_2)=\text{arg}\min_{\boldsymbol x_2,\boldsymbol y_2}  & f_1(\boldsymbol x_2,\boldsymbol y_2)+(\boldsymbol \lambda_2^\nu)^T(\boldsymbol y_2-\boldsymbol y_g^\nu)+\dfrac{\rho}{2}\left\lVert \boldsymbol y_2 - \boldsymbol y_g^\nu\right\rVert_2^2 \text{s.t.} \ \  \boldsymbol x_2 \in \chi_2
 
 2) Using these solutions, an averaging step is made to calculate the global value of the coupling variable to be used in the next iteration:
@@ -59,7 +59,7 @@ Then the following steps are applied for each iteration :math:`\nu=\{1,\dots, \n
 .. math::
 
  r_{1,2}^{\nu+1} = \left\lVert \boldsymbol y^\nu_{1,2} - {\boldsymbol y_g}^\nu \right\rVert_2^2 \\
- d_{1,2}^{\nu+1} = \rho \dot \left\lVert {\boldsymbol y_g}^{\nu+1} - {\boldsymbol y_g}^\nu \right\rVert_2^2
+ d_{1,2}^{\nu+1} = \rho\ \left\lVert {\boldsymbol y_g}^{\nu+1} - {\boldsymbol y_g}^\nu \right\rVert_2^2
 
 The steps 1, 2, and 3 and 4 are followed until convergence, which corresponds to the condition of primal and dual residuals being smaller than a user-set tolerance. For a more detailed description of consensus ADMM, please refer to the following material: https://stanford.edu/class/ee367/reading/admm_distr_stats.pdf.
 
@@ -76,27 +76,27 @@ The specific algorithm is partially based on https://arxiv.org/abs/1710.08938. H
 
 Let us assume that our problem consists of the subsystems :math:`k\in \{1,\dots,\mathcal N\}`, with each subsystem :math:`k` sharing some variable(s) with its neighbors :math:`\mathcal N_k`. Asynchronicity takes places by each subproblem receiving the solutions from only up to :math:`\left \lceil{\eta \lVert \mathcal N_k \rVert}\right \rceil` neighbors before moving on to the next iteration. Since it takes different time for each of these subproblems to receive these information, each subproblem has their own iteration counters :math:`\nu_k`. A generalized notation of the problem variables are as follows:
 
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| Variable                           | Description                                                                                                                             |
-+====================================+=========================================================================================================================================+
-| ..math..`\boldsymbol x_k`          | Internal variables of subsystem ..math..`k`                                                                                             |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| ..math..`\boldsymbol y_{kl}`       | Set of the coupling variables between subsystems ..math..`k` and ..math..`l` in subproblem ..math..`k`                                  |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| ..math..`\boldsymbol y_{k}`        | Set of the coupling variables between subsystems ..math..`k` and all its neighbors ..math..`\mathcal N_k` in subproblem ..math..`k`     |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| ..math..`\boldsymbol y_{g,kl}`     | Set of the (now locally defined) global value of `\boldsymbol y_{kl}` in subproblem ..math..`k`                                         |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| ..math..`\boldsymbol y_{g,k}`      | Set of the (now locally defined) global value of all coupling variables ..math..`\boldsymbol y_{k}` in subproblem ..math..`k`           |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| ..math..`\boldsymbol \lambda_{kl}` | Set of the Lagrange multipliers for the consensus constraint `\boldsymbol y_{kl} =\boldsymbol y_{g,kl}` in the subproblem ..math..`k`   |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| ..math..`\boldsymbol \lambda_{k}`  | Set of the Lagrange multipliers for all consensus constraints `\boldsymbol y_{k} =\boldsymbol y_{g,k}` in the subproblem ..math..`k`    |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
-| ..math..`\rho_{k}`                 | Quadratic penalty parameter of the subproblem ..math..`k`                                                                               |
-+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------+
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| Variable                           | Description                                                                                                                               |
++====================================+===========================================================================================================================================+
+| :math:`\boldsymbol x_k`            | Internal variables of subsystem :math:`k`                                                                                                 |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| :math:`\boldsymbol y_{kl}`         | Set of the coupling variables between subsystems :math:`k` and :math:`l` in subproblem :math:`k`                                          |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| :math:`\boldsymbol y_{k}`          | Set of the coupling variables between subsystems :math:`k` and all its neighbors :math:`\mathcal N_k` in subproblem :math:`k`             |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| :math:`\boldsymbol y_{g,kl}`       | Set of the (now locally defined) global value of :math:`\boldsymbol y_{kl}` in subproblem :math:`k`                                       |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| :math:`\boldsymbol y_{g,k}`        | Set of the (now locally defined) global value of all coupling variables :math:`\boldsymbol y_{k}` in subproblem :math:`k`                 |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| :math:`\boldsymbol \lambda_{kl}`   | Set of the Lagrange multipliers for the consensus constraint :math:`\boldsymbol y_{kl} =\boldsymbol y_{g,kl}` in the subproblem :math:`k` |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| :math:`\boldsymbol \lambda_{k}`    | Set of the Lagrange multipliers for all consensus constraints :math:`\boldsymbol y_{k} =\boldsymbol y_{g,k}` in the subproblem :math:`k`  |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| :math:`\rho_{k}`                   | Quadratic penalty parameter of the subproblem :math:`k`                                                                                   |
++------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
 
-The asynchronous ADMM algorithm for each subsystem ..math..`k` operates as follows:
+The asynchronous ADMM algorithm for each subsystem :math:`k` operates as follows:
 
 1) Through the fixing (or initialization, in case of the first step) of the global values and the Lagrangian multipliers, the decoupled model can be solved independently in parallel to the others:
 
@@ -114,13 +114,13 @@ The asynchronous ADMM algorithm for each subsystem ..math..`k` operates as follo
 
 This update step looks differently than that of synchronous ADMM, as it factors for the inaccuricies which arise from asynchronicity.
 
-3) Update (all) consensus Lagrangian multipliers of subproblem ::math::`k` as usual:
+3) Update (all) consensus Lagrangian multipliers of subproblem :math:`k` as usual:
 
 .. math::
 
  \boldsymbol \lambda_{k}^{\nu_k+1}:=\boldsymbol \lambda_{k}^{\nu_k}+\rho \left(\boldsymbol y_{k}^{\nu_k+1}-{\boldsymbol y_{g,k}^{\nu_k+1}}\right)
 
-4) Update (all) consensus Lagrangian multipliers of subproblem ::math::`k` as usual:
+4) Update (all) consensus Lagrangian multipliers of subproblem :math:`k` as usual:
 
 .. math::
 
@@ -131,7 +131,7 @@ This update step looks differently than that of synchronous ADMM, as it factors 
 .. math::
 
  r_{k,l}^{\nu+1} = \left\lVert \boldsymbol y^\nu_{kl} - {\boldsymbol y_{g,kl}}^\nu \right\rVert_2^2 \\
- d_{k,l}^{\nu+1} = \rho \dot \left\lVert {\boldsymbol y_g}^{\nu+1} - {\boldsymbol y_g}^\nu \right\rVert_2^2
+ d_{k,l}^{\nu+1} = \rho \  \left\lVert {\boldsymbol y_g}^{\nu+1} - {\boldsymbol y_g}^\nu \right\rVert_2^2
 
 Interpretation of regional decomposition in urbs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -142,8 +142,8 @@ In this implementation, the urbs model is regionally decomposed into "region clu
     ===================================== ==========================================================================================================================================
       Variable                             Description
     ===================================== ==========================================================================================================================================
-      ..math..`\boldsymbol x_k`            Process/storage capacities, throughputs, commodity flows... within the region cluster ..math..`k`
-      ..math..`\boldsymbol y_{kl}`         Power flows/capacities of transmissions between the region clusters ..math..`k` and ..math..`l` (``e_tra_in(k,l)``, ``cap_tra(k,l)``)
+      :math:`\boldsymbol x_k`              Process/storage capacities, throughputs, commodity flows:. within the region cluster :math:`k`
+      :math:`\boldsymbol y_{kl}`           Power flows/capacities of transmissions between the region clusters :math:`k` and :math:`l` (``e_tra_in(k,l)``, ``cap_tra(k,l)``)
     ===================================== ==========================================================================================================================================
 Formulation the global CO2 limit in the consensus form
 The intuition is that, when two region clusters are optimized separately, the coupling between them manifests itself in the transmission power flows and capacities between these clusters. Thereby, they constitute the complicating variables of the problem and hence the linear and quadratic consensus terms will have to be added to the respective cost functions. However, a simplification is made here, by ignoring the transmission capacities in the consensus variables. This simplifies the algorithm without having an influence on the feasibility of the solution, since when the consensus for the power flows for a transmission line is achieved, the capacity of this transmission line will be set for each subproblem as the largest flow passing through this line to minimize the costs. In other words, the consensus of the power flows ensures the consensus of the line capacities.

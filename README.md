@@ -38,9 +38,7 @@ There are 2 ways to get all required packages under Windows. We recommend using 
      1. Download the [environment file](https://github.com/tum-ens/urbs/blob/master/urbs-env.yml).
      2. Launch a new command prompt (Windows: Win+R, type "cmd", Enter)
      3. Install it via conda by `conda env create -f urbs-extremos.yml`.
-     4. Each time you open a new terminal for running urbs, you can activate the environment by `conda activate urbs`.
-     5. Important for the ADMM mode of operation: a slight adjustment in the internals of ``pyomo`` has to be made to be able to build the ADMM subproblems: please  .
-Continue at [Get Started](#get-started).
+     4. Each time you open a new terminal for running urbs, you can activate the environment by `conda activate urbs-admm`.
 
 ### Manually (the hard way)
 

@@ -6,7 +6,7 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.594200.svg)](https://doi.org/10.5281/zenodo.594200)
 
 ## eXtremOS project
-This branch features the further development of urbs during the project eXtremOS. It includes a new optimazation mode: asynchronous ADMM for regional devomposition.
+This branch features the further development of urbs during the project eXtremOS. It includes a new optimazation mode: asynchronous ADMM for regional decomposition.
 
 ## Contributors
 The code basis is, of course, urbs. Next to the urbs contributors the work in the project was conducted by Soner Candas.

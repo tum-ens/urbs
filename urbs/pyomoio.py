@@ -107,8 +107,8 @@ def get_entity(instance, name):
 
     if not results.empty:
         # name columns according to labels + entity name
-        results.columns = labels + [name]
-        results.set_index(labels, inplace=True)
+        results.columns = labels[0:(results.axes[1].size-1)] + [name] #todo: behelfsmäßig. geht das besser?
+        results.set_index(labels[0:(results.axes[1].size-1)], inplace=True)
 
         # convert to Series
         results = results[name]
@@ -172,7 +172,7 @@ def list_entities(instance, entity_type):
     # helper function to discern entities by type
     def filter_by_type(entity, entity_type):
         if entity_type == 'set':
-            return isinstance(entity, pyomo.Set) and not entity.virtual
+            return isinstance(entity, pyomo.Set) #and not entity.virtual
         elif entity_type == 'par':
             return isinstance(entity, pyomo.Param)
         elif entity_type == 'var':
@@ -231,24 +231,24 @@ def _get_onset_names(entity):
     if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
             # N-dimensional set tuples, possibly with nested set tuples within
-            if entity.domain:
+            if not entity.domain.name == 'Any':
                 # retreive list of domain sets, which itself could be nested
-                domains = entity.domain.subsets()#set_tuple
+                domains = entity.domain.subsets(expand_all_set_operators=True)#set_tuple
             else:
                 try:
                     # if no domain attribute exists, some
-                    domains = entity.subsets()#set_tuple
+                    domains = entity.subsets(expand_all_set_operators=True)#set_tuple
                 except AttributeError:
                     # if that fails, too, a constructed (union, difference,
                     # intersection, ...) set exists. In that case, the
                     # attribute _setA holds the domain for the base set
                     try:
-                        domains = entity._setA.domain.subsets()#set_tuple
+                        domains = entity._setA.domain.subsets(expand_all_set_operators=True)#set_tuple
                     except AttributeError:
                         # if that fails, too, a constructed (union, difference,
                         # intersection, ...) set exists. In that case, the
                         # attribute _setB holds the domain for the base set
-                        domains = entity._setB.domain.subsets()#set_tuple
+                        domains = entity._setB.domain.subsets(expand_all_set_operators=True)#set_tuple
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))

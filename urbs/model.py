@@ -228,7 +228,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
 
     m.pro_output_tuples_reactive = pyomo.Set(
         within=m.stf * m.sit * m.pro,
-        initialize=[(stf, site, process) #todo: einfachere Variante möglich
+        initialize=[(stf, site, process)
                     for (stf, site, process) in m.pro_tuples
                     if m.process_dict['pf-min'][(stf, site, process)] > 0],
         doc='Commodities produced by process by site, e.g. (2020,Mid,PV,Elec-Reactive)')
@@ -658,7 +658,7 @@ def def_process_input_rule(m, tm, stf, sit, pro, com):
 
 # process output power = process throughput * output ratio
 def def_process_output_rule(m, tm, stf, sit, pro, com):
-    if com == 'Elec-Reactive':
+    if com == 'electricity-reactive':
         return pyomo.Constraint.Skip #todo: geht das schöner?
     else:
         return (m.e_pro_out[tm, stf, sit, pro, com] ==
@@ -666,12 +666,12 @@ def def_process_output_rule(m, tm, stf, sit, pro, com):
 
 
 def def_process_output_reactive_rule1(m, tm, stf, sit, pro):
-    return (m.e_pro_out[tm, stf, sit, pro, 'Elec-Reactive'] <=
-             m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['pf-min'][(stf, sit, pro)])))
+    return (m.e_pro_out[tm, stf, sit, pro, 'electricity-reactive'] <=
+             m.e_pro_out[tm, stf, sit, pro, 'electricity'] * math.tan(math.acos(m.process_dict['pf-min'][(stf, sit, pro)])))
 
 def def_process_output_reactive_rule2(m, tm, stf, sit, pro):
-    return (m.e_pro_out[tm, stf, sit, pro, 'Elec-Reactive'] >=
-             -m.e_pro_out[tm, stf, sit, pro, 'Elec'] * math.tan(math.acos(m.process_dict['pf-min'][(stf, sit, pro)])))
+    return (m.e_pro_out[tm, stf, sit, pro, 'electricity-reactive'] >=
+             -m.e_pro_out[tm, stf, sit, pro, 'electricity'] * math.tan(math.acos(m.process_dict['pf-min'][(stf, sit, pro)])))
 
 # process input (for supim commodity) = process capacity * timeseries
 def def_intermittent_supply_rule(m, tm, stf, sit, pro, coin):
@@ -739,8 +739,7 @@ def res_global_co2_limit_rule(m, stf):
             for sit in m.sit:
                 # minus because negative commodity_balance represents creation
                 # of that commodity.
-                co2_output_sum += (- commodity_balance(m, tm,
-                                                       stf, sit, 'CO2')* m.typeperiod['weight_typeperiod'][(stf,tm)])
+                co2_output_sum += (- commodity_balance(m, tm, stf, sit, 'CO2')* m.typeperiod['weight_typeperiod'][(stf,tm)])
 
         # scaling to annual output (cf. definition of m.weight)
         co2_output_sum *= m.weight
@@ -844,7 +843,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Variable':
         cost = \
-            sum(m.tau_pro[(tm,) + p] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+            sum(m.tau_pro[(tm,) + p] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
                 m.process_dict['var-cost'][p] *
                 m.process_dict['cost_factor'][p]
                 for tm in m.tm
@@ -857,7 +856,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Fuel':
         return m.costs[cost_type] == sum(
-            m.e_co_stock[(tm,) + c] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+            m.e_co_stock[(tm,) + c] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm for c in m.com_tuples
@@ -878,7 +877,7 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Environmental':
         return m.costs[cost_type] == sum(
-            - commodity_balance(m, tm, stf, sit, com) * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+            - commodity_balance(m, tm, stf, sit, com) * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
             m.commodity_dict['price'][(stf, sit, com, com_type)] *
             m.commodity_dict['cost_factor'][(stf, sit, com, com_type)]
             for tm in m.tm

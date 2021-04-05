@@ -6,18 +6,17 @@ from datetime import datetime, timedelta
 import numpy as np
 import itertools  as it
 from urbs.identify import *
-#from urbs.runfunctions import * #todo: wie importiere ich die Parameter aus anderen Modulen am schlausten?
 
 def run_tsam(data, noTypicalPeriods, hoursPerPeriod):
     ###bring together all time series data
-    time_series_data = pd.concat([data['demand'], data['supim']], axis=1,sort=True)
+    time_series_data = pd.concat([data['demand'], data['supim'], data['buy_sell_price'], data['eff_factor']], axis=1,sort=True)
     ###prepare datetime vector which is required by tsam method
     date_hour = np.arange(datetime(2021, 1, 1), datetime(2022, 1, 1), timedelta(hours=1)).astype(datetime).T
     ###prepare df for tsam
     time_series_data = time_series_data.iloc[1:, :] #drop initialization timestep
     time_series_data['DateTime'] = date_hour #add column with datetime
     time_series_data = time_series_data.set_index('DateTime') #set required index for tsam method
-    ###apply tsam method from  described in: https://tsam.readthedocs.io/en/latest/index.html
+    ###apply tsam method described in: https://tsam.readthedocs.io/en/latest/index.html
     aggregation = tsam.TimeSeriesAggregation(time_series_data, noTypicalPeriods=noTypicalPeriods,
                                              hoursPerPeriod=hoursPerPeriod, clusterMethod='hierarchical')
     ###store tsam results
@@ -49,6 +48,7 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod):
         weighting_order.append(occurence_weight_factor[type_nr][occurence_counter[type_nr]])
         weight_vector = pd.concat([weight_vector, weight_numbers], ignore_index=True)
         occurence_counter[type_nr] += 1
+
     ###rewrite weight data with new computed weights for new timeframe
     data['type period'].update(pd.Series(weight_vector.values, name='weight_typeperiod', index =data['type period'].index[0:timeframe]))
     ###rewrite demand load data
@@ -59,15 +59,19 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod):
     data['supim'] = data['supim'].iloc[0:timeframe, :]
     for column in data['supim']:
         data['supim'][column].iloc[0:timeframe] = modeling_steps[column].values
+    ###rewrite Buy/Sell Prices
+    data['buy_sell_price'] = data['buy_sell_price'].iloc[0:timeframe, :]
+    for column in data['buy_sell_price']:
+        data['buy_sell_price'][column].iloc[0:timeframe] = modeling_steps[column].values
+    ###rewrite Variable efficiencies
+    data['eff_factor'] = data['eff_factor'].iloc[0:timeframe, :]
+    for column in data['eff_factor']:
+        data['eff_factor'][column].iloc[0:timeframe] = modeling_steps[column].values
 
     ###return new timestep range
     timesteps_new = range(0, timeframe)
 
     return data, timesteps_new, weighting_order
-
-def get_stf(m): #todo: kann wieder ersetzt werden?!
-    stf_type = m.stf_list[0]
-    return stf_type
 
 ###function to store relevant parameters from other modules in model
 def store_typeperiod_parameter(m, hoursPerPeriod, weighting_order):
@@ -76,7 +80,6 @@ def store_typeperiod_parameter(m, hoursPerPeriod, weighting_order):
     return m
 
 def add_typeperiod(m):
-
     # Validation:
     # if not (len(m.timesteps) % 168 == 0 or len(m.timesteps) % 168 == 1):
     #     print('Warning: length of timesteps does not end at the end of the type period!')
@@ -125,7 +128,7 @@ def add_typeperiod(m):
         m.deltaSOC = pyomo.Var(
             m.t_endofperiod, m.sto_tuples,
             within=pyomo.Reals,
-            doc='Variabel to describe the delta of a storage within each period')
+            doc='Variable to describe the delta of a storage within each period')
 
         ###constraint to describe the difference of a storage within a repeating period
         m.res_delta_SOC = pyomo.Constraint(
@@ -140,6 +143,14 @@ def add_typeperiod(m):
             doc='Constraint to ensure that the transition between typeperiods includes the seasonal SOC delta to'
                 'allow consideration of seasonal storage')
 
+        ### delete old ciclycity rule to enable typeperiod simulation
+        del m.res_storage_state_cyclicity
+        ### adjusted ciclycity constraint for typeperiods
+        m.res_storage_state_cyclicity_typeperiod = pyomo.Constraint(
+            m.sto_tuples,
+            rule=res_storage_state_cyclicity_rule_typeperiod,
+            doc='storage content end >= storage content start - deltaSOC[last_typeperiod]')
+
     else:
         ###original timeset for cyclicity rule
         m.t_endofperiod = pyomo.Set(
@@ -147,7 +158,7 @@ def add_typeperiod(m):
             initialize=t_endofperiod_list,
             ordered=True,
             doc='timestep at the end of each timeperiod')
-        ###cycliyity contraint
+        ###cyclicity contraint
         m.res_storage_state_cyclicity_typeperiod = pyomo.Constraint(
             m.t_endofperiod, m.sto_tuples,
             rule=res_storage_state_cyclicity_typeperiod_rule,
@@ -155,7 +166,7 @@ def add_typeperiod(m):
 
     return m
 
-###original cyclicity rule without tsam
+###cyclicity rule without tsam
 def res_storage_state_cyclicity_typeperiod_rule(m, t, stf, sit, sto, com):
     return (m.e_sto_con[m.t[1], stf, sit, sto, com] ==
             m.e_sto_con[t, stf, sit, sto, com])
@@ -163,9 +174,14 @@ def res_storage_state_cyclicity_typeperiod_rule(m, t, stf, sit, sto, com):
 ###SOC rule for each repeating typeperiod
 def res_delta_SOC(m, t_0, t_end, stf, sit, sto, com):
     return ( m.deltaSOC[t_end, stf, sit, sto, com] ==
-             m.typeperiod_weights[t_end] * (m.e_sto_con[t_end, stf, sit, sto, com] - m.e_sto_con[t_0, stf, sit, sto, com]))
+             (m.typeperiod_weights[t_end] - 1) * (m.e_sto_con[t_end, stf, sit, sto, com] - m.e_sto_con[t_0, stf, sit, sto, com]))
 
 ###new storage rule using tsam considering the delta SOC per repeating typeperiod
 def res_typeperiod_deltaSOC_rule(m, t_A, t_B, stf, sit, sto, com):
     return (m.e_sto_con[t_B, stf, sit, sto, com] ==
             m.e_sto_con[t_A, stf, sit, sto, com] + m.deltaSOC[t_A, stf, sit, sto, com])
+
+### new ciclycity rule for typeperiods
+def res_storage_state_cyclicity_rule_typeperiod(m, stf, sit, sto, com):
+    return (m.e_sto_con[m.t[len(m.t)], stf, sit, sto, com] >=
+            m.e_sto_con[m.t[1], stf, sit, sto, com] - m.deltaSOC[m.t[len(m.t)], stf, sit, sto, com])

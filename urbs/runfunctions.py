@@ -44,6 +44,7 @@ def setup_solver(optim, logfile='solver.log'):
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
         optim.set_options("logfile={}".format(logfile))
+        optim.set_options("NumericFocus=3")
         optim.set_options("Crossover=0")
         optim.set_options("Method=2") # ohne method concurrent optimization
         optim.set_options("Threads=4")
@@ -110,7 +111,6 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
             microgrid_data_initial.append(read_input(microgrid_file, year))
             microgrid_data_initial[i] = scenario(microgrid_data_initial[i])
             validate_input(microgrid_data_initial[i])
-            validate_dc_objective(microgrid_data_initial[i], objective) #todo: braucht es das?
         # join microgrid data to model data
         data = create_transdist_data(data, microgrid_data_initial)
     elif mode['acpf']:
@@ -119,16 +119,20 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
 
     if mode['tsam']:
         data, timesteps, weighting_order = run_tsam(data, noTypicalPeriods, hoursPerPeriod)
+        # create model
+        tt = time.time()
+        prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order)
+        print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt, 4))
+    else:
+        # create model
+        tt = time.time()
+        prob = create_model(data, dt, timesteps, objective)
+        print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt,4))
 
     ## Excel Datei zum validieren der create_transdist_data todo: delete at the end
     # with pd.ExcelWriter(os.path.join(result_dir, '{}.xlsx').format(sce)) as writer:
     #     for i, sheet in enumerate(data):
     #         data[sheet].to_excel(writer, str(i))
-
-    # create model
-    tt = time.time()
-    prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order)
-    print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt,4))
 
     # write lp file
     prob.write('model.lp', io_options={'symbolic_solver_labels':True})
@@ -140,18 +144,15 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
     optim = SolverFactory(solver_name)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True,report_timing=True)
-    assert str(result.solver.termination_condition) == 'optimal'
+    #assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
-    # save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
-    #save(prob, os.path.join('C:/Users/beneh/Documents/Dokumente/Beneharos_Dokumente/01_Uni/00_Master/4_Semester/Masterarbeit/3_Postprocessing/h5 analysis/case_Test_AC', '{}.h5'.format(sce)))
-
-    # write report to spreadsheet #todo: wieder aktivieren wenn Problem in pyomoio gelöst
-    report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
-        report_tuples=report_tuples,
-        report_sites_name=report_sites_name)
+    #save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    save(prob, os.path.join('C:/Users/beneh/Documents/Dokumente/Beneharos_Dokumente/01_Uni/00_Master/4_Semester/Masterarbeit/3_Postprocessing/model_h5/transdist', '{}.h5'.format(sce)))
+    ## write report to spreadsheet
+    # report(prob,os.path.join(result_dir, '{}.xlsx').format(sce),
+    #     report_tuples=report_tuples,
+    #     report_sites_name=report_sites_name)
 
     # result plots
     result_figures(

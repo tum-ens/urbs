@@ -1,5 +1,4 @@
 import math
-from .typeperiod import get_stf
 import pyomo.core as pyomo
 
 
@@ -247,7 +246,7 @@ def add_transmission_dc(m):
         m.tm, m.tra_tuples_dc,
         rule=def_angle_limit_rule,
         doc='-angle limit < angle(in) - angle(out) < angle limit')
-    m.def_slackbus_angle = pyomo.Constraint( #todo: test if this works without any problems
+    m.def_slackbus_angle = pyomo.Constraint(
         m.tm, m.sit_slackbus,
         rule=def_slackbus_angle_rule,
         doc='(angle_slackbus = 0')
@@ -526,10 +525,10 @@ def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
 
 def def_ac_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.voltage_squared[tm, stf, sin] == m.voltage_squared[tm, stf, sout] +
-            2 * (m.transmission_dict['resistance'][(stf, sin, sout, tra, 'Elec')]
-                 * m.e_tra_in[tm, stf, sin, sout, tra, 'Elec'] +
-            m.transmission_dict['reactance'][(stf, sin, sout, tra, 'Elec-Reactive')]
-                 * m.e_tra_in[tm, stf, sin, sout, tra, 'Elec-Reactive']))
+            2 * (m.transmission_dict['resistance'][(stf, sin, sout, tra, 'electricity')]
+                 * m.e_tra_in[tm, stf, sin, sout, tra, 'electricity'] +
+            m.transmission_dict['reactance'][(stf, sin, sout, tra, 'electricity-reactive')]
+                 * m.e_tra_in[tm, stf, sin, sout, tra, 'electricity-reactive']))
 
 def def_voltage_limit_rule(m, tm, stf, sin):
     return ((m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['min-voltage'][(stf, sin)])**2,
@@ -626,29 +625,29 @@ def transmission_cost(m, cost_type):
                    for t in m.tra_tuples)
     elif cost_type == 'Variable':
         if m.mode['dcpf']:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_tp) + \
-                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_dc)
         if m.mode['acpf']:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_tp) + \
-                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+                   sum(m.e_tra_abs[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm
                        for t in m.tra_tuples_ac_dc)
         else:
-            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(get_stf(m),tm)] *
+            return sum(m.e_tra_in[(tm,) + t] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
                        m.transmission_dict['var-cost'][t] *
                        m.transmission_dict['cost_factor'][t]
                        for tm in m.tm

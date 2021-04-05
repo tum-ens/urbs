@@ -82,8 +82,12 @@ def read_input(input_files, year):
             demand = xls.parse('Demand').set_index(['t'])
             demand = pd.concat([demand], keys=[support_timeframe],
                                names=['support_timeframe'])
-            typeperiod = demand.loc[:, ['weight_typeperiod']]
-            demand = demand.drop(columns=['weight_typeperiod'])
+            try:
+                typeperiod = demand.loc[:, ['weight_typeperiod']]
+                demand = demand.drop(columns=['weight_typeperiod'])
+            except KeyError:
+                pass
+
             # split columns by dots '.', so that 'DE.Elec' becomes
             # the two-level column index ('DE', 'Elec')
             demand.columns = split_columns(demand.columns, '.')
@@ -177,7 +181,7 @@ def read_input(input_files, year):
 
     # sort nested indexes to make direct assignments work
     for key in data:
-        if isinstance(data[key].index, pd.core.indexes.multi.MultiIndex): #todo nachfragen indexes.multi.
+        if isinstance(data[key].index, pd.core.indexes.multi.MultiIndex):
             data[key].sort_index(inplace=True)
     return data
 

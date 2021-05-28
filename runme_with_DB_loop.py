@@ -4,8 +4,7 @@ import urbs
 from Database_to_urbs import Database_to_urbs
 import time
 
-# # User preferences
-
+# User preferences
 model_type = '_long'
 suffix = "_SC1min3"
 fs = os.path.sep
@@ -13,7 +12,6 @@ result_folder = 'Mekong'+fs+'Run_2020_SC1min3-20201015T2249'
 if model_type == '_long':
     time_slices = [i for i in range(8761)]
 else:
-    #time_slices = [i for j in (range(1), range(745, 913), range(2905, 3073), range(5089, 5257), range(7297, 7465)) for i in j]
     time_slices = [i for j in (range(1), range(745, 841), range(2905, 3001), range(5089, 5185), range(7297, 7393)) for i in j]
 
 for year in [2025, 2030, 2035, 2037]:
@@ -100,11 +98,7 @@ for year in [2025, 2030, 2035, 2037]:
         urbs.COLORS[country] = color
     
     # select scenarios to be run
-    scenarios = [
-                urbs.scenario_base
-                #urbs.scenario_20pc_cheaper_lines,
-                #urbs.scenario_50pc_cheaper_lines
-                ]
+    scenarios = [urbs.scenario_base]
     
     for scenario in scenarios:
         prob = urbs.run_scenario(input_path, solver, timesteps, scenario,

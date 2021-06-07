@@ -47,7 +47,9 @@ def setup_solver(optim, logfile='solver.log'):
         optim.set_options("NumericFocus=3")
         optim.set_options("Crossover=0")
         optim.set_options("Method=2") # ohne method concurrent optimization
-        optim.set_options("Threads=4")
+        #optim.set_options("QCPDual=0")
+        #optim.set_options("BarConvTol=1e-7")
+        optim.set_options("Threads=8")
         # optim.set_options("timelimit=7200")  # seconds
         # optim.set_options("mipgap=5e-4")  # default = 1e-4
     elif optim.name == 'glpk':
@@ -66,8 +68,8 @@ def setup_solver(optim, logfile='solver.log'):
 
 def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
                  objective, microgrid_files = None, plot_tuples=None,  plot_sites_name=None,
-                 plot_periods=None, report_tuples=None,
-                 report_sites_name=None,noTypicalPeriods=None, hoursPerPeriod=None):
+                 plot_periods=None, report_tuples=None, report_sites_name=None,
+                 cross_scenario_data=None, noTypicalPeriods=None, hoursPerPeriod=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
@@ -98,7 +100,7 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = read_input(input_files, year)
-    data = scenario(data)
+    data, cross_scenario_data = scenario(data, cross_scenario_data)
     validate_input(data)
     validate_dc_objective(data, objective)
 
@@ -109,24 +111,23 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
         microgrid_data_initial =[]
         for i, microgrid_file in enumerate(microgrid_files):
             microgrid_data_initial.append(read_input(microgrid_file, year))
-            microgrid_data_initial[i] = scenario(microgrid_data_initial[i])
             validate_input(microgrid_data_initial[i])
         # join microgrid data to model data
-        data = create_transdist_data(data, microgrid_data_initial)
+        data, cross_scenario_data = create_transdist_data(data, microgrid_data_initial, cross_scenario_data)
     elif mode['acpf']:
         add_reactive_transmission_lines(data)
         add_reactive_output_ratios(data)
 
     if mode['tsam']:
-        data, timesteps, weighting_order = run_tsam(data, noTypicalPeriods, hoursPerPeriod)
+        data, timesteps, weighting_order, cross_scenario_data = run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data)
         # create model
         tt = time.time()
-        prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order)
+        prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order, dual=False)
         print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt, 4))
     else:
         # create model
         tt = time.time()
-        prob = create_model(data, dt, timesteps, objective)
+        prob = create_model(data, dt, timesteps, objective, dual=False)
         print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt,4))
 
     ## Excel Datei zum validieren der create_transdist_data todo: delete at the end
@@ -135,7 +136,7 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
     #         data[sheet].to_excel(writer, str(i))
 
     # write lp file
-    prob.write('model.lp', io_options={'symbolic_solver_labels':True})
+    #prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
@@ -147,12 +148,12 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
     #assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
-    #save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
-    save(prob, os.path.join('C:/Users/beneh/Documents/Dokumente/Beneharos_Dokumente/01_Uni/00_Master/4_Semester/Masterarbeit/3_Postprocessing/model_h5/transdist', '{}.h5'.format(sce)))
+    save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    #save(prob, os.path.join('C:/Users/beneh/Documents/Dokumente/Beneharos_Dokumente/01_Uni/00_Master/4_Semester/Masterarbeit/3_Postprocessing/model_h5/transdist', '{}.h5'.format(sce)))
     ## write report to spreadsheet
-    # report(prob,os.path.join(result_dir, '{}.xlsx').format(sce),
-    #     report_tuples=report_tuples,
-    #     report_sites_name=report_sites_name)
+    report(prob,os.path.join(result_dir, '{}.xlsx').format(sce),
+        report_tuples=report_tuples,
+        report_sites_name=report_sites_name)
 
     # result plots
     result_figures(
@@ -165,4 +166,4 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
 
-    return prob
+    return prob, cross_scenario_data

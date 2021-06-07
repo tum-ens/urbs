@@ -6,10 +6,22 @@ from datetime import datetime, timedelta
 import numpy as np
 import itertools  as it
 from urbs.identify import *
+import os
 
-def run_tsam(data, noTypicalPeriods, hoursPerPeriod):
+def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data):
     ###bring together all time series data
-    time_series_data = pd.concat([data['demand'], data['supim'], data['buy_sell_price'], data['eff_factor']], axis=1,sort=True)
+    time_series_data = pd.concat([data['demand'], data['supim'], data['buy_sell_price'], data['eff_factor']], axis=1, sort=True)
+    # dict which allocates the first equal column of the dataframe to each column before droping duplicates of dataframe
+    equal_col_dict = dict()
+    for col1 in time_series_data.columns:
+        time_series_data2 = time_series_data.drop(columns = col1)
+        for col2 in time_series_data2.columns:
+            if time_series_data[col1].equals(time_series_data2[col2]):
+                equal_col_dict[col1] = col2
+                break
+    # drop duplicate timeseries
+    time_series_data = time_series_data.T.drop_duplicates().T
+
     ###prepare datetime vector which is required by tsam method
     date_hour = np.arange(datetime(2021, 1, 1), datetime(2022, 1, 1), timedelta(hours=1)).astype(datetime).T
     ###prepare df for tsam
@@ -17,16 +29,49 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod):
     time_series_data['DateTime'] = date_hour #add column with datetime
     time_series_data = time_series_data.set_index('DateTime') #set required index for tsam method
     ###apply tsam method described in: https://tsam.readthedocs.io/en/latest/index.html
-    aggregation = tsam.TimeSeriesAggregation(time_series_data, noTypicalPeriods=noTypicalPeriods,
-                                             hoursPerPeriod=hoursPerPeriod, clusterMethod='hierarchical')
+    if data['transdist_share'].values[0] == 1:
+        aggregation = tsam.TimeSeriesAggregation(time_series_data, noTypicalPeriods=noTypicalPeriods,
+                                             hoursPerPeriod=hoursPerPeriod, extremePeriodMethod = 'append', clusterMethod='hierarchical')
+        cross_scenario_data['predefClusterOrder'] = aggregation.clusterOrder
+        cross_scenario_data['predefClusterCenterIndices'] = aggregation.clusterCenterIndices
+
+        # _________for validation
+        store_name = 'TD' + str(data['transdist_share'].values[0]) + '.xlsx'
+        with pd.ExcelWriter(os.path.join(os.path.join(os.getcwd(), store_name))) as writer:
+            pd.Series(aggregation.clusterOrder).to_excel(writer, 'order')
+            pd.Series(aggregation.clusterCenterIndices).to_excel(writer, 'centerIndices')
+            pd.DataFrame.from_dict(aggregation.clusterPeriodDict).to_excel(writer, 'clusterPeriods')
+            aggregation.accuracyIndicators().to_excel(writer, 'accuracy')
+        # _________for validation
+
+    else:
+        aggregation = tsam.TimeSeriesAggregation(time_series_data, noTypicalPeriods=noTypicalPeriods,predefClusterOrder=cross_scenario_data['predefClusterOrder'],
+                                                 predefClusterCenterIndices=cross_scenario_data['predefClusterCenterIndices'], hoursPerPeriod=hoursPerPeriod,
+                                                 extremePeriodMethod = 'append', clusterMethod='hierarchical')
+        # _________for validation
+        ###write data into an excel file
+        store_name = 'TD' + str(data['transdist_share'].values[0]) + '.xlsx'
+        with pd.ExcelWriter(os.path.join(os.path.join(os.getcwd(), store_name))) as writer:
+            pd.Series(aggregation.clusterOrder).to_excel(writer, 'order')
+            pd.Series(aggregation.clusterCenterIndices).to_excel(writer, 'centerIndices')
+            pd.DataFrame.from_dict(aggregation.clusterPeriodDict).to_excel(writer, 'clusterPeriods')
+            aggregation.accuracyIndicators().to_excel(writer, 'accuracy')
+        # _________for validation
+
     ###store tsam results
     typPeriods = aggregation.createTypicalPeriods()
     orderPeriods = aggregation.clusterOrder
-    #tsam_data = aggregation.predictOriginalData()
-    #weights = aggregation.clusterPeriodNoOccur # is not used because detailed information considering interruptions is taken out of orderPeriods
+
+    # timeStepMatching = aggregation.indexMatching(),
+    # predictedData = aggregation.predictOriginalData()
+    # indicatorRaw = aggregation.accuracyIndicators()
+    # tsam_data = aggregation.predictOriginalData()
+    # weights = aggregation.clusterPeriodNoOccur # is not used because detailed information considering interruptions is taken out of orderPeriods
 
     ### adjust the modeling steps and the weight vector accordingly to the generated typeweeks including interruptions and its order
     requiredPeriods = [x[0] for x in it.groupby(orderPeriods)] #determine borders of subsequent typeperiods to model
+    print('The total number of typeperiods is: %.2f' % len(requiredPeriods))
+    print(requiredPeriods)
     timeframe = requiredPeriods.__len__() * hoursPerPeriod + 1 #determine total number of modeled typeperiod timesteps
     last_period_nr = orderPeriods[-1] #identify last element as this one represents only a day not a week
     ### store the occurence with its resulting weight for each modeled part typeperiod
@@ -51,27 +96,58 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod):
 
     ###rewrite weight data with new computed weights for new timeframe
     data['type period'].update(pd.Series(weight_vector.values, name='weight_typeperiod', index =data['type period'].index[0:timeframe]))
+
     ###rewrite demand load data
     data['demand'] = data['demand'].iloc[0:timeframe, :]
     for column in data['demand']:
-        data['demand'][column].iloc[0:timeframe] = modeling_steps[column].values
+        if column in modeling_steps.columns:
+            data['demand'][column].iloc[0:timeframe] = modeling_steps[column].values
+        else:
+            data['demand'][column].iloc[0:timeframe] = modeling_steps[equal_col_dict[column]].values
+
+    ### now scale distribution level demand data with multiplicator (had to be postponed to this point, to avoid multiple proportional time series')
+    multi_data = data['site'][data['site']['multiplicator'].notna()].droplevel(level=0)['multiplicator']
+    region_multiplicators = dict()
+    for idx in multi_data.index:
+        region_multiplicators[idx] = list(map(int, multi_data[idx].split(',')))
+    for column in data['demand']:
+        if 'node' in column[0]: # 'node' hard coded here
+            region_type = column[0].split('_')[1]
+            top_region_name = column[0].split('_')[2]
+            if 'rural' in region_type: # names rural and urban and its sheet order also hard coded here
+                multi = region_multiplicators[top_region_name][0]
+            if 'urban' in region_type:
+                multi = region_multiplicators[top_region_name][1]
+            data['demand'][column] *= multi * data['transdist_share'].values[0]
+
     ###rewrite fluctuating resource data
     data['supim'] = data['supim'].iloc[0:timeframe, :]
     for column in data['supim']:
-        data['supim'][column].iloc[0:timeframe] = modeling_steps[column].values
+        if column in modeling_steps.columns:
+            data['supim'][column].iloc[0:timeframe] = modeling_steps[column].values
+        else:
+            data['supim'][column].iloc[0:timeframe] = modeling_steps[equal_col_dict[column]].values
+
     ###rewrite Buy/Sell Prices
     data['buy_sell_price'] = data['buy_sell_price'].iloc[0:timeframe, :]
     for column in data['buy_sell_price']:
-        data['buy_sell_price'][column].iloc[0:timeframe] = modeling_steps[column].values
+        if column in modeling_steps.columns:
+            data['buy_sell_price'][column].iloc[0:timeframe] = modeling_steps[column].values
+        else:
+            data['buy_sell_price'][column].iloc[0:timeframe] = modeling_steps[equal_col_dict[column]].values
+
     ###rewrite Variable efficiencies
     data['eff_factor'] = data['eff_factor'].iloc[0:timeframe, :]
     for column in data['eff_factor']:
-        data['eff_factor'][column].iloc[0:timeframe] = modeling_steps[column].values
+        if column in modeling_steps.columns:
+            data['eff_factor'][column].iloc[0:timeframe] = modeling_steps[column].values
+        else:
+            data['eff_factor'][column].iloc[0:timeframe] = modeling_steps[equal_col_dict[column]].values
 
     ###return new timestep range
     timesteps_new = range(0, timeframe)
 
-    return data, timesteps_new, weighting_order
+    return data, timesteps_new, weighting_order, cross_scenario_data
 
 ###function to store relevant parameters from other modules in model
 def store_typeperiod_parameter(m, hoursPerPeriod, weighting_order):

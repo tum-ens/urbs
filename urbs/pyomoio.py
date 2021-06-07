@@ -172,7 +172,7 @@ def list_entities(instance, entity_type):
     # helper function to discern entities by type
     def filter_by_type(entity, entity_type):
         if entity_type == 'set':
-            return isinstance(entity, pyomo.Set) #and not entity.virtual
+            return isinstance(entity, pyomo.Set) and not entity.virtual
         elif entity_type == 'par':
             return isinstance(entity, pyomo.Param)
         elif entity_type == 'var':

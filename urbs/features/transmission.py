@@ -462,7 +462,7 @@ def add_transmission_ac(m):
     m.res_transmission_input_by_apparent_power = pyomo.Constraint(
         m.tm, m.tra_tuples_ac,
         rule=def_transmission_input_by_apparent_power_rule,
-        doc='')
+        doc='transmission.flow(active)^2+transmission.flow(active)^2)<= transmission.cap-up^2')
 
 
     m.res_transmission_capacity = pyomo.Constraint(

@@ -107,7 +107,7 @@ def get_entity(instance, name):
 
     if not results.empty:
         # name columns according to labels + entity name
-        results.columns = labels[0:(results.axes[1].size-1)] + [name] #todo: behelfsmäßig. geht das besser?
+        results.columns = labels[0:(results.axes[1].size-1)] + [name] #todo: behelfsmäßig - geht das besser?
         results.set_index(labels[0:(results.axes[1].size-1)], inplace=True)
 
         # convert to Series

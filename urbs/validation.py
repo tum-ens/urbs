@@ -91,11 +91,14 @@ def validate_input(data):
             for index in data['site'].index:
                 if not data['site'].loc[index]['base-voltage'] > 0:
                     raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
-            # Oder in global prop?:
-            # if not data['global_prop'].loc[pd.IndexSlice[:, 'Base Voltage'], 'value'][0] > 0:
-            #    raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
-
-            #todo: Validate input for ACPF
+        # Validate input for ACPF
+        if 'resistance' in data['transmission'].keys():
+            for index in data['transmission'].index:
+                if data['transmission'].loc[index]['resistance'] < 0:
+                    raise ValueError('Ensure for ACPF transmission lines: resistance > 0 ')
+                if data['transmission'].loc[index]['resistance'] > 0:
+                    if not data['transmission'].loc[index]['reactance'] > 0:
+                        raise ValueError('Ensure positive reactance for ACPF Transmission Lines')
 
     if not data['storage'].empty:
         for index in data['storage'].index:

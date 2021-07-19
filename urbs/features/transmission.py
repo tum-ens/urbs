@@ -10,7 +10,7 @@ def e_tra_domain_rule1(m, tm, stf, sin, sout, tra, com):
         return pyomo.NonNegativeReals
 
 def e_tra_domain_rule2(m, tm, stf, sin, sout, tra, com):
-    # assigning e_tra_in and e_tra_out variable domains for transport and DCPF
+    # assigning e_tra_in and e_tra_out variable domains for transport, DCPF and ACPF
     if (stf, sin, sout, tra, com) in m.tra_tuples_dc:
         return pyomo.Reals
     elif (stf, sin, sout, tra, com) in m.tra_tuples_ac:
@@ -258,7 +258,6 @@ def add_transmission_dc(m):
         m.tm, m.tra_tuples_dc,
         rule=e_tra_abs_rule2,
         doc='-transmission dc input <= absolute transmission dc input')
-
     m.res_transmission_input_by_capacity = pyomo.Constraint(
         m.tm, m.tra_tuples,
         rule=res_transmission_input_by_capacity_rule,
@@ -281,7 +280,7 @@ def add_transmission_dc(m):
 
 # adds the transmission features to model with ACPF model features
 def add_transmission_ac(m):
-    # defining transmission tuple sets for transport and DCPF model separately
+    # defining transmission tuple sets for transport, DCPF and ACPF model separately
     tra_tuples = set()
     tra_tuples_dc = set()
     tra_tuples_ac = set()
@@ -307,7 +306,7 @@ def add_transmission_ac(m):
         ordered=False,
         doc='Set of transmission technologies')
 
-    # Transport and DCPF transmission tuples
+    # Transport, DCPF and ACPF transmission tuples
     m.tra_tuples = pyomo.Set(
         within=m.stf * m.sit * m.sit * m.tra * m.com,
         initialize=tuple(tra_tuples),
@@ -329,7 +328,7 @@ def add_transmission_ac(m):
         doc='Combinations of possible bidirectional ac'
             'transmissions, e.g. (2020,node1_A,node2_A,hvac,Elec)')
 
-    # DCPF&ACPF transmission tuples together
+    # DCPF & ACPF transmission tuples together
     m.tra_tuples_ac_dc = pyomo.Set(
         within=m.stf * m.sit * m.sit * m.tra * m.com,
         initialize=tuple(tra_tuples_ac_dc),
@@ -444,11 +443,11 @@ def add_transmission_ac(m):
     m.e_tra_abs1 = pyomo.Constraint(
         m.tm, m.tra_tuples_ac_dc,
         rule=e_tra_abs_rule1,
-        doc='transmission ac_dc input <= absolute transmission ac_dc input')
+        doc='transmission ac/dc input <= absolute transmission ac/dc input')
     m.e_tra_abs2 = pyomo.Constraint(
         m.tm, m.tra_tuples_ac_dc,
         rule=e_tra_abs_rule2,
-        doc='-transmission ac_dc input <= absolute transmission acdc input')
+        doc='-transmission ac/dc input <= absolute transmission ac/dc input')
 
     m.res_transmission_input_by_capacity = pyomo.Constraint(
         m.tm, m.tra_tuples,
@@ -457,12 +456,12 @@ def add_transmission_ac(m):
     m.res_transmission_ac_dc_input_by_capacity = pyomo.Constraint(
         m.tm, m.tra_tuples_ac_dc,
         rule=res_transmission_ac_dc_input_by_capacity_rule,
-        doc='-ac_dc_pf transmission input <= total transmission capacity')
+        doc='-ac/dc_pf transmission input <= total transmission capacity')
 
     m.res_transmission_input_by_apparent_power = pyomo.Constraint(
         m.tm, m.tra_tuples_ac,
         rule=def_transmission_input_by_apparent_power_rule,
-        doc='transmission.flow(active)^2+transmission.flow(active)^2)<= transmission.cap-up^2')
+        doc='transmission.flow(active)^2+transmission.flow(reactive)^2)<= transmission.cap-up^2')
 
 
     m.res_transmission_capacity = pyomo.Constraint(
@@ -517,11 +516,13 @@ def def_cap_tra_new_rule(m, stf, sin, sout, tra, com):
            m.tra_cap_unit[stf, sin, sout, tra, com] *
            m.transmission_dict['tra-block'][(stf, sin, sout, tra, com)])
 
+
 # transmission output == transmission input * efficiency
 def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_out[tm, stf, sin, sout, tra, com] ==
             m.e_tra_in[tm, stf, sin, sout, tra, com] *
             m.transmission_dict['eff'][(stf, sin, sout, tra, com)])
+
 
 # power flow rule for DCPF transmissions
 def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
@@ -530,6 +531,8 @@ def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
             (-1 / m.transmission_dict['reactance'][(stf, sin, sout, tra, com)])
             * m.site_dict['base-voltage'][(stf, sin)]**2)
 
+
+# power flow rule for ACPF transmissions
 def def_ac_power_flow_rule(m, tm, stf, sin, sout, tra, com):
     return (m.voltage_squared[tm, stf, sin] == m.voltage_squared[tm, stf, sout] +
             2 * (m.transmission_dict['resistance'][(stf, sin, sout, tra, 'electricity')]
@@ -537,32 +540,42 @@ def def_ac_power_flow_rule(m, tm, stf, sin, sout, tra, com):
             m.transmission_dict['reactance'][(stf, sin, sout, tra, 'electricity-reactive')]
                  * m.e_tra_in[tm, stf, sin, sout, tra, 'electricity-reactive']))
 
+
+# apparent power line flow rule
 def def_transmission_input_by_apparent_power_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, 'electricity']**2 + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity-reactive']**2
             <= (m.dt * m.cap_tra[stf, sin, sout, tra, com])**2)
 
+
+# rule to hold voltage within defined permissible range
 def def_voltage_limit_rule(m, tm, stf, sin):
     return ((m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['min-voltage'][(stf, sin)])**2,
             m.voltage_squared[tm, stf, sin],
             (m.site_dict['base-voltage'][(stf, sin)] * m.site_dict['max-voltage'][(stf, sin)])**2)
 
+
+# determine slackbus voltage level
 def def_slackbus_voltage_rule(m, tm, stf, sin):
     return (m.voltage_squared[tm, stf, sin] == m.site_dict['base-voltage'][(stf, sin)]**2)
 
-# reference nodes' voltage angle in subsystems are set to zero (not necessary but for more clear)
+
+# reference nodes' voltage angle in subsystems are set to zero (not necessary but for clearness)
 def def_slackbus_angle_rule(m, tm, stf, sin):
     return (m.voltage_angle[tm, stf, sin] == 0)
 
-# voltage angle difference rule for ACPF & DCPF transmissions
+
+# voltage angle difference rule for DCPF transmission
 def def_angle_limit_rule(m, tm, stf, sin, sout, tra, com):
     return (- m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)],
             (m.voltage_angle[tm, stf, sin] - m.voltage_angle[tm, stf, sout]),
             m.transmission_dict['difflimit'][(stf, sin, sout, tra, com)])
 
+
 # first rule for creating absolute transmission input
 def e_tra_abs_rule1(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_in[tm, stf, sin, sout, tra, com] <=
             m.e_tra_abs[tm, stf, sin, sout, tra, com])
+
 
 # second rule for creating absolute transmission input
 def e_tra_abs_rule2(m, tm, stf, sin, sout, tra, com):

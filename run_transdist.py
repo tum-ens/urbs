@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from urbs.runfunctions import *
 
 
-input_files = 'Transmission_Level_red.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'Transmission_Level.xlsx'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
@@ -40,7 +40,7 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (0,24)  # time step selection
+(offset, length) = (0,2)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
@@ -67,9 +67,6 @@ scenarios = [
              urbs.transdist100, # transdist100 scenarios must be simulated first to store distribution demand
              #urbs.transdist66,
              #urbs.transdist33,
-             #urbs.transdist75,
-             #urbs.transdist50,
-             #urbs.transdist25,
              #urbs.transmission
             ]
 

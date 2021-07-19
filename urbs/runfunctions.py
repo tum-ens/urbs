@@ -47,7 +47,6 @@ def setup_solver(optim, logfile='solver.log'):
         optim.set_options("NumericFocus=3")
         optim.set_options("Crossover=0")
         optim.set_options("Method=2") # ohne method concurrent optimization
-        #optim.set_options("QCPDual=0")
         #optim.set_options("BarConvTol=1e-7")
         optim.set_options("Threads=8")
         # optim.set_options("timelimit=7200")  # seconds
@@ -112,30 +111,27 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
         for i, microgrid_file in enumerate(microgrid_files):
             microgrid_data_initial.append(read_input(microgrid_file, year))
             validate_input(microgrid_data_initial[i])
-        # join microgrid data to model data
+        # modify and join microgrid data to model data
         data, cross_scenario_data = create_transdist_data(data, microgrid_data_initial, cross_scenario_data)
+    # if distribution network has to be modeled without interface to transmission network
     elif mode['acpf']:
         add_reactive_transmission_lines(data)
         add_reactive_output_ratios(data)
 
     if mode['tsam']:
+        # run timeseries aggregation method before creating model
         data, timesteps, weighting_order, cross_scenario_data = run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data)
-        # create model
+        # create model and clock process
         tt = time.time()
-        prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order, dual=False)
+        prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order, dual=False) # dual false neccessary due to quadratic constraint infeasibility
         print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt, 4))
     else:
-        # create model
+        # create model and clock process
         tt = time.time()
         prob = create_model(data, dt, timesteps, objective, dual=False)
         print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt,4))
 
-    ## Excel Datei zum validieren der create_transdist_data todo: delete at the end
-    # with pd.ExcelWriter(os.path.join(result_dir, '{}.xlsx').format(sce)) as writer:
-    #     for i, sheet in enumerate(data):
-    #         data[sheet].to_excel(writer, str(i))
-
-    # write lp file
+    # write lp file # lp writing needs huge RAM capacities for bigger models
     #prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile
@@ -149,12 +145,12 @@ def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
 
     # save problem solution (and input data) to HDF5 file
     save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
-    #save(prob, os.path.join('C:/Users/beneh/Documents/Dokumente/Beneharos_Dokumente/01_Uni/00_Master/4_Semester/Masterarbeit/3_Postprocessing/model_h5/transdist', '{}.h5'.format(sce)))
+
+    # no report tuples and plot tuples are defined - postprocessing with h5 file in jupyter
     ## write report to spreadsheet
     report(prob,os.path.join(result_dir, '{}.xlsx').format(sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
-
     # result plots
     result_figures(
         prob,

@@ -141,7 +141,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         df_transmission = get_input(instance, 'transmission')
         if com in set(df_transmission.index.get_level_values('Commodity')):
             imported = get_entity(instance, 'e_tra_out')
-            # avoid negative value import for DCPF transmissions #todo: acpf similar to dcpf?
+            # avoid negative value import for DCPF transmissions
             if instance.mode['dcpf']:
                 # -0.01 to avoid numerical errors such as -0
                 minus_imported = imported[(imported < -0.01)]

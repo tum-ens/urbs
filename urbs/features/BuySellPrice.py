@@ -9,10 +9,12 @@ def add_buy_sell_price(m):
     m.com_sell = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Sell'),
+        ordered=False,
         doc='Commodities that can be sold')
     m.com_buy = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Buy'),
+        ordered=False,
         doc='Commodities that can be purchased')
 
     # Variables
@@ -73,7 +75,7 @@ def res_sell_total_rule(m, stf, sit, com, com_type):
         total_consumption = 0
         for tm in m.tm:
             total_consumption += (
-                m.e_co_sell[tm, stf, sit, com, com_type])
+                m.e_co_sell[tm, stf, sit, com, com_type] * m.typeperiod['weight_typeperiod'][(stf,tm)])
         total_consumption *= m.weight
         return (total_consumption <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -99,7 +101,7 @@ def res_buy_total_rule(m, stf, sit, com, com_type):
         total_consumption = 0
         for tm in m.tm:
             total_consumption += (
-                m.e_co_buy[tm, stf, sit, com, com_type])
+                m.e_co_buy[tm, stf, sit, com, com_type] * m.typeperiod['weight_typeperiod'][(stf,tm)])
         total_consumption *= m.weight
         return (total_consumption <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
@@ -130,8 +132,8 @@ def search_sell_buy_tuple(m, stf, sit_in, pro_in, coin):
     Returns:
         a process
     """
-    pro_output_tuples = list(m.pro_output_tuples.value)
-    pro_input_tuples = list(m.pro_input_tuples.value)
+    pro_output_tuples = [x for x in list(m.pro_output_tuples.data()) if x[1] == sit_in]
+    pro_input_tuples = [x for x in list(m.pro_input_tuples.data()) if x[1] == sit_in]
     # search the output commodities for the "buy" process
     # buy_out = (stf, site, output_commodity)
     buy_out = set([(x[0], x[1], x[3])
@@ -174,36 +176,53 @@ def revenue_costs(m):
     try:
         return -sum(
             m.e_co_sell[(tm,) + c] *
-            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
+            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm
             for c in sell_tuples)
     except KeyError:
-        return -sum(
-            m.e_co_sell[(tm,) + c] *
-            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
-            m.commodity_dict['price'][c] *
-            m.commodity_dict['cost_factor'][c]
-            for tm in m.tm
-            for c in sell_tuples)
-
+        try:
+            return -sum(
+                m.e_co_sell[(tm,) + c] *
+                m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in sell_tuples)
+        except KeyError:
+            return -sum(
+                m.e_co_sell[(tm,) + c] *
+                m.buy_sell_price_dict[c[1], c[2]][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in sell_tuples)
 
 def purchase_costs(m):
     buy_tuples = commodity_subset(m.com_tuples, m.com_buy)
     try:
         return sum(
             m.e_co_buy[(tm,) + c] *
-            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *
+            m.buy_sell_price_dict[c[2]][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
             m.commodity_dict['price'][c] *
             m.commodity_dict['cost_factor'][c]
             for tm in m.tm
             for c in buy_tuples)
     except KeyError:
-        return sum(
-            m.e_co_buy[(tm,) + c] *
-            m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *
-            m.commodity_dict['price'][c] *
-            m.commodity_dict['cost_factor'][c]
-            for tm in m.tm
-            for c in buy_tuples)
+        try:
+            return sum(
+                m.e_co_buy[(tm,) + c] *
+                m.buy_sell_price_dict[c[2], ][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in buy_tuples)
+        except KeyError:
+            return sum(
+                m.e_co_buy[(tm,) + c] *
+                m.buy_sell_price_dict[c[1],c[2]][(c[0], tm)] * m.weight *  m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
+                m.commodity_dict['price'][c] *
+                m.commodity_dict['cost_factor'][c]
+                for tm in m.tm
+                for c in buy_tuples)

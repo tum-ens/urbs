@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import glob
 from xlrd import XLRDError
-import pyomo.core as pyomo
+import pyomo.environ as pyomo
 from .features.modelhelper import *
 from .identify import *
 
@@ -82,6 +82,12 @@ def read_input(input_files, year):
             demand = xls.parse('Demand').set_index(['t'])
             demand = pd.concat([demand], keys=[support_timeframe],
                                names=['support_timeframe'])
+            try:
+                typeperiod = demand.loc[:, ['weight_typeperiod']]
+                demand = demand.drop(columns=['weight_typeperiod'])
+            except KeyError:
+                pass
+
             # split columns by dots '.', so that 'DE.Elec' becomes
             # the two-level column index ('DE', 'Elec')
             demand.columns = split_columns(demand.columns, '.')
@@ -163,6 +169,7 @@ def read_input(input_files, year):
         'commodity': commodity,
         'process': process,
         'process_commodity': process_commodity,
+        'type period': typeperiod,
         'demand': demand,
         'supim': supim,
         'transmission': transmission,
@@ -174,7 +181,7 @@ def read_input(input_files, year):
 
     # sort nested indexes to make direct assignments work
     for key in data:
-        if isinstance(data[key].index, pd.core.index.MultiIndex):
+        if isinstance(data[key].index, pd.core.indexes.multi.MultiIndex):
             data[key].sort_index(inplace=True)
     return data
 
@@ -246,6 +253,14 @@ def pyomo_model_prep(data, timesteps):
     if m.mode['tve']:
         m.eff_factor_dict = \
             data["eff_factor"].dropna(axis=0, how='all').to_dict()
+    if m.mode['tdy']:
+        m.typeperiod = data['type period'].dropna(axis=0, how='all').to_dict()
+    else:
+        # if mode 'typeperiod' is not active, create a dict with ones
+        temp = pd.DataFrame(index=data['demand'].dropna(axis=0, how='all').index)
+        temp['weight_typeperiod']=1
+        m.typeperiod = temp.to_dict()
+
     if m.mode['onoff']:
         # on/off option
         # only keep those entries whose values are 1
@@ -548,12 +563,19 @@ def pyomo_model_prep(data, timesteps):
         m.transmission_dict = transmission.to_dict()
         # DCPF transmission lines are bidirectional and do not have symmetry
         # fix-cost and inv-cost should be multiplied by 2
-        if m.mode['dpf']:
-            transmission_dc = transmission[transmission['reactance'] > 0]
+        if m.mode['acpf']:
+            transmission_ac = transmission[transmission['resistance'] > 0]
+            m.transmission_ac_dict = transmission_ac.to_dict()
+            for entry in m.transmission_ac_dict['resistance']:
+                m.transmission_dict['inv-cost'][entry] = 2 * m.transmission_dict['inv-cost'][entry]
+                m.transmission_dict['fix-cost'][entry] = 2 * m.transmission_dict['fix-cost'][entry]
+
+        if m.mode['dcpf']:
+            transmission_dc = transmission[(transmission['reactance'] > 0) & ((transmission['resistance'] == 0) | pd.isna(transmission['resistance']))]
             m.transmission_dc_dict = transmission_dc.to_dict()
-            for t in m.transmission_dc_dict['reactance']:
-                m.transmission_dict['inv-cost'][t] = 2 * m.transmission_dict['inv-cost'][t]
-                m.transmission_dict['fix-cost'][t] = 2 * m.transmission_dict['fix-cost'][t]
+            for entry in m.transmission_dc_dict['reactance']:
+                m.transmission_dict['inv-cost'][entry] = 2 * m.transmission_dict['inv-cost'][entry]
+                m.transmission_dict['fix-cost'][entry] = 2 * m.transmission_dict['fix-cost'][entry]
                 
     if m.mode['sto']:
         m.storage_dict = storage.to_dict()

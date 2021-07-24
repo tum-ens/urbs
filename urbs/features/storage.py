@@ -1,7 +1,6 @@
 import math
 import pyomo.core as pyomo
 
-
 def add_storage(m):
 
     # storage (e.g. hydrogen, pump storage)
@@ -10,6 +9,7 @@ def add_storage(m):
         indexlist.add(tuple(key)[2])
     m.sto = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of storage technologies')
 
     # storage tuples
@@ -287,8 +287,8 @@ def res_storage_state_cyclicity_rule(m, stf, sit, sto, com):
 
 
 def def_storage_energy_power_ratio_rule(m, stf, sit, sto, com):
-    return (m.cap_sto_c[sit, sto, com] == m.cap_sto_p[sit, sto, com] *
-            m.storage_dict['ep-ratio'][(sit, sto, com)])
+    return (m.cap_sto_c[stf, sit, sto, com] == m.cap_sto_p[stf, sit, sto, com] *
+            m.storage_dict['ep-ratio'][(stf, sit, sto, com)])
 
 
 # storage balance
@@ -331,11 +331,11 @@ def storage_cost(m, cost_type):
                    m.storage_dict['cost_factor'][s]
                    for s in m.sto_tuples)
     elif cost_type == 'Variable':
-        return sum(m.e_sto_con[(tm,) + s] * m.weight *
+        return sum(m.e_sto_con[(tm,) + s] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] *
                    m.storage_dict['var-cost-c'][s] *
                    m.storage_dict['cost_factor'][s] +
                    (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
-                   m.weight * m.storage_dict['var-cost-p'][s] *
+                   m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0],tm)] * m.storage_dict['var-cost-p'][s] *
                    m.storage_dict['cost_factor'][s]
                    for tm in m.tm
                    for s in m.sto_tuples)

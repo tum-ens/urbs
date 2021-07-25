@@ -49,8 +49,8 @@ def sort_plot_elements(elements):
     quotient = quotient.fillna(0)
     # sort created/consumed ascencing with quotient i.e. base load first
     elements = elements.append(quotient)
-    new_columns = elements.columns[elements.ix[elements.last_valid_index()]
-                                           .argsort()]
+    new_columns = elements.columns[elements.loc[elements.last_valid_index()]
+        .argsort()]
     elements_sorted = elements[new_columns][:-1]
 
     return elements_sorted
@@ -99,7 +99,7 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
         sit = [sit]
 
     (created, consumed, stored, imported, exported,
-     dsm, voltage_angle) = get_timeseries(prob, stf, com, sit, timesteps)
+     dsm, voltage_angle, voltage_magnitude) = get_timeseries(prob, stf, com, sit, timesteps)
 
     # move retrieved/stored storage timeseries to created/consumed and
     # rename storage columns back to 'storage' for color mapping

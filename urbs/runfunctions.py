@@ -1,6 +1,12 @@
 import os
-import pyomo.environ
-from pyomo.opt.base import SolverFactory
+import time
+
+# import pyomo.environ
+# from pyomo.opt.base import SolverFactory
+
+from pyomo.environ import SolverFactory
+import pyomo.environ as pyomo
+
 from datetime import datetime, date
 from .model import create_model
 from .report import *
@@ -8,6 +14,7 @@ from .plot import *
 from .input import *
 from .validation import *
 from .saveload import *
+from .features import *
 
 
 def prepare_result_directory(result_name):
@@ -37,6 +44,11 @@ def setup_solver(optim, logfile='solver.log'):
         # reference with list of option names
         # http://www.gurobi.com/documentation/5.6/reference-manual/parameters
         optim.set_options("logfile={}".format(logfile))
+        optim.set_options("NumericFocus=3")
+        optim.set_options("Crossover=0")
+        optim.set_options("Method=2") # ohne method concurrent optimization
+        #optim.set_options("BarConvTol=1e-7")
+        optim.set_options("Threads=8")
         # optim.set_options("timelimit=7200")  # seconds
         # optim.set_options("mipgap=5e-4")  # default = 1e-4
     elif optim.name == 'glpk':
@@ -53,10 +65,10 @@ def setup_solver(optim, logfile='solver.log'):
     return optim
 
 
-def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
-                 objective, plot_tuples=None,  plot_sites_name=None,
-                 plot_periods=None, report_tuples=None,
-                 report_sites_name=None):
+def run_scenario(input_files, solver_name, timesteps, scenario, result_dir, dt,
+                 objective, microgrid_files = None, plot_tuples=None,  plot_sites_name=None,
+                 plot_periods=None, report_tuples=None, report_sites_name=None,
+                 cross_scenario_data=None, noTypicalPeriods=None, hoursPerPeriod=None):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
@@ -87,33 +99,58 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
     # scenario name, read and modify data for scenario
     sce = scenario.__name__
     data = read_input(input_files, year)
-    data = scenario(data)
+    data, cross_scenario_data = scenario(data, cross_scenario_data)
     validate_input(data)
     validate_dc_objective(data, objective)
 
-    # create model
-    prob = create_model(data, dt, timesteps, objective)
-    prob.write('model.lp', io_options={'symbolic_solver_labels':True})
+
+    # read and modify microgrid data
+    mode = identify_mode(data)
+    if mode['transdist']:
+        microgrid_data_initial =[]
+        for i, microgrid_file in enumerate(microgrid_files):
+            microgrid_data_initial.append(read_input(microgrid_file, year))
+            validate_input(microgrid_data_initial[i])
+        # modify and join microgrid data to model data
+        data, cross_scenario_data = create_transdist_data(data, microgrid_data_initial, cross_scenario_data)
+    # if distribution network has to be modeled without interface to transmission network
+    elif mode['acpf']:
+        add_reactive_transmission_lines(data)
+        add_reactive_output_ratios(data)
+
+    if mode['tsam']:
+        # run timeseries aggregation method before creating model
+        data, timesteps, weighting_order, cross_scenario_data = run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data)
+        # create model and clock process
+        tt = time.time()
+        prob = create_model(data, dt, timesteps, objective, hoursPerPeriod, weighting_order, dual=False) # dual false neccessary due to quadratic constraint infeasibility
+        print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt, 4))
+    else:
+        # create model and clock process
+        tt = time.time()
+        prob = create_model(data, dt, timesteps, objective, dual=False)
+        print('Elapsed time to build pyomo model: %s s' % round(time.time() - tt,4))
+
+    # write lp file # lp writing needs huge RAM capacities for bigger models
+    #prob.write('model.lp', io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile
     log_filename = os.path.join(result_dir, '{}.log').format(sce)
 
     # solve model and read results
-    optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+    optim = SolverFactory(solver_name)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
-    result = optim.solve(prob, tee=True)
-    assert str(result.solver.termination_condition) == 'optimal'
+    result = optim.solve(prob, tee=True,report_timing=True)
+    #assert str(result.solver.termination_condition) == 'optimal'
 
     # save problem solution (and input data) to HDF5 file
-    # save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
+    save(prob, os.path.join(result_dir, '{}.h5'.format(sce)))
 
-    # write report to spreadsheet
-    report(
-        prob,
-        os.path.join(result_dir, '{}.xlsx').format(sce),
+    # no report tuples and plot tuples are defined - postprocessing with h5 file in jupyter
+    ## write report to spreadsheet
+    report(prob,os.path.join(result_dir, '{}.xlsx').format(sce),
         report_tuples=report_tuples,
         report_sites_name=report_sites_name)
-
     # result plots
     result_figures(
         prob,
@@ -125,4 +162,4 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         periods=plot_periods,
         figure_size=(24, 9))
 
-    return prob
+    return prob, cross_scenario_data

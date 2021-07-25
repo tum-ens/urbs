@@ -3,6 +3,7 @@ from .input import get_input
 from .pyomoio import get_entity, get_entities
 from .util import is_string
 
+import numpy as np
 
 def get_constants(instance):
     """Return summary DataFrames for important variables
@@ -97,14 +98,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         # select commodity (xs), then the sites from remaining simple columns
         # and sum all together to form a Series
         demand = (
-            pd.DataFrame.from_dict(
-                get_input(
-                    instance,
-                    'demand_dict')).loc[stf] .loc[timesteps].xs(
-                com,
-                axis=1,
-                level=1)[sites].sum(
-                    axis=1))
+            pd.DataFrame.from_dict(get_input(instance,
+                    'demand_dict')).loc[stf] .loc[timesteps].xs(com,axis=1,level=1)[sites].sum(axis=1))
     except KeyError:
         demand = pd.Series(0, index=timesteps)
     demand.name = 'Demand'
@@ -147,7 +142,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         if com in set(df_transmission.index.get_level_values('Commodity')):
             imported = get_entity(instance, 'e_tra_out')
             # avoid negative value import for DCPF transmissions
-            if instance.mode['dpf']:
+            if instance.mode['dcpf']:
                 # -0.01 to avoid numerical errors such as -0
                 minus_imported = imported[(imported < -0.01)]
                 minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
@@ -162,7 +157,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
             imported = imported.unstack(level='sit')
 
             internal_import = imported[sites].sum(axis=1)  # ...from sites
-            if instance.mode['dpf']:
+            if instance.mode['dcpf']:
                 imported = imported[[x for x in other_sites if x in imported.keys()]]  # ...to existing other_sites
             else:
                 imported = imported[other_sites]  # ...from other_sites
@@ -170,7 +165,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             exported = get_entity(instance, 'e_tra_in')
             # avoid negative value export for DCPF transmissions
-            if instance.mode['dpf']:
+            if instance.mode['dcpf']:
                 # -0.01 to avoid numerical errors such as -0
                 minus_exported = exported[(exported < -0.01)]
                 minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
@@ -186,7 +181,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             internal_export = exported[sites].sum(
                 axis=1)  # ...to sites (internal)
-            if instance.mode['dpf']:
+            if instance.mode['dcpf']:
                 exported = exported[[x for x in other_sites if x in exported.keys()]]  # ...to existing other_sites
             else:
                 exported = exported[other_sites]  # ...to other_sites
@@ -261,16 +256,26 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     consumed = consumed.join(shifted.rename('Demand'))
 
     # VOLTAGE ANGLE of sites
-
-    try:
-        voltage_angle = get_entity(instance, 'voltage_angle')
-        voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
-        voltage_angle = voltage_angle.unstack(level='sit')[sites]
-    except (KeyError, AttributeError):
+    if instance.mode['dcpf']:
+            voltage_angle = get_entity(instance, 'voltage_angle')
+            voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
+            voltage_angle = voltage_angle.unstack(level='sit')[sites]
+    else:
         voltage_angle = pd.DataFrame(index=timesteps)
-    voltage_angle.name = 'Voltage Angle'
+        voltage_angle.name = 'Voltage Angle'
 
-    return created, consumed, stored, imported, exported, dsm, voltage_angle
+    # Squred Voltage Magnitudes of sites
+    if instance.mode['acpf']:
+            voltage_squared = get_entity(instance, 'voltage_squared')
+            voltage_squared = voltage_squared.xs([stf], level=['stf']).loc[timesteps]
+            base_voltage = instance.site_dict['base-voltage'][(instance.stf.value_list[0], voltage_squared.index[0][1])]
+            voltage_squared = voltage_squared.unstack(level='sit')[sites]
+            voltage_magnitude = np.sqrt(voltage_squared)/base_voltage
+    else:
+        voltage_magnitude = pd.DataFrame(index=timesteps)
+        voltage_magnitude.name = 'Voltage Magnitude'
+
+    return created, consumed, stored, imported, exported, dsm, voltage_angle, voltage_magnitude
 
 
 def drop_all_zero_columns(df):

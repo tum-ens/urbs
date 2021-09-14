@@ -14,3 +14,4 @@ dependencies:
   - pyomo=5.6.7
   - glpk
   - psutil=5.6.5
+  - tsam=1.1.1

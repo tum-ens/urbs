@@ -58,6 +58,16 @@ implementation.
    implementation
    api
 
+ADMM module for regional decomposition
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Continue here if you would like to use the regional decomposition module, using 
+the alternating direction method of multipliers (ADMM).
+
+.. toctree::
+   :maxdepth: 1
+   
+   admm
 
 Features
 --------

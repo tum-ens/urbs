@@ -312,7 +312,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
     if m.mode['tdy']:
         if m.mode['tsam']:
             store_typeperiod_parameter(m, hoursPerPeriod, weighting_order)
-        m = add_typeperiod(m)
+        m = add_typeperiod(m, hoursPerPeriod)
 
     if (m.mode['tve'] or m.mode['onoff'] or #m.mode['chp'] or
         m.mode['minfraction']):
@@ -410,7 +410,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
         rule=def_process_output_reactive_rule1,
         doc='Q <= P * tan(phi_min)')
 
-    # upper reactive power generation limit
+    # lower reactive power generation limit
     m.def_process_output_reactive2 = pyomo.Constraint(
         m.tm, m.pro_output_tuples_reactive,
         rule=def_process_output_reactive_rule2,

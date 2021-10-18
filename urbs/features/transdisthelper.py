@@ -21,7 +21,7 @@ def create_transdist_data(data, microgrid_data_initial, cross_scenario_data):
     ### process microgrid data for every region and microgrid type
     for set_number, set in enumerate(microgrid_set_list):  # top region microgrid setting
         top_region_name = data['site'].index.get_level_values(1)[set_number]
-        for type_nr, quantity_nr in enumerate(set):  # Auflistung des settings
+        for type_nr, quantity_nr in enumerate(set):
             microgrid_entries = microgrid_data_initial[type_nr]['site'].index.get_level_values(1)
             n = 0
             while n < quantity_nr:
@@ -33,13 +33,13 @@ def create_transdist_data(data, microgrid_data_initial, cross_scenario_data):
                 ### scale capacities, commodities, demand, areas and the loadprofile with multiplicator number of the microgrid
                 microgrid_data_input, demand_shift = multiplicator_scaling(mode, data, microgrid_data_input,
                                                                            microgrid_multiplicator_list, set_number, type_nr)
-                ### copy SupIm data from respective state to the microgrid within that state
-                copy_SupIm_data(data, microgrid_data_input, top_region_name)
                 ### shift demand from transmission level to distribution level
                 data, mobility_transmission_shift, heat_transmission_shift = shift_demand(data, microgrid_data_input, set_number,
                                                                                           type_nr, demand_shift, loadprofile_BEV,
                                                                                           top_region_name, mobility_transmission_shift,
                                                                                           heat_transmission_shift, transdist_eff)
+                ### copy SupIm data from respective state to the microgrid within that state
+                copy_SupIm_data(data, microgrid_data_input, top_region_name)
                 ### model additional transmission lines for the reactive power
                 add_reactive_transmission_lines(microgrid_data_input)
                 ### add reactive output ratios for ac sites
@@ -154,7 +154,7 @@ def add_reactive_transmission_lines(microgrid_data_input):
     microgrid_data_input['transmission'] = pd.concat([microgrid_data_input['transmission'], reactive_transmission_lines], sort=True)
     return microgrid_data_input
 
-### Implement reactive power outputs as commodityaccording to predefined power factors for processes
+### Implement reactive power outputs as commodity according to predefined power factors for processes
 def add_reactive_output_ratios(microgrid_data_input):
     pro_Q = microgrid_data_input['process'][microgrid_data_input['process'].loc[:, 'pf-min'] > 0]
     ratios_elec = microgrid_data_input['process_commodity'].loc[pd.IndexSlice[:, :, 'electricity', 'Out'], :]

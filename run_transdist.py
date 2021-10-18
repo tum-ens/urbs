@@ -2,12 +2,12 @@
 import os
 import shutil
 import urbs
-import sys
-import time as t
-import numpy as np
-import multiprocessing as mp
-from os import getpid
-import matplotlib.pyplot as plt
+# import sys
+# import time as t
+# import numpy as np
+# import multiprocessing as mp
+# from os import getpid
+# import matplotlib.pyplot as plt
 from urbs.runfunctions import *
 
 
@@ -39,14 +39,14 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 # Choose Solver (cplex, glpk, gurobi, ...)
 solver = 'gurobi'
 
-# simulation timesteps
-(offset, length) = (0,2)  # time step selection
-timesteps = range(offset, offset+length+1)
-dt = 1  # length of each time step (unit: hours)
-
 # input data for tsam method
 noTypicalPeriods = 4
 hoursPerPeriod = 168
+
+# simulation timesteps
+(offset, length) = (0,8760)  # time step selection
+timesteps = range(offset, offset+length+1)
+dt = 1  # length of each time step (unit: hours)
 
 # detailed reporting commodity/sites
 report_tuples = []

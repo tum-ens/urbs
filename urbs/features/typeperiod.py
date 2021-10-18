@@ -147,10 +147,7 @@ def store_typeperiod_parameter(m, hoursPerPeriod, weighting_order):
     m.weighting_order = weighting_order
     return m
 
-def add_typeperiod(m):
-    # if not (len(m.timesteps) % 168 == 0 or len(m.timesteps) % 168 == 1):
-    #     print('Warning: length of timesteps does not end at the end of the type period!')
-
+def add_typeperiod(m, hoursPerPeriod):
     ### change weight parameter to 1, since the whole year is representated by weight_typeperiod
     m.del_component(m.weight)
     m.weight = pyomo.Param(
@@ -158,7 +155,7 @@ def add_typeperiod(m):
         doc='Pre-factor for variable costs and emissions for annual result for type period = 1')
 
     ### create list with all period ends
-    t_endofperiod_list = [i * 168 * m.dt for i in list(range(1,1+int(len(m.timesteps) / m.dt / 168)))]
+    t_endofperiod_list = [i * hoursPerPeriod * m.dt for i in list(range(1,1+int(len(m.timesteps) / m.dt / hoursPerPeriod)))]
 
     if m.mode['tsam']:
         ### prepare time lists for set tuples

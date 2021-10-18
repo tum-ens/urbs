@@ -14,7 +14,7 @@ def variable_distribution_share(data, cross_scenario_data, transdist_share):
             # within all scenarios for better comparability from cross_scenario data
             data['process'].loc[pd.IndexSlice[:, :, 'PV_utility_rooftop'], 'cap-up'] = data['process'].loc[pd.IndexSlice[:, :,'PV_utility_rooftop'], 'cap-up'].values \
                                                                                        + (1 - transdist_share) * cross_scenario_data['PV_cap_shift'].values
-            # read add additional demand (BEV, Heat) from cross_scenario data
+            # read additional demand (BEV, Heat) from cross_scenario data
             additional_demand_mobility = cross_scenario_data['mobility_transmission_shift']
             additional_demand_heat = cross_scenario_data['heat_transmission_shift']
         else:

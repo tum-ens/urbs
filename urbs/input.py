@@ -174,7 +174,7 @@ def read_input(input_files, year):
 
     # sort nested indexes to make direct assignments work
     for key in data:
-        if isinstance(data[key].index, pd.core.index.MultiIndex):
+        if isinstance(data[key].index, pd.MultiIndex):
             data[key].sort_index(inplace=True)
     return data
 

@@ -112,7 +112,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     # STOCK
     eco = get_entity(instance, 'e_co_stock')
     try:
-        eco = eco.xs([stf, com, 'Stock'], level=['stf', 'com', 'com_type'])
+        eco = eco.xs((stf, com, 'Stock'), level=['stf', 'com', 'com_type'])
         stock = eco.unstack()[sites].sum(axis=1)
     except KeyError:
         stock = pd.Series(0, index=timesteps)
@@ -121,7 +121,10 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     # PROCESS
     created = get_entity(instance, 'e_pro_out')
     try:
-        created = created.xs([stf, com], level=['stf', 'com']).loc[timesteps]
+        created = created.xs((stf, com), level=['stf', 'com']).loc[timesteps]
+    except KeyError:
+        created = created.xs((stf, com), level=['stf', 'com']).loc[timesteps[1:]]
+    try:
         created = created.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         created = created.unstack(level='pro')
         created = drop_all_zero_columns(created)
@@ -130,7 +133,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
     consumed = get_entity(instance, 'e_pro_in')
     try:
-        consumed = consumed.xs([stf, com], level=['stf', 'com']).loc[timesteps]
+        consumed = consumed.xs((stf, com), level=['stf', 'com']).loc[timesteps]
         consumed = consumed.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         consumed = consumed.unstack(level='pro')
         consumed = drop_all_zero_columns(consumed)
@@ -153,8 +156,12 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
                 imported = imported[imported >= 0]
                 imported = pd.concat([imported, minus_imported])
-            imported = imported.loc[timesteps].xs(
-                [stf, com], level=['stf', 'com'])
+            try:
+                imported = imported.loc[timesteps].xs(
+                    (stf, com), level=['stf', 'com'])
+            except KeyError:
+                imported = imported.loc[timesteps[1:]].xs(
+                    (stf, com), level=['stf', 'com'])
             imported = imported.unstack(level='tra').sum(axis=1)
             imported = imported.unstack(
                 level='sit_')[sites].fillna(0).sum(
@@ -176,8 +183,12 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
                 exported = exported[exported >= 0]
                 exported = pd.concat([exported, minus_exported])
-            exported = exported.loc[timesteps].xs(
-                [stf, com], level=['stf', 'com'])
+            try:
+                exported = exported.loc[timesteps].xs(
+                    (stf, com), level=('stf', 'com'))
+            except KeyError:
+                exported = exported.loc[timesteps[1:]].xs(
+                    (stf, com), level=('stf', 'com'))
             exported = exported.unstack(level='tra').sum(axis=1)
             exported = exported.unstack(
                 level='sit')[sites].fillna(0).sum(
@@ -209,9 +220,9 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     # select all entries with desired commodity co
     stored = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
     try:
-        stored = stored.loc[timesteps].xs([stf, com], level=['stf', 'com'])
+        stored = stored.loc[timesteps].xs((stf, com), level=['stf', 'com'])
         stored = stored.groupby(level=['t', 'sit']).sum()
-        stored = stored.loc[(slice(None), sites), :].sum(level='t')
+        stored = stored.loc[(slice(None), sites), :].groupby(level='t').sum()
         stored.columns = ['Level', 'Stored', 'Retrieved']
     except (KeyError, ValueError):
         stored = pd.DataFrame(0, index=timesteps,
@@ -232,8 +243,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         # for sit in m.dsm_site_tuples:
         try:
             # select commodity
-            dsmup = dsmup.xs([stf, com], level=['stf', 'com'])
-            dsmdo = dsmdo.xs([stf, com], level=['stf', 'com'])
+            dsmup = dsmup.xs((stf, com), level=['stf', 'com'])
+            dsmdo = dsmdo.xs((stf, com), level=['stf', 'com'])
 
             # select sites
             dsmup = dsmup.unstack()[sites].sum(axis=1)
@@ -264,9 +275,9 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
     try:
         voltage_angle = get_entity(instance, 'voltage_angle')
-        voltage_angle = voltage_angle.xs([stf], level=['stf']).loc[timesteps]
+        voltage_angle = voltage_angle.xs(stf, level=['stf']).loc[timesteps]
         voltage_angle = voltage_angle.unstack(level='sit')[sites]
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
         voltage_angle = pd.DataFrame(index=timesteps)
     voltage_angle.name = 'Voltage Angle'
 

@@ -7,10 +7,12 @@ def add_buy_sell_price(m):
 
     # Sets
     m.com_sell = pyomo.Set(
+        ordered=False,
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Sell'),
         doc='Commodities that can be sold')
     m.com_buy = pyomo.Set(
+        ordered=False,
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Buy'),
         doc='Commodities that can be purchased')

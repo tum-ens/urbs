@@ -3,15 +3,16 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.6
-  - numpy=1.17.3
-  - matplotlib=3.1.1
-  - pandas=0.24.2
-  - pandas-datareader=0.8.1
-  - pytables=3.6.1
-  - openpyxl=3.0.1
-  - xlrd=1.2.0
-  - pyomo=5.6.7
-  - glpk
-  - psutil=5.6.5
-  - pyutilib=5.8.0
+  - openpyxl = 3.*.*
+  - pyomo = 6.*.*
+  - pandas = 1.*.*
+  - xlrd = 2.*.*
+  - pandas-datareader = 0.*.*
+  - pytables = 3.*.*
+  - psutil = 5.*.*
+  - python = 3.9.*
+  - numpy = 1.*.*
+  - glpk = 4.*
+  - pyutilib = 6.*.*
+  - matplotlib = 3.*.*
+  

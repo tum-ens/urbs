@@ -19,10 +19,13 @@ def add_time_variable_efficiency(m):
                     m.com_env],
         doc='Outputs of processes with time dependent efficiency')
 
+    # helper tuple for defining domains of  process_timevar_output constraint
+    m.process_timevar_output_tuple = pyomo.Set(within=m.stf * m.sit * m.pro * m.com,
+                        initialize= (m.pro_timevar_output_tuples - (m.pro_partial_output_tuples & m.pro_timevar_output_tuples)))
+
     # time variable efficiency rules
     m.def_process_timevar_output = pyomo.Constraint(
-        m.tm, (m.pro_timevar_output_tuples -
-               (m.pro_partial_output_tuples & m.pro_timevar_output_tuples)),
+        m.tm, m.process_timevar_output_tuple,
         rule=def_pro_timevar_output_rule,
         doc='e_pro_out = tau_pro * r_out * eff_factor')
     m.def_process_partial_timevar_output = pyomo.Constraint(

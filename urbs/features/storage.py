@@ -9,6 +9,7 @@ def add_storage(m):
     for key in m.storage_dict["eff-in"]:
         indexlist.add(tuple(key)[2])
     m.sto = pyomo.Set(
+        ordered=False,
         initialize=indexlist,
         doc='Set of storage technologies')
 

@@ -42,7 +42,7 @@ def setup_solver(optim, logfile='solver.log'):
     elif optim.name == 'glpk':
         # reference with list of options
         # execute 'glpsol --help'
-        optim.set_options("log={}".format(logfile))
+        optim.set_options("log={}".format(logfile.replace('\\','/')))
         # optim.set_options("tmlim=7200")  # seconds
         # optim.set_options("mipgap=.0005")
     elif optim.name == 'cplex':

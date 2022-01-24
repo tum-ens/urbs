@@ -42,14 +42,14 @@ def sort_plot_elements(elements):
         columns=elements.columns)
 
     for col in std.columns:
-        std[col] = np.std(elements[col])
-        mean[col] = np.mean(elements[col])
+        std[col] = np.std(elements[col].tolist())
+        mean[col] = np.mean(elements[col].tolist())
         quotient[col] = std[col] / mean[col]
     # fill nan values (due to division by 0)
     quotient = quotient.fillna(0)
     # sort created/consumed ascencing with quotient i.e. base load first
     elements = elements.append(quotient)
-    new_columns = elements.columns[elements.ix[elements.last_valid_index()]
+    new_columns = elements.columns[elements.loc[elements.last_valid_index()]
                                            .argsort()]
     elements_sorted = elements[new_columns][:-1]
 

@@ -38,6 +38,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # costs are annual by default, variable costs are scaled by weight) and
     # among different simulation durations meaningful.
     m.weight = pyomo.Param(
+        within=pyomo.Any,
         initialize=float(8760) / ((len(m.timesteps) - 1) * dt),
         doc='Pre-factor for variable costs and emissions for an annual result')
 
@@ -45,11 +46,13 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # converts between energy (storage content, e_sto_con) and power (all other
     # quantities that start with "e_")
     m.dt = pyomo.Param(
+        within=pyomo.Any,
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
 
     # import objective function information
     m.obj = pyomo.Param(
+        within=pyomo.Any,
         initialize=objective,
         doc='Specification of minimized quantity, default: "cost"')
 
@@ -78,6 +81,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     for key in m.commodity_dict["price"]:
         indexlist.add(tuple(key)[0])
     m.stf = pyomo.Set(
+        ordered=False,
         initialize=indexlist,
         doc='Set of modeled support timeframes (e.g. years)')
 
@@ -86,6 +90,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     for key in m.commodity_dict["price"]:
         indexlist.add(tuple(key)[1])
     m.sit = pyomo.Set(
+        ordered=False,
         initialize=indexlist,
         doc='Set of sites')
 
@@ -94,6 +99,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     for key in m.commodity_dict["price"]:
         indexlist.add(tuple(key)[2])
     m.com = pyomo.Set(
+        ordered=False,
         initialize=indexlist,
         doc='Set of commodities')
 
@@ -102,6 +108,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     for key in m.commodity_dict["price"]:
         indexlist.add(tuple(key)[3])
     m.com_type = pyomo.Set(
+        ordered=False,
         initialize=indexlist,
         doc='Set of commodity types')
 
@@ -110,6 +117,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     for key in m.process_dict["inv-cost"]:
         indexlist.add(tuple(key)[2])
     m.pro = pyomo.Set(
+        ordered=False,
         initialize=indexlist,
         doc='Set of conversion processes')
 
@@ -132,6 +140,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         initialize=tuple(m.process_dict["inv-cost"].keys()),
         doc='Combinations of possible processes, e.g. (2018,North,Coal plant)')
     m.com_stock = pyomo.Set(
+        ordered=False,
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Stock'),
         doc='Commodities that can be purchased at some site(s)')
@@ -157,14 +166,17 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # commodity type subsets
     m.com_supim = pyomo.Set(
+        ordered=False,
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'SupIm'),
         doc='Commodities that have intermittent (timeseries) input')
     m.com_demand = pyomo.Set(
+        ordered=False,
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Demand'),
         doc='Commodities that have a demand (implies timeseries)')
     m.com_env = pyomo.Set(
+        ordered=False,
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Env'),
         doc='Commodities that (might) have a maximum creation limit')
@@ -288,6 +300,17 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             within=m.stf * m.sit * m.pro * m.com,
             doc='empty set needed for (partial) process output')
 
+    # helper tuples for defining domains of process_input/output constraints
+    m.process_input_tuple = pyomo.Set(within=m.stf * m.sit * m.pro * m.com,
+                                      initialize=(m.pro_input_tuples - m.pro_partial_input_tuples))
+
+    m.process_output_tuple = pyomo.Set(within=m.stf * m.sit * m.pro * m.com,
+                                       initialize=(m.pro_output_tuples - m.pro_partial_output_tuples - m.pro_timevar_output_tuples))
+
+    # helper tuple for defining domains of partial_process_output constraint
+    m.partial_process_output_tuple = pyomo.Set(within=m.stf * m.sit * m.pro * m.com,
+                                               initialize=(m.pro_partial_output_tuples - (m.pro_partial_output_tuples & m.pro_timevar_output_tuples)))
+
     # Equation declarations
     # equation bodies are defined in separate functions, referred to here by
     # their name in the "rule" keyword.
@@ -316,12 +339,11 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # process
     m.def_process_input = pyomo.Constraint(
-        m.tm, m.pro_input_tuples - m.pro_partial_input_tuples,
+        m.tm, m.process_input_tuple,
         rule=def_process_input_rule,
         doc='process input = process throughput * input ratio')
     m.def_process_output = pyomo.Constraint(
-        m.tm, (m.pro_output_tuples - m.pro_partial_output_tuples -
-               m.pro_timevar_output_tuples),
+        m.tm, m.process_output_tuple,
         rule=def_process_output_rule,
         doc='process output = process throughput * output ratio')
     m.def_intermittent_supply = pyomo.Constraint(
@@ -361,9 +383,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
     m.def_partial_process_output = pyomo.Constraint(
-        m.tm,
-        (m.pro_partial_output_tuples -
-            (m.pro_partial_output_tuples & m.pro_timevar_output_tuples)),
+        m.tm, m.partial_process_output_tuple,
         rule=def_partial_process_output_rule,
         doc='e_pro_out = '
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'

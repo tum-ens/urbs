@@ -33,6 +33,7 @@ def add_transmission(m):
     for key in m.transmission_dict["eff"]:
         indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
+        ordered=False,
         initialize=indexlist,
         doc='Set of transmission technologies')
 

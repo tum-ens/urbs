@@ -27,10 +27,10 @@ def get_entity(instance, name):
     # extract values
     if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
-            results = pd.DataFrame([v + (1,) for v in entity.value])
+            results = pd.DataFrame([v + (1,) for v in entity.data()])
         else:
             # Pyomo sets don't have values, only elements
-            results = pd.DataFrame([(v, 1) for v in entity.value])
+            results = pd.DataFrame([(v, 1) for v in entity.data()])
 
         # for unconstrained sets, the column label is identical to their index
         # hence, make index equal to entity name and append underscore to name
@@ -171,7 +171,7 @@ def list_entities(instance, entity_type):
     # helper function to discern entities by type
     def filter_by_type(entity, entity_type):
         if entity_type == 'set':
-            return isinstance(entity, pyomo.Set) and not entity.virtual
+            return isinstance(entity, pyomo.Set) # and not entity.virtual
         elif entity_type == 'par':
             return isinstance(entity, pyomo.Param)
         elif entity_type == 'var':

@@ -5,17 +5,25 @@ This document describes all changes made to urbs to enable python 3.9 and update
 | Package | Old | New |
 |---|---|---|
 | python | 3.6 | 3.9.\* |
-| numpy | 1.17.3 | 1.\*.\* |
-| matplotlib | 3.1.1 | 3.\*.\* |
-| pandas | 0.24.2 | 1.\*.\* |
-| pandas-datareader | 0.8.1 | 0.\*.\* |
-| pytables | 3.6.1 | 3.\*.\* |
-| openpyxl | 3.0.1 | 3.\*.\* |
-| xlrd | 1.2.0 | 2.\*.\* |
-| pyomo | 5.6.7 | 6.\*.\* |
+| numpy | 1.17.3 | 1.20.\* |
+| matplotlib | 3.1.1 | 3.4.\* |
+| pandas | 0.24.2 | 1.3.\* |
+| pandas-datareader | 0.8.1 | 0.10.\* |
+| pytables | 3.6.1 | 3.6.\* |
+| openpyxl | 3.0.1 | 3.0.\* |
+| xlrd | 1.2.0 | 2.0.\* |
+| pyomo | 5.6.7 | 6.1.\* |
 | glpk | - | 4.\* |
-| psutil | 5.6.5 | 5.\*.\* |
-| pyutilib | 5.8.0 | 6.\*.\* |
+| psutil | 5.6.5 | 5.8.\* |
+| pyutilib | 5.8.0 | 6.0.\* |
+
+# Notes
+
+To keep commandline output similar to the original warnings by openpyxl are suppressed in **runfunctions.py:14**.
+If an issue related to reading the excel file exists this should be disabled first.
+
+In **pyomoio.py:174** a check for the *virtual* attribute is disabled as it will be depreccated.
+This seems to have no influence on the results of computations.
 
 # Changes by Type
 
@@ -80,6 +88,12 @@ They are now mapped to 'float64' as was previously default.
 
 ---
 
+Suppress warnings by openpyxl to keep default appearance.
+
+**runfunctions.py:12-14**
+
+---
+
 Replace deprecated/moved features
 
 **pyomoio.py:235,239,245,250** `set_tuple` -> `subsets(expand_all_set_operators=True)`
@@ -88,6 +102,8 @@ Replace deprecated/moved features
 
 **runfunctions.py:45** replace escaped \\ with / 
 
+**plot.py:51** `elements.append(quotient)` -> `pd.concat((elements,quotient))`
+
 **plot.py:52** `Dataframe.ix[]` -> `Dataframe.loc[]`
 
 **output.py:115,124,133,161,188,223,246,247,267** python list -> python tuple
@@ -95,3 +111,11 @@ Replace deprecated/moved features
 **output.py:225** `Dataframe.loc[].sum(level=t)` -> `Dataframe.loc[].groupby(level=t).sum()`
 
 **pyomoio.pi:46,49,52,58,61,64,78,81,90,94,98,191,193** `iteritems()` -> `items()`
+
+**pyomoio.pi:30,33** `entity.value` -> `entity.data()`
+
+**BuySellPrice.pi:135,136** `entity.value` -> `entity.data()`
+
+**pyomoio.pi:174** `and not entity.virtual` removed
+
+**storage.py:238,244,245** `m.t[]` -> `m.t.at()`

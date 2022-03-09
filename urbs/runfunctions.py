@@ -9,6 +9,9 @@ from .input import *
 from .validation import *
 from .saveload import *
 
+# suppress warnings given by importing excel files with conditional formatting
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
 def prepare_result_directory(result_name):
     """ create a time stamped directory within the result folder.

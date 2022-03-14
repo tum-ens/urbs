@@ -19,9 +19,6 @@ This document describes all changes made to urbs to enable python 3.9 and update
 
 # Notes
 
-To keep commandline output similar to the original warnings by openpyxl are suppressed in **runfunctions.py:14**.
-If an issue related to reading the excel file exists this should be disabled first.
-
 In **pyomoio.py:174** a check for the *virtual* attribute is disabled as it will be depreccated.
 This seems to have no influence on the results of computations.
 

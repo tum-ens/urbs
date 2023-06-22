@@ -58,6 +58,15 @@ implementation.
    implementation
    api
 
+CoTraDis module
+^^^^^^^^^^^^^^^
+
+Continue here for the usage instructions on the coupled transmission-distribution system (CoTraDis) module.
+
+.. toctree::
+   :maxdepth: 1
+   
+   CoTraDis
 
 Features
 --------

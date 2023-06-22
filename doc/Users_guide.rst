@@ -1,5 +1,7 @@
 ﻿.. module:: urbs
 
+.. _urbs_general:
+
 Users guide
 ***********
 

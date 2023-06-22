@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def validate_input(data):
     """ Input validation function
 
@@ -31,8 +32,6 @@ def validate_input(data):
                                  com + ') is not in commodity input sheet.'
                                  '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')
-
-
     # Add global parameters if necessary
     for stf in data['global_prop'].index.get_level_values(0):
         if 'Cost limit' not in data['global_prop'].loc[stf].index:
@@ -41,14 +40,13 @@ def validate_input(data):
         if 'CO2 limit' not in data['global_prop'].loc[stf].index:
             data['global_prop'].loc[(stf, 'CO2 limit'), :] = np.inf
             print('Added a global CO2 limit for ' + str(stf) + ' with the value: inf.')
-        if stf == min(data['global_prop'].index.get_level_values(0)):
+        if len(data['global_prop'].index.levels[0]) > 1 and stf == min(data['global_prop'].index.get_level_values(0)):
             if 'Cost budget' not in data['global_prop'].loc[stf].index:
                 data['global_prop'].loc[(stf, 'Cost budget'), :] = np.inf
                 print('Added a global Cost budget for the entire period with the value: inf.')
             if 'CO2 budget' not in data['global_prop'].loc[stf].index:
                 data['global_prop'].loc[(stf, 'CO2 budget'), :] = np.inf
                 print('Added a global CO2 budget for the entire period with the value: inf.')
-
 
     # Find ducplicate index
     for key in data:
@@ -87,13 +85,20 @@ def validate_input(data):
                 if data['transmission'].loc[index]['reactance'] > 0:
                     if data['transmission'].loc[index]['eff'] != 1:
                         raise ValueError('Ensure efficiency of DCPF Transmission Lines are 1')
-                    if not data['transmission'].loc[index]['base_voltage'] > 0:
-                        raise ValueError('Ensure base voltage of DCPF transmission lines are '
-                                         'greater than 0')
-                    if not (0 < data['transmission'].loc[index]['difflimit'] <= 90):
-                        raise ValueError('Ensure angle difference of DCPF transmission lines '
-                                         'are between 90 and 0 '
-                                         'degrees')
+                    #if not (0 < data['transmission'].loc[index]['difflimit'] <= 90):
+                    #    raise ValueError('Ensure angle difference of DCPF transmission lines are between 90 and 0 '
+                    #                     'degrees')
+            for index in data['site'].index:
+                if not data['site'].loc[index]['base-voltage'] > 0:
+                    raise ValueError('Ensure base voltage of DCPF transmission lines are greater than 0')
+        # Validate input for ACPF
+        if 'resistance' in data['transmission'].keys():
+            for index in data['transmission'].index:
+                if data['transmission'].loc[index]['resistance'] < 0:
+                    raise ValueError('Ensure for ACPF transmission lines: resistance > 0 ')
+                if data['transmission'].loc[index]['resistance'] > 0:
+                    if not data['transmission'].loc[index]['reactance'] > 0:
+                        raise ValueError('Ensure positive reactance for ACPF Transmission Lines')
 
     if not data['storage'].empty:
         for index in data['storage'].index:
@@ -159,11 +164,24 @@ def validate_input(data):
                                "worksheet 'DSM' must be from the list of site "
                                "names specified in the worksheet 'Site'.")
 
+    if any(data['type period']['weight_typeperiod'] > 0):
+        if not data['dsm'].empty:
+            print('Warning: TypePeriod and DSM active!')
+
+        if not (len(data['type period'].dropna(axis=0, how='all').index) % 24 == 0 or
+                len(data['type period'].dropna(axis=0, how='all').index) % 24 - 1 == 0):
+            print('Warning: Weighting of the typeperiod does not end at the end of a day, please check the length of '
+                  '-Demand-weight_typeperiod')
+
+        if min(data['type period'].iloc[1:,0]) < 1:
+            print('Warning: weighting_typeperiod < 1')
+
+        if sum(data['type period'].loc[:,'weight_typeperiod'].dropna(axis=0, how='all')) != 8760:
+            print('Warning: The sum of weighting_typeperiod does not equal a year')
+
 # report that variable costs may have error if used with CO2 minimization and DCPF
 def validate_dc_objective(data, objective):
     if not data['transmission'].empty:
         if 'reactance' in data['transmission'].keys():
-            if any(data['transmission']['reactance'] > 0) and (objective == 'CO2') \
-                    and any(data['transmission']['var-cost'] > 0):
-                print("\nif the C02 is selected as objective function while modelling "
-                      "DC transmission lines, variable costs may be incorrect \n")
+            if any(data['transmission']['reactance'] > 0) and (objective == 'CO2') and any(data['transmission']['var-cost'] > 0):
+                print("\nif the C02 is selected as objective function while modelling DC transmission lines, variable costs may be incorrect \n")

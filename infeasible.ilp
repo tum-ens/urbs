@@ -1,0 +1,21 @@
+\ Model objective_function_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ c_e_res_vertex(48_2023_Consumer_Nodebus_142_space_heat_Demand)_:
+   e_pro_out(48_2023_Consumer_Nodebus_142_Heat_dummy_space_space_heat)
+   = 2.34
+ c_e_def_process_output(48_2023_Consumer_Nodebus_142_Heat_dummy_space_space_heat)_:
+   e_pro_out(48_2023_Consumer_Nodebus_142_Heat_dummy_space_space_heat)
+   - tau_pro(48_2023_Consumer_Nodebus_142_Heat_dummy_space) = 0
+ c_u_res_process_throughput_by_capacity(48_2023_Consumer_Nodebus_142_Heat_dummy_space)_:
+   tau_pro(48_2023_Consumer_Nodebus_142_Heat_dummy_space)
+   - cap_pro_new(2023_Consumer_Nodebus_142_Heat_dummy_space) <= 0
+ r_u_res_process_capacity(2023_Consumer_Nodebus_142_Heat_dummy_space)_:
+   cap_pro_new(2023_Consumer_Nodebus_142_Heat_dummy_space) <= 0
+Bounds
+ e_pro_out(48_2023_Consumer_Nodebus_142_Heat_dummy_space_space_heat) free
+ tau_pro(48_2023_Consumer_Nodebus_142_Heat_dummy_space) free
+ cap_pro_new(2023_Consumer_Nodebus_142_Heat_dummy_space) free
+End

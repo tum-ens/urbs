@@ -49,8 +49,8 @@ def sort_plot_elements(elements):
     quotient = quotient.fillna(0)
     # sort created/consumed ascencing with quotient i.e. base load first
     elements = elements.append(quotient)
-    new_columns = elements.columns[elements.ix[elements.last_valid_index()]
-                                           .argsort()]
+    new_columns = elements.columns[elements.loc[elements.last_valid_index()]
+        .argsort()]
     elements_sorted = elements[new_columns][:-1]
 
     return elements_sorted
@@ -99,7 +99,7 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
         sit = [sit]
 
     (created, consumed, stored, imported, exported,
-     dsm, voltage_angle) = get_timeseries(prob, stf, com, sit, timesteps)
+     dsm, voltage_angle, voltage_magnitude) = get_timeseries(prob, stf, com, sit, timesteps)
 
     # move retrieved/stored storage timeseries to created/consumed and
     # rename storage columns back to 'storage' for color mapping
@@ -276,8 +276,6 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
     # make xtick distance duration-dependent
     if len(timesteps_plot) > 26 * 168 / dt[0]:     # time horizon > half a year
         steps_between_ticks = int(168 * 4 / dt[0])  # tick every four weeks
-        if steps_between_ticks == 0:
-            steps_between_ticks = 1                # tick every timestep
     elif len(timesteps_plot) > 3 * 168 / dt[0]:    # time horizon > three weeks
         steps_between_ticks = int(168 / dt[0])     # tick every week
     elif len(timesteps_plot) > 2 * 24 / dt[0]:     # time horizon > two days
@@ -289,7 +287,7 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
 
     hoursteps_plot_ = hoursteps_plot[(steps_between_ticks - 1):]
     hoursteps_plot_ = hoursteps_plot_[::steps_between_ticks]   # take hole h's
-    xticks = np.insert(hoursteps_plot_, 0, hoursteps_plot[0])  # add 1st step
+    xticks = np.insert(hoursteps_plot_, 0, hoursteps_plot[0])  # add 1st tstep
 
     # set limits and ticks for all axes
     for ax in all_axes:

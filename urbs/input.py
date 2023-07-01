@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import glob
 from xlrd import XLRDError
-import pyomo.core as pyomo
+import pyomo.environ as pyomo
 from .features.modelhelper import *
 from .identify import *
 
@@ -21,7 +21,6 @@ def read_input(input_files, year):
     Returns:
         a dict of up to 12 DataFrames
     """
-
     if os.path.isdir(input_files):
         glob_input = os.path.join(input_files, '*.xlsx')
         input_files = sorted(glob.glob(glob_input))
@@ -82,6 +81,12 @@ def read_input(input_files, year):
             demand = xls.parse('Demand').set_index(['t'])
             demand = pd.concat([demand], keys=[support_timeframe],
                                names=['support_timeframe'])
+            try:
+                typeperiod = demand.loc[:, ['weight_typeperiod']]
+                demand = demand.drop(columns=['weight_typeperiod'])
+            except KeyError:
+                pass
+
             # split columns by dots '.', so that 'DE.Elec' becomes
             # the two-level column index ('DE', 'Elec')
             demand.columns = split_columns(demand.columns, '.')
@@ -163,6 +168,7 @@ def read_input(input_files, year):
         'commodity': commodity,
         'process': process,
         'process_commodity': process_commodity,
+        'type period': typeperiod,
         'demand': demand,
         'supim': supim,
         'transmission': transmission,
@@ -174,7 +180,7 @@ def read_input(input_files, year):
 
     # sort nested indexes to make direct assignments work
     for key in data:
-        if isinstance(data[key].index, pd.core.index.MultiIndex):
+        if isinstance(data[key].index, pd.core.indexes.multi.MultiIndex):
             data[key].sort_index(inplace=True)
     return data
 
@@ -207,6 +213,7 @@ def pyomo_model_prep(data, timesteps):
     m.global_prop = data['global_prop']
     commodity = data['commodity']
     process = data['process']
+    site = data['site']
 
     # create no expansion dataframes
     pro_const_cap = process[process['inst-cap'] == process['cap-up']]
@@ -214,11 +221,19 @@ def pyomo_model_prep(data, timesteps):
     # create list with all support timeframe values
     m.stf_list = m.global_prop.index.levels[0].tolist()
     # creating list wih cost types
-    m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Environmental']
+    if m.mode['power_price']:
+        m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Start-up',
+                            'Environmental', 'Power price']
+    else:
+        m.cost_type_list = ['Invest', 'Fixed', 'Variable', 'Fuel', 'Start-up',
+                            'Environmental']
 
     # Converting Data frames to dict
     # Data frames that need to be modified will be converted after modification
-    m.site_dict = data['site'].to_dict()
+    #m.site_dict = data['site'].to_dict()
+    #if m.mode['power_price']:
+    #    site_power_price = data['site'][data['site']['power_price_kw'] > 0]
+    #    m.site_power_price_dict = site_power_price.to_dict()
     m.demand_dict = data['demand'].to_dict()
     m.supim_dict = data['supim'].to_dict()
 
@@ -245,11 +260,60 @@ def pyomo_model_prep(data, timesteps):
     if m.mode['tve']:
         m.eff_factor_dict = \
             data["eff_factor"].dropna(axis=0, how='all').to_dict()
+    if m.mode['tdy']:
+        m.typeperiod = data['type period'].dropna(axis=0, how='all').to_dict()
+    else:
+        # if mode 'typeperiod' is not active, create a dict with ones
+        temp = pd.DataFrame(index=data['demand'].dropna(axis=0, how='all').index)
+        temp['weight_typeperiod']=1
+        m.typeperiod = temp.to_dict()
+
+    if m.mode['onoff']:
+        # on/off option
+        # only keep those entries whose values are 1
+        onoff = data['process']['on-off']
+        onoff = onoff[onoff == 1]
+        m.onoff_dict = onoff.to_dict()
+        # fixed start costs
+        # only keep those entries whose values are
+        # a) positive and
+        # b) numeric (implicitely, as NaN or NV compare false against 0)
+        start_price = data['process']['start-price']
+        start_price = start_price[start_price > 0]
+        m.start_price_dict = start_price.to_dict()
+    if m.mode['minfraction']:
+        # minimum fractions of processes
+        # only keep those entries whose values are
+        # a) positive and
+        # b) numeric (implicitely, as NaN or NV compare false against 0)
+        min_fraction = data['process']['min-fraction']
+        min_fraction = min_fraction[min_fraction > 0]
+        m.min_fraction_dict = min_fraction.to_dict()
+    
+        # input ratios for partial efficiencies
+        # only keep those entries whose values are
+        # a) positive and
+        # b) numeric (implicitely, as NaN or NV compare false against 0)
+        r_in_min_fraction = data['process_commodity'].xs('In', level='Direction')
+        r_in_min_fraction = r_in_min_fraction['ratio-min']
+        r_in_min_fraction = r_in_min_fraction[r_in_min_fraction > 0]
+        m.r_in_min_fraction_dict = r_in_min_fraction.to_dict()
+    
+        # output ratios for partial efficiencies
+        # only keep those entries whose values are
+        # a) positive and
+        # b) numeric (implicitely, as NaN or NV compare false against 0)
+        r_out_min_fraction = data['process_commodity'].xs('Out', level='Direction')
+        r_out_min_fraction = r_out_min_fraction['ratio-min']
+        r_out_min_fraction = r_out_min_fraction[r_out_min_fraction > 0]
+        m.r_out_min_fraction_dict = r_out_min_fraction.to_dict()
 
     # Create columns of support timeframe values
     commodity['support_timeframe'] = (commodity.index.
                                       get_level_values('support_timeframe'))
     process['support_timeframe'] = (process.index.
+                                    get_level_values('support_timeframe'))
+    site['support_timeframe'] = (site.index.
                                     get_level_values('support_timeframe'))
     if m.mode['tra']:
         transmission['support_timeframe'] = (transmission.index.
@@ -281,23 +345,17 @@ def pyomo_model_prep(data, timesteps):
     proc_area = proc_area[proc_area >= 0]
     m.proc_area_dict = proc_area.to_dict()
 
-    # input ratios for partial efficiencies
+    # process new capacity blocks
     # only keep those entries whose values are
     # a) positive and
     # b) numeric (implicitely, as NaN or NV compare false against 0)
-    r_in_min_fraction = data['process_commodity'].xs('In', level='Direction')
-    r_in_min_fraction = r_in_min_fraction['ratio-min']
-    r_in_min_fraction = r_in_min_fraction[r_in_min_fraction > 0]
-    m.r_in_min_fraction_dict = r_in_min_fraction.to_dict()
+    cap_block = data["process"]['cap-block']
+    cap_block = cap_block[cap_block > 0]
+    m.cap_block_dict = cap_block.to_dict()
 
-    # output ratios for partial efficiencies
-    # only keep those entries whose values are
-    # a) positive and
-    # b) numeric (implicitely, as NaN or NV compare false against 0)
-    r_out_min_fraction = data['process_commodity'].xs('Out', level='Direction')
-    r_out_min_fraction = r_out_min_fraction['ratio-min']
-    r_out_min_fraction = r_out_min_fraction[r_out_min_fraction > 0]
-    m.r_out_min_fraction_dict = r_out_min_fraction.to_dict()
+    pro_inv_cost_fix = data["process"]['inv-cost-fix']
+    pro_inv_cost_fix = pro_inv_cost_fix[pro_inv_cost_fix > 0]
+    m.pro_inv_cost_fix_dict = pro_inv_cost_fix.to_dict()
 
     # storages with fixed initial state
     if m.mode['sto']:
@@ -362,6 +420,7 @@ def pyomo_model_prep(data, timesteps):
                                      apply(effective_distance, m=m))
         commodity['cost_factor'] = (commodity['discount-factor'] *
                                     commodity['eff-distance'])
+
         process['stf_dist'] = (process['support_timeframe'].
                                apply(stf_dist, m=m))
         process['discount-factor'] = (process['support_timeframe'].
@@ -371,6 +430,14 @@ def pyomo_model_prep(data, timesteps):
         process['cost_factor'] = (process['discount-factor'] *
                                   process['eff-distance'])
 
+        site['stf_dist'] = (site['support_timeframe'].
+                               apply(stf_dist, m=m))
+        site['discount-factor'] = (site['support_timeframe'].
+                                      apply(discount_factor, m=m))
+        site['eff-distance'] = (site['stf_dist'].
+                                   apply(effective_distance, m=m))
+        site['cost_factor'] = (site['discount-factor'] *
+                                  site['eff-distance'])
         # Additional features
         # transmission mode
         if m.mode['tra']:
@@ -491,7 +558,7 @@ def pyomo_model_prep(data, timesteps):
         # cost factor will be set to 1 for non intertemporal problems
         commodity['cost_factor'] = 1
         process['cost_factor'] = 1
-
+        site['cost_factor'] = 1
         # additional features
         if m.mode['tra']:
             transmission['invcost-factor'] = (
@@ -513,31 +580,73 @@ def pyomo_model_prep(data, timesteps):
     m.commodity_dict = commodity.to_dict()
     m.process_dict = process.to_dict()
 
+    m.site_dict = site.to_dict()
+    # create dataframe for plants that are allowed to be decomissioned
+    pro_decom_cap = process[process['decommissionable'] == 1]
+
+
+
+    #write dictionary with decommissionable processes
+    m.pro_decom_cap_dict = pro_decom_cap['decommissionable'].to_dict()
+
+
+
+    #write dictionary with savings from decommissioning
+    m.pro_decom_saving_dict = pro_decom_cap['decom-saving'].to_dict()
+
+
+
     # dictionaries for additional features
     if m.mode['tra']:
         m.transmission_dict = transmission.to_dict()
+
+        tra_decom_cap = transmission[transmission['decommissionable'] == 1]
+        m.tra_decom_cap_dict = tra_decom_cap['decommissionable'].to_dict()
+        m.tra_decom_saving_dict = tra_decom_cap['decom-saving'].to_dict()
         # DCPF transmission lines are bidirectional and do not have symmetry
         # fix-cost and inv-cost should be multiplied by 2
-        if m.mode['dpf']:
-            transmission_dc = transmission[transmission['reactance'] > 0]
-            m.transmission_dc_dict = transmission_dc.to_dict()
-            for t in m.transmission_dc_dict['reactance']:
-                m.transmission_dict['inv-cost'][t] = 2 * m.transmission_dict['inv-cost'][t]
-                m.transmission_dict['fix-cost'][t] = 2 * m.transmission_dict['fix-cost'][t]
+        if m.mode['acpf']:
+            transmission_ac = transmission[~transmission['resistance'].isna()]
+            m.transmission_ac_dict = transmission_ac.to_dict()
+            for entry in m.transmission_ac_dict['resistance']:
+                m.transmission_dict['inv-cost'][entry] = 2 * m.transmission_dict['inv-cost'][entry]
+                m.transmission_dict['decom-saving'][entry] = 2 * m.transmission_dict['decom-saving'][entry]
+                m.transmission_dict['fix-cost'][entry] = 2 * m.transmission_dict['fix-cost'][entry]
+            transmission_ront = transmission.filter(like='ront', axis=0)
+            m.transmission_ront_dict = transmission_ront.to_dict()
+            transmission_kont = transmission.filter(like='kont', axis=0)
+            m.transmission_kont_dict = transmission_kont.to_dict()
 
+
+        if m.mode['dcpf']:
+            transmission_dc = transmission[(transmission['reactance'] > 0) & ((transmission['resistance'] == 0) | pd.isna(transmission['resistance']))]
+            m.transmission_dc_dict = transmission_dc.to_dict()
+            for entry in m.transmission_dc_dict['reactance']:
+                m.transmission_dict['inv-cost'][entry] = 2 * m.transmission_dict['inv-cost'][entry]
+                m.transmission_dict['fix-cost'][entry] = 2 * m.transmission_dict['fix-cost'][entry]
+                m.transmission_dict['decom-saving'][entry] = 2 * m.transmission_dict['decom-saving'][entry]
+                
     if m.mode['sto']:
         m.storage_dict = storage.to_dict()
+        sto_decom_cap = storage[storage['decommissionable'] == 1]
+        m.sto_decom_cap_dict = sto_decom_cap['decommissionable'].to_dict()
+        m.sto_decom_saving_p_dict = sto_decom_cap['decom-saving-p'].to_dict()
+        m.sto_decom_saving_c_dict = sto_decom_cap['decom-saving-c'].to_dict()
 
     # update m.mode['exp'] and write dictionaries with constant capacities
     m.mode['exp']['pro'] = identify_expansion(pro_const_cap['inst-cap'],
                                               process['inst-cap'].dropna())
     m.pro_const_cap_dict = pro_const_cap['inst-cap'].to_dict()
 
+
     if m.mode['tra']:
         m.mode['exp']['tra'] = identify_expansion(
             tra_const_cap['inst-cap'],
             transmission['inst-cap'].dropna())
         m.tra_const_cap_dict = tra_const_cap['inst-cap'].to_dict()
+        tra_block = data['transmission']['tra-block']
+        tra_block = tra_block[tra_block > 0]
+        m.tra_block_dict = tra_block.to_dict()
 
     if m.mode['sto']:
         m.mode['exp']['sto-c'] = identify_expansion(
@@ -546,6 +655,10 @@ def pyomo_model_prep(data, timesteps):
         m.mode['exp']['sto-p'] = identify_expansion(
             sto_const_cap_c['inst-cap-p'], storage['inst-cap-p'].dropna())
         m.sto_const_cap_p_dict = sto_const_cap_p['inst-cap-p'].to_dict()
+        sto_block_c = storage['c-block']
+        m.sto_block_c_dict = sto_block_c[sto_block_c > 0].to_dict()
+        sto_block_p = storage['p-block']
+        m.sto_block_p_dict = sto_block_p[sto_block_p > 0].to_dict()
 
     return m
 

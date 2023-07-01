@@ -3,13 +3,13 @@ import pyomo.core as pyomo
 
 
 def add_storage(m):
-
     # storage (e.g. hydrogen, pump storage)
     indexlist = set()
     for key in m.storage_dict["eff-in"]:
         indexlist.add(tuple(key)[2])
     m.sto = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of storage technologies')
 
     # storage tuples
@@ -48,6 +48,23 @@ def add_storage(m):
         initialize=tuple(m.sto_ep_ratio_dict.keys()),
         doc='storages with given energy to power ratio')
 
+    # storage tuples for storages which are built in blocks
+    m.sto_block_c_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.sto_block_c_dict.keys()),
+        doc='storages with new energy block capacities')
+    m.sto_block_p_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.sto_block_p_dict.keys()),
+        doc='storages with new power block capacities')
+
+    # storage tuples for storages with decommissionable capacities
+    m.sto_decommissionable_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sto * m.com,
+        initialize=tuple(m.sto_decom_cap_dict.keys()),
+        doc='storages which can be decommissioned')
+
+
     # Variables
     m.cap_sto_c_new = pyomo.Var(
         m.sto_tuples,
@@ -57,6 +74,22 @@ def add_storage(m):
         m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
+    m.cap_sto_c_decommissioned = pyomo.Var(
+        m.sto_decommissionable_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Decommissioned storage size (MWh)')
+    m.cap_sto_p_decommissioned = pyomo.Var(
+        m.sto_decommissionable_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Decommissioned storage power (MW)')
+    m.sto_cap_c_unit = pyomo.Var(
+        m.sto_block_c_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage size units')
+    m.sto_cap_p_unit = pyomo.Var(
+        m.sto_block_p_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage power units')
 
     # storage capacities as expression objects
     m.cap_sto_c = pyomo.Expression(
@@ -82,6 +115,14 @@ def add_storage(m):
         doc='Energy content of storage (MWh) in timestep')
 
     # storage rules
+    m.def_new_cap_sto_c = pyomo.Constraint(
+        m.sto_block_c_tuples,
+        rule=def_new_cap_sto_c_rule,
+        doc='cap_sto_c_new = sto_cap_c_unit * c-block')
+    m.def_new_cap_sto_p = pyomo.Constraint(
+        m.sto_block_p_tuples,
+        rule=def_new_cap_sto_p_rule,
+        doc='cap_sto_p_new = sto_cap_p_unit * p-block')
     m.def_storage_state = pyomo.Constraint(
         m.tm, m.sto_tuples,
         rule=def_storage_state_rule,
@@ -131,7 +172,7 @@ def def_storage_state_rule(m, t, stf, sit, sto, com):
     return (m.e_sto_con[t, stf, sit, sto, com] ==
             m.e_sto_con[t - 1, stf, sit, sto, com] *
             (1 - m.storage_dict['discharge']
-             [(stf, sit, sto, com)]) ** m.dt.value +
+            [(stf, sit, sto, com)]) ** m.dt.value +
             m.e_sto_in[t, stf, sit, sto, com] *
             m.storage_dict['eff-in'][(stf, sit, sto, com)] -
             m.e_sto_out[t, stf, sit, sto, com] /
@@ -142,28 +183,38 @@ def def_storage_state_rule(m, t, stf, sit, sto, com):
 def def_storage_capacity_rule(m, stf, sit, sto, com):
     if m.mode['int']:
         if (sit, sto, com, stf) in m.inst_sto_tuples:
-            if (min(m.stf), sit, sto, com) in m.sto_const_cap_c_dict:
+            # if (min(m.stf), sit, sto, com) in m.sto_const_cap_c_dict:
+            if 0:
                 cap_sto_c = m.storage_dict['inst-cap-c'][
                     (min(m.stf), sit, sto, com)]
             else:
                 cap_sto_c = (
+                        sum(m.cap_sto_c_new[stf_built, sit, sto, com]
+                            for stf_built in m.stf
+                            if (sit, sto, com, stf_built, stf) in
+                            m.operational_sto_tuples) +
+                        m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)]
+                        - sum(
+                    m.cap_sto_c_decommissioned[stf_dec, sit, sto, com] for stf_dec in m.stf if stf_dec <= stf if
+                    stf_dec > min(m.stf) if (stf_dec, sit, sto, com) in m.sto_decom_cap_dict))
+        else:
+            cap_sto_c = (
                     sum(m.cap_sto_c_new[stf_built, sit, sto, com]
                         for stf_built in m.stf
                         if (sit, sto, com, stf_built, stf) in
-                        m.operational_sto_tuples) +
-                    m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)])
-        else:
-            cap_sto_c = (
-                sum(m.cap_sto_c_new[stf_built, sit, sto, com]
-                    for stf_built in m.stf
-                    if (sit, sto, com, stf_built, stf) in
-                    m.operational_sto_tuples))
+                        m.operational_sto_tuples)
+                    - sum(m.cap_sto_c_decommissioned[stf_dec, sit, sto, com] for stf_dec in m.stf if stf_dec <= stf if
+                          stf_dec > min(m.stf) if (stf_dec, sit, sto, com) in m.sto_decom_cap_dict))
     else:
-        if (stf, sit, sto, com) in m.sto_const_cap_c_dict:
+        if 0:  # (stf, sit, sto, com) in m.sto_const_cap_c_dict:
             cap_sto_c = m.storage_dict['inst-cap-c'][(stf, sit, sto, com)]
         else:
             cap_sto_c = (m.cap_sto_c_new[stf, sit, sto, com] +
-                         m.storage_dict['inst-cap-c'][(stf, sit, sto, com)])
+                         m.storage_dict['inst-cap-c'][(stf, sit, sto, com)]
+                         - sum(m.cap_sto_c_decommissioned[stf_dec, sit, sto, com]
+                               for stf_dec in m.stf if stf_dec <= stf
+                               if stf_dec > min(m.stf)
+                               if (stf_dec, sit, sto, com) in m.sto_decom_cap_dict))
 
     return cap_sto_c
 
@@ -172,30 +223,54 @@ def def_storage_capacity_rule(m, stf, sit, sto, com):
 def def_storage_power_rule(m, stf, sit, sto, com):
     if m.mode['int']:
         if (sit, sto, com, stf) in m.inst_sto_tuples:
-            if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
+            # if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
+            if 0:
                 cap_sto_p = m.storage_dict['inst-cap-p'][
                     (min(m.stf), sit, sto, com)]
             else:
                 cap_sto_p = (
-                    sum(m.cap_sto_p_new[stf_built, sit, sto, com]
-                        for stf_built in m.stf
-                        if (sit, sto, com, stf_built, stf) in
-                        m.operational_sto_tuples) +
-                    m.storage_dict['inst-cap-p'][(min(m.stf), sit, sto, com)])
+                        sum(m.cap_sto_p_new[stf_built, sit, sto, com]
+                            for stf_built in m.stf
+                            if (sit, sto, com, stf_built, stf) in
+                            m.operational_sto_tuples) +
+                        m.storage_dict['inst-cap-p'][(min(m.stf), sit, sto, com)]
+                        - sum(m.cap_sto_p_decommissioned[stf_dec, sit, sto, com] for stf_dec in m.stf if stf_dec <= stf
+                              if (stf_dec, sit, sto, com) in m.sto_decom_cap_dict))
         else:
             cap_sto_p = (
-                sum(m.cap_sto_p_new[stf_built, sit, sto, com]
-                    for stf_built in m.stf
-                    if (sit, sto, com, stf_built, stf)
-                    in m.operational_sto_tuples))
+                    sum(m.cap_sto_p_new[stf_built, sit, sto, com]
+                        for stf_built in m.stf
+                        if (sit, sto, com, stf_built, stf)
+                        in m.operational_sto_tuples)
+                    - sum(m.cap_sto_p_decommissioned[stf_dec, sit, sto, com] for stf_dec in m.stf if stf_dec <= stf
+                          if (stf_dec, sit, sto, com) in m.sto_decom_cap_dict))
     else:
-        if (stf, sit, sto, com) in m.sto_const_cap_p_dict:
+        if 0:  # (stf, sit, sto, com) in m.sto_const_cap_p_dict:
             cap_sto_p = m.storage_dict['inst-cap-p'][(stf, sit, sto, com)]
         else:
             cap_sto_p = (m.cap_sto_p_new[stf, sit, sto, com] +
-                         m.storage_dict['inst-cap-p'][(stf, sit, sto, com)])
+                         m.storage_dict['inst-cap-p'][(stf, sit, sto, com)]
+                         - sum(m.cap_sto_p_decommissioned[stf_dec, sit, sto, com]
+                               for stf_dec in m.stf if stf_dec <= stf
+                               if (stf_dec, sit, sto, com) in m.sto_decom_cap_dict))
 
     return cap_sto_p
+
+
+# new storage size
+
+def def_new_cap_sto_c_rule(m, stf, sit, sto, com):
+    return (m.cap_sto_c[stf, sit, sto, com] ==
+            m.sto_cap_c_unit[stf, sit, sto, com] *
+            m.sto_block_c_dict[stf, sit, sto, com])
+
+
+# new storage power
+
+def def_new_cap_sto_p_rule(m, stf, sit, sto, com):
+    return (m.cap_sto_p[stf, sit, sto, com] ==
+            m.sto_cap_p_unit[stf, sit, sto, com] *
+            m.sto_block_p_dict[stf, sit, sto, com])
 
 
 # storage input <= storage power
@@ -251,7 +326,7 @@ def def_storage_energy_power_ratio_rule(m, stf, sit, sto, com):
 
 # storage balance
 def storage_balance(m, tm, stf, sit, com):
-    """called in commodity balance
+    """callesd in commodity balance
     For a given commodity co and timestep tm, calculate the balance of
     storage input and output """
 
@@ -273,7 +348,13 @@ def storage_cost(m, cost_type):
                    m.cap_sto_c_new[s] *
                    m.storage_dict['inv-cost-c'][s] *
                    m.storage_dict['invcost-factor'][s]
-                   for s in m.sto_tuples)
+                   for s in m.sto_tuples) - sum(m.cap_sto_c_decommissioned[s] *
+                   m.storage_dict['decom-saving-c'][s] *
+                   m.storage_dict['invcost-factor'][s] +
+                   m.cap_sto_p_decommissioned[s] *
+                   m.storage_dict['decom-saving-p'][s] *
+                   m.storage_dict['invcost-factor'][s]
+                   for s in m.sto_decom_cap_dict)
         if m.mode['int']:
             cost -= sum(m.cap_sto_p_new[s] *
                         m.storage_dict['inv-cost-p'][s] *
@@ -282,6 +363,13 @@ def storage_cost(m, cost_type):
                         m.storage_dict['inv-cost-c'][s] *
                         m.storage_dict['overpay-factor'][s]
                         for s in m.sto_tuples)
+            cost += sum(m.cap_sto_c_decommissioned[s] *
+                   m.storage_dict['decom-saving-c'][s] *
+                   m.storage_dict['overpay-factor'][s] +
+                   m.cap_sto_p_decommissioned[s] *
+                   m.storage_dict['decom-saving-p'][s] *
+                   m.storage_dict['overpay-factor'][s]
+                   for s in m.sto_decom_cap_dict)
         return cost
     elif cost_type == 'Fixed':
         return sum((m.cap_sto_p[s] * m.storage_dict['fix-cost-p'][s] +
@@ -289,11 +377,11 @@ def storage_cost(m, cost_type):
                    m.storage_dict['cost_factor'][s]
                    for s in m.sto_tuples)
     elif cost_type == 'Variable':
-        return sum(m.e_sto_con[(tm,) + s] * m.weight *
+        return sum(m.e_sto_con[(tm,) + s] * m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0], tm)] *
                    m.storage_dict['var-cost-c'][s] *
                    m.storage_dict['cost_factor'][s] +
                    (m.e_sto_in[(tm,) + s] + m.e_sto_out[(tm,) + s]) *
-                   m.weight * m.storage_dict['var-cost-p'][s] *
+                   m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0], tm)] * m.storage_dict['var-cost-p'][s] *
                    m.storage_dict['cost_factor'][s]
                    for tm in m.tm
                    for s in m.sto_tuples)
@@ -310,8 +398,8 @@ def op_sto_tuples(sto_tuple, m):
             index_helper = sorted_stf.index(stf_later)
             if stf_later == max(sorted_stf):
                 if (stf_later +
-                    m.global_prop_dict['value'][(max(sorted_stf), 'Weight')] -
-                    1 <= stf +
+                        m.global_prop_dict['value'][(max(sorted_stf), 'Weight')] -
+                        1 <= stf +
                         m.storage_dict['depreciation'][(stf, sit, sto, com)]):
                     op_sto.append((sit, sto, com, stf, stf_later))
             elif (sorted_stf[index_helper + 1] <=
@@ -336,13 +424,13 @@ def inst_sto_tuples(m):
             index_helper = sorted_stf.index(stf_later)
             if stf_later == max(m.stf):
                 if (stf_later +
-                    m.global_prop_dict['value'][(max(sorted_stf), 'Weight')] -
-                    1 < min(m.stf) +
+                        m.global_prop_dict['value'][(max(sorted_stf), 'Weight')] -
+                        1 < min(m.stf) +
                         m.storage_dict['lifetime'][(stf, sit, sto, com)]):
                     inst_sto.append((sit, sto, com, stf_later))
             elif (sorted_stf[index_helper + 1] <=
                   min(m.stf) + m.storage_dict['lifetime'][
-                                (stf, sit, sto, com)]):
+                      (stf, sit, sto, com)]):
                 inst_sto.append((sit, sto, com, stf_later))
 
     return inst_sto

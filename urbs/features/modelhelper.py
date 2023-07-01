@@ -112,6 +112,7 @@ def effective_distance(dist, m):
         return (1 - (1 + discount) ** (-dist)) / discount
 
 
+
 def commodity_balance(m, tm, stf, sit, com):
     """Calculate commodity balance at given timestep.
     For a given commodity co and timestep tm, calculate the balance of
@@ -144,6 +145,39 @@ def commodity_balance(m, tm, stf, sit, com):
 
     return balance
 
+def calculate_injection(m, tm, stf, sit):
+    """Calculate commodity balance at given timestep.
+    For a given commodity co and timestep tm, calculate the balance of
+    consumed (to process/storage/transmission, counts positive) and provided
+    (from process/storage/transmission, counts negative) commodity flow. Used
+    as helper function in create_model for constraints on demand and stock
+    commodities.
+    Args:
+        m: the model object
+        tm: the timestep
+        site: the site
+        com: the commodity
+    Returns
+        balance: net value of consumed (positive) or provided (negative) power
+    """
+
+    if m.mode['uncoordinated']:
+        injection = (m.e_pro_out[(tm, stf, sit, 'import', 'electricity')]
+                  + m.e_pro_out[(tm, stf, sit, 'import_hp', 'electricity_hp')]
+                  - m.e_pro_in[(tm, stf, sit, 'feed_in', 'electricity')])
+    else:
+        if m.mode['tra'] and not m.grid_plan_model:
+            injection = sum(m.e_tra_out[(tm,stframe,sitin,sitout,tra,com)]
+                            for (stframe,sitin,sitout,tra,com) in m.tra_tuples
+                            if sitout == sit and
+                            (com == 'electricity' or com == 'electricity_hp')) \
+                        -sum(m.e_tra_in[(tm,stframe,sitin,sitout,tra,com)]
+                            for (stframe,sitin,sitout,tra,com) in m.tra_tuples
+                            if sitin == sit and
+                            (com == 'electricity' or com == 'electricity_hp'))
+        else:
+            injection = 0
+    return injection
 
 def commodity_subset(com_tuples, type_name):
     """ Unique list of commodity names for given type.
@@ -182,7 +216,7 @@ def op_pro_tuples(pro_tuple, m):
                     1 <= stf + m.process_dict['depreciation'][
                                               (stf, sit, pro)]):
                     op_pro.append((sit, pro, stf, stf_later))
-            elif ((stf_later + sorted_stf[index_helper + 1])/2 <= stf + m.process_dict['depreciation'][(stf, sit, pro)]
+            elif ((stf_later + sorted_stf[index_helper+1]) / 2 <= stf + m.process_dict['depreciation'][(stf, sit, pro)]
                   and stf <= stf_later):
                 op_pro.append((sit, pro, stf, stf_later))
             else:
@@ -209,8 +243,8 @@ def inst_pro_tuples(m):
                    1 < min(m.stf) + m.process_dict['lifetime'][
                                                    (stf, sit, pro)]):
                     inst_pro.append((sit, pro, stf_later))
-            elif (stf_later + sorted_stf[index_helper + 1])/2 <= (min(m.stf)
-                                                                  + m.process_dict['lifetime'][(stf, sit, pro)]):
+            elif (stf_later + sorted_stf[index_helper + 1]) / 2 <= (min(m.stf)
+                                                                    + m.process_dict['lifetime'][(stf, sit, pro)]):
                 inst_pro.append((sit, pro, stf_later))
 
     return inst_pro

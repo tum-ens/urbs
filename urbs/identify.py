@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def identify_mode(data):
     """ Identify the urbs mode that is needed for running the current Input
 
@@ -28,12 +27,28 @@ def identify_mode(data):
         'dsm': False,                   # demand site management
         'bsp': False,                   # buy sell price
         'tve': False,                   # time variable efficiency
-        'dpf': False,                   # dc power flow
+        'dcpf': False,                  # dc power flow
+        'acpf': False,                  # ac power flow
+        'tdy': False,                   # type periods
+        'tsam': False,                  # time series aggregation method
+        'tsam_season': False,
+        'onoff': False,                 # on/off processes
+        'minfraction': False,           # processes with minimum working load
+        'chp': False,                   # chp processes
         'exp': {                        # expansion
                 'pro': True,
                 'tra': False,
                 'sto-c': False,
-                'sto-p': False}
+                'sto-p': False},
+        'transdist': False,# transmission-distribution interface
+        'power_price': False,
+        'uncoordinated': False,
+        'hp_elec': False
+        # 'inv_mip':{
+        #         'pro': False,
+        #         'tra': False,
+        #         'sto-c': False,
+        #         'sto-p': False}
         }
 
     # if number of support timeframes > 1
@@ -52,9 +67,37 @@ def identify_mode(data):
         mode['bsp'] = True
     if not data['eff_factor'].empty:
         mode['tve'] = True
+    if 'resistance' in data['transmission'].keys():
+        if any(data['transmission']['resistance'] > 0):
+            mode['acpf'] = True
     if 'reactance' in data['transmission'].keys():
         if any(data['transmission']['reactance'] > 0):
-            mode['dpf'] = True
+            mode['dcpf'] = True
+    if any(data['type period']['weight_typeperiod'] > 0):
+        mode['tdy'] = True
+    if data['global_prop'].loc[pd.IndexSlice[:,'tsam'],'value'].iloc[0]:
+        mode['tsam'] = True
+    if data['global_prop'].loc[pd.IndexSlice[:,'tsam_season'],'value'].iloc[0]:
+        mode['tsam_season'] = True
+    if 'on-off' in data['process'].keys():
+        if any(data['process']['on-off'] == 1):
+            mode['onoff'] = True
+    if 'min-fraction' in data['process'].keys():
+        if any(data['process']['min-fraction'] > 0):
+            mode['minfraction'] = True
+    if len(data['site'][data['site']['power_price_kw'] > 0]):
+        mode['power_price'] = True
+    if data['global_prop'].loc[pd.IndexSlice[:,'uncoordinated'],'value'].iloc[0]:
+        mode['uncoordinated'] = True
+    # checking TransDist input value
+    if data['global_prop'].loc[pd.IndexSlice[:,'TransDist'],'value'].iloc[0]:
+        mode['transdist'] = True
+    if data['commodity']['price'].loc[:,:,'electricity_hp_import',:].iloc[0] < \
+        data['commodity']['price'].loc[:,:,'electricity_import',:].iloc[0]:
+        mode['hp_elec'] = True
+    # if not data['process_commodity'].empty:
+    #     if any(data['commodity'] == 'heat'):
+    #         mode['chp'] = True
 
     return mode
 

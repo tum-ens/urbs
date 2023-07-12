@@ -1,5 +1,6 @@
 import pandas as pd
-import pyomo.core as pyomo
+import pyomo.environ as pyomo
+#import pyomo.core as pyomo
 
 
 def get_entity(instance, name):
@@ -22,15 +23,15 @@ def get_entity(instance, name):
         entity = instance.__getattribute__(name)
         labels = _get_onset_names(entity)
     except AttributeError:
-        return pd.Series(name=name)
+        return pd.Series(name=name, dtype='float64')
 
     # extract values
     if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
-            results = pd.DataFrame([v + (1,) for v in entity.value])
+            results = pd.DataFrame([v + (1,) for v in entity.data()])
         else:
             # Pyomo sets don't have values, only elements
-            results = pd.DataFrame([(v, 1) for v in entity.value])
+            results = pd.DataFrame([(v, 1) for v in entity.data()])
 
         # for unconstrained sets, the column label is identical to their index
         # hence, make index equal to entity name and append underscore to name
@@ -43,25 +44,25 @@ def get_entity(instance, name):
     elif isinstance(entity, pyomo.Param):
         if entity.dim() > 1:
             results = pd.DataFrame(
-                [v[0] + (v[1],) for v in entity.iteritems()])
+                [v[0] + (v[1],) for v in entity.items()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
-                [(v[0], v[1]) for v in entity.iteritems()])
+                [(v[0], v[1]) for v in entity.items()])
         else:
             results = pd.DataFrame(
-                [(v[0], v[1].value) for v in entity.iteritems()])
+                [(v[0], v[1].value) for v in entity.items()])
             labels = ['None']
 
     elif isinstance(entity, pyomo.Expression):
         if entity.dim() > 1:
             results = pd.DataFrame(
-                [v[0]+(v[1](),) for v in entity.iteritems()])
+                [v[0]+(v[1](),) for v in entity.items()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
-                [(v[0], v[1]()) for v in entity.iteritems()])
+                [(v[0], v[1]()) for v in entity.items()])
         else:
             results = pd.DataFrame(
-                [(v[0], v[1]()) for v in entity.iteritems()])
+                [(v[0], v[1]()) for v in entity.items()])
             labels = ['None']
 
     elif isinstance(entity, pyomo.Constraint):
@@ -75,10 +76,10 @@ def get_entity(instance, name):
                  if id in instance.dual._dict.keys()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
-                [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
+                [(v[0], instance.dual[v[1]]) for v in entity.items()])
         else:
             results = pd.DataFrame(
-                [(v[0], instance.dual[v[1]]) for v in entity.iteritems()])
+                [(v[0], instance.dual[v[1]]) for v in entity.items()])
             labels = ['None']
 
     else:
@@ -87,15 +88,15 @@ def get_entity(instance, name):
             # concatenate index tuples with value if entity has
             # multidimensional indices v[0]
             results = pd.DataFrame(
-                [v[0] + (v[1].value,) for v in entity.iteritems()])
+                [v[0] + (v[1].value,) for v in entity.items()])
         elif entity.dim() == 1:
             # otherwise, create tuple from scalar index v[0]
             results = pd.DataFrame(
-                [(v[0], v[1].value) for v in entity.iteritems()])
+                [(v[0], v[1].value) for v in entity.items()])
         else:
             # assert(entity.dim() == 0)
             results = pd.DataFrame(
-                [(v[0], v[1].value) for v in entity.iteritems()])
+                [(v[0], v[1].value) for v in entity.items()])
             labels = ['None']
 
     # check for duplicate onset names and append one to several "_" to make
@@ -106,14 +107,14 @@ def get_entity(instance, name):
 
     if not results.empty:
         # name columns according to labels + entity name
-        results.columns = labels + [name]
-        results.set_index(labels, inplace=True)
+        results.columns = labels[0:(results.axes[1].size-1)] + [name]
+        results.set_index(labels[0:(results.axes[1].size-1)], inplace=True)
 
         # convert to Series
         results = results[name]
     else:
         # return empty Series
-        results = pd.Series(name=name)
+        results = pd.Series(name=name, dtype='float64')
     return results
 
 
@@ -188,7 +189,7 @@ def list_entities(instance, entity_type):
     # create entity iterator, using a python 2 and 3 compatible idiom:
     # http://python3porting.com/differences.html#index-6
     try:
-        iter_entities = instance.__dict__.iteritems()  # Python 2 compat
+        iter_entities = instance.__dict__.items()  # Python 2 compat
     except AttributeError:
         iter_entities = instance.__dict__.items()  # Python way
 
@@ -230,30 +231,30 @@ def _get_onset_names(entity):
     if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
             # N-dimensional set tuples, possibly with nested set tuples within
-            if entity.domain:
+            if not entity.domain.name == 'Any':
                 # retreive list of domain sets, which itself could be nested
-                domains = entity.domain.set_tuple
+                domains = entity.domain.subsets(expand_all_set_operators=True)
             else:
                 try:
                     # if no domain attribute exists, some
-                    domains = entity.set_tuple
+                    domains = entity.subsets(expand_all_set_operators=True)
                 except AttributeError:
                     # if that fails, too, a constructed (union, difference,
                     # intersection, ...) set exists. In that case, the
                     # attribute _setA holds the domain for the base set
                     try:
-                        domains = entity._setA.domain.set_tuple
+                        domains = entity._setA.domain.subsets(expand_all_set_operators=True)
                     except AttributeError:
                         # if that fails, too, a constructed (union, difference,
                         # intersection, ...) set exists. In that case, the
                         # attribute _setB holds the domain for the base set
-                        domains = entity._setB.domain.set_tuple
+                        domains = entity._setB.domain.subsets(expand_all_set_operators=True)
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))
 
         elif entity.dimen == 1:
-            if entity.domain:
+            if not entity.domain.name == 'Any':
                 # 1D subset; add domain name
                 labels.append(entity.domain.name)
             else:

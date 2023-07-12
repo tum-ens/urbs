@@ -38,7 +38,6 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
 
         # collect timeseries data
         for stf, sit, com in report_tuples:
-
             # wrap single site name in 1-element list for consistent behavior
             if is_string(sit):
                 help_sit = [sit]

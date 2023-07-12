@@ -51,6 +51,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # import objective function information
     m.obj = pyomo.Param(
         initialize=objective,
+        within=pyomo.Any,
         doc='Specification of minimized quantity, default: "cost"')
 
     # Sets
@@ -79,6 +80,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[0])
     m.stf = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of modeled support timeframes (e.g. years)')
 
     # site (e.g. north, middle, south...)
@@ -87,6 +89,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[1])
     m.sit = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of sites')
 
     # commodity (e.g. solar, wind, coal...)
@@ -95,6 +98,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[2])
     m.com = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
@@ -103,6 +107,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[3])
     m.com_type = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
@@ -111,6 +116,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         indexlist.add(tuple(key)[2])
     m.pro = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of conversion processes')
 
     # cost_type
@@ -134,6 +140,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.com_stock = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Stock'),
+        ordered=False,
         doc='Commodities that can be purchased at some site(s)')
 
     if m.mode['int']:
@@ -159,14 +166,17 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.com_supim = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'SupIm'),
+        ordered=False,
         doc='Commodities that have intermittent (timeseries) input')
     m.com_demand = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Demand'),
+        ordered=False,
         doc='Commodities that have a demand (implies timeseries)')
     m.com_env = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Env'),
+        ordered=False,
         doc='Commodities that (might) have a maximum creation limit')
 
     # process tuples for area rule

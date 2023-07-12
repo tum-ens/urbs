@@ -34,6 +34,7 @@ def add_transmission(m):
         indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of transmission technologies')
 
     # transmission tuples
@@ -121,6 +122,7 @@ def add_transmission_dc(m):
         indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
+        ordered=False,
         doc='Set of transmission technologies')
 
     # Transport and DCPF transmission tuples

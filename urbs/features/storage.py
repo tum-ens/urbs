@@ -80,6 +80,12 @@ def add_storage(m):
         m.t, m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
+        
+    m.storage_costs = pyomo.Var(
+        m.sto_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs of storages by type and site (EUR/a)')        
 
     # storage rules
     m.def_storage_state = pyomo.Constraint(

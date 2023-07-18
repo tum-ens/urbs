@@ -65,6 +65,12 @@ def add_transmission(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+        
+    m.transmission_costs = pyomo.Var(
+        m.tra_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs of transmission by type and site (EUR/a)')    
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(
@@ -173,6 +179,12 @@ def add_transmission_dc(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+        
+    m.transmission_costs = pyomo.Var(
+        m.tra_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs of transmission by type and site (EUR/a)')    
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(

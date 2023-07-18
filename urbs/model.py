@@ -235,6 +235,12 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
+        
+    m.process_costs = pyomo.Var(
+        m.pro_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs by type and site (EUR/a)')    
 
     # commodity
     m.e_co_stock = pyomo.Var(

@@ -262,12 +262,13 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
     # VOLTAGE ANGLE of sites
 
-    # try:
-    #     voltage_angle = get_entity(instance, 'voltage_angle')
-    #     voltage_angle = voltage_angle.xs((stf), level=['stf']).loc[timesteps]
-    #     voltage_angle = voltage_angle.unstack(level='sit')[sites]
-    # except (KeyError, AttributeError):
-    #     voltage_angle = pd.DataFrame(index=timesteps)
+    try:
+        voltage_angle = get_entity(instance, 'voltage_angle')
+        print("VOLTAGE_ANGLE", voltage_angle)
+        voltage_angle = voltage_angle.xs((stf), level=['stf']).loc[timesteps]
+        voltage_angle = voltage_angle.unstack(level='sit')[sites]
+    except (KeyError, AttributeError, TypeError):
+        voltage_angle = pd.DataFrame(index=timesteps)
     voltage_angle = pd.DataFrame(index=timesteps)
     voltage_angle.name = 'Voltage Angle'
 

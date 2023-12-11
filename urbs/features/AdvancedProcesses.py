@@ -24,7 +24,7 @@ def add_advanced_processes(m):
             within=m.stf * m.sit * m.pro * m.com,
             doc='Outputs of processes with time dependent efficiency')
 
-    if m.mode['ava']:
+    if m.mode['ava']: #LVDS: tuple definitions for the processes availability (similar to 'tve')
         tve_stflist = set()
         # get all support timeframes for which availability is enabled
         for key in m.availability_dict[tuple(m.availability_dict.keys())[0]]:
@@ -436,7 +436,7 @@ def add_advanced_processes(m):
         rule=res_start_up_rule,
         doc='start >= on_off(t) - on_off(t-1)')
 
-    #availability rule
+    #LVDS: availability rule
     m.res_process_throughput_by_available_capacity = pyomo.Constraint(
         m.tm, m.pro_availability_tuples,
         rule=res_process_throughput_by_available_capacity_rule,
@@ -790,7 +790,7 @@ def res_start_up_rule(m, t, stf, sit, pro):
                                              m.on_off[t - 1, stf, sit, pro])
 
 # process throughput <= process capacity
-def res_process_throughput_by_available_capacity_rule(m, tm, stf, sit, pro):
+def res_process_throughput_by_available_capacity_rule(m, tm, stf, sit, pro): #LVDS:
     return (m.tau_pro[tm, stf, sit, pro] <= m.dt * m.cap_pro[stf, sit, pro] * m.availability_dict[(sit, pro)][stf, tm])
 
 # Start-up costs

@@ -45,14 +45,8 @@ def identify_mode(data):
         'power_price': False,
         'uncoordinated': False,
         'evu_sperre': False,
-        '14a_steuve': False,
-        '14a_steune': False,
+        '14a': False,
         'uhp': False
-        # 'inv_mip':{
-        #         'pro': False,
-        #         'tra': False,
-        #         'sto-c': False,
-        #         'sto-p': False}
         }
 
     # if number of support timeframes > 1

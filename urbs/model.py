@@ -7,20 +7,6 @@ import pyomo.environ as pyomo
 import numpy as np
 import math
 import sys
-import pdb
-
-class ForkedPdb(pdb.Pdb):
-    """A Pdb subclass that may be used
-    from a forked multiprocessing child
-
-    """
-    def interaction(self, *args, **kwargs):
-        _stdin = sys.stdin
-        try:
-            sys.stdin = open('/dev/stdin')
-            pdb.Pdb.interaction(self, *args, **kwargs)
-        finally:
-            sys.stdin = _stdin
 
 def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=None, weighting_order=None,
                  assumelowq=True, dual=True, grid_plan_model=False, bui_react_model=False, flexible_heat=True):
@@ -90,16 +76,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
         initialize=m.timesteps[1:],
         ordered=True,
         doc='Set of modelled timesteps')
-    if m.mode['evu_sperre']:
-        m.day = pyomo.Set(
-            initialize=range(1, int(len(m.timesteps[1:]) / 24 + 1)),
-            ordered=True,
-            doc='Set of days')
-        m.tm_sperrzeit = pyomo.Set(
-            within=m.t,
-            initialize=m.timesteps[1:-2],
-            ordered=True,
-            doc='Set of timesteps where the sperrzeit constraint is defined ')
 
     # support timeframes (e.g. 2020, 2030...)
     indexlist = set()
@@ -170,7 +146,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
                     for (stf, site) in m.sit_tuples
                     if m.site_dict['ref-node'][(stf, site)] == 1],
         doc='Set of all reference nodes in defined microgrids')
-    if m.mode['power_price']:
+    if m.mode['power_price']: #LVDS: Sites with a capacity price defined
         m.sit_power_price_tuples = pyomo.Set(
             within=m.stf * m.sit,
             initialize=[(stf, site)
@@ -178,7 +154,8 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
                         if m.site_dict['power_price_kw'][(stf, site)] > 0],
             doc='Combinations of support timeframes and sites with retail power price')
 
-    if m.mode['uhp']:
+    if m.mode['uhp']: #LVDS: Sites with a U value defined for which the space heating demand will be calculated endogenously
+                      #using the building thermal model
         m.sit_temperature_tuples = pyomo.Set(
             within=m.stf * m.sit,
             initialize=[(stf, site)
@@ -303,22 +280,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
                     if m.process_dict['decommissionable'][stf, sit, pro] == 1],
         doc='Processes which can be decommissioned')
 
-    if m.mode['evu_sperre']:
-        m.hp_lock_tuples = pyomo.Set(
-            within=m.stf * m.sit * m.pro,
-            initialize=[(stf, sit, pro)
-                        for (stf, sit, pro) in m.pro_tuples
-                        if 'hp_lock' in pro],
-            doc='Heat pump processes which compensate for heatpump_air_heizstrom whenever the sperrzeit is applied')
-
-        m.sit_multi_heatpump_tuples = pyomo.Set(
-            within=m.stf * m.sit,
-            initialize=[(stf, sit) for (stf, sit) in m.sit_tuples
-                        if len([pro for (st, si, pro) in m.pro_tuples
-                               if pro.startswith('heatpump') and st == stf and si == sit]) > 1],
-            doc='Sites where multiple heat pumps are defined (required for the rule "res_single_heatpump", only if '
-                'evu_sperre)')
-
     # costs
     m.costs = pyomo.Var(
         m.cost_type,
@@ -332,15 +293,15 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
         doc='Use of stock commodity source (MW) per timestep')
 
     # site
-    if m.mode['power_price']:
-        m.peak_injection = pyomo.Var(m.sit_power_price_tuples,
+    if m.mode['power_price']: #LVDS: these variables are required for the buildings under capacity pricing scheme
+        m.peak_injection = pyomo.Var(m.sit_power_price_tuples, # peak injection of the building throughout a year
                                      within=pyomo.NonNegativeReals,
                                      doc='Peak injection/feed-in in site')
-        m.abs_injection = pyomo.Var(m.tm, m.sit_power_price_tuples,
+        m.abs_injection = pyomo.Var(m.tm, m.sit_power_price_tuples, #LVDS: absolute injection of the building at an hour
                                     within=pyomo.NonNegativeReals,
                                     doc='Absolute injection/feed-in in site')
 
-    if m.mode['uhp']:
+    if m.mode['uhp']: #LVDS
         m.temperature = pyomo.Var(m.t, m.sit_temperature_tuples,
                                      within=pyomo.Reals,
                                      doc='Temperature in building')
@@ -555,65 +516,47 @@ def create_model(data, dt=1, timesteps=None, objective='cost', hoursPerPeriod=No
         rule=def_new_capacity_units_rule,
         doc='cap_pro_new = pro_cap_unit * cap-block')
 
-    if m.mode['power_price']:
+    if m.mode['power_price']: #LVDS
         if not grid_plan_model:
             m.def_abs_injection_1 = pyomo.Constraint(
                 m.tm, m.sit_power_price_tuples,
                 rule=def_abs_injection_1_rule,
-                doc='injection <= abs(injection)')
+                doc='injection <= abs(injection)') #LVDS: Equation 2.36 from Candas' dissertation
             m.def_abs_injection_2 = pyomo.Constraint(
                 m.tm, m.sit_power_price_tuples,
                 rule=def_abs_injection_2_rule,
-                doc='-injection <= abs(injection)')
+                doc='-injection <= abs(injection)') #LVDS: Equation 2.37 from Candas' dissertation
             m.def_peak_injection = pyomo.Constraint(
                 m.tm, m.sit_power_price_tuples,
                 rule=def_peak_injection_rule,
-                doc='-abs(injection) <= peak(injection)')
+                doc='abs(injection) <= peak(injection)') #LVDS: Equation 2.38 from Candas' dissertation
 
-    if m.mode['evu_sperre']:
-        if grid_plan_model:
-            m.def_evu_sperre_daily_limit = pyomo.Constraint(m.day, m.hp_lock_tuples,
-                                                           rule=def_evu_sperre_hourly_limit_rule,
-                                                           doc='Sperrzeit not more than 6 hours per day')
-            m.def_evu_sperre_hourly_limit = pyomo.Constraint(m.tm_sperrzeit, m.hp_lock_tuples,
-                                                            rule=def_evu_sperre_hourly_limit_rule,
-                                                            doc='Sperrzeit not more than 2 hour per time, and pause after')
 
-        m.res_single_heatpump = pyomo.Constraint(m.sit_multi_heatpump_tuples, rule=res_single_heatpump_rule,
-                                                 doc='Only one type of heatpump in each building')
-
-    if m.mode['uhp']:
-        if bui_react_model:
+    if m.mode['uhp']: #LVDS
+        if bui_react_model: #LVDS: HOODS_Bui_React model? then relaxed temperature constraint
             m.res_temperature_min = pyomo.Constraint(
                 m.tm, m.sit_temperature_tuples,
                 rule=res_temperature_min_slack_rule,
-                doc='building temperature >= set temperature - slack')
+                doc='building temperature >= set temperature - slack') #LVDS: Relaxed temperature constraint (2.93)
         else:
             m.res_temperature_min = pyomo.Constraint(
                 m.tm, m.sit_temperature_tuples,
                 rule=res_temperature_min_rule,
-                doc='building temperature >= set temperature')
+                doc='building temperature >= set temperature') #LVDS: LHS of equation (2.15)
         if flexible_heat:
             m.res_temperature_max = pyomo.Constraint(
                 m.tm, m.sit_temperature_tuples,
                 rule=res_temperature_max_rule,
-            doc='building temperature <= max temperature')
+            doc='building temperature <= max temperature') #LVDS: RHS of equation (2.15)
         else:
             m.res_temperature_fix = pyomo.Constraint(
                 m.tm, m.sit_temperature_tuples,
                 rule=res_temperature_fix_rule,
-                doc='building temperature <= min temperature')
+                doc='building temperature = min temperature') #LVDS: Temp. is fixed to the Tmin for InFlex paradigm (3.14)
         m.def_initial_temperature = pyomo.Constraint(m.sit_temperature_tuples,
                                                      rule=def_initial_temperature_rule)
-        #if m.mode['tsam']:
-        #    m.def_startofperiod_temperature = pyomo.Constraint(m.t_startofperiod, m.sit_temperature_tuples,
-        #                                                 rule=def_startofperiod_temperature_rule)
 
-    # if m.mode['int']:
-    #     m.res_global_co2_limit = pyomo.Constraint(
-    #         m.stf,
-    #         rule=res_global_co2_limit_rule,
-    #         doc='total co2 commodity output <= global.prop CO2 limit')
+
 
     # costs
     m.def_costs = pyomo.Constraint(
@@ -718,21 +661,18 @@ def res_vertex_rule(m, tm, stf, sit, com, com_type):
     if m.mode['dsm']:
         power_surplus += dsm_surplus(m, tm, stf, sit, com)
 
+    #LVDS: Space heat demand is endogenously calculated using the thermal building model (a.l.a. UrbanHeatPro)
     if m.mode['uhp'] and com == 'space_heat':
         if (stf, sit) in m.sit_temperature_tuples:
             if m.mode['tsam'] and tm in m.t_startofperiod:
-                return m.temperature[(tm, stf, sit)] == (m.uhp_dict[(sit, 'Tmin')][(stf, tm)])# +
-                                                          #m.uhp_dict[(sit, 'Tmax')][(stf, tm)]) / 2
+                return m.temperature[(tm, stf, sit)] == (m.uhp_dict[(sit, 'Tmin')][(stf, tm)])
             else:
-                try:
-                    power_surplus +=   (m.uhp_dict[(sit, 'sol_gains')][(stf, tm)]
-                                    + m.uhp_dict[(sit, 'int_gains')][(stf, tm)]
-                                    - m.site_dict['C'][(stf, sit)] / (m.dt * 3600) * (m.temperature[tm, stf, sit] - m.temperature[tm-1, stf, sit])
-                                    - ((m.site_dict['U'][(stf, sit)] + m.site_dict['V'][(stf, sit)])
-                                       * (m.temperature[tm, stf, sit] - m.uhp_dict[('ambient', 'Tamb')][(stf, tm)] )) * m.dt
-                                    )
-                except:
-                    import pdb;pdb.set_trace()
+                power_surplus +=   (m.uhp_dict[(sit, 'sol_gains')][(stf, tm)]
+                                + m.uhp_dict[(sit, 'int_gains')][(stf, tm)]
+                                - m.site_dict['C'][(stf, sit)] / (m.dt * 3600) * (m.temperature[tm, stf, sit] - m.temperature[tm-1, stf, sit])
+                                - ((m.site_dict['U'][(stf, sit)] + m.site_dict['V'][(stf, sit)])
+                                   * (m.temperature[tm, stf, sit] - m.uhp_dict[('ambient', 'Tamb')][(stf, tm)] )) * m.dt
+                                )
     return power_surplus == 0
 
 
@@ -925,50 +865,38 @@ def res_area_rule(m, stf, sit):
         return pyomo.Constraint.Skip
 
 
-def def_abs_injection_1_rule(m, tm, stf, sit):
+def def_abs_injection_1_rule(m, tm, stf, sit):  #LVDS
     return calculate_injection(m, tm, stf, sit) <= m.abs_injection[(tm, stf, sit)]
 
 
-def def_abs_injection_2_rule(m, tm, stf, sit):
+def def_abs_injection_2_rule(m, tm, stf, sit): #LVDS
     return -calculate_injection(m, tm, stf, sit) <= m.abs_injection[(tm, stf, sit)]
 
 
-def def_peak_injection_rule(m, tm, stf, sit):
+def def_peak_injection_rule(m, tm, stf, sit): #LVDS
     return m.abs_injection[(tm, stf, sit)] <= m.peak_injection[(stf, sit)]
 
-
-def def_evu_sperre_hourly_limit_rule(m, tm, stf, sit, pro):
-    return m.on_off[(tm - 1, stf, sit, pro)] + 2 * m.on_off[(tm, stf, sit, pro)] + \
-           m.on_off[(tm + 1, stf, sit, pro)] + m.on_off[(tm + 2, stf, sit, pro)] <= 3
-
-def def_evu_sperre_daily_limit_rule(m, day, stf, sit, pro):
-    return sum(m.on_off[(t, stf, sit, pro)] for t in range(1 + 24 * (day - 1), 24 + 24 * (day - 1) + 1)) <= 6
-
-def res_single_heatpump_rule(m, stf, sit):
-    return  sum(m.pro_cap_expands[(st, si, pr)]
-            for (st, si, pr) in m.pro_inv_cost_fix_tuples
-            if si == sit and st == stf and pr.startswith('heatpump')) <= 1 # new capacity blocks
 
 def def_new_capacity_units_rule(m, stf, sit, pro):
     return (m.cap_pro[stf, sit, pro] == m.pro_cap_unit[stf, sit, pro] *
             m.cap_block_dict[stf, sit, pro])
 
-def res_temperature_min_rule(m, tm, stf, sit):
+def res_temperature_min_rule(m, tm, stf, sit):  #LVDS
     return m.temperature[(tm, stf, sit)] >= m.uhp_dict[(sit, 'Tmin')][(stf, tm)]
 
-def res_temperature_min_slack_rule(m, tm, stf, sit):
+def res_temperature_min_slack_rule(m, tm, stf, sit):  #LVDS
     return m.temperature[(tm, stf, sit)] >= m.uhp_dict[(sit, 'Tmin')][(stf, tm)] - m.temperature_slack[(tm, stf, sit)]
 
-def res_temperature_max_rule(m, tm, stf, sit):
+def res_temperature_max_rule(m, tm, stf, sit):  #LVDS
     return m.temperature[(tm, stf, sit)] <= m.uhp_dict[(sit, 'Tmax')][(stf, tm)]
 
-def res_temperature_fix_rule(m, tm, stf, sit):
-    if m.uhp_dict[(sit, 'Tmin')][(stf, tm)] == 18: #night temperature, dont force
+def res_temperature_fix_rule(m, tm, stf, sit):  #LVDS
+    if m.uhp_dict[(sit, 'Tmin')][(stf, tm)] == 18: #night temperature, dont force T
         return m.temperature[(tm, stf, sit)] <= m.uhp_dict[(sit, 'Tmax')][(stf, tm)]
     else:
         return m.temperature[(tm, stf, sit)] == m.uhp_dict[(sit, 'Tmin')][(stf, tm)] #force set temperature during day
 
-def def_initial_temperature_rule(m, stf, sit):
+def def_initial_temperature_rule(m, stf, sit):  #LVDS
     return m.temperature[(0, stf, sit)] == m.uhp_dict[(sit, 'Tmin')][(stf, 0)]
 
 def def_startofperiod_temperature_rule(m, t_startofperiod, stf, sit):
@@ -1066,7 +994,7 @@ def def_costs_rule(m, cost_type):
                  m.process_dict['invcost-factor'][p]
                  for p in m.pro_tuples)
              - sum(m.cap_decommissioned[p] *
-                   m.process_dict['decom-saving'][p] *
+                   m.process_dict['decom-saving'][p] *  #LVDS: Decom-saving -> receiving revenues for decommissioning
                    m.process_dict['invcost-factor'][p]
                    for p in m.pro_decom_cap_dict)
              + sum(m.pro_cap_expands[p] *
@@ -1080,7 +1008,7 @@ def def_costs_rule(m, cost_type):
                     m.process_dict['overpay-factor'][p]
                     for p in m.pro_tuples)
             cost += sum(
-                m.cap_decommissioned[p] * m.process_dict['decom-saving'][p] * m.process_dict['overpay-factor'][p] for p
+                m.cap_decommissioned[p] * m.process_dict['decom-saving'][p] * m.process_dict['overpay-factor'][p] for p  #LVDS
                 in m.pro_decom_cap_dict)
             cost -= sum(m.pro_cap_expands[p] *
                         m.process_dict['inv-cost-fix'][p] *
@@ -1153,12 +1081,12 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Purchase':
         return m.costs[cost_type] == purchase_costs(m)
-    elif cost_type == 'Power price':
+    elif cost_type == 'Power price':  #LVDS
         return m.costs[cost_type] == sum(m.site_dict['power_price_kw'][sit]
                                          * m.site_dict['cost_factor'][sit]
                                          * m.peak_injection[sit]
                                          for sit in m.sit_power_price_tuples)
-    elif cost_type == 'Temperature slack':
+    elif cost_type == 'Temperature slack': #LVDS
         return m.costs[cost_type] == sum(m.weight * m.typeperiod['weight_typeperiod'][(m.stf_list[0], tm)]
                                          * m.temperature_slack[tm, sit] * 200
                                          for tm in m.tm

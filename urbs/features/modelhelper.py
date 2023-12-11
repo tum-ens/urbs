@@ -2,21 +2,7 @@ from .transmission import transmission_balance
 from .storage import storage_balance
 
 import sys
-import pdb
 
-class ForkedPdb(pdb.Pdb):
-    """A Pdb subclass that may be used
-    from a forked multiprocessing child
-
-    """
-
-    def interaction(self, *args, **kwargs):
-        _stdin = sys.stdin
-        try:
-            sys.stdin = open('/dev/stdin')
-            pdb.Pdb.interaction(self, *args, **kwargs)
-        finally:
-            sys.stdin = _stdin
 
 def invcost_factor(dep_prd, interest, discount=None, year_built=None,
                    stf_min=None):
@@ -178,16 +164,12 @@ def calculate_injection(m, tm, stf, sit):
     """
 
     if m.mode['uncoordinated']:
-        if m.mode['evu_sperre']:
-            injection = (m.e_pro_out[(tm, stf, sit, 'import', 'electricity')]
-                      + m.e_pro_out[(tm, stf, sit, 'import_hp', 'electricity_hp')]
-                      - m.e_pro_in[(tm, stf, sit, 'feed_in', 'electricity')])
-        elif m.mode['14a_steuve']:
+        if m.mode['14a']:
             injection = (m.e_pro_out[(tm, stf, sit, 'import', 'electricity')]
                       + m.e_pro_out[(tm, stf, sit, 'import_hp', 'electricity_hp')]
                       + m.e_pro_out[(tm, stf, sit, 'import_bev', 'electricity_bev')]
                       - m.e_pro_in[(tm, stf, sit, 'feed_in', 'electricity')])
-        else: #for 14a_steune or any other case without regulation
+        else: #for the case where 14a commodities do not exist
             injection = (m.e_pro_out[(tm, stf, sit, 'import', 'electricity')]
                          - m.e_pro_in[(tm, stf, sit, 'feed_in', 'electricity')])
     else:

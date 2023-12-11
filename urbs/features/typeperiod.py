@@ -10,24 +10,20 @@ import os
 
 ### Apply timeseries aggregation
 def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, seasonality, uncoordinated = False, uhp = False):
-    ###bring together all time series data
-    #time_series_data = pd.concat([data['demand'].loc[:, pd.IndexSlice[:, 'electricity']],
-    #                              data['demand'].loc[:, pd.IndexSlice[:, 'space_heat']],
-    #                              data['supim'].loc[:, pd.IndexSlice[:, 'solar']],
-    #                              data['eff_factor'].loc[:, pd.IndexSlice[:, 'heatpump_air']]], axis=1, sort=True)
 
-    # include bsp timeseries with an additional column level (to make it similar to other timeseries)
+    # LVDS: include bsp timeseries with an additional column level (to make it similar to other timeseries)
     bsp_data = data['buy_sell_price'].copy()
     bsp_data.columns = pd.MultiIndex.from_product([['bsp'], bsp_data.columns])
-    if uhp:
+
+    if uhp: #LVDS: if UHP feature is activated (thermal building model), then include it in the ts data
         time_series_data = pd.concat(
             [data['demand'], data['supim'], data['eff_factor'], data['availability'], bsp_data, data['uhp']], axis=1, sort=True)
     else:
         time_series_data = pd.concat(
             [data['demand'], data['supim'], data['eff_factor'], data['availability'], bsp_data], axis=1, sort=True)
 
-    #set negligibly small weights for the timeseries that do not follow a seasonal pattern
-    if uhp:
+    # LVDS: set negligibly small weights for the timeseries that do not follow a seasonal pattern
+    if uhp: # LVDS: depending on whether uhp active or not, set the weight for the space heat demand
         weights = {(sit,com): 10**-6 for (sit, com) in time_series_data.columns if ((com in ['water_heat',
                                                                                              'space_heat',
                                                                                          'electricity',
@@ -54,13 +50,14 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
                                                                                 or com.startswith('Tmax')
                                                                                 or com.startswith('sol_gains')
                                                                                 or com.startswith('int_gains'))}
-    # considered time-series are the following:
-    ##### space heat demand (col2 = 'space_heat')
-    ##### solar supims (col2.startswith('solar'))
-    ##### heatpump-air COPs (col2.startswith('heatpump_air')
-    ##### Tamb (col2 == 'Tamb')
-    #####
-    # normalize their weights, corresponding to the number of the column associated to them:
+
+    # LVDS: considered time-series are the following (whose weights are not negligible, i.e., 10^-6):
+    #       space heat demand (col2 = 'space_heat')
+    #       solar supims (col2.startswith('solar'))
+    #       heatpump-air COPs (col2.startswith('heatpump_air')
+    #       Tamb (col2 == 'Tamb')
+
+    # LVDS: normalize their weights, corresponding to the number of the column associated to them:
     space_heat_column_number = len(time_series_data.xs('space_heat', level=1, axis=1).columns)
     solar_column_number = len([col for col in time_series_data.columns if col[1].startswith('solar')])
     hp_cop_column_number = len([col for col in time_series_data.columns if col[1].startswith('heatpump_air')])
@@ -78,7 +75,7 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
         if col[1] == 'Tamb':
             weights[col] = 1 / tamb_column_number
 
-    ### add the timestep with the lowest temperature
+    ## LVDS: add the typical week that includes the hour having the lowest annual temperature
     if uhp:
         try:
             addMeanMin_cols = [ [col for col in time_series_data.columns if col[1] == 'Tamb'][0] ]
@@ -86,7 +83,8 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
             addMeanMin_cols = None
     else:
         addMeanMin_cols = None
-    #parametrize tsam
+
+    # LVDS: parametrize tsam
     extremePeriodMethod = 'replace_cluster_center'
     clusterMethod = 'hierarchical'
 
@@ -99,11 +97,11 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
             if time_series_data[col1].equals(time_series_data2[col2]):
                 equal_col_dict[col1] = col2
                 break
-    ### drop duplicate timeseries
-    # time_series_data = time_series_data.T.drop_duplicates().T
+
+
     ###prepare datetime vector which is required by tsam method
     date_hour = np.arange(datetime(2022, 1, 1), datetime(2023, 1, 1), timedelta(hours=1)).astype(datetime).T
-    #date_hour = np.arange(datetime(2022, 1, 1), datetime(2022, 1, 8), timedelta(hours=1)).astype(datetime).T
+
 
     ### prepare df for tsam
     time_series_data = time_series_data.iloc[1:, :] #drop initialization timestep
@@ -142,7 +140,7 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
             #typPeriods = aggregation.createTypicalPeriods()
 
     else:
-        #uncoordinated, use the cros-scenario from coordinated if it exists
+        #uncoordinated, use the cross-scenario from coordinated if it exists
 
         if cross_scenario_data:
             print('uncoordinated tsam step with existing clusters from coordinated')
@@ -164,8 +162,8 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
     ###store tsam results
     #
     #orderPeriods
-    with open(f"{data['site'].index[0][1]}.txt", 'w') as file:
-        file.write(",".join(map(str, orderPeriods)))
+    #with open(f"{data['site'].index[0][1]}.txt", 'w') as file:
+    #    file.write(",".join(map(str, orderPeriods)))
     #
     #
     #
@@ -278,13 +276,11 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
         if "charging_station" in column[1]:
             data['eff_factor'][column] = data['eff_factor'][column].round() # only 0 1 allowed
 
-    ### rewrite availability
+    ### LVDS: rewrite availability
     data['availability'] = data['availability'].iloc[0:timeframe, :]
     for column in data['availability']:
-        #if column in modeling_steps.columns:
         data['availability'][column].iloc[0:timeframe] = modeling_steps[column].values
-        #else:
-        #    data['availability'][column].iloc[0:timeframe] = modeling_steps[equal_col_dict[column]].values
+
 
     if uhp:
         data['uhp'] = data['uhp'].iloc[0:timeframe, :]
@@ -294,7 +290,6 @@ def run_tsam(data, noTypicalPeriods, hoursPerPeriod, cross_scenario_data, season
             #else:
             #    data['uhp'][column].iloc[0:timeframe] = modeling_steps[equal_col_dict[column]].values
 
-    modeling_steps.to_excel('tsam_ts.xlsx')
     ### return new timestep range
     timesteps_new = range(0, timeframe)
     data['supim'] = data['supim'].round(2)

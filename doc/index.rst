@@ -65,8 +65,19 @@ Continue here for the usage instructions on the coupled transmission-distributio
 
 .. toctree::
    :maxdepth: 1
-   
+
    CoTraDis
+
+LVDS module
+^^^^^^^^^^^^^^^
+
+Continue here for the usage instructions on the low-voltage distribution system
+(LVDS) module.
+
+.. toctree::
+   :maxdepth: 1
+   
+   LVDS
 
 Features
 --------

@@ -319,11 +319,11 @@ def add_transmission_ac(m, assumelowq):
         tra_tuples_kont.add(tuple(key))
     for key in m.transmission_ront_dict['resistance']:
         tra_tuples_ront.add(tuple(key))
-    #import pdb;pdb.set_trace()
+
     for key in m.transmission_dict['cap-lo']:
-        if key[4] == 'electricity_hp':
+        if key[4] == 'electricity_hp': # LVDS
             tra_tuples_hp.add(tuple(key))
-        if key[4] == 'electricity_bev':
+        if key[4] == 'electricity_bev': # LVDS
             tra_tuples_bev.add(tuple(key))
     for key in m.transmission_dict['resistance']:
         if key[4] == 'electricity-reactive':
@@ -334,8 +334,7 @@ def add_transmission_ac(m, assumelowq):
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
     tra_tuples_ac_dc = tra_tuples_ac | tra_tuples_dc
     tra_tuples = tra_tuples_ac | tra_tuples_dc | tra_tuples_tp
-    # tra_tuples_ront = remove_duplicate_transmission(tra_tuples_ront)
-    # tra_tuples_kont = remove_duplicate_transmission(tra_tuples_kont)
+
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
     indexlist = set()
@@ -407,7 +406,7 @@ def add_transmission_ac(m, assumelowq):
         doc='Combinations of possible transport transmissions,'
             'e.g. (2020,South,Mid,hvac,Elec)')
 
-    if m.mode['evu_sperre'] or m.mode['14a_steuve']:
+    if m.mode['14a']: # LVDS: AC transmission tuples for the transport of electricity_hp commodity
         m.tra_tuples_hp = pyomo.Set(
             within=m.stf * m.sit * m.sit * m.tra * m.com,
             initialize=tuple(tra_tuples_hp),
@@ -419,7 +418,7 @@ def add_transmission_ac(m, assumelowq):
             doc='Combinations of possible transport transmissions that deliver heat pump electricity,'
                 'e.g. (2020,South,Mid,hvac,elec_hp)')
 
-    if m.mode['14a_steuve']:
+    if m.mode['14a']: # LVDS: AC transmission tuples for the transport of electricity_bev commodity
         m.tra_tuples_bev = pyomo.Set(
             within=m.stf * m.sit * m.sit * m.tra * m.com,
             initialize=tuple(tra_tuples_bev),
@@ -502,23 +501,7 @@ def add_transmission_ac(m, assumelowq):
         m.tm, m.sit_tuples_ac,
         within=pyomo.Reals,
         doc='Voltage^2 of a site kV')
-    # m.tra_resistance = pyomo.Var(
-    #    m.tra_tuples_ac,
-    #    within=pyomo.NonNegativeReals,
-    #    doc='Resistance of an AC line (fixed by Gurobi persistent)')
-    # m.tra_reactance = pyomo.Var(
-    #    m.tra_tuples_ac,
-    #    within=pyomo.NonNegativeReals,
-    #    doc='Resistance of an AC line (fixed by Gurobi persistent)')
 
-    # m.tra_resistance_adj = pyomo.Var(
-    #    m.tra_tuples_ac,
-    #    within=pyomo.NonNegativeReals,
-    #    doc='Adjusted resistance of an AC line')
-    # m.tra_reactance_adj = pyomo.Var(
-    #    m.tra_tuples_ac,
-    #    within=pyomo.NonNegativeReals,
-    #    doc='Adjusted resistance of an AC line')
     # transmission
     m.def_cap_tra_new = pyomo.Constraint(
         m.tra_block_tuples - m.tra_tuples_hp - m.tra_tuples_bev - m.tra_tuples_reac,
@@ -542,33 +525,16 @@ def add_transmission_ac(m, assumelowq):
         rule=def_ac_power_flow_rule,
         doc='voltage^2(in) = voltage^2(out) + 2 * (resistance(in_out) * Power_active(in_out) + reactance(in_out) * Power_reactive(in_out))')
 
-    #    m.def_ac_resistance_adjustment = pyomo.Constraint(
-    #        m.tra_tuples_ac,
-    #        rule=def_ac_resistance_adjustment_rule,
-    #        doc='adjust the line resistance depending on the capacity expansion of an AC cable')
 
-    #    m.def_ac_reactance_adjustment = pyomo.Constraint(
-    #        m.tra_tuples_ac,
-    #        rule=def_ac_reactance_adjustment_rule,
-    #        doc='adjust the line reactance depending on the capacity expansion of an AC cable')
-
-    m.def_voltage_limit_upper = pyomo.Constraint(
+    m.def_voltage_limit_upper = pyomo.Constraint(  #LVDS: equation 2.65a of Candas dissertation
         m.tm, m.sit_tuples_ac,
         rule=def_voltage_limit_upper_rule,
         doc='V^2 <= (base_voltage * max-voltage)^2. If OLTP (rONT) is built, the limit is raised to 1.1 pu')
-    m.def_voltage_limit_lower = pyomo.Constraint(
+    m.def_voltage_limit_lower = pyomo.Constraint( #LVDS: equation 2.65b of Candas dissertation
         m.tm, m.sit_tuples_ac,
         rule=def_voltage_limit_lower_rule,
         doc='(base_voltage * min-voltage)^2 <= V^2 <= If OLTP (rONT) is built, the limit is lowered to 0.9 pu')
 
-    # m.def_slackbus_voltage_1 = pyomo.Constraint(
-    #    m.tm, m.sit_slackbus,
-    #    rule=def_slackbus_voltage_1_rule,
-    #    doc='(voltage_slack_squared = base voltage^2,controllable if rONT')
-    # m.def_slackbus_voltage_2 = pyomo.Constraint(
-    #    m.tm, m.sit_slackbus,
-    #    rule=def_slackbus_voltage_2_rule,
-    #    doc='voltage_slack_squared = base voltage^2, controllable if rONT')
 
     m.def_angle_limit = pyomo.Constraint(
         m.tm, m.tra_tuples_dc,
@@ -582,34 +548,9 @@ def add_transmission_ac(m, assumelowq):
         m.tm, m.tra_tuples - m.tra_tuples_ac - m.tra_tuples_hp - m.tra_tuples_bev,
         rule=res_transmission_input_by_capacity_rule,
         doc='transmission input <= total transmission capacity')
-        
-    #m.res_transmission_ac_dc_input_by_capacity = pyomo.Constraint(
-    #    m.tm, m.tra_tuples_dc,
-    #    rule=res_transmission_ac_dc_input_by_capacity_rule,
-    #    doc='-ac/dc_pf transmission input <= total transmission capacity')
 
-    #m.res_transmission_input_by_apparent_power = pyomo.Constraint(
-    #    m.tm, m.tra_tuples_ac,
-    #    rule=def_transmission_input_by_apparent_power_rule,
-    #    doc='transmission.flow(active)^2+transmission.flow(reactive)^2)<= transmission.cap-up^2')
-    
-    # m.res_transmission_input_by_apparent_power_square_1 = pyomo.Constraint(
-    #     m.tm, m.tra_tuples_ac,
-    #     rule=def_transmission_input_by_apparent_power_square_1_rule,
-    #     doc='transmission.flow(active)^2+transmission.flow(reactive)^2)<= transmission.cap-up^2')
-    # m.res_transmission_input_by_apparent_power_square_2 = pyomo.Constraint(
-    #     m.tm, m.tra_tuples_ac,
-    #     rule=def_transmission_input_by_apparent_power_square_2_rule,
-    #     doc='transmission.flow(active)^2+transmission.flow(reactive)^2)<= transmission.cap-up^2')
-    # m.res_transmission_input_by_apparent_power_square_3 = pyomo.Constraint(
-    #     m.tm, m.tra_tuples_ac,
-    #     rule=def_transmission_input_by_apparent_power_square_3_rule,
-    #     doc='transmission.flow(active)^2+transmission.flow(reactive)^2)<= transmission.cap-up^2')
-    # m.res_transmission_input_by_apparent_power_square_4 = pyomo.Constraint(
-    #     m.tm, m.tra_tuples_ac,
-    #     rule=def_transmission_input_by_apparent_power_square_4_rule,
-    #     doc='transmission.flow(active)^2+transmission.flow(reactive)^2)<= transmission.cap-up^2')
-    if not assumelowq:
+    if not assumelowq: #LVDS: equations 2.59 from Candas dissertation, if low Q/P is assumed, the first four constraints
+        # are not necessary, simplifying the model.
         m.res_transmission_input_by_apparent_power_diamond_1 = pyomo.Constraint(
             m.tm, m.tra_tuples_ac - m.tra_tuples_hp - m.tra_tuples_bev - m.tra_tuples_reac,
             rule=res_transmission_input_by_apparent_power_diamond_1_rule,
@@ -644,12 +585,12 @@ def add_transmission_ac(m, assumelowq):
         rule=res_transmission_input_by_apparent_power_diamond_7_rule,
         doc='four additional ac line constraints to approximate the quadratic restriction of real/reactive power')
       
-    m.def_single_ont = pyomo.Constraint(
+    m.def_single_ont = pyomo.Constraint( #LVDS: equation 2.61 of Candas dissertation
         m.sit_slackbus,
         rule=def_single_ont_rule,
         doc='there can be only one ONT built, the existing has to be decommissioned if a new one is built')
 
-    m.def_single_ac_cable = pyomo.Constraint(
+    m.def_single_ac_cable = pyomo.Constraint( #LVDS: equation 2.54 of Candas dissertation
         m.tra_tuples_ac - m.tra_tuples_hp- m.tra_tuples_bev - m.tra_tuples_reac,
         rule=def_single_ac_cable_rule,
         doc='for a given AC line section, only one bundle of cable can be built (either single line, double line, -if defined- triple one.')
@@ -665,14 +606,6 @@ def add_transmission_ac(m, assumelowq):
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
 
-    #m.res_transmission_ac_symmetry_1 = pyomo.Constraint(
-    #    m.tra_tuples_ac,
-    #    rule=res_transmission_ac_symmetry_1_rule,
-    #    doc='reactive and active power transmission capacities are equal for a given line')
-    #m.res_transmission_ac_symmetry_2 = pyomo.Constraint(
-    #    m.tra_tuples_ac,
-    #    rule=res_transmission_ac_symmetry_2_rule,
-    #    doc='reactive and hp power transmission capacities are equal for a given line')
     return m
 
 
@@ -743,22 +676,8 @@ def def_dc_power_flow_rule(m, tm, stf, sin, sout, tra, com):
 
 
 # # power flow rule for ACPF transmissions
-def def_ac_power_flow_rule(m, tm, stf, sin, sout):
-    if m.mode['evu_sperre']:
-        return ( 1000 * m.voltage_squared[tm, stf, sin] == 1000 * (m.voltage_squared[tm, stf, sout] +
-                 2 / 1000 * (sum(m.transmission_dict['resistance'][(st, sit_in, sit_out, tra, 'electricity')]  # P, Q: kW, voltage: kV
-                    * m.e_tra_in[tm, st, sit_in, sit_out, tra, 'electricity']
-                    for (st, sit_in, sit_out, tra, co) in m.tra_tuples_ac
-                    if st == stf and sit_in == sin and sit_out == sout and co == 'electricity')
-                            + sum(m.transmission_dict['resistance'][(st, sit_in, sit_out, tra, 'electricity')]  # P, Q: kW, voltage: kV
-                                * m.e_tra_in[tm, st, sit_in, sit_out, tra, 'electricity_hp']
-                                for (st, sit_in, sit_out, tra, co) in m.tra_tuples_ac
-                                if st == stf and sit_in == sin and sit_out == sout and co == 'electricity_hp')
-                            + sum(m.transmission_dict['reactance'][(st, sit_in, sit_out, tra, 'electricity')]
-                                  * m.e_tra_in[tm, st, sit_in, sit_out, tra, 'electricity-reactive']
-                                  for (st, sit_in, sit_out, tra, co) in m.tra_tuples_ac
-                                  if st == stf and sit_in == sin and sit_out == sout and co == 'electricity-reactive'))) )
-    elif m.mode['14a_steuve']:
+def def_ac_power_flow_rule(m, tm, stf, sin, sout): #LVDS: equation scaled by 1000 for better numerics
+    if m.mode['14a']: #LVDS: 14a enabled: total P flow is sum over electricity, electricity_hp, and electricity_bev commodities
         return ( 1000 * m.voltage_squared[tm, stf, sin] == 1000 * (m.voltage_squared[tm, stf, sout] +
                  2 / 1000 * (sum(m.transmission_dict['resistance'][(st, sit_in, sit_out, tra, 'electricity')]  # P, Q: kW, voltage: kV
                     * m.e_tra_in[tm, st, sit_in, sit_out, tra, 'electricity']
@@ -791,9 +710,8 @@ def def_ac_power_flow_rule(m, tm, stf, sin, sout):
 
             
 def res_transmission_input_by_apparent_power_diamond_1_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    # LVDS: equation 2.60 from Candas dissertation. Seven more follows below and form the octagon (Figure 2.15)
+    if m.mode['14a']: # LVDS: if 14a is enabled, total P flow is summed over electricity, electricity_hp, and electricity_bev commodities
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -804,9 +722,7 @@ def res_transmission_input_by_apparent_power_diamond_1_rule(m, tm, stf, sin, sou
 
 
 def res_transmission_input_by_apparent_power_diamond_2_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    if m.mode['14a']:
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -817,9 +733,7 @@ def res_transmission_input_by_apparent_power_diamond_2_rule(m, tm, stf, sin, sou
 
 
 def res_transmission_input_by_apparent_power_diamond_3_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    if m.mode['14a']:
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -830,9 +744,7 @@ def res_transmission_input_by_apparent_power_diamond_3_rule(m, tm, stf, sin, sou
 
 
 def res_transmission_input_by_apparent_power_diamond_4_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    if m.mode['14a']:
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -842,9 +754,7 @@ def res_transmission_input_by_apparent_power_diamond_4_rule(m, tm, stf, sin, sou
             <= ((round(np.sqrt(2),2) + 1) * m.dt * m.cap_tra[stf, sin, sout, tra, com] ))
 
 def res_transmission_input_by_apparent_power_diamond_5_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    if m.mode['14a']:
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -855,9 +765,7 @@ def res_transmission_input_by_apparent_power_diamond_5_rule(m, tm, stf, sin, sou
 
 
 def res_transmission_input_by_apparent_power_diamond_6_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    if m.mode['14a']:
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -868,9 +776,7 @@ def res_transmission_input_by_apparent_power_diamond_6_rule(m, tm, stf, sin, sou
 
 
 def res_transmission_input_by_apparent_power_diamond_7_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    if m.mode['14a']:
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -881,9 +787,7 @@ def res_transmission_input_by_apparent_power_diamond_7_rule(m, tm, stf, sin, sou
 
 
 def res_transmission_input_by_apparent_power_diamond_8_rule(m, tm, stf, sin, sout, tra, com):
-    if m.mode['evu_sperre']:
-        hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-    elif m.mode['14a_steuve']:
+    if m.mode['14a']:
         hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] \
                     + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
     else:
@@ -901,7 +805,7 @@ def res_transmission_input_by_apparent_power_diamond_8_rule(m, tm, stf, sin, sou
 
 
 # determine slackbus voltage level
-def def_voltage_limit_upper_rule(m, tm, stf, sit):
+def def_voltage_limit_upper_rule(m, tm, stf, sit): # LVDS
     if m.mode['transdist']:
         ront_built = sum(m.cap_tra_unit[(st, sit_in, sit_out, tra, com)]
                          for (st, sit_in, sit_out, tra, com) in m.tra_tuples
@@ -915,7 +819,7 @@ def def_voltage_limit_upper_rule(m, tm, stf, sit):
             1.21 - m.site_dict['max-voltage'][(stf, sit)] ** 2)) * m.site_dict['base-voltage'][(stf, sit)]
 
 
-def def_voltage_limit_lower_rule(m, tm, stf, sit):
+def def_voltage_limit_lower_rule(m, tm, stf, sit): # LVDS
     if m.mode['transdist']:
         ront_built = sum(m.cap_tra_unit[(st, sit_in, sit_out, tra, com)]
                          for (st, sit_in, sit_out, tra, com) in m.tra_tuples
@@ -934,7 +838,7 @@ def def_slackbus_angle_rule(m, tm, stf, sin):
     return m.voltage_angle[tm, stf, sin] == 0
 
 
-def def_single_ont_rule(m, stf, sit):
+def def_single_ont_rule(m, stf, sit): # LVDS
     return (sum(m.cap_tra_unit[(st, sit_in, sit_out, tra, com)]
                 for (st, sit_in, sit_out, tra, com) in m.tra_tuples
                 if sit_in == sit and st == stf and tra[0:4] == 'ront' and com == 'electricity') +
@@ -944,7 +848,7 @@ def def_single_ont_rule(m, stf, sit):
 
 
 # reference nodes' voltage angle in subsystems are set to zero (not necessary but for clearness)
-def def_single_ac_cable_rule(m, stf, sin, sout, tra, com):
+def def_single_ac_cable_rule(m, stf, sin, sout, tra, com): # LVDS
     return (sum(m.cap_tra_unit[(st, sit_in, sit_out, tra, co)]
                 for (st, sit_in, sit_out, tra, co) in m.tra_tuples_ac
                 if sit_in == sin and sit_out == sout and stf == st and com == co) == 1)
@@ -972,9 +876,7 @@ def e_tra_abs_rule2(m, tm, stf, sin, sout, tra, com):
 # transmission input <= transmission capacity
 def res_transmission_input_by_capacity_rule(m, tm, stf, sin, sout, tra, com):
     if com == 'electricity':
-        if m.mode['evu_sperre']:
-            hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp']
-        elif m.mode['14a_steuve']:
+        if m.mode['14a']: # LVDS: 14a enabled, P flows are summed over electricity, electricity_hp and electricity_bev commodities
             hp_bev_el = m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_hp'] + m.e_tra_in[tm, stf, sin, sout, tra, 'electricity_bev']
         else:
             hp_bev_el = 0
@@ -1000,12 +902,6 @@ def res_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 # transmission capacity from A to B == transmission capacity from B to A
 def res_transmission_symmetry_rule(m, stf, sin, sout, tra, com):
     return m.cap_tra[stf, sin, sout, tra, com] == (m.cap_tra[stf, sout, sin, tra, com])
-
-
-#def res_transmission_ac_symmetry_1_rule(m, stf, sin, sout, tra, com):
-#    return m.cap_tra[stf, sin, sout, tra, 'electricity'] == (m.cap_tra[stf, sin, sout, tra, 'electricity-reactive'])
-#def res_transmission_ac_symmetry_2_rule(m, stf, sin, sout, tra, com):
-#    return m.cap_tra[stf, sin, sout, tra, 'electricity'] == (m.cap_tra[stf, sin, sout, tra, 'electricity_hp'])
 
 # transmission balance
 def transmission_balance(m, tm, stf, sit, com):
@@ -1038,7 +934,7 @@ def transmission_cost(m, cost_type):
                    m.transmission_dict['invcost-factor'][t]
                    for t in m.tra_tuples - m.tra_tuples_hp - m.tra_tuples_bev - m.tra_tuples_reac) - sum(
             m.cap_tra_decommissioned[t] *
-            m.transmission_dict['decom-saving'][t] *
+            m.transmission_dict['decom-saving'][t] * # LVDS
             m.transmission_dict['invcost-factor'][t]
             for t in m.tra_decom_cap_dict - m.tra_tuples_hp - m.tra_tuples_bev - m.tra_tuples_reac)
         if m.mode['int']:
@@ -1047,7 +943,7 @@ def transmission_cost(m, cost_type):
                         m.transmission_dict['overpay-factor'][t]
                         for t in m.tra_tuples - m.tra_tuples_hp - m.tra_tuples_bev - m.tra_tuples_reac)
             cost += sum(m.cap_tra_decommissioned[t] *
-                        m.transmission_dict['decom-saving'][t] *
+                        m.transmission_dict['decom-saving'][t] * # LVDS
                         m.transmission_dict['overpay-factor'][t]
                         for t in m.tra_decom_cap_dict - m.tra_tuples_hp - m.tra_tuples_bev - m.tra_tuples_reac)
         return cost

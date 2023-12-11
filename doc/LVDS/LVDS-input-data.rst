@@ -1,18 +1,58 @@
-.. _transdist_implementation:
+.. _LVDS-input-data:
 
-Automated Coupling
-========================
+LVDS input data
+===============
 
-A central goal in this work is to consider different system levels within a single multi-commodity energy system model for expansion and operation planning.
-A key aspect to realize this for our energy system planning approach is to integrate the bottom level microgrids within each associated top level region.
-In the following, a walkthrough on the ``transdisthelper.py`` script will be given to establish understanding regarding
-how the model coupling implementations work.
+This section describes the changes made in the individual sheets of the urbs input file to enable
+the LVDS implementation.
 
-1. Import of Microgrid Data
--------------------------------
 
-Import microgrid data with a predefined selection list:
+1. "Global" sheet
+^^^^^^^^^^^^^^^^^
 
+The global parameter sheet has the following additional parameters:
+
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| Property            | Value | Description                                                                                                    |
++=====================+=======+================================================================================================================+
+| CO2 limit           | 0     |                                                                                                                |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| Cost limit          | inf   |                                                                                                                |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| TransDist           | 0     |                                                                                                                |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| tsam                | 1     | Boolean for activating the time-series aggregation                                                             |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| noTypicalPeriods    | 3     | Number of desired typical periods (relevant if tsam=1)                                                         |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| hoursPerPeriod      | 168   | Length of each typical period in hours (relevant if tsam=1)                                                    |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| tsam_season         | 0     | Set to 1 if seasonal storage constraints are active (may increase the model complexity significantly) (Relevant if tsam=1) |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| PF_HP               | 0.95  | Power factor of heat pumps                                                                                     |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| lp                  | 0     | Boolean for LP file generation                                                                                 |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| excel               | 0     | Boolean for Excel file generation                                                                              |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| assumelowq          | 1     | Boolean for the assumption of high P/Q ratio in grid (usually holds and simplifies the grid capacity constraints)|
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| heatpump_elec_mult  | 1     | The ratio between the prices of heat pump electricity and regular import electricity                           |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| uhp                 | 1     | Boolean for activating the thermal building model for endogenously determining the space heating demand (see sheet "UHP") |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| uncoordinated       | 1     | Boolean for sequential modeling of prosumers and grid (HOODS-Bui -> HOODS-Grid) instead of holistic LVDS optimization (HOODS-Sys) |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| parallel            | 1     | Boolean for solving the prosumer models in parallel, instead of sequentially (faster, but might get stuck) (Relevant if uncoordinated=1) |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| grid_curtailment    | 1     | Boolean for activating DSO-side curtailment (Relevant if uncoordinated=1)                                      |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| flexible            | 1     | Boolean for activating prosumer flexibilities (Paradigm InFlex -> Flex)                                        |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| 14a                 | 1     | Boolean for activating 14a regulation (Relevant if uncoordinated=1)                                            |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
+| power_price_kw      | 0     | Capacity (peak) price in €/kW.a                                                                                |
++---------------------+-------+----------------------------------------------------------------------------------------------------------------+
 ::
 
     for set_number, set in enumerate(microgrid_set_list):  # top region microgrid setting

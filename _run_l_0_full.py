@@ -14,7 +14,7 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore", category=RuntimeWarning)
     warnings.filterwarnings("ignore", category=UserWarning)
 
-    input_files = 'urbs_test.xlsx'  # for single year file name, for intertemporal folder name
+    input_files = 'urbs_DG.xlsx'  # for single year file name, for intertemporal folder name
     input_dir = 'Input'
     input_path = os.path.join(input_dir, input_files)
 
@@ -42,10 +42,6 @@ if __name__ == '__main__':
     # Choose Solver (cplex, glpk, gurobi, ...)
     solver = 'gurobi'
 
-    # input data for tsam method
-    noTypicalPeriods = 6
-    hoursPerPeriod = 168
-
     # simulation timesteps
     (offset, length) = (0, 8760)  # time step selection
     timesteps = range(offset, offset + length + 1)
@@ -65,29 +61,16 @@ if __name__ == '__main__':
             print("Site reading complete")
 
             global_props       = xls.parse('Global').set_index('Property')
-            # tsam               = global_props.loc['tsam']['value']
+            tsam               = global_props.loc['tsam']['value']
+            noTypicalPeriods   = int(global_props.loc['noTypicalPeriods']['value'])
+            hoursPerPeriod     = int(global_props.loc['hoursPerPeriod']['value'])
             uncoordinated      = global_props.loc['uncoordinated']['value']
             flexible           = global_props.loc['flexible']['value']
             lp                 = global_props.loc['lp']['value']
             excel              = global_props.loc['excel']['value']
-            # assumelowq         = global_props.loc['assumelowq']['value']
-            # grid_curtailment   = global_props.loc['grid_curtailment']['value']
-            # dso_downregulation = global_props.loc['14a']['value']
-            # parallel           = global_props.loc['parallel']['value']
-           
-            # uncoordinated = 1
-
-            # print("Mode reading complete:")
-            # print('tsam:             {}'.format(tsam))
-            # print('uncoordinated:    {}'.format(uncoordinated))
-            # print('flexible:         {}'.format(flexible))
-            # print('grid_curtailment: {}'.format(grid_curtailment))
-            # print('lp:               {}'.format(lp))
-            # print('excel:            {}'.format(excel))
-            # print('assumelowq:       {}'.format(assumelowq))
-            # print('14a_steuve:       {}'.format(steuve))
-            # print('14a_steune:       {}'.format(steune))
-            # print('parallel:         {}'.format(parallel))
+            electrification    = global_props.loc['electrification']['value']
+            vartariff          = global_props.loc['vartariff']['value']
+            parallel           = global_props.loc['parallel']['value']
 
     demcollist = demand.columns.to_list()
     demcollist.remove('weight_typeperiod')
@@ -122,7 +105,7 @@ if __name__ == '__main__':
 
     cross_scenario_data = dict()
 
-    if uncoordinated:  # run buildings in parallel
+    if uncoordinated:  # LVDS: create clusters list for, if activated, parallel prosumer runs
         n_cpu = int(os.cpu_count() / 2)
         buildings = [col.split('.')[0] for col in demcollist if col.split('.')[1] == 'electricity']
         div, mod = divmod(len(buildings), n_cpu)
@@ -131,22 +114,24 @@ if __name__ == '__main__':
         clusters = None
 
     for scenario in scenarios:
-        prob, prob_grid_plan, prob_hp_react, cross_scenario_data = urbs.run_lvds_opt(input_path, solver, timesteps,
-                                                                                     scenario, result_dir, dt,
-                                                                                     objective, microgrid_paths,
-                                                                                     plot_tuples=plot_tuples,
-                                                                                     plot_sites_name=plot_sites_name,
-                                                                                     plot_periods=plot_periods,
-                                                                                     report_tuples=report_tuples,
-                                                                                     cross_scenario_data=cross_scenario_data,
-                                                                                     report_sites_name=report_sites_name,
-                                                                                     noTypicalPeriods=noTypicalPeriods,
-                                                                                     hoursPerPeriod=hoursPerPeriod,
-                                                                                     uncoordinated=uncoordinated,
-                                                                                     flexible=1,
-                                                                                     grid_curtailment=1,
-                                                                                     lp=lp,
-                                                                                     xls=excel,
-                                                                                     assumelowq=1,
-                                                                                     clusters=clusters)
+        urbs.run_lvds_opt(input_path, solver, timesteps,
+                         scenario, result_dir, dt,
+                         objective, microgrid_paths,
+                         report_tuples=report_tuples,
+                         cross_scenario_data=cross_scenario_data,
+                         report_sites_name=report_sites_name,
+                         noTypicalPeriods=noTypicalPeriods,
+                         hoursPerPeriod=hoursPerPeriod,
+                         uncoordinated=uncoordinated,
+                         flexible=1,
+                         grid_curtailment=1,
+                         lp=lp,
+                         xls=excel,
+                         assumelowq=1,
+                         clusters=clusters,
+                         electrification=electrification,
+                         vartariff=vartariff,
+                         parallel=parallel)
+
+       # prob, prob_grid_plan, prob_hp_react, cross_scenario_data = urbs.run_lvds_opt(input_path, solver, timesteps,
 

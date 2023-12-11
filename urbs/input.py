@@ -7,18 +7,6 @@ from .features.modelhelper import *
 from .identify import *
 import copy
 
-class ForkedPdb(pdb.Pdb):
-    """A Pdb subclass that may be used
-    from a forked multiprocessing child
-
-    """
-    def interaction(self, *args, **kwargs):
-        _stdin = sys.stdin
-        try:
-            sys.stdin = open('/dev/stdin')
-            pdb.Pdb.interaction(self, *args, **kwargs)
-        finally:
-            sys.stdin = _stdin
 
 def read_input(input_files, year):
     """Read Excel input file and prepare URBS input dict.
@@ -158,7 +146,7 @@ def read_input(input_files, year):
             else:
                 eff_factor = pd.DataFrame()
             ef.append(eff_factor)
-            if 'Availability' in xls.sheet_names:
+            if 'Availability' in xls.sheet_names: # LVDS
                 availability = (xls.parse('Availability').set_index(['t']))
                 availability = pd.concat([availability], keys=[support_timeframe],
                                        names=['support_timeframe'])
@@ -195,21 +183,21 @@ def read_input(input_files, year):
         pass
 
     data = {
-        'global_prop': global_prop, # solo
-        'site': site, # 0
-        'commodity': commodity, # 0
-        'process': process, # 0
-        'process_commodity': process_commodity, # solo
-        'type period': typeperiod, # solo
-        'demand': demand, # 1
-        'supim': supim, # 1
-        'transmission': transmission, #irrelevant
-        'storage': storage, # 0
-        'dsm': dsm, # 0
-        'buy_sell_price': buy_sell_price.dropna(axis=1, how='all'), # solo
-        'eff_factor': eff_factor.dropna(axis=1, how='all'), # 1
-        'availability': availability.dropna(axis=1, how='all'), # 1
-        'uhp': uhp.dropna(axis=1, how='all') # 1
+        'global_prop': global_prop,
+        'site': site,
+        'commodity': commodity,
+        'process': process,
+        'process_commodity': process_commodity,
+        'type period': typeperiod,
+        'demand': demand,
+        'supim': supim,
+        'transmission': transmission,
+        'storage': storage,
+        'dsm': dsm,
+        'buy_sell_price': buy_sell_price.dropna(axis=1, how='all'),
+        'eff_factor': eff_factor.dropna(axis=1, how='all'),
+        'availability': availability.dropna(axis=1, how='all'),
+        'uhp': uhp.dropna(axis=1, how='all')
     }
 
     # sort nested indexes to make direct assignments work
@@ -262,14 +250,8 @@ def pyomo_model_prep(data, timesteps):
     if m.mode['uhp']:
         m.cost_type_list.append('Temperature slack')
 
-    # Converting Data frames to dict
-    # Data frames that need to be modified will be converted after modification
-    #m.site_dict = data['site'].to_dict()
-    #if m.mode['power_price']:
-    #    site_power_price = data['site'][data['site']['power_price_kw'] > 0]
-    #    m.site_power_price_dict = site_power_price.to_dict()
-    #import pdb;pdb.set_trace()
-    if m.mode['uhp']: #set pre-defined space_heat demand to zero, if there is one
+    # for UHP mode: set the pre-defined space_heat demands to zero, if there are any
+    if m.mode['uhp']:
         try:
             space_heat_demand = [(sit, com) for (sit, com) in data['demand'].columns if com == 'space_heat']
             data['demand'][space_heat_demand] *= 0
@@ -307,7 +289,7 @@ def pyomo_model_prep(data, timesteps):
             data["availability"].dropna(axis=0, how='all').to_dict()
 
 
-    if m.mode['uhp']:
+    if m.mode['uhp']: # LVDS
         m.uhp_dict = \
             data["uhp"].dropna(axis=0, how='all').to_dict()
     if m.mode['tdy']:

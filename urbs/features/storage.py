@@ -80,6 +80,12 @@ def add_storage(m):
         m.t, m.sto_tuples,
         within=pyomo.NonNegativeReals,
         doc='Energy content of storage (MWh) in timestep')
+        
+    m.storage_costs = pyomo.Var(
+        m.sto_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs of storages by type and site (EUR/a)')        
 
     # storage rules
     m.def_storage_state = pyomo.Constraint(
@@ -118,6 +124,11 @@ def add_storage(m):
         m.sto_ep_ratio_tuples,
         rule=def_storage_energy_power_ratio_rule,
         doc='storage capacity = storage power * storage E2P ratio')
+    m.def_specific_storage_cost = pyomo.Constraint(
+        m.sto_tuples,
+        m.cost_type,
+        rule=specific_storage_cost,
+        doc='Break down of costs per storage unit to cost type and stf')    
 
     return m
 
@@ -297,6 +308,53 @@ def storage_cost(m, cost_type):
                    m.storage_dict['cost_factor'][s]
                    for tm in m.tm
                    for s in m.sto_tuples)
+                   
+                   
+def specific_storage_cost(m, stf, sit, sto, com, cost_type):
+    """returns storage costs broke down to the different cost types"""
+    if cost_type == 'Invest':
+        cost_spec_storage = (m.cap_sto_p_new[stf, sit, sto, com] *
+                             m.storage_dict['inv-cost-p'][stf, sit, sto, com] *
+                             m.storage_dict['invcost-factor'][stf, sit, sto, com] +
+                             m.cap_sto_c_new[stf, sit, sto, com] *
+                             m.storage_dict['inv-cost-c'][stf, sit, sto, com] *
+                             m.storage_dict['invcost-factor'][stf, sit, sto, com])
+        if m.mode['int']:
+            cost_spec_storage -= (m.cap_sto_p_new[stf, sit, sto, com] *
+                                  m.storage_dict['inv-cost-p'][stf, sit, sto, com] *
+                                  m.storage_dict['overpay-factor'][stf, sit, sto, com] +
+                                  m.cap_sto_c_new[stf, sit, sto, com] *
+                                  m.storage_dict['inv-cost-c'][stf, sit, sto, com] *
+                                  m.storage_dict['overpay-factor'][stf, sit, sto, com])
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    elif cost_type == 'Fixed':
+        cost_spec_storage = ((m.cap_sto_p[stf, sit, sto, com] * m.storage_dict['fix-cost-p'][stf, sit, sto, com] +
+                              m.cap_sto_c[stf, sit, sto, com] * m.storage_dict['fix-cost-c'][stf, sit, sto, com]) *
+                             m.storage_dict['cost_factor'][stf, sit, sto, com])
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    elif cost_type == 'Variable':
+        cost_spec_storage = sum(m.e_sto_con[tm, stf, sit, sto, com] * m.weight *
+                             m.storage_dict['var-cost-c'][stf, sit, sto, com] *
+                             m.storage_dict['cost_factor'][stf, sit, sto, com] +
+                             (m.e_sto_in[tm, stf, sit, sto, com] + m.e_sto_out[tm, stf, sit, sto, com]) *
+                             m.weight * m.storage_dict['var-cost-p'][stf, sit, sto, com] *
+                             m.storage_dict['cost_factor'][stf, sit, sto, com]
+                             for tm in m.tm)
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    elif cost_type == 'Fuel':
+        cost_spec_storage=0
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    elif cost_type == 'Environmental':
+        cost_spec_storage = 0
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    elif cost_type == 'Revenue':
+        cost_spec_storage = 0
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    elif cost_type == 'Purchase':
+        cost_spec_storage = 0
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    else:
+        raise NotImplementedError("Unknown cost type.")                   
 
 
 def op_sto_tuples(sto_tuple, m):

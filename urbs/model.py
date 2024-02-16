@@ -235,6 +235,12 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
+        
+    m.process_costs = pyomo.Var(
+        m.pro_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs by type and site (EUR/a)')    
 
     # commodity
     m.e_co_stock = pyomo.Var(
@@ -380,6 +386,13 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.cost_type,
         rule=def_costs_rule,
         doc='main cost function by cost type')
+        
+    # specific cost calculation allows to identify individual contributors to the cost function. 
+    m.def_specific_process_costs = pyomo.Constraint(
+        m.pro_tuples,
+        m.cost_type,
+        rule=def_specific_process_costs_rule,
+        doc='main cost function of processes by cost type by process and stf')    
 
     # objective and global constraints
     if m.obj.value == 'cost':
@@ -818,6 +831,75 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Purchase':
         return m.costs[cost_type] == purchase_costs(m)
+
+    else:
+        raise NotImplementedError("Unknown cost type.")
+
+
+def def_specific_process_costs_rule(m, stf, sit, pro, cost_type):
+   # Calculate total costs by cost type per process and stf. This allows to easily identify the biggest contributors to the cost functions. 
+
+    if cost_type == 'Invest':
+        cost_spec = \
+            (m.cap_pro_new[stf, sit, pro] *
+             m.process_dict['inv-cost'][stf, sit, pro] *
+             m.process_dict['invcost-factor'][stf, sit, pro])
+
+        if m.mode['int']:
+            #import pdb;pdb.set_trace()
+            cost_spec -= \
+                (m.cap_pro_new[stf, sit, pro] *
+                 m.process_dict['inv-cost'][stf, sit, pro] *
+                 m.process_dict['overpay-factor'][stf, sit, pro])
+
+        return m.process_costs[stf, sit, pro, cost_type] == cost_spec
+
+    elif cost_type == 'Fixed':
+        cost_spec = \
+            (m.cap_pro[stf, sit, pro] * m.process_dict['fix-cost'][stf, sit, pro] *
+             m.process_dict['cost_factor'][stf, sit, pro]
+             )
+
+        return m.process_costs[stf, sit, pro, cost_type] == cost_spec
+
+    elif cost_type == 'Variable':
+        cost_spec = \
+            sum(m.tau_pro[tm, stf, sit, pro] * m.weight *
+                m.process_dict['var-cost'][stf, sit, pro] *
+                m.process_dict['cost_factor'][stf, sit, pro]
+                for tm in m.tm)
+
+        return m.process_costs[stf, sit, pro, cost_type] == cost_spec
+
+    elif cost_type == 'Fuel':
+        return m.process_costs[stf, sit, pro, cost_type] == \
+               sum(
+                   m.e_pro_in[(tm, st, si, pro, co)] * m.weight *
+                   m.commodity_dict['price'][st, si, co, co_type] *
+                   m.commodity_dict['cost_factor'][st, si, co, co_type]
+                   for tm in m.tm for (st, si, co, co_type) in m.com_tuples
+                   if st == stf
+                   if si == sit
+                   if ((stf, sit, pro, co) in m.pro_input_tuples) and co_type == "Stock")
+
+    elif cost_type == 'Environmental':
+        return m.process_costs[stf, sit, pro, cost_type] == \
+               sum(
+                   m.e_pro_out[(tm, st, si, pro, co)] * m.weight *
+                   m.commodity_dict['price'][st, si, co, co_type] *
+                   m.commodity_dict['cost_factor'][st, si, co, co_type]
+                   for tm in m.tm for (st, si, co, co_type) in m.com_tuples
+                   if st == stf
+                   if si == sit
+                   if ((stf, sit, pro, co) in m.pro_output_tuples) and co_type == "Env")
+
+
+    # Revenue and Purchase costs defined in BuySellPrice.py
+    elif cost_type == 'Revenue':
+        return m.process_costs[stf, sit, pro, cost_type] == revenue_costs(m)
+
+    elif cost_type == 'Purchase':
+        return m.process_costs[stf, sit, pro, cost_type] == purchase_costs(m)
 
     else:
         raise NotImplementedError("Unknown cost type.")

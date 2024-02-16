@@ -65,6 +65,12 @@ def add_transmission(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+        
+    m.transmission_costs = pyomo.Var(
+        m.tra_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs of transmission by type and site (EUR/a)')    
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(
@@ -99,6 +105,12 @@ def add_transmission(m):
         m.tra_tuples,
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
+    
+    m.def_specific_transmission_cost = pyomo.Constraint(
+        m.tra_tuples,
+        m.cost_type,
+        rule=specific_transmission_cost,
+        doc='main cost function of transmission by cost type by process and stf')    
 
     return m
 
@@ -167,6 +179,12 @@ def add_transmission_dc(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
+        
+    m.transmission_costs = pyomo.Var(
+        m.tra_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs of transmission by type and site (EUR/a)')    
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(
@@ -232,6 +250,12 @@ def add_transmission_dc(m):
         m.tra_tuples_tp,
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
+        
+    m.def_specific_transmission_cost = pyomo.Constraint(
+        m.tra_tuples,
+        m.cost_type,
+        rule=specific_transmission_cost,
+        doc='main cost function of transmission by cost type by process and stf')    
 
     return m
 
@@ -387,6 +411,54 @@ def transmission_cost(m, cost_type):
                        for tm in m.tm
                        for t in m.tra_tuples)
 
+
+# transmission cost function broke down to the individual cost types and links
+def specific_transmission_cost(m, stf, sit, sit_, tra, com, cost_type):
+    """returns transmission costs broke down to the different cost types"""
+    if cost_type == 'Invest':
+        cost_spec_transmission = (m.cap_tra_new[stf, sit, sit_, tra, com] *
+                                  m.transmission_dict['inv-cost'][stf, sit, sit_, tra, com] *
+                                  m.transmission_dict['invcost-factor'][stf, sit, sit_, tra, com])
+        if m.mode['int']:
+            cost_spec_transmission -= (m.cap_tra_new[stf, sit, sit_, tra, com] *
+                                       m.transmission_dict['inv-cost'][stf, sit, sit_, tra, com] *
+                                       m.transmission_dict['overpay-factor'][stf, sit, sit_, tra, com])
+        return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+    elif cost_type == 'Fixed':
+        cost_spec_transmission = (
+                m.cap_tra[stf, sit, sit_, tra, com] * m.transmission_dict['fix-cost'][stf, sit, sit_, tra, com] *
+                m.transmission_dict['cost_factor'][stf, sit, sit_, tra, com])
+        return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+
+    elif cost_type == 'Variable':
+        if m.mode['dpf']:
+            cost_spec_transmission = sum(m.e_tra_in[tm, stf, sit, sit_, tra, com] * m.weight *
+                                         m.transmission_dict['var-cost'][stf, sit, sit_, tra, com] *
+                                         m.transmission_dict['cost_factor'][stf, sit, sit_, tra, com]
+                                         for tm in m.tm) + \
+                                     (m.e_tra_abs[tm, stf, sit, sit_, tra, com] * m.weight *
+                                      m.transmission_dict['var-cost'][stf, sit, sit_, tra, com] *
+                                      m.transmission_dict['cost_factor'][stf, sit, sit_, tra, com]
+                                      for tm in m.tm)
+            return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+        else:
+            cost_spec_transmission = sum(m.e_tra_in[tm, stf, sit, sit_, tra, com] * m.weight *
+                                         m.transmission_dict['var-cost'][stf, sit, sit_, tra, com] *
+                                         m.transmission_dict['cost_factor'][stf, sit, sit_, tra, com]
+                                         for tm in m.tm)
+            return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+    elif cost_type == 'Fuel':
+        cost_spec_transmission = 0
+        return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+    elif cost_type == 'Environmental':
+        cost_spec_transmission = 0
+        return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+    elif cost_type == 'Revenue':
+        cost_spec_transmission = 0
+        return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+    elif cost_type == 'Purchase':
+        cost_spec_transmission = 0
+        return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
 
 def op_tra_tuples(tra_tuple, m):
     """ s.a. op_pro_tuples

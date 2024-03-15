@@ -5,9 +5,10 @@ import pyomo.core as pyomo
 def add_storage(m):
 
     # storage (e.g. hydrogen, pump storage)
-    indexlist = set()
+    indexlist = list()
     for key in m.storage_dict["eff-in"]:
-        indexlist.add(tuple(key)[2])
+        if key[2] not in indexlist:
+            indexlist.append(key[2])
     m.sto = pyomo.Set(
         initialize=indexlist,
         doc='Set of storage technologies')
@@ -245,14 +246,14 @@ def res_storage_capacity_rule(m, stf, sit, sto, com):
 # forced minimun  storage content in final timestep t[len(m.t)]
 # content[t=1] == storage capacity * fraction <= content[t=final]
 def def_initial_storage_state_rule(m, stf, sit, sto, com):
-    return (m.e_sto_con[m.t[1], stf, sit, sto, com] ==
+    return (m.e_sto_con[m.t.at(1), stf, sit, sto, com] ==
             m.cap_sto_c[stf, sit, sto, com] *
             m.storage_dict['init'][(stf, sit, sto, com)])
 
 
 def res_storage_state_cyclicity_rule(m, stf, sit, sto, com):
-    return (m.e_sto_con[m.t[1], stf, sit, sto, com] <=
-            m.e_sto_con[m.t[len(m.t)], stf, sit, sto, com])
+    return (m.e_sto_con[m.t.at(1), stf, sit, sto, com] <=
+            m.e_sto_con[m.t.at(len(m.t)), stf, sit, sto, com])
 
 
 def def_storage_energy_power_ratio_rule(m, stf, sit, sto, com):

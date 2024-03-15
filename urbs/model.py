@@ -38,6 +38,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # costs are annual by default, variable costs are scaled by weight) and
     # among different simulation durations meaningful.
     m.weight = pyomo.Param(
+        within=pyomo.Reals,
         initialize=float(8760) / ((len(m.timesteps) - 1) * dt),
         doc='Pre-factor for variable costs and emissions for an annual result')
 
@@ -45,11 +46,13 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # converts between energy (storage content, e_sto_con) and power (all other
     # quantities that start with "e_")
     m.dt = pyomo.Param(
+        within=pyomo.Reals,
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
 
     # import objective function information
     m.obj = pyomo.Param(
+        within=pyomo.Any,
         initialize=objective,
         doc='Specification of minimized quantity, default: "cost"')
 
@@ -62,6 +65,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # generate ordered time step sets
     m.t = pyomo.Set(
+        within=pyomo.Reals,
         initialize=m.timesteps,
         ordered=True,
         doc='Set of timesteps')
@@ -74,41 +78,47 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='Set of modelled timesteps')
 
     # support timeframes (e.g. 2020, 2030...)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[0])
+        if key[0] not in indexlist:
+            indexlist.append(key[0])
     m.stf = pyomo.Set(
+        within=pyomo.Reals,
         initialize=indexlist,
         doc='Set of modeled support timeframes (e.g. years)')
 
     # site (e.g. north, middle, south...)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[1])
+        if key[1] not in indexlist:
+            indexlist.append(key[1])
     m.sit = pyomo.Set(
         initialize=indexlist,
         doc='Set of sites')
 
     # commodity (e.g. solar, wind, coal...)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[2])
+        if key[2] not in indexlist:
+            indexlist.append(key[2])
     m.com = pyomo.Set(
         initialize=indexlist,
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[3])
+        if key[3] not in indexlist:
+            indexlist.append(key[3])
     m.com_type = pyomo.Set(
         initialize=indexlist,
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
-    indexlist = set()
+    indexlist = list()
     for key in m.process_dict["inv-cost"]:
-        indexlist.add(tuple(key)[2])
+        if key[2] not in indexlist:
+            indexlist.append(key[2])
     m.pro = pyomo.Set(
         initialize=indexlist,
         doc='Set of conversion processes')

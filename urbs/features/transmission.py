@@ -23,15 +23,16 @@ def remove_duplicate_transmission(transmission_keys):
                 i -= 1
                 break
         i += 1
-    return set(tra_tuple_list)
+    return list(tra_tuple_list)
 
 
 def add_transmission(m):
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
-    indexlist = set()
+    indexlist = list()
     for key in m.transmission_dict["eff"]:
-        indexlist.add(tuple(key)[3])
+        if key[3] not in indexlist:
+            indexlist.append(key[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')
@@ -117,20 +118,21 @@ def add_transmission(m):
 # adds the transmission features to model with DCPF model features
 def add_transmission_dc(m):
     # defining transmission tuple sets for transport and DCPF model separately
-    tra_tuples = set()
-    tra_tuples_dc = set()
+    tra_tuples = list()
+    tra_tuples_dc = list()
     for key in m.transmission_dict['reactance']:
-        tra_tuples.add(tuple(key))
+        tra_tuples.append(key)
     for key in m.transmission_dc_dict['reactance']:
-        tra_tuples_dc.add(tuple(key))
+        tra_tuples_dc.append(key)
     tra_tuples_tp = tra_tuples - tra_tuples_dc
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
     tra_tuples = tra_tuples_dc | tra_tuples_tp
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
-    indexlist = set()
+    indexlist = list()
     for key in m.transmission_dict["eff"]:
-        indexlist.add(tuple(key)[3])
+        if key[3] not in indexlist:
+            indexlist.append(key[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')

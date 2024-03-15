@@ -47,7 +47,7 @@ def read_input(input_files, year):
             global_prop = xls.parse('Global').set_index(['Property'])
             # create support timeframe index
             if ('Support timeframe' in
-                    xls.parse('Global').set_index('Property').value):
+                    global_prop.value):
                 support_timeframe = (
                     global_prop.loc['Support timeframe']['value'])
                 global_prop = (
@@ -174,7 +174,7 @@ def read_input(input_files, year):
 
     # sort nested indexes to make direct assignments work
     for key in data:
-        if isinstance(data[key].index, pd.core.index.MultiIndex):
+        if isinstance(data[key].index, pd.MultiIndex):
             data[key].sort_index(inplace=True)
     return data
 

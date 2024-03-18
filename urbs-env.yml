@@ -1,18 +1,16 @@
-name: urbs
+name: urbs-env
 channels:
-  - defaults
   - conda-forge
 dependencies:
-  - python=3.10
-  - numpy
-  - matplotlib
-  - pandas
-  - pandas-datareader
-  - pytables
-  - openpyxl
-  - xlrd
-  - pyomo=6.3.0
+  - python=3.12.2
+  - numpy=1.26.4
+  - matplotlib=3.8.3
+  - pandas=2.2.1
+  - pandas-datareader=0.10.0
+  - pytables=3.9.2
+  - openpyxl=3.1.2
+  - xlrd=2.0.1
+  - pyomo=6.7.1
   - glpk
-  - psutil
-  - pyutilib
-  - snappy
+  - psutil=5.9.8
+  - pyutilib=6.0.0

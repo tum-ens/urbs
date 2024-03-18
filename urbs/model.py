@@ -38,6 +38,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # costs are annual by default, variable costs are scaled by weight) and
     # among different simulation durations meaningful.
     m.weight = pyomo.Param(
+        within=pyomo.Reals,
         initialize=float(8760) / ((len(m.timesteps) - 1) * dt),
         doc='Pre-factor for variable costs and emissions for an annual result')
 
@@ -45,13 +46,14 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     # converts between energy (storage content, e_sto_con) and power (all other
     # quantities that start with "e_")
     m.dt = pyomo.Param(
+        within=pyomo.Reals,
         initialize=dt,
         doc='Time step duration (in hours), default: 1')
 
     # import objective function information
     m.obj = pyomo.Param(
-        initialize=objective,
         within=pyomo.Any,
+        initialize=objective,
         doc='Specification of minimized quantity, default: "cost"')
 
     # Sets
@@ -63,6 +65,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
 
     # generate ordered time step sets
     m.t = pyomo.Set(
+        within=pyomo.Reals,
         initialize=m.timesteps,
         ordered=True,
         doc='Set of timesteps')
@@ -75,48 +78,49 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='Set of modelled timesteps')
 
     # support timeframes (e.g. 2020, 2030...)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[0])
+        if key[0] not in indexlist:
+            indexlist.append(key[0])
     m.stf = pyomo.Set(
+        within=pyomo.Reals,
         initialize=indexlist,
-        ordered=False,
         doc='Set of modeled support timeframes (e.g. years)')
 
     # site (e.g. north, middle, south...)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[1])
+        if key[1] not in indexlist:
+            indexlist.append(key[1])
     m.sit = pyomo.Set(
         initialize=indexlist,
-        ordered=False,
         doc='Set of sites')
 
     # commodity (e.g. solar, wind, coal...)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[2])
+        if key[2] not in indexlist:
+            indexlist.append(key[2])
     m.com = pyomo.Set(
         initialize=indexlist,
-        ordered=False,
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
-    indexlist = set()
+    indexlist = list()
     for key in m.commodity_dict["price"]:
-        indexlist.add(tuple(key)[3])
+        if key[3] not in indexlist:
+            indexlist.append(key[3])
     m.com_type = pyomo.Set(
         initialize=indexlist,
-        ordered=False,
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
-    indexlist = set()
+    indexlist = list()
     for key in m.process_dict["inv-cost"]:
-        indexlist.add(tuple(key)[2])
+        if key[2] not in indexlist:
+            indexlist.append(key[2])
     m.pro = pyomo.Set(
         initialize=indexlist,
-        ordered=False,
         doc='Set of conversion processes')
 
     # cost_type
@@ -140,7 +144,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.com_stock = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Stock'),
-        ordered=False,
         doc='Commodities that can be purchased at some site(s)')
 
     if m.mode['int']:
@@ -166,17 +169,14 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
     m.com_supim = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'SupIm'),
-        ordered=False,
         doc='Commodities that have intermittent (timeseries) input')
     m.com_demand = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Demand'),
-        ordered=False,
         doc='Commodities that have a demand (implies timeseries)')
     m.com_env = pyomo.Set(
         within=m.com,
         initialize=commodity_subset(m.com_tuples, 'Env'),
-        ordered=False,
         doc='Commodities that (might) have a maximum creation limit')
 
     # process tuples for area rule
@@ -245,6 +245,12 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.cost_type,
         within=pyomo.Reals,
         doc='Costs by type (EUR/a)')
+        
+    m.process_costs = pyomo.Var(
+        m.pro_tuples,
+        m.cost_type,
+        within=pyomo.Reals,
+        doc='Costs by type and site (EUR/a)')    
 
     # commodity
     m.e_co_stock = pyomo.Var(
@@ -390,6 +396,13 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m.cost_type,
         rule=def_costs_rule,
         doc='main cost function by cost type')
+        
+    # specific cost calculation allows to identify individual contributors to the cost function. 
+    m.def_specific_process_costs = pyomo.Constraint(
+        m.pro_tuples,
+        m.cost_type,
+        rule=def_specific_process_costs_rule,
+        doc='main cost function of processes by cost type by process and stf')    
 
     # objective and global constraints
     if m.obj.value == 'cost':
@@ -828,6 +841,75 @@ def def_costs_rule(m, cost_type):
 
     elif cost_type == 'Purchase':
         return m.costs[cost_type] == purchase_costs(m)
+
+    else:
+        raise NotImplementedError("Unknown cost type.")
+
+
+def def_specific_process_costs_rule(m, stf, sit, pro, cost_type):
+   # Calculate total costs by cost type per process and stf. This allows to easily identify the biggest contributors to the cost functions. 
+
+    if cost_type == 'Invest':
+        cost_spec = \
+            (m.cap_pro_new[stf, sit, pro] *
+             m.process_dict['inv-cost'][stf, sit, pro] *
+             m.process_dict['invcost-factor'][stf, sit, pro])
+
+        if m.mode['int']:
+            #import pdb;pdb.set_trace()
+            cost_spec -= \
+                (m.cap_pro_new[stf, sit, pro] *
+                 m.process_dict['inv-cost'][stf, sit, pro] *
+                 m.process_dict['overpay-factor'][stf, sit, pro])
+
+        return m.process_costs[stf, sit, pro, cost_type] == cost_spec
+
+    elif cost_type == 'Fixed':
+        cost_spec = \
+            (m.cap_pro[stf, sit, pro] * m.process_dict['fix-cost'][stf, sit, pro] *
+             m.process_dict['cost_factor'][stf, sit, pro]
+             )
+
+        return m.process_costs[stf, sit, pro, cost_type] == cost_spec
+
+    elif cost_type == 'Variable':
+        cost_spec = \
+            sum(m.tau_pro[tm, stf, sit, pro] * m.weight *
+                m.process_dict['var-cost'][stf, sit, pro] *
+                m.process_dict['cost_factor'][stf, sit, pro]
+                for tm in m.tm)
+
+        return m.process_costs[stf, sit, pro, cost_type] == cost_spec
+
+    elif cost_type == 'Fuel':
+        return m.process_costs[stf, sit, pro, cost_type] == \
+               sum(
+                   m.e_pro_in[(tm, st, si, pro, co)] * m.weight *
+                   m.commodity_dict['price'][st, si, co, co_type] *
+                   m.commodity_dict['cost_factor'][st, si, co, co_type]
+                   for tm in m.tm for (st, si, co, co_type) in m.com_tuples
+                   if st == stf
+                   if si == sit
+                   if ((stf, sit, pro, co) in m.pro_input_tuples) and co_type == "Stock")
+
+    elif cost_type == 'Environmental':
+        return m.process_costs[stf, sit, pro, cost_type] == \
+               sum(
+                   m.e_pro_out[(tm, st, si, pro, co)] * m.weight *
+                   m.commodity_dict['price'][st, si, co, co_type] *
+                   m.commodity_dict['cost_factor'][st, si, co, co_type]
+                   for tm in m.tm for (st, si, co, co_type) in m.com_tuples
+                   if st == stf
+                   if si == sit
+                   if ((stf, sit, pro, co) in m.pro_output_tuples) and co_type == "Env")
+
+
+    # Revenue and Purchase costs defined in BuySellPrice.py
+    elif cost_type == 'Revenue':
+        return m.process_costs[stf, sit, pro, cost_type] == revenue_costs(m)
+
+    elif cost_type == 'Purchase':
+        return m.process_costs[stf, sit, pro, cost_type] == purchase_costs(m)
 
     else:
         raise NotImplementedError("Unknown cost type.")

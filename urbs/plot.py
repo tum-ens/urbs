@@ -91,8 +91,8 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
         timesteps = sorted(get_entity(prob, 'tm').index)
 
     # convert timesteps to hour series for the plots
-    hoursteps = timesteps * dt[0]
-    hoursteps_plot = timesteps_plot * dt[0]
+    hoursteps = timesteps * dt.iloc[0]
+    hoursteps_plot = timesteps_plot * dt.iloc[0]
 
     if is_string(sit):
         # wrap single site in 1-element list for consistent behaviour
@@ -163,7 +163,7 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
 
     # stack plot for consumed commodities (divided by dt for power)
     sp00 = ax0.stackplot(hoursteps[1:],
-                         -consumed.values.T / dt[0],
+                         -consumed.values.T / dt.iloc[0],
                          labels=tuple(consumed.columns),
                          linewidth=0.15)
     # color
@@ -177,7 +177,7 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
 
     # stack plot for created commodities (divided by dt for power)
     sp0 = ax0.stackplot(hoursteps[1:],
-                        created.values.T / dt[0],
+                        created.values.T / dt.iloc[0],
                         labels=tuple(created.columns),
                         linewidth=0.15)
 
@@ -223,12 +223,12 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
 
     # PLOT DEMAND
     # line plot for demand (unshifted) commodities (divided by dt for power)
-    ax0.plot(hoursteps, original.values / dt[0], linewidth=0.8,
+    ax0.plot(hoursteps, original.values / dt.iloc[0], linewidth=0.8,
              color=to_color('Unshifted'))
 
     # line plot for demand (in case of DSM mode: shifted) commodities
     # (divided by dt for power)
-    ax0.plot(hoursteps[1:], demand.values / dt[0], linewidth=1.0,
+    ax0.plot(hoursteps[1:], demand.values / dt.iloc[0], linewidth=1.0,
              color=to_color('Shifted'))
 
     # PLOT STORAGE
@@ -274,18 +274,18 @@ def plot(prob, stf, com, sit, dt, timesteps, timesteps_plot,
         ax2.set_ylabel('{} ({})'.format(power_name, power_unit))
 
     # make xtick distance duration-dependent
-    if len(timesteps_plot) > 26 * 168 / dt[0]:     # time horizon > half a year
-        steps_between_ticks = int(168 * 4 / dt[0])  # tick every four weeks
+    if len(timesteps_plot) > 26 * 168 / dt.iloc[0]:     # time horizon > half a year
+        steps_between_ticks = int(168 * 4 / dt.iloc[0])  # tick every four weeks
         if steps_between_ticks == 0:
             steps_between_ticks = 1                # tick every timestep
-    elif len(timesteps_plot) > 3 * 168 / dt[0]:    # time horizon > three weeks
-        steps_between_ticks = int(168 / dt[0])     # tick every week
-    elif len(timesteps_plot) > 2 * 24 / dt[0]:     # time horizon > two days
-        steps_between_ticks = int(24 / dt[0])      # tick every day
-    elif len(timesteps_plot) > 24 / dt[0]:         # time horizon > a day
-        steps_between_ticks = int(6 / dt[0])       # tick every six hours
+    elif len(timesteps_plot) > 3 * 168 / dt.iloc[0]:    # time horizon > three weeks
+        steps_between_ticks = int(168 / dt.iloc[0])     # tick every week
+    elif len(timesteps_plot) > 2 * 24 / dt.iloc[0]:     # time horizon > two days
+        steps_between_ticks = int(24 / dt.iloc[0])      # tick every day
+    elif len(timesteps_plot) > 24 / dt.iloc[0]:         # time horizon > a day
+        steps_between_ticks = int(6 / dt.iloc[0])       # tick every six hours
     else:                                          # time horizon <= a day
-        steps_between_ticks = int(3 / dt[0])       # tick every three hours
+        steps_between_ticks = int(3 / dt.iloc[0])       # tick every three hours
 
     hoursteps_plot_ = hoursteps_plot[(steps_between_ticks - 1):]
     hoursteps_plot_ = hoursteps_plot_[::steps_between_ticks]   # take hole h's

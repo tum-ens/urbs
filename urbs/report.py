@@ -26,10 +26,10 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
     with pd.ExcelWriter(filename) as writer:
 
         # write constants to spreadsheet
-        costs.to_frame().to_excel(writer, 'Costs')
-        cpro.to_excel(writer, 'Process caps')
-        ctra.to_excel(writer, 'Transmission caps')
-        csto.to_excel(writer, 'Storage caps')
+        costs.to_frame().to_excel(writer, sheet_name='Costs')
+        cpro.to_excel(writer, sheet_name='Process caps')
+        ctra.to_excel(writer, sheet_name='Transmission caps')
+        csto.to_excel(writer, sheet_name='Storage caps')
 
         # initialize timeseries tableaus
         energies = []
@@ -38,6 +38,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
 
         # collect timeseries data
         for stf, sit, com in report_tuples:
+
             # wrap single site name in 1-element list for consistent behavior
             if is_string(sit):
                 help_sit = [sit]
@@ -102,7 +103,7 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
         if timeseries:
             # concatenate Commodity sums
             energy = pd.concat(energies, axis=1).fillna(0)
-            energy.to_excel(writer, 'Commodity sums')
+            energy.to_excel(writer, sheet_name='Commodity sums')
 
             # write timeseries to individual sheets
             for stf, sit, com in report_tuples:
@@ -112,4 +113,4 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
                 sheet_name = "{}.{}.{} timeseries".format(
                     stf, report_sites_name[sit], com)[:31]
                 timeseries[(stf, report_sites_name[sit], com)].to_excel(
-                    writer, sheet_name)
+                    writer, sheet_name=sheet_name)

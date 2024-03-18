@@ -1,6 +1,5 @@
 import pandas as pd
-import pyomo.environ as pyomo
-#import pyomo.core as pyomo
+import pyomo.core as pyomo
 
 
 def get_entity(instance, name):
@@ -23,7 +22,7 @@ def get_entity(instance, name):
         entity = instance.__getattribute__(name)
         labels = _get_onset_names(entity)
     except AttributeError:
-        return pd.Series(name=name, dtype='float64')
+        return pd.Series(name=name)
 
     # extract values
     if isinstance(entity, pyomo.Set):
@@ -71,7 +70,7 @@ def get_entity(instance, name):
             # an existing dual variable
             # in that case add to results
             results = pd.DataFrame(
-                [key + (instance.dual[entity.__getitem__(key)],)
+                [key + (instance.dual[entity.at(key)],)
                  for (id, key) in entity.id_index_map().items()
                  if id in instance.dual._dict.keys()])
         elif entity.dim() == 1:
@@ -107,14 +106,14 @@ def get_entity(instance, name):
 
     if not results.empty:
         # name columns according to labels + entity name
-        results.columns = labels[0:(results.axes[1].size-1)] + [name]
-        results.set_index(labels[0:(results.axes[1].size-1)], inplace=True)
+        results.columns = labels + [name]
+        results.set_index(labels, inplace=True)
 
         # convert to Series
         results = results[name]
     else:
         # return empty Series
-        results = pd.Series(name=name, dtype='float64')
+        results = pd.Series(name=name)
     return results
 
 
@@ -141,10 +140,10 @@ def get_entities(instance, names):
         else:
             index_names_before = df.index.names
 
-            df = df.join(other, how='outer')
+            df = df.join(other.reindex(df.index), how='outer')
 
             if index_names_before != df.index.names:
-                df.index.names = index_names_before
+                    df.index.names = index_names_before
 
     return df
 
@@ -172,7 +171,7 @@ def list_entities(instance, entity_type):
     # helper function to discern entities by type
     def filter_by_type(entity, entity_type):
         if entity_type == 'set':
-            return isinstance(entity, pyomo.Set) and not entity.virtual
+            return isinstance(entity, pyomo.Set)
         elif entity_type == 'par':
             return isinstance(entity, pyomo.Param)
         elif entity_type == 'var':
@@ -189,7 +188,7 @@ def list_entities(instance, entity_type):
     # create entity iterator, using a python 2 and 3 compatible idiom:
     # http://python3porting.com/differences.html#index-6
     try:
-        iter_entities = instance.__dict__.items()  # Python 2 compat
+        iter_entities = instance.__dict__.iteritems()  # Python 2 compat
     except AttributeError:
         iter_entities = instance.__dict__.items()  # Python way
 
@@ -231,7 +230,7 @@ def _get_onset_names(entity):
     if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
             # N-dimensional set tuples, possibly with nested set tuples within
-            if not entity.domain.name == 'Any':
+            if entity.domain:
                 # retreive list of domain sets, which itself could be nested
                 domains = entity.domain.subsets(expand_all_set_operators=True)
             else:
@@ -254,20 +253,24 @@ def _get_onset_names(entity):
                 labels.extend(_get_onset_names(domain_set))
 
         elif entity.dimen == 1:
-            if not entity.domain.name == 'Any':
-                # 1D subset; add domain name
-                labels.append(entity.domain.name)
-            else:
+            labels.append(entity.name)
+            #if entity.domain == pyomo.Any:
+            #    pass
+            #elif entity.domain:
+                # 1D subset; add entity name
+            #    labels.append(entity.name)
+            #else:
                 # unrestricted set; add entity name
-                labels.append(entity.name)
+            #    labels.append(entity.name)
         else:
             # no domain, so no labels needed
             pass
 
     elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Expression,
                     pyomo.Constraint, pyomo.Objective)):
-        if entity.dim() > 0 and entity._index:
-            labels = _get_onset_names(entity._index)
+
+        if entity.dim() > 0 and entity._index_set:
+            labels = _get_onset_names(entity._index_set)
         else:
             # zero dimensions, so no onset labels
             pass

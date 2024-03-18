@@ -211,7 +211,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     try:
         stored = stored.loc[timesteps].xs((stf, com), level=['stf', 'com'])
         stored = stored.groupby(level=['t', 'sit']).sum()
-        stored = stored.loc[(slice(None), sites), :].groupby(level='t').sum()
+        stored = stored.loc[(slice(None), sites), :].groupby('t').sum()
         stored.columns = ['Level', 'Stored', 'Retrieved']
     except (KeyError, ValueError):
         stored = pd.DataFrame(0, index=timesteps,
@@ -264,12 +264,10 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
     try:
         voltage_angle = get_entity(instance, 'voltage_angle')
-        print("VOLTAGE_ANGLE", voltage_angle)
-        voltage_angle = voltage_angle.xs((stf), level=['stf']).loc[timesteps]
+        voltage_angle = voltage_angle.xs(stf, level=['stf']).loc[timesteps]
         voltage_angle = voltage_angle.unstack(level='sit')[sites]
     except (KeyError, AttributeError, TypeError):
         voltage_angle = pd.DataFrame(index=timesteps)
-    voltage_angle = pd.DataFrame(index=timesteps)
     voltage_angle.name = 'Voltage Angle'
 
     return created, consumed, stored, imported, exported, dsm, voltage_angle

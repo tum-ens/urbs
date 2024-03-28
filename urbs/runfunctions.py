@@ -31,8 +31,10 @@ def prepare_result_directory(result_name):
     return result_dir
 
 
-def setup_solver(optim, logfile='solver.log', precision='default'):
-    """ Setup options for the chosen solver
+def setup_solver(optim, logfile='solver.log', recommendations=True, precision='default'):
+    """ Setup options for the chosen solver with parameter value recommendations for ENS models using gurobi.
+        This can be used as a first orientation to improve performance and feasibility of the optimization.
+        However, the right settings can vary depending on the problem.
 
     Args:
         - optim: default pyomo object to perform optimization
@@ -45,31 +47,29 @@ def setup_solver(optim, logfile='solver.log', precision='default'):
 
     """
     if optim.name == 'gurobi':
-        # reference with list of option names
-        # https://www.gurobi.com/documentation/current/refman/parameters.html
+        # reference with list of option names: https://www.gurobi.com/documentation/current/refman/parameters.html
         optim.set_options("logfile={}".format(logfile))
-        optim.set_options("Parallel=1") # kernel parallelization
-        optim.set_options("Threads=8") # number of kernels
-        optim.set_options("Method=2")  # 2: barrier method - most performant for large models,
-        optim.set_options("Crossover=0") # crossover: simplex step to push solution to exact optimal point with no tolerance
-        optim.set_options("mipgap=1e-2")  # Kosten-Input mit größeren Ungenauigkeiten als 1%?
-        # optim.set_options("NumericFocus=3") # try values only if error "numerical trouble encountered"
-        # optim.set_options("timelimit=7200")  # in seconds if timelimit is required - suboptimal output
-        # optim.set_options("presolve = 2") # 1:conservative, 2:agressive, 0: off, -1: automatic(default)
-        if precision == 'default': # tolerances for barrier
-            optim.set_options("BarConvTol=1e-4")
-            optim.set_options("FeasibilityTol=1e-4")
-            optim.set_options("OptimalityTol=1e-4")
-        if precision == 'high':
-            optim.set_options("BarConvTol=1e-10")
-            optim.set_options("FeasibilityTol=1e-9")
-            optim.set_options("OptimalityTol=1e-9")
-        optim.set_options("ConcurrentMIP=4") # good for MIP problems by parallelization
-
-
+        if recommendations == True:
+            optim.set_options("Parallel=1") # kernel parallelization
+            optim.set_options("ConcurrentMIP=4") # good for MIP problems by parallelization of multiple solves with different settings (not deterministic!)
+            optim.set_options("Threads=8") # number of kernels (kernel>8: performance growth turns logarithmic)
+            optim.set_options("Method=2") # 2: barrier method - most performant for large models
+            optim.set_options("Crossover=0") # crossover=0: deactivate simplex step to push interior solution from barrier to exact optimal point with no tolerance
+            # optim.set_options("NumericFocus=3") # try values only if error "numerical trouble encountered"
+            # optim.set_options("timelimit=7200") # in seconds if timelimit is required - suboptimal output
+            # optim.set_options("presolve = 2") # 1:conservative, 2:agressive, 0: off, -1: automatic(default)
+            if precision == 'default':
+                optim.set_options("BarConvTol=1e-4") # Barrier convergence tolerance
+                optim.set_options("FeasibilityTol=1e-4") # Primal feasibility tolerance
+                optim.set_options("OptimalityTol=1e-4") # Dual feasibility tolerance
+                optim.set_options("mipgap=1e-2") # Relative MIP optimality gap
+            if precision == 'high':
+                optim.set_options("BarConvTol=1e-10") # Barrier convergence tolerance
+                optim.set_options("FeasibilityTol=1e-9") # Primal feasibility tolerance
+                optim.set_options("OptimalityTol=1e-9") # Dual feasibility tolerance
+                optim.set_options("mipgap=1e-4") # Relative MIP optimality gap
     elif optim.name == 'glpk': # execute 'glpsol --help' for reference with list of options
         optim.set_options("log={}".format(logfile))
-        # optim.set_options("mipgap=5e-4")
     elif optim.name == 'cplex':
         optim.set_options("log={}".format(logfile))
     else:
@@ -125,7 +125,7 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-    optim = setup_solver(optim, logfile=log_filename)
+    optim = setup_solver(optim, logfile=log_filename, recommendations=True)
     result = optim.solve(prob, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
 

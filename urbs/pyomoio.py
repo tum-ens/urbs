@@ -185,12 +185,8 @@ def list_entities(instance, entity_type):
         else:
             raise ValueError("Unknown entity_type '{}'".format(entity_type))
 
-    # create entity iterator, using a python 2 and 3 compatible idiom:
-    # http://python3porting.com/differences.html#index-6
-    try:
-        iter_entities = instance.__dict__.iteritems()  # Python 2 compat
-    except AttributeError:
-        iter_entities = instance.__dict__.items()  # Python way
+    # create entity iterator
+    iter_entities = instance.__dict__.items()  # Python way
 
     # now iterate over all entities and keep only those whose type matches
     entities = sorted(
@@ -254,14 +250,6 @@ def _get_onset_names(entity):
 
         elif entity.dimen == 1:
             labels.append(entity.name)
-            #if entity.domain == pyomo.Any:
-            #    pass
-            #elif entity.domain:
-                # 1D subset; add entity name
-            #    labels.append(entity.name)
-            #else:
-                # unrestricted set; add entity name
-            #    labels.append(entity.name)
         else:
             # no domain, so no labels needed
             pass

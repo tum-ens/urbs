@@ -124,9 +124,6 @@ def add_transmission_dc(m):
         tra_tuples.append(key)
     for key in m.transmission_dc_dict['reactance']:
         tra_tuples_dc.append(key)
-    #tra_tuples_tp = tra_tuples - tra_tuples_dc
-    #tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
-    #tra_tuples = tra_tuples_dc | tra_tuples_tp
     tra_tuples_tp = [item for item in tra_tuples if item not in tra_tuples_dc]
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
     tra_tuples = tra_tuples_dc + tra_tuples_tp

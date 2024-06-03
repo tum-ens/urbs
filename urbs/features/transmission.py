@@ -124,9 +124,13 @@ def add_transmission_dc(m):
         tra_tuples.append(key)
     for key in m.transmission_dc_dict['reactance']:
         tra_tuples_dc.append(key)
-    tra_tuples_tp = tra_tuples - tra_tuples_dc
+    #tra_tuples_tp = tra_tuples - tra_tuples_dc
+    #tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
+    #tra_tuples = tra_tuples_dc | tra_tuples_tp
+    tra_tuples_tp = [item for item in tra_tuples if item not in tra_tuples_dc]
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
-    tra_tuples = tra_tuples_dc | tra_tuples_tp
+    tra_tuples = tra_tuples_dc + tra_tuples_tp
+    tra_tuples = list(dict.fromkeys(tra_tuples))
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
     indexlist = list()
@@ -438,10 +442,10 @@ def specific_transmission_cost(m, stf, sit, sit_, tra, com, cost_type):
                                          m.transmission_dict['var-cost'][stf, sit, sit_, tra, com] *
                                          m.transmission_dict['cost_factor'][stf, sit, sit_, tra, com]
                                          for tm in m.tm) + \
-                                     (m.e_tra_abs[tm, stf, sit, sit_, tra, com] * m.weight *
-                                      m.transmission_dict['var-cost'][stf, sit, sit_, tra, com] *
-                                      m.transmission_dict['cost_factor'][stf, sit, sit_, tra, com]
-                                      for tm in m.tm)
+                                     sum(m.e_tra_abs[tm, stf, sit, sit_, tra, com] * m.weight *
+                                         m.transmission_dict['var-cost'][stf, sit, sit_, tra, com] *
+                                         m.transmission_dict['cost_factor'][stf, sit, sit_, tra, com]
+                                         for tm in m.tm)
             return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
         else:
             cost_spec_transmission = sum(m.e_tra_in[tm, stf, sit, sit_, tra, com] * m.weight *

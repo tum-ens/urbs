@@ -95,6 +95,7 @@ def create_model(data, dt=1, objective='cost', dual=True):
     # import objective function information (a switch to reflect user preferences)
     m.obj = pyomo.Param(
         initialize=data["objective"],
+        within=pyomo.Any,
         doc='Specification of minimized quantity, default: "cost"')
     
     # weight = length of year (hours) / length of simulation (hours)
@@ -131,26 +132,31 @@ def create_model(data, dt=1, objective='cost', dual=True):
     # support timeframes (e.g. 2020, 2030...)
     m.stf = pyomo.Set(
         initialize=set(data["support_timeframes"]),
+        ordered=False,
         doc='Set of modeled support timeframes (e.g. years)')
 
     # site
     m.sit = pyomo.Set(
         initialize=set(data["sites"]),
+        ordered=False,
         doc='Set of sites')
 
     # commodity (e.g. solar, wind, coal...)
     m.com = pyomo.Set(
         initialize=set(data["commodities"]),
+        ordered=False,
         doc='Set of commodities')
 
     # commodity type (i.e. SupIm, Demand, Stock, Env)
     m.com_type = pyomo.Set(
         initialize=set(data["com_type"]),
+        ordered=False,
         doc='Set of commodity types')
 
     # process (e.g. Wind turbine, Gas plant, Photovoltaics...)
     m.pro = pyomo.Set(
         initialize=set(data["process"]),
+        ordered=False,
         doc='Set of conversion processes')
 
     # cost_type
@@ -177,18 +183,22 @@ def create_model(data, dt=1, objective='cost', dual=True):
     m.com_stock = pyomo.Set(
         within=m.com,
         initialize=set(com for stf, sit, com, com_type in m.com_tuples if com_type == 'Stock'),
+        ordered=False,
         doc='Commodities that can be purchased at some site(s)')
     m.com_supim = pyomo.Set(
         within=m.com,
         initialize=set(com for stf, sit, com, com_type in m.com_tuples if com_type == 'SupIm'),
+        ordered=False,
         doc='Commodities that have intermittent (time series) input')
     m.com_demand = pyomo.Set(
         within=m.com,
         initialize=set(com for stf, sit, com, com_type in m.com_tuples if com_type == 'Demand'),
+        ordered=False,
         doc='Commodities that have a demand (implies time series)')
     m.com_env = pyomo.Set(
         within=m.com,
         initialize=set(com for stf, sit, com, com_type in m.com_tuples if com_type == 'Env'),
+        ordered=False,
         doc='Commodities that (might) have a maximum creation limit')
 
     # process input/output

@@ -70,8 +70,8 @@ def get_entity(instance, name):
             # an existing dual variable
             # in that case add to results
             results = pd.DataFrame(
-                [key + (instance.dual[entity.at(key)],)
-                 for (id, key) in entity.id_index_map().items()
+                [key + (instance.dual[entity.__getitem__(key)],)
+                 for (key, id) in entity.items()
                  if id in instance.dual._dict.keys()])
         elif entity.dim() == 1:
             results = pd.DataFrame(
@@ -143,7 +143,7 @@ def get_entities(instance, names):
             df = df.join(other.reindex(df.index), how='outer')
 
             if index_names_before != df.index.names:
-                    df.index.names = index_names_before
+                df.index.names = index_names_before
 
     return df
 

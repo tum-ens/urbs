@@ -222,13 +222,22 @@ def _get_onset_names(entity):
     """
     # get column titles for entities from domain set names
     labels = []
+    # Flag needed for differentiation in handling SetDifference_OrderedSet
+    SetDifference_flag = False
 
+    # if entity is a Set, get the indices by reducing dimension to 1
     if isinstance(entity, pyomo.Set):
         if entity.dimen > 1:
             # N-dimensional set tuples, possibly with nested set tuples within
             if entity.domain:
-                # retreive list of domain sets, which itself could be nested
-                domains = entity.domain.subsets(expand_all_set_operators=True)
+                # retrieve list of domain sets, which itself could be nested
+                #  if domain is a Set Difference subsets are expanded and only first item
+                #  of GeneratorObject is used in for loop by setting the SetDifferenceFlag
+                if isinstance(entity.domain, pyomo.base.set.SetDifference_OrderedSet):
+                    domains = entity.domain.subsets(expand_all_set_operators=True)
+                    SetDifference_flag = True
+                else:
+                    domains = entity.domain.subsets(expand_all_set_operators=False)
             else:
                 try:
                     # if no domain attribute exists, some
@@ -247,6 +256,8 @@ def _get_onset_names(entity):
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))
+                if SetDifference_flag:
+                    break
 
         elif entity.dimen == 1:
             labels.append(entity.name)
@@ -254,6 +265,7 @@ def _get_onset_names(entity):
             # no domain, so no labels needed
             pass
 
+    # if entity is not a set, get the set of indices
     elif isinstance(entity, (pyomo.Param, pyomo.Var, pyomo.Expression,
                     pyomo.Constraint, pyomo.Objective)):
 

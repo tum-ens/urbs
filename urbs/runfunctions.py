@@ -70,10 +70,13 @@ def setup_solver(optim, logfile='solver.log', recommendations=True, precision='d
                 optim.set_options("mipgap=1e-4") # Relative MIP optimality gap
     elif optim.name == 'glpk': # execute 'glpsol --help' for reference with list of options
         optim.set_options("log={}".format(logfile))
+        # optim.set_options("tmlim=7200")  # seconds
+        # optim.set_options("mipgap=.0005")
     elif optim.name == 'cplex':
         optim.set_options("log={}".format(logfile))
     else:
-        print("Warning from setup_solver: no options set for solver '{optim.name}'!")
+        print("Warning from setup_solver: no options set for solver "
+              "'{}'!".format(optim.name))
     return optim
 
 

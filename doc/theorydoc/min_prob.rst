@@ -2,7 +2,7 @@
 
 .. _theory-min:
 
-Minimal Optimization Model
+Minimal optimization model
 ==========================
 The minimal model in urbs is a simple expansion and dispatch model with only
 processes being able to fulfill the given demands. All spatial information is
@@ -16,7 +16,7 @@ output (mimo) and the variable vector takes the following form:
    \epsilon^{\text{in}}_{cpt},
    \epsilon^{\text{out}}_{cpt}}_{\text{process variables}}).
 
-Here, :math:`\zeta` represents the total annualized system cost, :math:`\rho_{ct}`
+Here, :math:`\zeta` represents the total annualized system cost, :math:`\rho_ct`
 the amount of commodities :math:`c` taken from a virtual, infinite stock at
 time :math:`t`, :math:`\kappa_{p}` and :math:`\widehat{\kappa}_{p}` the total
 and the newly installed process capacities of processes :math:`p`,
@@ -27,13 +27,13 @@ and the newly installed process capacities of processes :math:`p`,
 
 Objective
 ---------
-For any urbs problem, as the objective function, either the total system costs or
+For any urbs problem as the objective function either the total system costs or
 the total emissions of CO2 can be chosen. In the former (standard) case this
 leads to an objective vector of:
 
 .. math::
-   c^{\text{T}}x = (\zeta,0,0,0,0,0,0)   
-   \text{  with  } c^{\text{T}}=(1,0,0,0,0,0,0),
+
+   c=(1,0,0,0,0,0,0),
 
 where only the costs are part of the objective function. For the latter choice
 of objective no such simple structure can be written.
@@ -55,13 +55,13 @@ the total variable costs accumulating over one year,
 :math:`\zeta_{\text{env}}` the annual penalties for environmental pollution.
 These costs are then calculated in the following way:
 
-Annualized Investment Costs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Investments' values are typically depreciated with time. This devaluation happens in general
-longer time horizons than our model's standard of one year. However to overcome distortions in the overall
-cost function, urbs uses the annual cash flow (CAPEX) for the calculation of the
+Annualized invest costs
+~~~~~~~~~~~~~~~~~~~~~~~
+Investments are typically depreciated over a longer period of time than the
+standard modeling horizon of one year. To overcome distortions in the overall
+cost function urbs uses the annual cash flow (CAPEX) for the calculation of the
 investment costs in the cost function. This is captured by multiplying the
-total invest costs for a given process :math:`C_p` with the annuity
+total invest costs for a given process :math:`C_p` with the so-called annuity
 factor :math:`f_p`, i.e.:
 
 .. math::
@@ -112,7 +112,7 @@ parameters for all allowed processes. Fixed costs scale with the capacity
 where :math:`k^{\text{fix}}_p` represents the specific annual fix costs for
 process :math:`p`.
 
-Annual Variable Costs
+Annual variable costs
 ~~~~~~~~~~~~~~~~~~~~~
 Variable costs represent both, additional maintenance requirements due to usage
 of processes and taxes or tariffs. They scale with the utilization of
@@ -127,11 +127,11 @@ integrated process usage, and :math:`w` and :math:`\Delta t` are a weight
 factor that extrapolates the actual modeled time horizon to one year and the
 timestep length in hours, respectively.
 
-Annual Fuel Costs
+Annual fuel costs
 ~~~~~~~~~~~~~~~~~
 The usage of fuel adds an additional cost factor to the total costs. As with
 variable costs these costs occur when processes are used and are dependent on
-the total usage of the fuel (:ref:`Stock <stock-commodity-def>`) commodities:
+the total usage of the fuel (stock) commodities:
 
 .. math::
    \zeta_{\text{fuel}}=w \Delta t \sum_{t \in T_m\\ c \in C_{\text{stock}}}
@@ -141,7 +141,7 @@ where :math:`k^{\text{fuel}}_{c}` are the specific fuel costs. The distinction
 between variable and fuel costs is introduced for clarity of the results, both
 could in principle be merged into one class of costs.
 
-Annual Environmental Costs
+Annual environmental costs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Environmental costs occur when the emission of an environmental commodity is
 penalized by a fine. Environmental commodities do not have to be balanced but
@@ -161,10 +161,10 @@ takes in a unit of a commodity.
 After this discussion of the individual cost terms the constraints making up
 the matrices :math:`A` and :math:`B` are discussed now.
 
-Process Expansion Constraints
+Process expansion constraints
 -----------------------------
 The unit expansion constraints are independent of the modeled time. In case of
-the minimal model they are restricted to two constraints only limiting the
+the minimal model the are restricted to two constraints only limiting the
 allowed capacity expansion for each process. The total capacity of a given
 process is simply given by:
 
@@ -173,8 +173,14 @@ process is simply given by:
    &\kappa_{p}=K_p + \widehat{\kappa}_p,
 
 where :math:`K_p` is the already installed capacity of process :math:`p`.
+The newly installed capacity can also be an integer, expressed as the product
+between the parameter process new capacity block :math:`{K}_p^\text{block}`
+and the variable new process capacity units :math:`\beta_{p}`:
 
-Process Capacity Limit Rule
+.. math::
+   \widehat{\kappa}_p= {K}_p^\text{block}\cdot \beta_p
+
+Process capacity limit rule
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The capacity of each process :math:`p` is limited by a maximal and minimal
 capacity, :math:`\overline{K}_p` and :math:`\underline{K}_p`, respectively,
@@ -188,12 +194,12 @@ All further constraints are time dependent and are determinants of the unit
 commitment, i.e. the time series of operation of all processes and commodity
 flows.
 
-Commodity Dispatch Constraints
+Commodity dispatch constraints
 ------------------------------
 In this part the rules governing the commodity flow timeseries are shown.  
 
-Vertex Rule ("Kirchhoff's Current Law")
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vertex rule ("Kirchhoffs current law")
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This rule is the central rule for the commodity flows and states that all
 commodity flows, (except for those of environmental commodities) have to be
 balanced in each time step. As a helper function the already mentioned
@@ -202,8 +208,8 @@ commodity balance is calculated in the following way:
 .. math::
    &\forall c \in C,~t\in T_m:\\\\
    &\text{CB}(c,t)=
-    \sum_{(c,p)\in C^{\mathrm{in}}_p}\epsilon^{\text{in}}_{cpt}-
-    \sum_{(c,p)\in C^{\mathrm{out}}_p}\epsilon^{\text{out}}_{cpt}.
+    \sum_{(c,p)\in C^{\mathrm{out}}_p}\epsilon^{\text{in}}_{cpt}-
+    \sum_{(c,p)\in C^{\mathrm{in}}_p}\epsilon^{\text{out}}_{cpt}.
 
 Here, the tuple sets :math:`C^{\mathrm{in,out}}_p` represent all input and
 output commodities of process :math:`p`, respectively. The commodity balance
@@ -228,9 +234,9 @@ where :math:`C_{\text{dem}}` is the set of demand commodities and
 consumed at any time in any process must be taken from the stock and that all
 demands have to be fulfilled at each time step.
 
-Stock Commodity Limitations
+Stock commodity limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-There are two rules that govern the retrieval of :ref:`stock <stock-commodity-def>` commodities from stock:
+There are two rule that govern the retrieval of stock commodities from stock:
 The total stock and the stock per hour rule. The former limits the total amount
 of stock commodity that can be retrieved annually and the latter limits the
 same quantity per timestep. the two rules take the following form:
@@ -239,17 +245,15 @@ same quantity per timestep. the two rules take the following form:
    &\forall c \in C_{\text{st}}:\\
    &w \sum_{t\in T_{m}}\rho_{ct}\leq \overline{L}_c\\\\
    &\forall c \in C_{\text{st}},~t\in T_m:\\
-   &\rho_{ct}\leq \Delta t \cdot \overline{l}_{c}
+   &\rho_ct\leq \overline{l}_{c},
 
 where :math:`\overline{L}_c` and :math:`\overline{l}_c` are the totally allowed
 annual and hourly retrieval of commodity :math:`c` from the stock,
 respectively.
 
-.. _Environmental Commodity Limitations:
-
-Environmental Commodity Limitations
+Environmental commodity limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Similar to stock commodities, :ref:`environmental commodities<env-commodity-def>` can also be limited
+Similar to stock commodities, environmental commodities can also be limited
 per hour or per year. Both properties are assured by the following two
 rules:
 
@@ -257,13 +261,13 @@ rules:
    &\forall c \in C_{\text{env}}:\\
    &-w \sum_{t\in T_{m}}\text{CB}(c,t)\leq \overline{M}_c\\\\
    &\forall c \in C_{\text{env}},~t\in T_m:\\
-   & -\text{CB}(c,t)\leq \Delta t \cdot  \overline{m}_{c},
+   & -\text{CB}(c,t)\leq \overline{m}_{c},
 
 where :math:`\overline{M}_c` and :math:`\overline{m}_c` are the totally allowed
 annual and hourly emissions of environmental commodity :math:`c` to the
 atmosphere, respectively.
 
-Process Dispatch Constraints
+Process dispatch constraints
 ----------------------------
 So far, apart from the commodity balance function, the interaction between
 processes and commodities have not been discussed. It is perhaps in order to
@@ -288,7 +292,7 @@ process :math:`p` for the conversion of commodity :math:`c_1` into commodity
 .. math::
    \eta=\frac{r^{\text{out}}_{pc_2}}{r^{\text{in}}_{pc_1}}.
 
-Basic Process Throughput Rules
+Basic process throughput rules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The throughput :math:`\tau_{pt}` of a process is limited by its installed
 capacity and the specified minimal operational state. Furthermore, the
@@ -296,17 +300,19 @@ switching speed of a process can be limited:
 
 .. math::
    &\forall p\in P,~t\in T_m:\\
-   &\tau_{pt}\leq \Delta t  \kappa_{p}\\
-   &\tau_{pt}\geq \Delta t  \underline{P}_{p}\kappa_{p}\\
-   &|\tau_{pt}-\tau_{p(t-1)}|\leq \Delta t\overline{PG}_p\kappa_{p},
+   &\tau_{pt}\leq \kappa_{p}\\
+   &\tau_{pt}\geq \underline{P}_{p}\kappa_{p}\\
+   &\tau_{pt}-\tau_{p(t-1)}\leq \Delta t\overline{PG}_p^\text{up}\kappa_{p}\\
+   &\tau_{pt}-\tau_{p(t-1)}\geq - \Delta t\overline{PG}_p^\text{down}\kappa_{p}\\,
 
 where :math:`\underline{P}_{p}` is the normalized, minimal operational state of
-the process and :math:`\overline{PG}_p` the normalized, maximal gradient of the
+the process and :math:`\overline{PG}_p^\text{up}` and :math:`\overline{PG}_p^\text{down}`
+are the normalized, maximal ramping up gradient, respectively ramping down gradient of the
 operational state in full capacity per timestep.
 
-Intermittent Supply Rule
+Intermittent supply rule
 ~~~~~~~~~~~~~~~~~~~~~~~~
-If the input commodity is of type :ref:`SupIm <supply-intermmittent-def>`, which means that it represents an
+If the input commodity is of type 'SupIm', which means that it represents an
 operational state rather than a proper material flow, the operational state of
 the process is governed by this alone. This feature is typically used for
 renewable energies but can be used whenever a certain operation time series of

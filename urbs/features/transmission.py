@@ -23,16 +23,15 @@ def remove_duplicate_transmission(transmission_keys):
                 i -= 1
                 break
         i += 1
-    return list(tra_tuple_list)
+    return set(tra_tuple_list)
 
 
 def add_transmission(m):
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
-    indexlist = list()
+    indexlist = set()
     for key in m.transmission_dict["eff"]:
-        if key[3] not in indexlist:
-            indexlist.append(key[3])
+        indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')
@@ -43,6 +42,11 @@ def add_transmission(m):
         initialize=tuple(m.transmission_dict["eff"].keys()),
         doc='Combinations of possible transmissions, e.g. '
             '(2020,South,Mid,hvac,Elec)')
+    m.tra_block_tuples = pyomo.Set(
+        within=m.stf * m.sit * m.sit * m.tra * m.com,
+        initialize=[(stf, sit, sit_, tra, com)
+                    for (stf, sit, sit_, tra, com) in tuple(m.tra_block_dict.keys())],
+        doc='Transmission with new block capacities')
 
     if m.mode['int']:
         m.operational_tra_tuples = pyomo.Set(
@@ -66,12 +70,16 @@ def add_transmission(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
-        
+    m.tra_cap_unit =pyomo.Var(
+        m.tra_block_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New transmission capacity blocks')
+
     m.transmission_costs = pyomo.Var(
         m.tra_tuples,
         m.cost_type,
         within=pyomo.Reals,
-        doc='Costs of transmission by type and site (EUR/a)')    
+        doc='Costs of transmission by type and site (EUR/a)')
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(
@@ -89,6 +97,10 @@ def add_transmission(m):
         doc='Power flow out of transmission line (MW) per timestep')
 
     # transmission
+    m.def_cap_tra_new = pyomo.Constraint(
+        m.tra_block_tuples,
+        rule=def_cap_tra_new_rule,
+        doc='cap_tra_new = tra-block * cap_tra_new')
     m.def_transmission_output = pyomo.Constraint(
         m.tm, m.tra_tuples,
         rule=def_transmission_output_rule,
@@ -106,34 +118,32 @@ def add_transmission(m):
         m.tra_tuples,
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
-    
+
     m.def_specific_transmission_cost = pyomo.Constraint(
         m.tra_tuples,
         m.cost_type,
         rule=specific_transmission_cost,
-        doc='main cost function of transmission by cost type by process and stf')    
+        doc='main cost function of transmission by cost type by process and stf')
 
     return m
 
 # adds the transmission features to model with DCPF model features
 def add_transmission_dc(m):
     # defining transmission tuple sets for transport and DCPF model separately
-    tra_tuples = list()
-    tra_tuples_dc = list()
+    tra_tuples = set()
+    tra_tuples_dc = set()
     for key in m.transmission_dict['reactance']:
-        tra_tuples.append(key)
+        tra_tuples.add(tuple(key))
     for key in m.transmission_dc_dict['reactance']:
-        tra_tuples_dc.append(key)
-    tra_tuples_tp = [item for item in tra_tuples if item not in tra_tuples_dc]
+        tra_tuples_dc.add(tuple(key))
+    tra_tuples_tp = tra_tuples - tra_tuples_dc
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
-    tra_tuples = tra_tuples_dc + tra_tuples_tp
-    tra_tuples = list(dict.fromkeys(tra_tuples))
+    tra_tuples = tra_tuples_dc | tra_tuples_tp
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
-    indexlist = list()
+    indexlist = set()
     for key in m.transmission_dict["eff"]:
-        if key[3] not in indexlist:
-            indexlist.append(key[3])
+        indexlist.add(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')
@@ -182,12 +192,16 @@ def add_transmission_dc(m):
         m.tra_tuples,
         within=pyomo.NonNegativeReals,
         doc='New transmission capacity (MW)')
-        
+    m.tra_cap_unit =pyomo.Var(
+        m.tra_block_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New transmission capacity blocks')
+
     m.transmission_costs = pyomo.Var(
         m.tra_tuples,
         m.cost_type,
         within=pyomo.Reals,
-        doc='Costs of transmission by type and site (EUR/a)')    
+        doc='Costs of transmission by type and site (EUR/a)')
 
     # transmission capacity as expression object
     m.cap_tra = pyomo.Expression(
@@ -214,6 +228,10 @@ def add_transmission_dc(m):
         doc='Voltage angle of a site')
 
     # transmission
+    m.def_cap_tra_new = pyomo.Constraint(
+        m.tra_block_tuples,
+        rule=def_cap_tra_new_rule,
+        doc='cap_tra_new = tra-block * cap_tra_new')
     m.def_transmission_output = pyomo.Constraint(
         m.tm, m.tra_tuples,
         rule=def_transmission_output_rule,
@@ -253,12 +271,12 @@ def add_transmission_dc(m):
         m.tra_tuples_tp,
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
-        
+
     m.def_specific_transmission_cost = pyomo.Constraint(
         m.tra_tuples,
         m.cost_type,
         rule=specific_transmission_cost,
-        doc='main cost function of transmission by cost type by process and stf')    
+        doc='main cost function of transmission by cost type by process and stf')
 
     return m
 
@@ -296,6 +314,12 @@ def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
                            (stf, sin, sout, tra, com)])
 
     return cap_tra
+
+# new capacity built in blocks
+def def_cap_tra_new_rule(m, stf, sin, sout, tra, com):
+    return(m.cap_tra_new[stf, sin, sout, tra, com] ==
+           m.tra_cap_unit[stf, sin, sout, tra, com] *
+           m.transmission_dict['tra-block'][(stf, sin, sout, tra, com)])
 
 # transmission output == transmission input * efficiency
 

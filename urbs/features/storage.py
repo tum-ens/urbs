@@ -17,7 +17,7 @@ def add_storage(m):
     m.sto_tuples = pyomo.Set(
         within=m.stf * m.sit * m.sto * m.com,
         initialize=tuple(m.storage_dict["eff-in"].keys()),
-        doc='Combinations of possible storage by site,'
+        doc='Comb inations of possible storage by site,'
             'e.g. (2020,Mid,Bat,Elec)')
 
     # tuples for intertemporal operation
@@ -394,6 +394,9 @@ def specific_storage_cost(m, stf, sit, sto, com, cost_type):
         cost_spec_storage = 0
         return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
     elif cost_type == 'Purchase':
+        cost_spec_storage = 0
+        return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
+    elif cost_type == 'Start-up':
         cost_spec_storage = 0
         return m.storage_costs[stf, sit, sto, com, cost_type] == cost_spec_storage
     else:

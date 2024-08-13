@@ -823,6 +823,7 @@ def def_costs_rule(m, cost_type):
             for tm in m.tm for c in m.com_tuples
             if c[2] in m.com_stock)
 
+
     elif cost_type == 'Start-up':
         if m.mode['onoff']:
             cost = sum(m.start_up[(tm,) + p] * m.weight *
@@ -920,6 +921,16 @@ def def_specific_process_costs_rule(m, stf, sit, pro, cost_type):
 
     elif cost_type == 'Purchase':
         return m.process_costs[stf, sit, pro, cost_type] == purchase_costs(m)
+
+    elif cost_type == 'Start-up':
+        if m.mode['onoff']:
+            cost = sum(m.start_up[(tm,) + stf, sit, pro] * m.weight *
+                       m.start_price_dict[stf, sit, pro] * m.cap_pro[stf, sit, pro] *
+                       m.process_dict['cost_factor'][stf, sit, pro]
+                       for tm in m.tm)
+            return m.process_costs[stf, sit, pro, cost_type] == cost
+        else:
+            return m.process_costs[stf, sit, pro, cost_type] == 0
 
     else:
         raise NotImplementedError("Unknown cost type.")

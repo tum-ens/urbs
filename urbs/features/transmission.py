@@ -29,9 +29,9 @@ def remove_duplicate_transmission(transmission_keys):
 def add_transmission(m):
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
-    indexlist = set()
+    indexlist = list()
     for key in m.transmission_dict["eff"]:
-        indexlist.add(tuple(key)[3])
+        indexlist.append(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')
@@ -130,20 +130,20 @@ def add_transmission(m):
 # adds the transmission features to model with DCPF model features
 def add_transmission_dc(m):
     # defining transmission tuple sets for transport and DCPF model separately
-    tra_tuples = set()
-    tra_tuples_dc = set()
+    tra_tuples = list()
+    tra_tuples_dc = list()
     for key in m.transmission_dict['reactance']:
-        tra_tuples.add(tuple(key))
+        tra_tuples.append(tuple(key))
     for key in m.transmission_dc_dict['reactance']:
-        tra_tuples_dc.add(tuple(key))
+        tra_tuples_dc.append(tuple(key))
     tra_tuples_tp = tra_tuples - tra_tuples_dc
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
     tra_tuples = tra_tuples_dc | tra_tuples_tp
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
-    indexlist = set()
+    indexlist = list()
     for key in m.transmission_dict["eff"]:
-        indexlist.add(tuple(key)[3])
+        indexlist.append(tuple(key)[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')
@@ -484,6 +484,9 @@ def specific_transmission_cost(m, stf, sit, sit_, tra, com, cost_type):
         cost_spec_transmission = 0
         return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
     elif cost_type == 'Purchase':
+        cost_spec_transmission = 0
+        return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
+    elif cost_type == 'Start-up':
         cost_spec_transmission = 0
         return m.transmission_costs[stf, sit, sit_, tra, com, cost_type] == cost_spec_transmission
 

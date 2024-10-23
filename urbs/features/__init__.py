@@ -13,3 +13,6 @@ from .dsm import add_dsm, dsm_surplus
 from .BuySellPrice import add_buy_sell_price, bsp_surplus, revenue_costs, \
                           purchase_costs
 from .AdvancedProcesses import add_advanced_processes
+
+from .TimeVarEff import add_time_variable_efficiency
+from .processavailability import add_availability

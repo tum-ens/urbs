@@ -2,11 +2,11 @@ import os
 import shutil
 import urbs
 
-input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'myopictest'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Run'
+result_name = 'myopictest'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -24,7 +24,7 @@ objective = 'cost'  # set either 'cost' or 'CO2' as objective
 solver = 'gurobi'
 
 # simulation timesteps
-(offset, length) = (3500, 24)  # time step selection
+(offset, length) = (0, 2)  # time step selection
 timesteps = range(offset, offset+length+1)
 dt = 1  # length of each time step (unit: hours)
 
@@ -56,7 +56,7 @@ scenarios = [
             ]
 
 for scenario in scenarios:
-    prob = urbs.run_scenario(input_path, solver, timesteps, scenario,
+    prob = urbs.run_scenario_myopic(input_path, solver, timesteps, scenario,
                              result_dir, dt, objective,
                              plot_tuples=plot_tuples,
                              plot_sites_name=plot_sites_name,

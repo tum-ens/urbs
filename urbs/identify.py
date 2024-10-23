@@ -28,6 +28,7 @@ def identify_mode(data):
         'dsm': False,                   # demand site management
         'bsp': False,                   # buy sell price
         'tve': False,                   # time variable efficiency
+        'avail':False,                  #availability factor for processes
         'dpf': False,                   # dc power flow
         'onoff': False,                 # on/off processes
         'minfraction': False,           # processes with minimum working load
@@ -35,12 +36,16 @@ def identify_mode(data):
                 'pro': True,
                 'tra': False,
                 'sto-c': False,
-                'sto-p': False},
+                'sto-p': False}
         }
 
     # if number of support timeframes > 1
     if len(data['global_prop'].index.levels[0]) > 1:
         mode['int'] = True
+    stf_is=data['global_prop'].index.levels[0][0]
+    if data['global_prop'].loc[stf_is,"mode"].value == "myopic":
+        mode['int'] = False
+
     if not data['transmission'].empty:
         mode['tra'] = True
         mode['exp']['tra'] = True
@@ -63,6 +68,8 @@ def identify_mode(data):
     if 'min-fraction' in data['process'].keys():
         if any(data['process']['min-fraction'] > 0):
             mode['minfraction'] = True
+    if not data["process"]["availability"].empty:
+        mode['avail'] = True
 
     return mode
 

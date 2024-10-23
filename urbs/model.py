@@ -146,7 +146,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         initialize=commodity_subset(m.com_tuples, 'Stock'),
         doc='Commodities that can be purchased at some site(s)')
 
-    
+
     if m.mode['int']:
         # tuples for operational status of technologies
         m.operational_pro_tuples = pyomo.Set(
@@ -252,6 +252,12 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
 
+    #set of processes that are allowed to be decommissioned
+    m.cap_decommissioned = pyomo.Var(
+        m.pro_tuples,
+        within=pyomo.NonNegativeReals,
+        doc='Decommissioned process capacity (MW)')
+
     # process capacity as expression object
     # (variable if expansion is possible, else static)
     m.cap_pro = pyomo.Expression(
@@ -293,6 +299,10 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m = add_buy_sell_price(m)
     if (m.mode['tve'] or m.mode['onoff'] or m.mode['minfraction']):
         m = add_advanced_processes(m)
+    if m.mode['tve']:
+        m = add_time_variable_efficiency(m)
+    if m.mode['avail']:
+        m = add_availability(m)
     else:
         m.pro_timevar_output_tuples = pyomo.Set(
             within=m.stf * m.sit * m.pro * m.com,
@@ -402,6 +412,8 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         rule=res_process_capacity_rule,
         doc='process.cap-lo <= total process capacity <= process.cap-up')
 
+
+
     m.res_area = pyomo.Constraint(
         m.sit_tuples,
         rule=res_area_rule,
@@ -414,11 +426,11 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         doc='cap_pro_new = pro_cap_unit * cap-block')
 
 
-    #if m.mode['int']:
-    #    m.res_global_co2_limit = pyomo.Constraint(
-    #        m.stf,
-    #        rule=res_global_co2_limit_rule,
-    #        doc='total co2 commodity output <= global.prop CO2 limit')
+    if m.mode['int']:
+        m.res_global_co2_limit = pyomo.Constraint(
+            m.stf,
+            rule=res_global_co2_limit_rule,
+            doc='total co2 commodity output <= global.prop CO2 limit')
 
     # costs
     m.def_costs = pyomo.Constraint(
@@ -602,22 +614,30 @@ def def_process_capacity_rule(m, stf, sit, pro):
                 cap_pro = m.process_dict['inst-cap'][(stf, sit, pro)]
             else:
                 cap_pro = \
-                    (sum(m.cap_pro_new[stf_built, sit, pro]
-                         for stf_built in m.stf
-                         if (sit, pro, stf_built, stf)
-                         in m.operational_pro_tuples) +
-                     m.process_dict['inst-cap'][(min(m.stf), sit, pro)])
+                    (sum
+
+                     (m.cap_pro_new[stf_built, sit, pro]
+                      for stf_built in m.stf if (sit, pro, stf_built, stf) in m.operational_pro_tuples)
+                     + m.process_dict['inst-cap'][(min(m.stf), sit, pro)]
+                     ) \
+                    - sum(m.cap_decommissioned[stf_dec, sit, pro] for stf_dec in m.stf if stf_dec <= stf if stf_dec > min(m.stf) if (stf_dec, sit, pro) in m.pro_decom_cap_dict)
+
+
         else:
             cap_pro = sum(
                 m.cap_pro_new[stf_built, sit, pro]
                 for stf_built in m.stf
-                if (sit, pro, stf_built, stf) in m.operational_pro_tuples)
+
+                if (sit, pro, stf_built, stf) in m.operational_pro_tuples
+            - sum(m.cap_decommissioned[stf_dec, sit, pro] for stf_dec in m.stf if stf_dec <= stf if stf_dec > min(m.stf) if (stf_dec, sit, pro) in m.pro_decom_cap_dict))
+
     else:
         if (sit, pro, stf) in m.pro_const_cap_dict:
-            cap_pro = m.process_dict['inst-cap'][(stf, sit, pro)]
+            cap_pro = m.process_dict['inst-cap'][(stf, sit, pro)] - sum(m.cap_decommissioned[stf_dec, sit, pro] for stf_dec in m.stf if stf_dec <= stf if (stf_dec, sit, pro) in m.pro_decom_cap_dict)
         else:
             cap_pro = (m.cap_pro_new[stf, sit, pro] +
-                       m.process_dict['inst-cap'][(stf, sit, pro)])
+                       m.process_dict['inst-cap'][(stf, sit, pro)]
+                       -sum(m.cap_decommissioned[stf_dec, sit, pro] for stf_dec in m.stf if stf_dec <= stf if (stf_dec, sit, pro) in m.pro_decom_cap_dict))
     return cap_pro
 
 
@@ -631,6 +651,8 @@ def def_process_input_rule(m, tm, stf, sit, pro, com):
 def def_process_output_rule(m, tm, stf, sit, pro, com):
     return (m.e_pro_out[tm, stf, sit, pro, com] ==
             m.tau_pro[tm, stf, sit, pro] * m.r_out_dict[(stf, pro, com)])
+
+
 
 
 # process input (for supim commodity) = process capacity * timeseries

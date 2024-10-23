@@ -210,6 +210,9 @@ def pyomo_model_prep(data, timesteps):
 
     # create no expansion dataframes
     pro_const_cap = process[process['inst-cap'] == process['cap-up']]
+    
+    # create dataframe for plants that are allowed to be decommissioned
+    pro_decom_cap = process[process['decommissionable'] == 1]    
 
     # create list with all support timeframe values
     m.stf_list = m.global_prop.index.levels[0].tolist()
@@ -562,6 +565,10 @@ def pyomo_model_prep(data, timesteps):
     m.mode['exp']['pro'] = identify_expansion(pro_const_cap['inst-cap'],
                                               process['inst-cap'].dropna())
     m.pro_const_cap_dict = pro_const_cap['inst-cap'].to_dict()
+    
+    
+    #write dictionary with decommissionable processes
+    m.pro_decom_cap_dict = pro_decom_cap['decommissionable'].to_dict()
 
 
     if m.mode['tra']:

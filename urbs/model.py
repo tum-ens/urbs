@@ -291,8 +291,7 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m = add_dsm(m)
     if m.mode['bsp']:
         m = add_buy_sell_price(m)
-    if (m.mode['tve'] or m.mode['onoff'] or #m.mode['chp'] or
-        m.mode['minfraction']):
+    if (m.mode['tve'] or m.mode['onoff'] or m.mode['minfraction']):
         m = add_advanced_processes(m)
     else:
         m.pro_timevar_output_tuples = pyomo.Set(

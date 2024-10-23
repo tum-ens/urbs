@@ -31,17 +31,11 @@ def identify_mode(data):
         'dpf': False,                   # dc power flow
         'onoff': False,                 # on/off processes
         'minfraction': False,           # processes with minimum working load
-        'chp': False,                   # chp processes
         'exp': {                        # expansion
                 'pro': True,
                 'tra': False,
                 'sto-c': False,
-                'sto-p': False}
-        # 'inv_mip':{
-        #         'pro': False,
-        #         'tra': False,
-        #         'sto-c': False,
-        #         'sto-p': False}
+                'sto-p': False},
         }
 
     # if number of support timeframes > 1
@@ -69,9 +63,6 @@ def identify_mode(data):
     if 'min-fraction' in data['process'].keys():
         if any(data['process']['min-fraction'] > 0):
             mode['minfraction'] = True
-    # if not data['process_commodity'].empty:
-    #     if any(data['commodity'] == 'heat'):
-    #         mode['chp'] = True
 
     return mode
 

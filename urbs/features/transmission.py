@@ -23,7 +23,7 @@ def remove_duplicate_transmission(transmission_keys):
                 i -= 1
                 break
         i += 1
-    return set(tra_tuple_list)
+    return list(tra_tuple_list)
 
 
 def add_transmission(m):
@@ -31,7 +31,8 @@ def add_transmission(m):
     # tranmission (e.g. hvac, hvdc, pipeline...)
     indexlist = list()
     for key in m.transmission_dict["eff"]:
-        indexlist.append(tuple(key)[3])
+        if key[3] not in indexlist:
+            indexlist.append(key[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')
@@ -118,7 +119,7 @@ def add_transmission(m):
         m.tra_tuples,
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
-
+    
     m.def_specific_transmission_cost = pyomo.Constraint(
         m.tra_tuples,
         m.cost_type,
@@ -133,17 +134,19 @@ def add_transmission_dc(m):
     tra_tuples = list()
     tra_tuples_dc = list()
     for key in m.transmission_dict['reactance']:
-        tra_tuples.append(tuple(key))
+        tra_tuples.append(key)
     for key in m.transmission_dc_dict['reactance']:
-        tra_tuples_dc.append(tuple(key))
-    tra_tuples_tp = tra_tuples - tra_tuples_dc
+        tra_tuples_dc.append(key)
+    tra_tuples_tp = [item for item in tra_tuples if item not in tra_tuples_dc]
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
-    tra_tuples = tra_tuples_dc | tra_tuples_tp
+    tra_tuples = tra_tuples_dc + tra_tuples_tp
+    tra_tuples = list(dict.fromkeys(tra_tuples))
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
     indexlist = list()
     for key in m.transmission_dict["eff"]:
-        indexlist.append(tuple(key)[3])
+        if key[3] not in indexlist:
+            indexlist.append(key[3])
     m.tra = pyomo.Set(
         initialize=indexlist,
         doc='Set of transmission technologies')
@@ -271,7 +274,6 @@ def add_transmission_dc(m):
         m.tra_tuples_tp,
         rule=res_transmission_symmetry_rule,
         doc='total transmission capacity must be symmetric in both directions')
-
     m.def_specific_transmission_cost = pyomo.Constraint(
         m.tra_tuples,
         m.cost_type,
@@ -322,8 +324,6 @@ def def_cap_tra_new_rule(m, stf, sin, sout, tra, com):
            m.transmission_dict['tra-block'][(stf, sin, sout, tra, com)])
 
 # transmission output == transmission input * efficiency
-
-
 def def_transmission_output_rule(m, tm, stf, sin, sout, tra, com):
     return (m.e_tra_out[tm, stf, sin, sout, tra, com] ==
             m.e_tra_in[tm, stf, sin, sout, tra, com] *

@@ -24,8 +24,8 @@ shutil.copy(__file__, result_dir)
 # objective function
 objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
-# Choose Solver (cplex, glpk, gurobi, ...)
-solver = 'gurobi'
+# Choose Solver (cplex, glpk, gurobi, appsi_highs, ...)
+solver = 'appsi_highs'
 
 # simulation timesteps
 (offset, length) = (0, 24)  # time step selection

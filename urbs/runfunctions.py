@@ -50,7 +50,6 @@ def setup_solver(optim, logfile='solver.log', recommendations=True, precision='d
         # reference with list of option names: https://www.gurobi.com/documentation/current/refman/parameters.html
         optim.set_options("logfile={}".format(logfile))
         if recommendations == True:
-            optim.set_options("Parallel=1") # kernel parallelization
             optim.set_options("ConcurrentMIP=4") # good for MIP problems by parallelization of multiple solves with different settings (not deterministic!)
             optim.set_options("Threads=8") # number of kernels (kernel>8: performance growth turns logarithmic)
             optim.set_options("Method=2") # 2: barrier method - most performant for large models

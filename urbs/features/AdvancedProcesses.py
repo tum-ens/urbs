@@ -24,6 +24,7 @@ def add_advanced_processes(m):
             within=m.stf * m.sit * m.pro * m.com,
             doc='Outputs of processes with time dependent efficiency')
 
+
     # process tuples for on/off
     if m.mode['onoff']:
         m.pro_on_off_tuples = pyomo.Set(
@@ -264,7 +265,7 @@ def add_advanced_processes(m):
             doc='empty commodities with partial input ratio')
 
     
-    # time variable efficiency rules
+    # time variable efficiency constraints
     m.def_process_timevar_output = pyomo.Constraint(
         m.tm, m.pro_timevar_output_tuples - m.pro_partial_output_tuples -
         m.pro_on_off_output_tuples,
@@ -318,7 +319,7 @@ def add_advanced_processes(m):
         doc='Output may not increase faster than the ramping up gradient')
 
 
-    # minfraction rules
+    # minfraction constraints
     m.res_throughput_by_capacity_min = pyomo.Constraint(
         m.tm, m.pro_minfraction_tuples | m.pro_partial_tuples,
         rule=res_throughput_by_capacity_min_rule,
@@ -337,7 +338,7 @@ def add_advanced_processes(m):
             ' cap_pro * min_fraction * (r - R) / (1 - min_fraction)'
             ' + tau_pro * (R - min_fraction * r) / (1 - min_fraction)')
 
-    # on off rules
+    # on off constraints
     # connection between on_off and tau_pro
     m.res_throughput_by_on_off_lower = pyomo.Constraint(
         m.tm, m.pro_on_off_tuples | m.pro_partial_on_off_tuples,
@@ -420,13 +421,7 @@ def add_advanced_processes(m):
 
     return m
 
-# constraints
-
-# process output == process throughput *
-#                   input ratio at maximum operation point *
-#                   efficiency factor
-
-
+# rules
 def def_pro_timevar_output_rule(m, tm, stf, sit, pro, com):
     return (m.e_pro_out[tm, stf, sit, pro, com] ==
             m.tau_pro[tm, stf, sit, pro] * m.r_out_dict[(stf, pro, com)] *

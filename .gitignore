@@ -4,4 +4,6 @@
 result/*
 results/*
 doc/_build/*
+analyzing/plots
+analyzing/tables
 teaching/.ipynb_checkpoints

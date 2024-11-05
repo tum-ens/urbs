@@ -299,8 +299,6 @@ def create_model(data, dt=1, timesteps=None, objective='cost',
         m = add_buy_sell_price(m)
     if (m.mode['tve'] or m.mode['onoff'] or m.mode['minfraction']):
         m = add_advanced_processes(m)
-    if m.mode['tve']:
-        m = add_time_variable_efficiency(m)
     if m.mode['avail']:
         m = add_availability(m)
     else:

@@ -1,6 +1,7 @@
 import os
 import pyomo.environ
 from pyomo.opt.base import SolverFactory
+from pyomo.contrib.appsi.solvers import Highs, Gurobi, Cplex
 from datetime import datetime, date
 from .model import create_model
 from .report import *
@@ -46,34 +47,33 @@ def setup_solver(optim, logfile='solver.log', recommendations=True, precision='d
         specified pyomo object to perform optimization
 
     """
-    # if optim.name == 'gurobi':
-    #     # reference with list of option names: https://www.gurobi.com/documentation/current/refman/parameters.html
-    #     optim.set_options("logfile={}".format(logfile))
-    #     if recommendations == True:
-    #         # optim.set_options("Parallel=1") # kernel parallelization
-    #         optim.set_options("ConcurrentMIP=4") # good for MIP problems by parallelization of multiple solves with different settings (not deterministic!)
-    #         optim.set_options("Threads=8") # number of kernels (kernel>8: performance growth turns logarithmic)
-    #         optim.set_options("Method=2") # 2: barrier method - most performant for large models
-    #         optim.set_options("Crossover=0") # crossover=0: deactivate simplex step to push interior solution from barrier to exact optimal point with no tolerance
-    #         # optim.set_options("NumericFocus=3") # try values only if error "numerical trouble encountered"
-    #         # optim.set_options("timelimit=7200") # in seconds if timelimit is required - suboptimal output
-    #         # optim.set_options("presolve = 2") # 1:conservative, 2:agressive, 0: off, -1: automatic(default)
-    #         if precision == 'default':
-    #             optim.set_options("BarConvTol=1e-4") # Barrier convergence tolerance
-    #             optim.set_options("FeasibilityTol=1e-4") # Primal feasibility tolerance
-    #             optim.set_options("OptimalityTol=1e-4") # Dual feasibility tolerance
-    #             optim.set_options("mipgap=1e-2") # Relative MIP optimality gap
-    #         if precision == 'high':
-    #             optim.set_options("BarConvTol=1e-10") # Barrier convergence tolerance
-    #             optim.set_options("FeasibilityTol=1e-9") # Primal feasibility tolerance
-    #             optim.set_options("OptimalityTol=1e-9") # Dual feasibility tolerance
-    #             optim.set_options("mipgap=1e-4") # Relative MIP optimality gap
-    # elif optim.name == 'glpk': # execute 'glpsol --help' for reference with list of options
-    #     optim.set_options("log={}".format(logfile))
-    # elif optim.name == 'cplex':
-    #     optim.set_options("log={}".format(logfile))
-    # else:
-    #     print("Warning from setup_solver: no options set for solver '{optim.name}'!")
+    if optim.name == 'gurobi':
+        # reference with list of option names: https://www.gurobi.com/documentation/current/refman/parameters.html
+        optim.set_options("logfile={}".format(logfile))
+        if recommendations == True:
+            optim.set_options("ConcurrentMIP=4") # good for MIP problems by parallelization of multiple solves with different settings (not deterministic!)
+            optim.set_options("Threads=8") # number of kernels (kernel>8: performance growth turns logarithmic)
+            optim.set_options("Method=2") # 2: barrier method - most performant for large models
+            optim.set_options("Crossover=0") # crossover=0: deactivate simplex step to push interior solution from barrier to exact optimal point with no tolerance
+            # optim.set_options("NumericFocus=3") # try values only if error "numerical trouble encountered"
+            # optim.set_options("timelimit=7200") # in seconds if timelimit is required - suboptimal output
+            # optim.set_options("presolve = 2") # 1:conservative, 2:agressive, 0: off, -1: automatic(default)
+            if precision == 'default':
+                optim.set_options("BarConvTol=1e-4") # Barrier convergence tolerance
+                optim.set_options("FeasibilityTol=1e-4") # Primal feasibility tolerance
+                optim.set_options("OptimalityTol=1e-4") # Dual feasibility tolerance
+                optim.set_options("mipgap=1e-2") # Relative MIP optimality gap
+            if precision == 'high':
+                optim.set_options("BarConvTol=1e-10") # Barrier convergence tolerance
+                optim.set_options("FeasibilityTol=1e-9") # Primal feasibility tolerance
+                optim.set_options("OptimalityTol=1e-9") # Dual feasibility tolerance
+                optim.set_options("mipgap=1e-4") # Relative MIP optimality gap
+    elif optim.name == 'glpk': # execute 'glpsol --help' for reference with list of options
+        optim.set_options("log={}".format(logfile))
+    elif optim.name == 'cplex':
+        optim.set_options("log={}".format(logfile))
+    else:
+        print("Warning from setup_solver: no options set for solver '{optim.name}'!")
     return optim
 
 
@@ -125,7 +125,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-    optim = setup_solver(optim, logfile=log_filename, recommendations=True)
+    if Solver != 'appsi_highs':
+        optim = setup_solver(optim, logfile=log_filename, recommendations=True)
     result = optim.solve(prob, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
 

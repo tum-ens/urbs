@@ -1,10 +1,4 @@
 # Python venv
-# Steps:
-# 1) python3 -m venv urbs-env
-# 2) Linux/MacOS: source urbs-env/bin/activate Windows: urbs-env\Scripts\activate
-# 3) python3 -m pip install -r urbs-env.txt
-
-#python==3.12.2
 numpy==1.26.4
 matplotlib==3.8.3
 pandas==2.2.1
@@ -13,7 +7,6 @@ tables==3.9.2 #pytables in conda
 openpyxl==3.1.2
 xlrd==2.0.1
 pyomo==6.7.1
-#glpk
 psutil==5.9.8
 pyutilib==6.0.0
 gurobipy

@@ -50,7 +50,6 @@ def setup_solver(optim, logfile='solver.log', recommendations=True, precision='d
         # reference with list of option names: https://www.gurobi.com/documentation/current/refman/parameters.html
         optim.set_options("logfile={}".format(logfile))
         if recommendations == True:
-            optim.set_options("Parallel=1") # kernel parallelization
             optim.set_options("ConcurrentMIP=4") # good for MIP problems by parallelization of multiple solves with different settings (not deterministic!)
             optim.set_options("Threads=8") # number of kernels (kernel>8: performance growth turns logarithmic)
             optim.set_options("Method=2") # 2: barrier method - most performant for large models
@@ -70,10 +69,13 @@ def setup_solver(optim, logfile='solver.log', recommendations=True, precision='d
                 optim.set_options("mipgap=1e-4") # Relative MIP optimality gap
     elif optim.name == 'glpk': # execute 'glpsol --help' for reference with list of options
         optim.set_options("log={}".format(logfile))
+        # optim.set_options("tmlim=7200")  # seconds
+        # optim.set_options("mipgap=.0005")
     elif optim.name == 'cplex':
         optim.set_options("log={}".format(logfile))
     else:
-        print("Warning from setup_solver: no options set for solver '{optim.name}'!")
+        print("Warning from setup_solver: no options set for solver "
+              "'{}'!".format(optim.name))
     return optim
 
 
@@ -151,3 +153,134 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
         figure_size=(24, 9))
 
     return prob
+
+
+##comments:
+## input_files can be a list but then additional mode for urbs = myopic necessary. Otherwise intertemporal mode is initialized which also affects the read in of data (no inst-cap anymore)
+##report in excel and plotting is deleted for now
+def run_scenario_myopic(input_files, Solver, timesteps, scenario, result_dir, dt,
+                 objective, plot_tuples=None,  plot_sites_name=None,
+                 plot_periods=None, report_tuples=None,
+                 report_sites_name=None):
+    """ run an urbs model for given input, time steps and scenario
+
+    Args:
+        - input_files: filenames of input Excel spreadsheets
+        - Solver: the user specified solver
+        - timesteps: a list of timesteps, e.g. range(0,8761)
+        - scenario: a scenario function that modifies the input data dict
+        - result_dir: directory name for result spreadsheet and plots
+        - dt: length of each time step (unit: hours)
+        - objective: objective function chosen (either "cost" or "CO2")
+        - plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
+        - plot_sites_name: (optional) dict of names for sites in plot_tuples
+        - plot_periods: (optional) dict of plot periods
+          (c.f. urbs.result_figures)
+        - report_tuples: (optional) list of (sit, com) tuples
+          (c.f. urbs.report)
+        - report_sites_name: (optional) dict of names for sites in
+          report_tuples
+
+    Returns:
+        the urbs model instance
+    """
+
+    # sets a modeled year for non-intertemporal problems
+    # (necessary for consitency)
+    year = date.today().year
+
+    # scenario name, read and modify data for scenario
+    sce = scenario.__name__
+    glob_input = os.path.join(input_files, '*.xlsx')
+    input_files = sorted(glob.glob(glob_input))
+    for i in range(0,len(input_files)):
+
+        data = read_input(input_files[i], year)
+        data = scenario(data)
+        validate_input(data)
+        #validate_dc_objective(data, objective)
+
+        if i == 0:
+            pass
+        else: data=myopic_update(data,prob)
+
+        # create model
+        prob = create_model(data, dt, timesteps, objective)
+        # prob_filename = os.path.join(result_dir, 'model.lp')
+        # prob.write(prob_filename, io_options={'symbolic_solver_labels':True})
+
+        # refresh time stamp string and create filename for logfile
+        log_filename = os.path.join(result_dir, '{}.log').format(sce)
+
+        # solve model and read results
+        optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
+        optim = setup_solver(optim, logfile=log_filename)
+        result = optim.solve(prob, tee=True)
+        assert str(result.solver.termination_condition) == 'optimal'
+
+        # save problem solution (and input data) to HDF5 file
+        save(prob, os.path.join(result_dir, '{}'+str(data['global_prop'].index.levels[0][0])+'.h5').format(sce))
+
+        report(
+            prob,
+            os.path.join(result_dir, '{}'+str(data['global_prop'].index.levels[0][0])+'.xlsx').format(sce),
+            report_tuples=report_tuples,
+            report_sites_name=report_sites_name)
+
+
+    return prob
+
+
+def myopic_update(data,prob):
+
+    # set inst cap for processes to results from previous stf
+    pro = data['process']
+    indexlist = pro.index.to_list()
+    previous_stf = prob._result["cap_pro"].index.levels[0].to_list()
+    for indextuple in indexlist:
+        indexstf = indextuple[0]
+        indexsit = indextuple[1]
+        indexprocess = indextuple[2]
+
+        if prob._result["cap_pro"].index.isin([(previous_stf[0], indexsit, indexprocess)]).any() == True:
+            pro.loc[(indextuple),'inst-cap'] = prob._result["cap_pro"].loc[(previous_stf,indexsit,indexprocess)].iloc[0]
+        else:
+            pass
+        #pro.loc[(indextuple),'lifetime'] = indexstf - previous_stf
+
+    # set inst cap for storages to results from previous stf
+    sto = data['storage']
+    indexlist = sto.index.to_list()
+    previous_stf = prob._result["cap_sto_c"].index.levels[0].to_list()
+    for indextuple in indexlist:
+        indexsit = indextuple[1]
+        indexstorage = indextuple[2]
+        indexcommodity=indextuple[3]
+
+        if prob._result["cap_sto_c"].index.isin([(previous_stf[0], indexsit, indexstorage,indexcommodity)]).any() == True:
+            sto.loc[(indextuple),'inst-cap-c'] = prob._result["cap_sto_c"].loc[(previous_stf,indexsit,indexstorage,indexcommodity)].iloc[0]
+            sto.loc[(indextuple), 'inst-cap-p'] = prob._result["cap_sto_p"].loc[(previous_stf, indexsit, indexstorage,indexcommodity)].iloc[0]
+        else:
+            pass
+
+
+    # set inst cap for transmission to results from previous stf
+    tra = data['transmission']
+    indexlist = tra.index.to_list()
+    previous_stf = prob._result["cap_tra"].index.levels[0].to_list()
+
+    for indextuple in indexlist:
+        indexsitin = indextuple[1]
+        indexsitout = indextuple[2]
+        indextransmission = indextuple[3]
+        indexcommodity = indextuple[4]
+
+        if prob._result["cap_tra"].index.isin([(previous_stf[0], indexsitin,indexsitout, indextransmission,indexcommodity)]).any() == True:
+            tra.loc[(indextuple),'inst-cap'] = prob._result["cap_tra"].loc[(previous_stf,indexsitin,indexsitout,indextransmission,indexcommodity)].iloc[0]
+        else:
+            pass
+
+
+    return data
+
+

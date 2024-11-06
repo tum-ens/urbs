@@ -78,9 +78,11 @@ You can also use the [GitHub Desktop](https://desktop.github.com/) application i
     `python -m pip install -r urbs-env.txt`
 
 ### Solver
-You can use open-source solvers such as [highs](https://highs.dev/) or [glpk](https://www.gnu.org/software/glpk/).
-Highs is automatically installed with the environment. If you want to use the commercial solver [Gurobi](https://www.gurobi.com/), you need to first create an account and then apply for an academic license in the License Center.
-Please follow the official [descriptions](https://www.gurobi.com/features/academic-named-user-license/).
+There are several solvers that can be used to solve the optimization problems. Our recommendations are the following two python libraries that have been installed in the environment.
+- [Highs](https://highs.dev/) (open-source)
+- [Gurobi](https://www.gurobi.com/) (commercial): To run this powerful solver you first need to create an account and then apply for an academic license in the license center ([descriptions](https://www.gurobi.com/features/academic-named-user-license/)).
+
+However, also other solvers such as [glpk](https://www.gnu.org/software/glpk/) (open-source) or [CPLEX](https://www.ibm.com/analytics/cplex-optimizer) (commercial) are compatible with the Pyomo interface in urbs.
 
 ## Get started
 

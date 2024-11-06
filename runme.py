@@ -2,11 +2,11 @@ import os
 import shutil
 import urbs
 
-input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
+input_files = 'Intertemporal_example'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Run'
+result_name = 'Intertemporal_example'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
 
 # copy input file to result directory
@@ -56,7 +56,7 @@ scenarios = [
             ]
 
 for scenario in scenarios:
-    prob = urbs.run_scenario(input_path, solver, timesteps, scenario,
+    prob = urbs.run_scenario_myopic(input_path, solver, timesteps, scenario,
                              result_dir, dt, objective,
                              plot_tuples=plot_tuples,
                              plot_sites_name=plot_sites_name,

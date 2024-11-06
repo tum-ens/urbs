@@ -7,8 +7,8 @@ solution will be listed and defined in this section. A variable is a numerical
 value that is determined during optimization. Variables can denote a single,
 independent value, or an array of values. Variables define the search space for
 optimization. Variables of this optimization model can be separated into
-sections by their area of use. These sections are Cost, Commodity, Process,
-Transmission, Storage and Demand Side Management.
+sections by their area of use. These Sections are Cost, Commodity, Process,
+Transmission, Storage and demand side management.
 
 .. table:: *Table: Model Variables*
     
@@ -21,7 +21,7 @@ Transmission, Storage and Demand Side Management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\zeta_\text{inv}`               | €    | Investment Costs                  |
     +----------------------------------------+------+-----------------------------------+
-    | :math:`\zeta_\text{fix}`               | €    | Fixed Costs                       |
+    | :math:`\zeta_\text{fix}`               | €    | Fix Costs                         |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\zeta_\text{var}`               | €    | Variable Costs                    |
     +----------------------------------------+------+-----------------------------------+
@@ -30,8 +30,6 @@ Transmission, Storage and Demand Side Management.
     | :math:`\zeta_\text{rev}`               | €    | Revenue Costs                     |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\zeta_\text{pur}`               | €    | Purchase Costs                    |
-    +----------------------------------------+------+-----------------------------------+
-    | :math:`\zeta_\text{env}`               | €    | Pollution/Environmental Costs     |
     +----------------------------------------+------+-----------------------------------+
     | **Commodity Variables**                                                           |
     +----------------------------------------+------+-----------------------------------+
@@ -47,17 +45,25 @@ Transmission, Storage and Demand Side Management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvp}`             | MW   | New Process Capacity              |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvp}`                    | -    | New Process Capacity Units        |
+    +----------------------------------------+------+-----------------------------------+
     | :math:`\tau_{yvpt}`                    | MWh  | Process Throughput                |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvcpt}^\text{in}`     | MWh  | Process Input Commodity Flow      |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvcpt}^\text{out}`    | MWh  | Process Output Commodity Flow     |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\omicron_{yvpt}`                |-     | Process On/Off Marker             |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\sigma_{yvpt}`                  |-     | Process Start-up Marker           |
+    +----------------------------------------+------+-----------------------------------+
     | **Transmission Variables**                                                        |
     +----------------------------------------+------+-----------------------------------+
-    | :math:`\kappa_{yaf}`                   | MW   | Total Transmission Capacity       |
+    | :math:`\kappa_{yaf}`                   | MW   | Total transmission Capacity       |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yaf}`             | MW   | New Transmission Capacity         |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yaf}`                    |-     | New Transmission Capacity Units   |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\pi_{yaft}^\text{in}`           | MWh  | Transmission Input Commodity Flow |
     +----------------------------------------+------+-----------------------------------+
@@ -75,9 +81,13 @@ Transmission, Storage and Demand Side Management.
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvs}^\text{c}`    | MWh  | New Storage Size                  |
     +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvs}^\text{c}`           | -    | New Storage Size Units            |
+    +----------------------------------------+------+-----------------------------------+
     | :math:`\kappa_{yvs}^\text{p}`          | MW   | Total Storage Power               |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\hat{\kappa}_{yvs}^\text{p}`    | MW   | New Storage Power                 |
+    +----------------------------------------+------+-----------------------------------+
+    | :math:`\beta_{yvs}^\text{c}`           | -    | New Storage Power Units           |
     +----------------------------------------+------+-----------------------------------+
     | :math:`\epsilon_{yvst}^\text{in}`      | MWh  | Storage Input Commodity Flow      |
     +----------------------------------------+------+-----------------------------------+
@@ -155,7 +165,7 @@ variable :math:`\psi_{yvct}` represents the energy amount in [MWh] that is
 being used by the system of commodity :math:`c` from type buy
 (:math:`\forall c \in C_\text{buy}`) in support timeframe :math:`y`
 (:math:`\forall y \in Y`) in a site :math:`v` (:math:`\forall v \in V`) at
-timestep :math:`t` (:math:`\forall t \in T_\text{m}`). In script ``features\BuySellPrice.py``
+timestep :math:`t` (:math:`\forall t \in T_\text{m}`). In script ``model.py``
 this variable is defined by the variable ``e_co_buy`` and initialized by the
 following code fragment: ::
 
@@ -181,44 +191,14 @@ is expressed in the unit Megawatts [MW].
 In script ``model.py`` this variable is defined by the model variable
 ``cap_pro`` and initialized by the following code fragment: ::
 
-    m.cap_pro = pyomo.Expression(
+    m.cap_pro = pyomo.Var(
         m.pro_tuples,
-        rule=def_process_capacity_rule,
+        within=pyomo.NonNegativeReals,
         doc='Total process capacity (MW)')
-
-The parameter is defined with *Expression* component of Pyomo. This allows the expressions
-to be re-used in multiple contexts and grants the ability to adjust the *Expression* at a later time.
-In the context of "urbs" model, Pyomo *Expression* enables :math:`\hat{\kappa}_{yvp}`, ``cap_pro_new``
-to be used as an variable. The rule ``def_process_capacity_rule`` is defined as follows::
-
-    def def_process_capacity_rule(m, stf, sit, pro):
-    if m.mode['int']:
-        if (sit, pro, stf) in m.inst_pro_tuples:
-            if (sit, pro, min(m.stf)) in m.pro_const_cap_dict:
-                cap_pro = m.process_dict['inst-cap'][(stf, sit, pro)]
-            else:
-                cap_pro = \
-                    (sum(m.cap_pro_new[stf_built, sit, pro]
-                         for stf_built in m.stf
-                         if (sit, pro, stf_built, stf)
-                         in m.operational_pro_tuples) +
-                     m.process_dict['inst-cap'][(min(m.stf), sit, pro)])
-        else:
-            cap_pro = sum(
-                m.cap_pro_new[stf_built, sit, pro]
-                for stf_built in m.stf
-                if (sit, pro, stf_built, stf) in m.operational_pro_tuples)
-    else:
-        if (sit, pro, stf) in m.pro_const_cap_dict:
-            cap_pro = m.process_dict['inst-cap'][(stf, sit, pro)]
-        else:
-            cap_pro = (m.cap_pro_new[stf, sit, pro] +
-                       m.process_dict['inst-cap'][(stf, sit, pro)])
-    return cap_pro
 
 **New Process Capacity**, :math:`\hat{\kappa}_{yvp}`, ``cap_pro_new``: The
 variable :math:`\hat{\kappa}_{yvp}` represents the capacity of a process tuple
-:math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V, \forall y \in Y`) that needs to be
+:math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V`) that needs to be
 installed additionally to the energy system in support timeframe :math:`y` in
 site :math:`v` in order to provide the optimal solution. This variable is
 expressed in the unit MW. In script ``model.py`` this variable is defined by
@@ -230,7 +210,20 @@ fragment: ::
         within=pyomo.NonNegativeReals,
         doc='New process capacity (MW)')
 
-**Process Throughput**, :math:`\tau_{yvpt}`, ``tau_pro``: The variable
+**New Process Capacity Units**, :math:`\beta_{yvp}`, ``pro_cap_unit``: The
+variable :math:`\beta_{yvp}` represents the number of capacity blocks of a
+process tuple :math:`p_{yv}` (:math:`\forall p \in P, \forall v \in V`) that
+needs to be installed additionally to the energy system in support timeframe
+:math:`y` in site :math:`v` in order to provide the optimal solution. In
+script ``model.py`` this variable is defined by the model variable
+``cap_pro_new`` and initialized by the following code fragment: ::
+
+    m.pro_cap_unit = pyomo.Var(
+        m.pro_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='Number of newly installed capacity units')
+
+**Process Throughput**, :math:`\tau_{yvpt}`, ``tau_pro`` : The variable
 :math:`\tau_{yvpt}` represents the measure of (energetic) activity of a process
 tuple :math:`p_{yv}`
 (:math:`\forall p \in P, \forall v \in V, \forall y \in Y`) at a timestep
@@ -278,6 +271,35 @@ initialized by the following code fragment: ::
         within=pyomo.NonNegativeReals,
         doc='Flow of commodity out of process at a given timestep')
 
+**Process On/Off Marker**, :math:`\omicron_{yvpt}`, ``on_off``: The boolean
+variable :math:`\omicron_{yvpt}` marks whether process tuple :math:`p_{yv}`
+(:math:`\forall p \in P^\text{on/off}, \forall v \in V, \forall y \in Y`)
+is on and producing (:math:`\omicron_{yvpt}` is 1) or it is not
+producing (:math:`\omicron_{yvpt}` is 0) at a timestep :math:`t`. While not
+producing, the process is either turned off or it started, without reaching the
+minimum fraction :math:`\underline{P}_{yvp}`.
+In the script ``AdvancedProcesses.py``, this variable is defined by the model
+variable ``on_off`` and initialized by the following code fragment: ::
+
+    m.on_off = pyomo.Var(
+        m.t, m.pro_on_off_tuples,
+        within=pyomo.Boolean,
+        doc='Turn on/off a process with minimum working load')
+
+**Process Start-up Marker**, :math:`\sigma_{yvpt}`, ``start_ups``: The boolean
+variable :math:`\sigma_{yvpt}` marks whether process tuple :math:`p_{yv}`
+(:math:`\forall p \in P^\text{on/off}, \forall v \in V, \forall y \in Y`)
+is starting (:math:`\sigma_{yvpt}` becomes 1) or not (:math:`\sigma_{yvpt}` is 0)
+at a timestep :math:`t`. The process is considered to start when its output
+``e_pro_out`` becomes greater than 0.
+In the script ``AdvancedProcesses.py``, this variable is defined by the model
+variable ``start_ups`` and initialized by the following code fragment: ::
+
+    m.start_up = pyomo.Var(
+            m.tm, m.pro_start_up_tuples,
+            within=pyomo.Boolean,
+            doc='Start-up marker')
+
 Transmission Variables
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -288,53 +310,20 @@ an origin site :math:`v_\text{out}` to a destination site
 :math:`{v_\text{in}}`. The total transmission capacity includes both the
 already installed transmission capacity and the additional new transmission
 capacity that needs to be installed. This variable is expressed in the unit MW.
-In script ``features\transmission.py`` this variable is defined by the model variable
+In script ``model.py`` this variable is defined by the model variable
 ``cap_tra`` and initialized by the following code fragment: ::
 
-    m.cap_tra = pyomo.Expression(
+    m.cap_tra = pyomo.Var(
         m.tra_tuples,
-        rule=def_transmission_capacity_rule,
+        within=pyomo.NonNegativeReals,
         doc='Total transmission capacity (MW)')
-    
-With ``def_transmission_capacity_rule`` defined as::
-
-    def def_transmission_capacity_rule(m, stf, sin, sout, tra, com):
-    if m.mode['int']:
-        if (sin, sout, tra, com, stf) in m.inst_tra_tuples:
-            if (min(m.stf), sin, sout, tra, com) in m.tra_const_cap_dict:
-                cap_tra = m.transmission_dict['inst-cap'][
-                    (min(m.stf), sin, sout, tra, com)]
-            else:
-                cap_tra = (
-                    sum(m.cap_tra_new[stf_built, sin, sout, tra, com]
-                        for stf_built in m.stf
-                        if (sin, sout, tra, com, stf_built, stf) in
-                        m.operational_tra_tuples) +
-                    m.transmission_dict['inst-cap']
-                    [(min(m.stf), sin, sout, tra, com)])
-        else:
-            cap_tra = (
-                sum(m.cap_tra_new[stf_built, sin, sout, tra, com]
-                    for stf_built in m.stf
-                    if (sin, sout, tra, com, stf_built, stf) in
-                    m.operational_tra_tuples))
-    else:
-        if (stf, sin, sout, tra, com) in m.tra_const_cap_dict:
-            cap_tra = \
-                m.transmission_dict['inst-cap'][(stf, sin, sout, tra, com)]
-        else:
-            cap_tra = (m.cap_tra_new[stf, sin, sout, tra, com] +
-                       m.transmission_dict['inst-cap'][
-                           (stf, sin, sout, tra, com)])
-
-    return cap_tra
 
 **New Transmission Capacity**, :math:`\hat{\kappa}_{yaf}`, ``cap_tra_new``: The
 variable :math:`\hat{\kappa}_{yaf}` represents the additional capacity, that
 needs to be installed, of a transmission tuple :math:`f_{yca}`, where :math:`a`
 represents the arc from an origin site :math:`v_\text{out}` to a destination
 site :math:`v_\text{in}`. This variable is expressed in the unit MW.
-In script ``features\transmission.py`` this variable is defined by the model variable
+In script ``model.py`` this variable is defined by the model variable
 ``cap_tra_new`` and initialized by the following code fragment: ::
 
     m.cap_tra_new = pyomo.Var(
@@ -347,7 +336,7 @@ In script ``features\transmission.py`` this variable is defined by the model var
 commodity flow input into a transmission tuple :math:`f_{yca}` at a timestep
 :math:`t`, where :math:`a` represents the arc from an origin site
 :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
-is expressed in the unit MWh. In script ``features\transmission.py`` this variable is defined by
+is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
 the model variable ``e_tra_in`` and initialized by the following code fragment:
 ::
 
@@ -358,10 +347,10 @@ the model variable ``e_tra_in`` and initialized by the following code fragment:
 
 **Transmission Output Commodity Flow**, :math:`\pi_{yaft}^\text{out}`,
 ``e_tra_out``: The variable :math:`\pi_{yaft}^\text{out}` represents the
-commodity flow output out of a transmission tuple :math:`f_{yca}` at a timestep
+commodity flow output out of a transmission tuple :math:`f_{ca}` at a timestep
 :math:`t`, where :math:`a` represents the arc from an origin site
 :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
-is expressed in the unit MWh. In script ``features\transmission.py`` this variable is defined by
+is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
 the model variable ``e_tra_out`` and initialized by the following code
 fragment: ::
 
@@ -377,7 +366,7 @@ If the DC Power Flow transmission modelling is activated, two new variables are 
 
 **Voltage Angle**, :math:`\theta_{yvt}`, ``voltage_angle``: The variable :math:`\theta_{yvt}` represents the voltage
 angle of a site :math:`v`, which has a DCPF transmission line connection, at a timestep :math:`t`. This variable is
-expressed in the unit degrees. In script ``features\transmission.py`` this variable is defined by the model variable ``voltage_angle``
+expressed in the unit degrees. In script ``urbs.py`` this variable is defined by the model variable ``voltage_angle``
 and initialized by the following code
 fragment: ::
 
@@ -391,7 +380,7 @@ The variable :math:`{\pi_{yaft}^{\text{in}}}^\prime` represents the absolute val
 on a DCPF transmission tuple :math:`f_{yca}` at a timestep
 :math:`t`, where :math:`a` represents the arc from an origin site
 :math:`v_\text{out}` to a destination site :math:`v_\text{in}`. This variable
-is expressed in the unit MWh. In script ``features\transmission.py`` this variable is defined by
+is expressed in the unit MWh. In script ``urbs.py`` this variable is defined by
 the model variable ``e_tra_abs`` and initialized by the following code
 fragment: ::
 
@@ -437,49 +426,19 @@ variable :math:`\kappa_{yvs}^\text{c}` represents the total load capacity of a
 storage tuple :math:`s_{yvc}`. The total storage load capacity includes both the
 already installed storage load capacity and the additional new storage load
 capacity that needs to be installed. This variable is expressed in unit MWh. In
-script ``features\storage.py`` this variable is defined by the model variable
+script ``model.py`` this variable is defined by the model variable
 ``cap_sto_c`` and initialized by the following code fragment: ::
 
-    m.cap_sto_c = pyomo.Expression(
+    m.cap_sto_c = pyomo.Var(
         m.sto_tuples,
-        rule=def_storage_capacity_rule,
+        within=pyomo.NonNegativeReals,
         doc='Total storage size (MWh)')
-
-With ``def_storage_capacity_rule`` defined as: ::
-
-    def def_storage_capacity_rule(m, stf, sit, sto, com):
-        if m.mode['int']:
-            if (sit, sto, com, stf) in m.inst_sto_tuples:
-                if (min(m.stf), sit, sto, com) in m.sto_const_cap_c_dict:
-                    cap_sto_c = m.storage_dict['inst-cap-c'][
-                        (min(m.stf), sit, sto, com)]
-                else:
-                    cap_sto_c = (
-                        sum(m.cap_sto_c_new[stf_built, sit, sto, com]
-                            for stf_built in m.stf
-                            if (sit, sto, com, stf_built, stf) in
-                            m.operational_sto_tuples) +
-                        m.storage_dict['inst-cap-c'][(min(m.stf), sit, sto, com)])
-            else:
-                cap_sto_c = (
-                    sum(m.cap_sto_c_new[stf_built, sit, sto, com]
-                        for stf_built in m.stf
-                        if (sit, sto, com, stf_built, stf) in
-                        m.operational_sto_tuples))
-        else:
-            if (stf, sit, sto, com) in m.sto_const_cap_c_dict:
-                cap_sto_c = m.storage_dict['inst-cap-c'][(stf, sit, sto, com)]
-            else:
-                cap_sto_c = (m.cap_sto_c_new[stf, sit, sto, com] +
-                            m.storage_dict['inst-cap-c'][(stf, sit, sto, com)])
-
-    return cap_sto_c
 
 **New Storage Size**, :math:`\hat{\kappa}_{yvs}^\text{c}`, ``cap_sto_c_new``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the additional
-storage load capacity of a storage tuple :math:`s_{yvc}` that needs to be
+storage load capacity of a storage tuple :math:`s_{vc}` that needs to be
 installed to the energy system in order to provide the optimal solution. This
-variable is expressed in the unit MWh. In script ``features\storage.py`` this variable is
+variable is expressed in the unit MWh. In script ``model.py`` this variable is
 defined by the model variable ``cap_sto_c_new`` and initialized by the
 following code fragment: ::
 
@@ -488,55 +447,37 @@ following code fragment: ::
         within=pyomo.NonNegativeReals,
         doc='New storage size (MWh)')
 
+**New Storage Size Units**, :math:`\beta_{yvs}^\text{c}`, ``sto_cap_c_unit``:
+The variable :math:`\hat{\kappa}_{yvs}^\text{c}` represents the number of
+additional storage load capacity blocks of a storage tuple :math:`s_{vc}` that
+needs to be installed to the energy system in order to provide the optimal solution.
+In script ``storage.py`` this variable is defined by the model variable ``cap_sto_c_unit``
+and initialized by the following code fragment: ::
+
+    m.sto_cap_c_unit = pyomo.Var(
+        m.sto_block_c_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage size units')
+
 **Total Storage Power**, :math:`\kappa_{yvs}^\text{p}`, ``cap_sto_p``: The
 variable :math:`\kappa_{yvs}^\text{p}` represents the total potential discharge
-power of a storage tuple :math:`s_{yvc}`. The total storage power includes both
+power of a storage tuple :math:`s_{vc}`. The total storage power includes both
 the already installed storage power and the additional new storage power that
 needs to be installed. This variable is expressed in the unit MW. In script
-``features\storage.py`` this variable is defined by the model variable ``cap_sto_p`` and
+``model.py`` this variable is defined by the model variable ``cap_sto_p`` and
 initialized by the following code fragment:
 ::
 
-    m.cap_sto_p = pyomo.Expression(
+    m.cap_sto_p = pyomo.Var(
         m.sto_tuples,
-        rule=def_storage_power_rule,
+        within=pyomo.NonNegativeReals,
         doc='Total storage power (MW)')
-
-With ``def_storage_power_rule`` defined as: ::
-
-    def def_storage_power_rule(m, stf, sit, sto, com):
-        if m.mode['int']:
-            if (sit, sto, com, stf) in m.inst_sto_tuples:
-                if (min(m.stf), sit, sto, com) in m.sto_const_cap_p_dict:
-                    cap_sto_p = m.storage_dict['inst-cap-p'][
-                        (min(m.stf), sit, sto, com)]
-                else:
-                    cap_sto_p = (
-                        sum(m.cap_sto_p_new[stf_built, sit, sto, com]
-                            for stf_built in m.stf
-                            if (sit, sto, com, stf_built, stf) in
-                            m.operational_sto_tuples) +
-                        m.storage_dict['inst-cap-p'][(min(m.stf), sit, sto, com)])
-            else:
-                cap_sto_p = (
-                    sum(m.cap_sto_p_new[stf_built, sit, sto, com]
-                        for stf_built in m.stf
-                        if (sit, sto, com, stf_built, stf)
-                        in m.operational_sto_tuples))
-        else:
-            if (stf, sit, sto, com) in m.sto_const_cap_p_dict:
-                cap_sto_p = m.storage_dict['inst-cap-p'][(stf, sit, sto, com)]
-            else:
-                cap_sto_p = (m.cap_sto_p_new[stf, sit, sto, com] +
-                            m.storage_dict['inst-cap-p'][(stf, sit, sto, com)])
-
-        return cap_sto_p
 
 **New Storage Power**, :math:`\hat{\kappa}_{yvs}^\text{p}`, ``cap_sto_p_new``:
 The variable :math:`\hat{\kappa}_{yvs}^\text{p}` represents the additional
-potential discharge power of a storage tuple :math:`s_{yvc}` that needs to be
+potential discharge power of a storage tuple :math:`s_{vc}` that needs to be
 installed to the energy system in order to provide the optimal solution. This
-variable is expressed in the unit MW. In script ``features\storage.py`` this variable is
+variable is expressed in the unit MW. In script ``model.py`` this variable is
 defined by the model variable ``cap_sto_p_new`` and initialized by the
 following code fragment:
 ::
@@ -546,12 +487,25 @@ following code fragment:
         within=pyomo.NonNegativeReals,
         doc='New  storage power (MW)')
 
+**New Storage Power Units**, :math:`\beta_{yvs}^\text{c}`, ``sto_cap_p_unit``:
+The variable :math:`\beta_{yvs}^\text{c}` represents the number of additional
+potential discharge power blocks of a storage tuple :math:`s_{vc}` that needs
+to be installed to the energy system in order to provide the optimal solution.
+In the script ``storage.py`` this variable is defined by the model variable
+``sto_cap_p_unit`` and initialized by the following code fragment:
+::
+
+    m.sto_cap_p_unit = pyomo.Var(
+        m.sto_block_p_tuples,
+        within=pyomo.NonNegativeIntegers,
+        doc='New storage power units')
+
 **Storage Input Commodity Flow**, :math:`\epsilon_{yvst}^\text{in}`,
 ``e_sto_in``: The variable :math:`\epsilon_{yvst}^\text{in}` represents the
 input commodity flow into a storage tuple :math:`s_{yvc}` at a timestep
 :math:`t`. Input commodity flow into a storage tuple can also be defined as the
 charge of a storage tuple. This variable is expressed in the unit MWh. In
-script ``features\storage.py`` this variable is defined by the model variable ``e_sto_in``
+script ``model.py`` this variable is defined by the model variable ``e_sto_in``
 and initialized by the following code fragment:
 ::
 
@@ -561,11 +515,11 @@ and initialized by the following code fragment:
         doc='Commodity flow into storage (MWh) at a given timestep')
 
 **Storage Output Commodity Flow**, :math:`\epsilon_{yvst}^\text{out}`,
-``e_sto_out``:  The variable :math:`\epsilon_{yvst}^\text{out}` represents the
+``e_sto_out``:  The variable :math:`\epsilon_{vst}^\text{out}` represents the
 output commodity flow out of a storage tuple :math:`s_{yvc}` at a timestep
 :math:`t`. Output commodity flow out of a storage tuple can also be defined as
 the discharge of a storage tuple. This variable is expressed in the unit MWh.
-In script ``features\storage.py`` this variable is defined by the model variable
+In script ``model.py`` this variable is defined by the model variable
 ``e_sto_out`` and initialized by the following code fragment:
 ::
 
@@ -576,8 +530,8 @@ In script ``features\storage.py`` this variable is defined by the model variable
 
 **Storage Energy Content**, :math:`\epsilon_{yvst}^\text{con}`, ``e_sto_con``:
 The variable :math:`\epsilon_{yvst}^\text{con}` represents the energy amount
-that is loaded in a storage tuple :math:`s_{yvc}` at a timestep :math:`t`. This
-variable is expressed in the unit MWh. In script ``features\storage.py`` this variable is
+that is loaded in a storage tuple :math:`s_{vc}` at a timestep :math:`t`. This
+variable is expressed in the unit MWh. In script ``urbs.py`` this variable is
 defined by the model variable ``e_sto_out`` and initialized by the following
 code fragment:
 ::

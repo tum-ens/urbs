@@ -140,7 +140,6 @@ def add_transmission_dc(m):
     tra_tuples_tp = [item for item in tra_tuples if item not in tra_tuples_dc]
     tra_tuples_dc = remove_duplicate_transmission(tra_tuples_dc)
     tra_tuples = tra_tuples_dc + tra_tuples_tp
-    tra_tuples = list(dict.fromkeys(tra_tuples))
 
     # tranmission (e.g. hvac, hvdc, pipeline...)
     indexlist = list()

@@ -3,12 +3,14 @@ import shutil
 import urbs
 from datetime import date
 
-input_files = 'Intertemporal_example'  # for single year file name, for intertemporal folder name
+input_files = 'myopictest'  # for single year file name, for intertemporal folder name
 input_dir = 'Input'
 input_path = os.path.join(input_dir, input_files)
 
-result_name = 'Intertemp'
+result_name = 'myopictest'
 result_dir = urbs.prepare_result_directory(result_name)  # name + time stamp
+
+mode="myopic" # choose from single year, intertemporal or myopic
 
 #get year
 year = date.today().year
@@ -53,7 +55,7 @@ report_tuples = [
     ]
 
 # optional: define names for sites in report_tuples
-report_sites_name = {('North', 'Mid', 'South'): 'All'}
+report_sites_name = {}
 
 # plotting commodities/sites
 plot_tuples = [
@@ -76,11 +78,11 @@ plot_tuples = [
     ]
 
 # optional: define names for sites in plot_tuples
-plot_sites_name = {('North', 'Mid', 'South'): 'All'}
+plot_sites_name = {}
 
 # plotting timesteps
 plot_periods = {
-    'all': timesteps[1:]
+   # 'all': timesteps[1:]
 }
 
 # add or change plot colors
@@ -94,16 +96,11 @@ for country, color in my_colors.items():
 # select scenarios to be run
 scenarios = [
              urbs.scenario_base,
-             urbs.scenario_stock_prices,
-             urbs.scenario_co2_limit,
-             urbs.scenario_co2_tax_mid,
-             urbs.scenario_no_dsm,
-             urbs.scenario_north_process_caps,
-             urbs.scenario_all_together
+
             ]
 
 for scenario in scenarios:
-    prob = urbs.run_scenario(input_path, solver, timesteps, scenario,
+    prob = urbs.run_scenario_myopic(input_path, solver, timesteps, scenario,
                              result_dir, dt, objective,
                              plot_tuples=plot_tuples,
                              plot_sites_name=plot_sites_name,

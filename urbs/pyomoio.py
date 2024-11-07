@@ -65,21 +65,25 @@ def get_entity(instance, name):
             labels = ['None']
 
     elif isinstance(entity, pyomo.Constraint):
-        if entity.dim() > 1:
-            # check whether all entries of the constraint have
-            # an existing dual variable
-            # in that case add to results
-            results = pd.DataFrame(
-                [key + (instance.dual[entity.__getitem__(key)],)
-                 for (key, id) in entity.items()
-                 if id in instance.dual._dict.keys()])
-        elif entity.dim() == 1:
-            results = pd.DataFrame(
-                [(v[0], instance.dual[v[1]]) for v in entity.items()])
-        else:
-            results = pd.DataFrame(
-                [(v[0], instance.dual[v[1]]) for v in entity.items()])
-            labels = ['None']
+        try:
+            if entity.dim() > 1:
+                # check whether all entries of the constraint have
+                # an existing dual variable
+                # in that case add to results
+                results = pd.DataFrame(
+                    [key + (instance.dual[entity.__getitem__(key)],)
+                     for (key, id) in entity.items()
+                     if id in instance.dual._dict.keys()])
+            elif entity.dim() == 1:
+                results = pd.DataFrame(
+                    [(v[0], instance.dual[v[1]]) for v in entity.items()])
+            else:
+                results = pd.DataFrame(
+                    [(v[0], instance.dual[v[1]]) for v in entity.items()])
+                labels = ['None']
+        except KeyError:
+            print(entity.name + " has no dual variable.")
+            results = pd.DataFrame()
 
     else:
         # create DataFrame
@@ -223,7 +227,7 @@ def _get_onset_names(entity):
     # get column titles for entities from domain set names
     labels = []
     # Flag needed for differentiation in handling SetDifference_OrderedSet
-    SetDifference_flag = False
+    set_flag = False
 
     # if entity is a Set, get the indices by reducing dimension to 1
     if isinstance(entity, pyomo.Set):
@@ -233,9 +237,10 @@ def _get_onset_names(entity):
                 # retrieve list of domain sets, which itself could be nested
                 #  if domain is a Set Difference subsets are expanded and only first item
                 #  of GeneratorObject is used in for loop by setting the SetDifferenceFlag
-                if isinstance(entity.domain, pyomo.base.set.SetDifference_OrderedSet):
+                if (isinstance(entity.domain, pyomo.base.set.SetDifference_OrderedSet) or
+                        isinstance(entity.domain, pyomo.base.set.SetUnion_OrderedSet)):
                     domains = entity.domain.subsets(expand_all_set_operators=True)
-                    SetDifference_flag = True
+                    set_flag = True
                 else:
                     domains = entity.domain.subsets(expand_all_set_operators=False)
             else:
@@ -256,7 +261,7 @@ def _get_onset_names(entity):
 
             for domain_set in domains:
                 labels.extend(_get_onset_names(domain_set))
-                if SetDifference_flag:
+                if set_flag:
                     break
 
         elif entity.dimen == 1:

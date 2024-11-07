@@ -9,7 +9,7 @@ if [ -d "urbs-env/bin" ]; then
 else
     # Create the virtual environment
     echo "Creating virtual environment..."
-    python3 -m venv urbs-env
+    py -3.12 -m venv urbs-env
 
     # Check if creation was successful
     if [ ! -d "urbs-env/bin" ]; then
@@ -28,7 +28,7 @@ if [ -f "urbs-env/installed.flag" ]; then
     echo "Required packages already installed."
 else
     echo "Installing required packages from urbs-env.txt..."
-    python -m pip install -r urbs-env.txt
+    py -3.12 -m pip install -r urbs-env.txt
 
     # Check if the installation succeeded
     if [ $? -ne 0 ]; then

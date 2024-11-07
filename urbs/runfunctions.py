@@ -216,7 +216,8 @@ def run_scenario_myopic(input_files, Solver, timesteps, scenario, result_dir, dt
 
         # solve model and read results
         optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-        optim = setup_solver(optim, logfile=log_filename)
+        if Solver != 'appsi_highs':
+            optim = setup_solver(optim, logfile=log_filename)
         result = optim.solve(prob, tee=True)
         assert str(result.solver.termination_condition) == 'optimal'
 

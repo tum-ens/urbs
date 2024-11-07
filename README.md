@@ -42,10 +42,9 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ### Installing Python
 
-1) Download and install [Python 3.12](https://www.python.org/downloads/). Make sure to check the box "Add Python to PATH" during installation.
-2) Check that Python is installed by running the command `python --version` in your terminal. The output should be `Python 3.12.x` or similar.
-***Note: (Depending on what your standard python version is, you might need to call `python3` instead of `python`.)***
-4) (Optional) If you want to use the Jupyter Notebook, install it by running `python -m pip install jupyter` in your terminal.
+1) Download and install [Python 3.12](https://www.python.org/downloads/). ***Note: Make sure to check the box "Add Python to PATH" during installation.***
+2) Using your terminal you can check which Python versions are installed on your system with `py -0` and check your standard version with `python --version`. The output should be `Python 3.12.x` or similar.
+***Note: (If your standard python version is Python 2.X, you might need to call `python3` instead of `python`.)***
 
 ### Installing an IDE (optional)
 
@@ -71,7 +70,7 @@ You can also use the [GitHub Desktop](https://desktop.github.com/) application i
 2) If this does not work for your IDE, you can install the environments by running the bash (Linux) / batch (Windows) script `prepare-virtual-environment` in the root directory of the repository. This will create a virtual environment, install all necessary packages and activate the environment.
 3) If you want to install the environment manually, enter the commands below in your terminal:
 
-    `python -m venv urbs-env`
+    `python3.12 -m venv urbs-env`
 
     `Linux/MacOS: source urbs-env/bin/activate or Windows: urbs-env\Scripts\activate`
    
@@ -84,9 +83,12 @@ There are several solvers that can be used to solve the optimization problems. O
 
 However, also other solvers such as [glpk](https://www.gnu.org/software/glpk/) (open-source) or [CPLEX](https://www.ibm.com/analytics/cplex-optimizer) (commercial) are compatible with the Pyomo interface in urbs.
 
+### (optional) Installing Jupyter Notebook
+If you want to use the Jupyter Notebook, install it by running `python -m pip install jupyter` in your terminal.
+
 ## Get started
 
-In the downloaded directory, open a execute the runme script by using the following on the command prompt (Windows) or Terminal (Linux). (Depending on what your standard python version is, you might need to call `python3` instead of `python`.):
+In the downloaded directory, open a execute the runme script by using the following on the command prompt (Windows) or Terminal (Linux). (***Note: (Depending on what your standard python version is, you might need to call `python3.12` instead of `python`.)***):
  
     python runme.py
 

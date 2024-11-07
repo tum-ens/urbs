@@ -28,7 +28,7 @@ if exist "urbs-env\installed.flag" (
     echo Required packages already installed.
 ) else (
     echo Installing required packages from urbs-env.txt...
-    py -3.12 -m pip install -r urbs-env.txt
+    python -m pip install -r urbs-env.txt
 
     REM Check if the installation succeeded
     if %errorlevel% neq 0 (

@@ -1,0 +1,13 @@
+# Python venv
+numpy==1.26.4
+matplotlib==3.8.3
+pandas==2.2.1
+pandas-datareader==0.10.0
+tables==3.9.2 #pytables in conda
+openpyxl==3.1.2
+xlrd==2.0.1
+pyomo==6.7.1
+psutil==5.9.8
+pyutilib==6.0.0
+gurobipy
+highspy

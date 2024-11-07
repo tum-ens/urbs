@@ -4,4 +4,6 @@
 result/*
 results/*
 doc/_build/*
+analyzing/urbs_lvds_analysis/
+urbs-env/*
 teaching/.ipynb_checkpoints

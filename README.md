@@ -66,15 +66,18 @@ You can also use the [GitHub Desktop](https://desktop.github.com/) application i
 
 ### Installing your environment
 
-1) If you use a new IDE (such as Pycharm or VS Code) the environment can be directly created from the urbs-env.txt file when opening a project.
-2) If this does not work for your IDE, you can install the environments by running the bash (Linux) / batch (Windows) script `prepare-virtual-environment` in the root directory of the repository. This will create a virtual environment, install all necessary packages and activate the environment.
-3) If you want to install the environment manually, enter the commands below in your terminal:
+1) You can install the environments by running the bash (Linux) / batch (Windows) script `prepare-virtual-environment` in the root directory of the repository. This will create a virtual environment, install all necessary packages and activate the environment.
+2) If you want to install the environment manually, enter the commands below in your terminal:
 
+Windows:
+    `py -3.12 -m venv urbs-env`
+    `urbs-env\Scripts\activate`
+    `py -3.12 -m pip install -r urbs-env.txt`
+
+Linux/MacOS:
     `python3.12 -m venv urbs-env`
-
-    `Linux/MacOS: source urbs-env/bin/activate or Windows: urbs-env\Scripts\activate`
-   
-    `python -m pip install -r urbs-env.txt`
+    `source urbs-env/bin/activate
+    `python3.12 -m pip install -r urbs-env.txt`
 
 ### Solver
 There are several solvers that can be used to solve the optimization problems. Our recommendations are the following two python libraries that have been installed in the environment.

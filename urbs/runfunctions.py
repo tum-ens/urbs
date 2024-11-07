@@ -1,6 +1,7 @@
 import os
 import pyomo.environ
 from pyomo.opt.base import SolverFactory
+from pyomo.contrib.appsi.solvers import Highs, Gurobi, Cplex
 from datetime import datetime, date
 from .model import create_model
 from .report import *
@@ -17,8 +18,8 @@ def prepare_result_directory(result_name):
         result_name: user specified result name
 
     Returns:
-        a subfolder in the result folder 
-    
+        a subfolder in the result folder
+
     """
     # timestamp for result directory
     now = datetime.now().strftime('%Y%m%dT%H%M')
@@ -127,7 +128,8 @@ def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,
 
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
-    optim = setup_solver(optim, logfile=log_filename, recommendations=True)
+    if Solver != 'appsi_highs':
+        optim = setup_solver(optim, logfile=log_filename, recommendations=True)
     result = optim.solve(prob, tee=True)
     assert str(result.solver.termination_condition) == 'optimal'
 

@@ -72,12 +72,12 @@ You can also use the [GitHub Desktop](https://desktop.github.com/) application i
 Windows:
     `py -3.12 -m venv urbs-env`
     `urbs-env\Scripts\activate`
-    `py -3.12 -m pip install -r urbs-env.txt`
+    `python -m pip install -r urbs-env.txt`
 
 Linux/MacOS:
     `python3.12 -m venv urbs-env`
     `source urbs-env/bin/activate
-    `python3.12 -m pip install -r urbs-env.txt`
+    `python -m pip install -r urbs-env.txt`
 
 ### Solver
 There are several solvers that can be used to solve the optimization problems. Our recommendations are the following two python libraries that have been installed in the environment.

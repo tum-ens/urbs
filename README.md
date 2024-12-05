@@ -5,6 +5,24 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 [![Documentation Status](https://readthedocs.org/projects/urbs/badge/?version=latest)](http://urbs.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.594200.svg)](https://doi.org/10.5281/zenodo.594200)
 
+## Table of Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Installation](#installation)
+  - [Installing Python](#installing-python)
+  - [Installing a Python IDE (optional)](#installing-a-python-ide-optional)
+  - [Installing Git](#installing-git)
+  - [Cloning the urbs repository](#cloning-the-urbs-repository)
+  - [Installing your environment](#installing-your-environment)
+  - [Solver](#solver)
+- [Get started](#get-started)
+- [Next steps and tips](#next-steps-and-tips)
+- [Further reading](#further-reading)
+- [Example uses](#example-uses)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
   * urbs is a linear programming model for multi-commodity energy systems with a focus on optimal storage sizing and use.
@@ -22,40 +40,58 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ## Installation
 
-There are 2 ways to get all required packages under Windows. We recommend using the Python distribution Anaconda. If you don't want to use it or already have an existing Python (version 3.6 **recommended**, 2.7 is supported as well) installation, you can also download the required packages by yourself..
+### Installing Python
 
-### Anaconda/Miniconda (recommended)
+1) Download and install [Python 3.12](https://www.python.org/downloads/). ***Note: Make sure to check the box "Add Python to PATH" during installation.***
+2) Using your terminal you can check which Python versions are installed on your system with `py -0` and check your standard version with `python --version`. The output should be `Python 3.12.x` or similar.
+***Note: (If your standard python version is Python 2.X, you might need to call `python3` instead of `python`.)***
 
-  1. **[Anaconda (Python 3)](http://continuum.io/downloads)/[Miniconda](https://docs.conda.io/en/latest/miniconda.html)**. Choose the 64-bit installer if possible.
-     During the installation procedure, keep both checkboxes "modify PATH" and "register Python" selected! If only higher Python versions are available, you can switch to a specific Python Version by typing `conda install python=<version>`
-  2. **Packages and Solver**: [GLPK](http://winglpk.sourceforge.net/).
-     1. Download the [environment file](https://github.com/tum-ens/urbs/blob/master/urbs-env.yml).
-     2. Launch a new command prompt (Windows: Win+R, type "cmd", Enter)
-     3. Install it via conda by `conda env create -f urbs-env.yml`.
-     4. Each time you open a new terminal for running urbs, you can activate the environment by `conda activate urbs`.
+### Installing an IDE (optional)
 
-Continue at [Get Started](#get-started).
+If you want to use an IDE for Python, you can install [PyCharm](https://www.jetbrains.com/pycharm/download/#section=windows) or [Visual Studio Code](https://code.visualstudio.com/). Both are free to use.
 
-### Manually (the hard way)
+### Installing Git
 
-For all packages, best take the latest release or release candidate version. Both 32 bit and 64 bit versions work, though 64 bit is recommended. The list of packages can be found in the [environment file](https://github.com/tum-ens/urbs/blob/master/urbs-env.yml).
-  
+1) Download and install [Git](http://git-scm.com/). Make sure to check the box "Run Git from the Windows Command Prompt" during installation.
+You can also use the [GitHub Desktop](https://desktop.github.com/) application if you prefer a graphical user interface.
+2) Check that Git is installed by running the command `git --version` in your terminal. 
+
+### Cloning the urbs repository
+
+1) Open your terminal and navigate to your preferred directory.
+2) Clone the repository by running the following commands in your terminal.:
+   - For GitLab: `git clone git@gitlab.lrz.de:tum-ens/urbs.git`
+   - For GitHub: `git clone git@github.com:tum-ens/urbs.git`
+3) Navigate to the cloned repository by running `cd urbs` in your terminal.
+
+### Installing your environment
+
+1) In windows you can install the environment by running the batch script `prepare-virtual-environment` in the root directory of the repository. This will create a virtual environment, install all necessary packages and activate the environment.
+2) If you want to install the environment manually, enter the commands below in your terminal:
+
+Windows:
+    `py -3.12 -m venv urbs-env`
+    `urbs-env\Scripts\activate`
+    `python -m pip install -r urbs-env.txt`
+
+Linux/MacOS:
+    `python3.12 -m venv urbs-env`
+    `source urbs-env/bin/activate
+    `python -m pip install -r urbs-env.txt`
+
+### Solver
+There are several solvers that can be used to solve the optimization problems. Our recommendations are the following two python libraries that have been installed in the environment.
+- [Highs](https://highs.dev/) (open-source)
+- [Gurobi](https://www.gurobi.com/) (commercial): To run this powerful solver you first need to create an account and then apply for an academic license in the license center ([descriptions](https://www.gurobi.com/features/academic-named-user-license/)).
+
+However, also other solvers such as [glpk](https://www.gnu.org/software/glpk/) (open-source) or [CPLEX](https://www.ibm.com/analytics/cplex-optimizer) (commercial) are compatible with the Pyomo interface in urbs.
+
+### (optional) Installing Jupyter Notebook
+If you want to use the Jupyter Notebook, install it by running `python -m pip install jupyter` in your terminal.
+
 ## Get started
 
-### Developers
-Once installation is complete, finally [install git (for version control)](http://git-scm.com/). **Remark:** at step "Adjusting your PATH environment", select "Run Git from the Windows Command Prompt".
-
-Then, in a directory of your choice, clone this repository by:
-
-    git clone https://github.com/tum-ens/urbs.git
-    
-Continue like the users after they downloaded the zip file. 
-
-### Users
-
-If you are not planning on developing urbs, pick the [latest release](https://github.com/tum-ens/urbs/releases) and download the zip file.
-
-In the downloaded directory, open a execute the runme script by using the following on the command prompt (Windows) or Terminal (Linux). (Depending on what your standard python version is, you might need to call `python3` instead of `python`.):
+In the downloaded directory, open a execute the runme script by using the following on the command prompt or Terminal. (***Note: (Depending on what your standard python version is, you might need to call `python3.12` instead of `python`.)***):
  
     python runme.py
 
@@ -67,7 +103,7 @@ and look at the new files `result/mimo-example-.../comparison.xlsx` and `result/
 
 ## Next steps and tips
 
-  1. Head over to the tutorial at http://urbs.readthedocs.io, which goes through runme.py step by step. 
+  1. Head over to the tutorial at http://urbs.readthedocs.io, which goes through runme.py step by step or try out the Jupyter Notebook tutorial inside the teaching folder. 
   2. Read the source code of `runme.py` and `comp.py`. 
   3. Try adding/modifying scenarios in `scenarios.py` and see their effect on results.
   4. If you need a nice python editor, think about using [PyCharm](https://www.jetbrains.com/pycharm/download). It has many features including easy Git integration, package management, etc.
@@ -90,15 +126,7 @@ and look at the new files `result/mimo-example-.../comparison.xlsx` and `result/
 <a href="https://raw.githubusercontent.com/ojdo/urbs/1house/img/comparison.png"><img src="https://raw.githubusercontent.com/ojdo/urbs/1house/img/comparison.png" alt="Comparison plot in example study 1house."></a>
   
   - Branch [haag15](https://github.com/ojdo/urbs/tree/haag15) in the forked repository [ojdo/urbs](https://github.com/ojdo/urbs) shows a larger example of a real-world use. Its input file contains a town divided into 12 regions, 12 process types, and 2 demand commodities (electricity and heat) . Patience and RAM (64 GB or more) is needed to run these scenarios with 8760 timesteps. The branch also contains three IPython notebooks that are used for result analysis and coupling to model [rivus](https://github.com/tum-ens/rivus).
-  
-## List of branches
-  - ASEAN
-  - CoTraDis
-  - decensys
-  - extremos
-  - MIQCP
-  - near_optimal
-  - urbs_gui
+
 
 ## Copyright
 

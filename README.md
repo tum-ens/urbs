@@ -66,7 +66,8 @@ You can also use the [GitHub Desktop](https://desktop.github.com/) application i
 
 ### Installing your environment
 
-1) In windows you can install the environment by running the batch script `prepare-virtual-environment` in the root directory of the repository. This will create a virtual environment, install all necessary packages and activate the environment.
+1) In windows you can install the environment by running the batch script `prepare-virtual-environment` in the root directory of the repository.
+You can do so from a terminal or by double-clicking the file in the file explorer. This will create a virtual environment and install all necessary packages.
 2) If you want to install the environment manually, enter the commands below in your terminal:
 
 Windows:
@@ -90,6 +91,12 @@ However, also other solvers such as [glpk](https://www.gnu.org/software/glpk/) (
 If you want to use the Jupyter Notebook, install it by running `python -m pip install jupyter` in your terminal.
 
 ## Get started
+
+Before running a script, ensure your environment is activated:
+- Set up your interpreter with your environment in your IDE.
+- Or, if running from your terminal, use the following command:
+  - Windows: `urbs-env\Scripts\activate`
+  - Linux/MacOS: `source urbs-env/bin/activate`
 
 In the downloaded directory, open a execute the runme script by using the following on the command prompt or Terminal. (***Note: (Depending on what your standard python version is, you might need to call `python3.12` instead of `python`.)***):
  

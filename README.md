@@ -44,7 +44,7 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 1) Download and install [Python 3.12](https://www.python.org/downloads/). ***Note: Make sure to check the box "Add Python to PATH" during installation.***
 2) Using your terminal you can check which Python versions are installed on your system with `py -0` and check your standard version with `python --version`. The output should be `Python 3.12.x` or similar.
-***Note: (If your standard python version is Python 2.X, you might need to call `python3` instead of `python`.)***
+   <br /> (***Note: If your standard python version is Python 2.X, you might need to call `python3` instead of `python`.***)
 
 ### Installing an IDE (optional)
 
@@ -69,21 +69,20 @@ You can also use the [GitHub Desktop](https://desktop.github.com/) application i
 1) In windows you can install the environment by running the batch script `prepare-virtual-environment` in the root directory of the repository.
 You can do so from a terminal or by double-clicking the file in the file explorer. This will create a virtual environment and install all necessary packages.
 2) If you want to install the environment manually, enter the commands below in your terminal:
-
-Windows:
-    `py -3.12 -m venv urbs-env`
-    `urbs-env\Scripts\activate`
+- Windows: <br />
+    `py -3.12 -m venv urbs-env` <br />
+    `urbs-env\Scripts\activate` <br />
     `python -m pip install -r urbs-env.txt`
 
-Linux/MacOS:
-    `python3.12 -m venv urbs-env`
-    `source urbs-env/bin/activate
+- Linux/MacOS: <br />
+    `python3.12 -m venv urbs-env` <br />
+    `source urbs-env/bin/activate` <br />
     `python -m pip install -r urbs-env.txt`
 
 ### Solver
 There are several solvers that can be used to solve the optimization problems. Our recommendations are the following two python libraries that have been installed in the environment.
 - [Highs](https://highs.dev/) (open-source)
-- [Gurobi](https://www.gurobi.com/) (commercial): To run this powerful solver you first need to create an account and then apply for an academic license in the license center ([descriptions](https://www.gurobi.com/features/academic-named-user-license/)).
+- [Gurobi](https://www.gurobi.com/) (commercial): To run this powerful solver you first need to create an account, apply for an academic license in the license center and download it ([descriptions](https://www.gurobi.com/features/academic-named-user-license/)).
 
 However, also other solvers such as [glpk](https://www.gnu.org/software/glpk/) (open-source) or [CPLEX](https://www.ibm.com/analytics/cplex-optimizer) (commercial) are compatible with the Pyomo interface in urbs.
 
@@ -93,12 +92,13 @@ If you want to use the Jupyter Notebook, install it by running `python -m pip in
 ## Get started
 
 Before running a script, ensure your environment is activated:
-- Set up your interpreter with your environment in your IDE.
-- Or, if running from your terminal, use the following command:
+- Either set up your interpreter in your IDE with your created environment.
+- Or, if running from your terminal, use the following command to activate it:
   - Windows: `urbs-env\Scripts\activate`
   - Linux/MacOS: `source urbs-env/bin/activate`
 
-In the downloaded directory, open a execute the runme script by using the following on the command prompt or Terminal. (***Note: (Depending on what your standard python version is, you might need to call `python3.12` instead of `python`.)***):
+In the downloaded directory, open a execute the runme script by using the following on the command prompt or Terminal. 
+<br /> (***Note: Depending on what your standard python version is, you might need to call `python3.12` instead of `python`.***):
  
     python runme.py
 

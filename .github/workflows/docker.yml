@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'weburbs_v*.*.*'
 
 jobs:
   buildOptimizer:
@@ -16,12 +16,12 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            ghcr.io/${{ github.repository }}
+            ghcr.io/${{ github.repository }}-weburbs
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=match,pattern=weburbs_v(\d),group=1
+            type=match,pattern=weburbs_v(\d.\d),group=1
+            type=match,pattern=weburbs_v(\d.\d.\d),group=1
 
       - name: Checkout code
         uses: actions/checkout@v4

@@ -1,0 +1,7 @@
+
+services:
+  app:
+    image: ghcr.io/jonastahl/idp-urbs:0.0.4
+    build: .
+    ports:
+      - "5000:5000"

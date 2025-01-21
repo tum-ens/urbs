@@ -1,0 +1,1 @@
+curl http://localhost:5000/simulate -XPOST -H "Content-type: application/json" -T Input/simple.json

@@ -543,9 +543,13 @@ def res_env_step_rule(m, tm, stf, sit, com, com_type):
         return pyomo.Constraint.Skip
     else:
         environmental_output = - commodity_balance(m, tm, stf, sit, com)
-        return (environmental_output <=
+        rule = (environmental_output <=
                 m.dt * m.commodity_dict['maxperhour']
                 [(stf, sit, com, com_type)])
+        if rule is True:
+            return pyomo.Constraint.Skip
+        else:
+            return rule
 
 
 # limit environmental commodity output in total (scaled to annual
@@ -559,8 +563,12 @@ def res_env_total_rule(m, stf, sit, com, com_type):
         for tm in m.tm:
             env_output_sum += (- commodity_balance(m, tm, stf, sit, com))
         env_output_sum *= m.weight
-        return (env_output_sum <=
+        rule = (env_output_sum <=
                 m.commodity_dict['max'][(stf, sit, com, com_type)])
+        if rule is True:
+            return pyomo.Constraint.Skip
+        else:
+            return rule
 
 
 # process
@@ -708,8 +716,13 @@ def res_global_co2_limit_rule(m, stf):
 
         # scaling to annual output (cf. definition of m.weight)
         co2_output_sum *= m.weight
-        return (co2_output_sum <= m.global_prop_dict['value']
+
+        rule = (co2_output_sum <= m.global_prop_dict['value']
                                                     [stf, 'CO2 limit'])
+        if rule is True:
+            return pyomo.Constraint.Skip
+        else:
+            return rule
     else:
         return pyomo.Constraint.Skip
 

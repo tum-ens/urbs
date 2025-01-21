@@ -1,10 +1,179 @@
-import pandas as pd
+import numpy as np
 import os
 import glob
-from xlrd import XLRDError
+
+import pandas as pd
 import pyomo.core as pyomo
 from .features.modelhelper import *
 from .identify import *
+
+pd.set_option('future.no_silent_downcasting', True)
+
+
+def dataFrameFromObject(data, index, indcol, columns, additional=None):
+    if additional is None:
+        additional = {}
+    df = pd.DataFrame.from_dict(data, orient='index', columns=indcol + columns).reset_index()
+    for (k, v) in additional.items():
+        df.insert(0, k, v)
+    df.columns = index + indcol + columns
+    return df.set_index(index + indcol)
+
+
+def read_config(config, year):
+    """Read JSON input config and prepare URBS input dict.
+
+    Reads the Excel spreadsheets that adheres to the structure shown in
+    mimo-example.xlsx. Column titles in 'Demand' and 'SupIm' are split, so that
+    'Site.Commodity' becomes the MultiIndex column ('Site', 'Commodity').
+
+    Args:
+        - filename: filename to Excel spreadsheets
+        - year: current year for non-intertemporal problems
+
+    Returns:
+        a dict of up to 12 DataFrames
+    """
+
+    gl = []
+    sit = []
+    com = []
+    pro = []
+    pro_com = []
+    tra = []
+    sto = []
+    dem = []
+    sup = []
+    bsp = []
+    ds = []
+    ef = []
+
+    # create support timeframe index
+    support_timeframe = year
+    if 'Support timeframe' in config['global']:
+        support_timeframe = config['global']['Support timeframe']
+        del config['global']['Support timeframe']
+
+    c_global = dataFrameFromObject(config['global'], ['Property'], [], ['value'])
+    gl.append(pd.concat([c_global],
+                        keys=[support_timeframe],
+                        names=['support_timeframe']))
+
+    c_site = dataFrameFromObject(config['site'], ['Name'], [], ['area'])
+    c_site.replace('inf', np.inf, inplace=True)
+    sit.append(pd.concat([c_site],
+                         keys=[support_timeframe],
+                         names=['support_timeframe']))
+
+    c_commodity = []
+    c_process = []
+    c_commodity_process = []
+    supim = []
+    demand = []
+    c_storage = []
+    for (site, dataSite) in config['site'].items():
+        c_com = dataFrameFromObject(dataSite['commodity'], ['Site', 'Commodity'], ['Type'],
+                                    ['price', 'max', 'maxperhour'],
+                                    {'Site': site})
+        c_com.replace('inf', np.inf, inplace=True)
+        c_commodity.append(c_com)
+
+        for (commodity, dataCom) in dataSite['commodity'].items():
+            if 'supim' in dataCom:
+                df = pd.DataFrame(dataCom['supim'], columns=[f"{site}.{commodity}"])
+                df.index.name = 't'
+                df.columns = split_columns(df.columns)
+                supim.append(df)
+            if 'demand' in dataCom:
+                df = pd.DataFrame(dataCom['demand'], columns=[f"{site}.{commodity}"])
+                df.index.name = 't'
+                df.columns = split_columns(df.columns)
+                demand.append(df)
+            if 'storage' in dataCom:
+                c_stor = dataFrameFromObject(dataCom['storage'], ['Site', 'Commodity', 'Storage'], [],
+                                             ['inst-cap-c', 'cap-lo-c', 'cap-up-c', 'inst-cap-p', 'cap-lo-p',
+                                              'cap-up-p', 'eff-in', 'eff-out', 'inv-cost-p', 'inv-cost-c',
+                                              'fix-cost-p', 'fix-cost-c', 'var-cost-p', 'var-cost-c', 'wacc',
+                                              'depreciation', 'init', 'discharge', 'ep-ratio'],
+                                             {'Commodity': commodity, 'Site': site})
+                c_stor.replace('inf', np.inf, inplace=True)
+                c_stor = c_stor.reorder_levels(['Site', 'Storage', 'Commodity'])
+                c_storage.append(c_stor)
+            else:
+                c_storage.append(pd.DataFrame())
+
+        c_pro = dataFrameFromObject(dataSite['process'], ['Site', 'Process'], [],
+                                    ['inst-cap', 'cap-lo', 'cap-up', 'max-grad', 'min-fraction', 'inv-cost', 'fix-cost',
+                                     'var-cost', 'wacc', 'depreciation', 'area-per-cap'], {'Site': site})
+        c_pro.replace('inf', np.inf, inplace=True)
+        c_process.append(c_pro)
+
+        for (process, dataProc) in dataSite['process'].items():
+            c_com_pro = dataFrameFromObject(dataProc['commodity'], ['Process', 'Commodity'], ['Direction'],
+                                            ['ratio', 'ratio-min'], {'Process': process})
+            c_commodity_process.append(c_com_pro)
+    com.append(pd.concat(c_commodity,
+                         keys=[support_timeframe],
+                         names=['support_timeframe']))
+    pro.append(pd.concat(c_process,
+                         keys=[support_timeframe],
+                         names=['support_timeframe']))
+    pro_com.append(pd.concat([pd.concat(c_commodity_process)],
+                             keys=[support_timeframe],
+                             names=['support_timeframe']))
+    sup.append(pd.concat([pd.concat(supim, axis=1)],
+                         keys=[support_timeframe],
+                         names=['support_timeframe']))
+    dem.append(pd.concat([pd.concat(demand, axis=1)],
+                         keys=[support_timeframe],
+                         names=['support_timeframe']))
+    sto.append(pd.concat([pd.concat(c_storage, axis=1)],
+                         keys=[support_timeframe],
+                         names=['support_timeframe']))
+
+    # currently unused configs
+    tra.append(pd.DataFrame())
+    ds.append(pd.DataFrame())
+    bsp.append(pd.DataFrame())
+    ef.append(pd.DataFrame())
+
+    # prepare input data
+    try:
+        global_prop = pd.concat(gl, sort=False)
+        site = pd.concat(sit, sort=False)
+        commodity = pd.concat(com, sort=False)
+        process = pd.concat(pro, sort=False)
+        process_commodity = pd.concat(pro_com, sort=False)
+        demand = pd.concat(dem, sort=False)
+        supim = pd.concat(sup, sort=False)
+        transmission = pd.concat(tra, sort=False)
+        storage = pd.concat(sto, sort=False)
+        dsm = pd.concat(ds, sort=False)
+        buy_sell_price = pd.concat(bsp, sort=False)
+        eff_factor = pd.concat(ef, sort=False)
+    except KeyError:
+        pass
+
+    data = {
+        'global_prop': global_prop,
+        'site': site,
+        'commodity': commodity,
+        'process': process,
+        'process_commodity': process_commodity,
+        'demand': demand,
+        'supim': supim,
+        'transmission': transmission,
+        'storage': storage,
+        'dsm': dsm,
+        'buy_sell_price': buy_sell_price.dropna(axis=1, how='all'),
+        'eff_factor': eff_factor.dropna(axis=1, how='all')
+    }
+
+    # sort nested indexes to make direct assignments work
+    for key in data:
+        if isinstance(data[key].index, pd.MultiIndex):
+            data[key].sort_index(inplace=True)
+    return data
 
 
 def read_input(input_files, year):
@@ -64,7 +233,7 @@ def read_input(input_files, year):
             sit.append(site)
             commodity = (
                 xls.parse('Commodity')
-                   .set_index(['Site', 'Commodity', 'Type']))
+                .set_index(['Site', 'Commodity', 'Type']))
             commodity = pd.concat([commodity], keys=[support_timeframe],
                                   names=['support_timeframe'])
             com.append(commodity)
@@ -74,7 +243,7 @@ def read_input(input_files, year):
             pro.append(process)
             process_commodity = (
                 xls.parse('Process-Commodity')
-                   .set_index(['Process', 'Commodity', 'Direction']))
+                .set_index(['Process', 'Commodity', 'Direction']))
             process_commodity = pd.concat([process_commodity],
                                           keys=[support_timeframe],
                                           names=['support_timeframe'])
@@ -121,7 +290,7 @@ def read_input(input_files, year):
             else:
                 dsm = pd.DataFrame()
             ds.append(dsm)
-            if 'Buy-Sell-Price'in xls.sheet_names:
+            if 'Buy-Sell-Price' in xls.sheet_names:
                 buy_sell_price = xls.parse('Buy-Sell-Price').set_index(['t'])
                 buy_sell_price = pd.concat([buy_sell_price],
                                            keys=[support_timeframe],
@@ -323,32 +492,32 @@ def pyomo_model_prep(data, timesteps):
 
         # derive invest factor from WACC, depreciation and discount untility
         process['discount'] = (m.global_prop.xs('Discount rate', level=1)
-                                .loc[m.global_prop.index.min()[0]]['value'])
+        .loc[m.global_prop.index.min()[0]]['value'])
         process['stf_min'] = m.global_prop.index.min()[0]
         process['stf_end'] = (m.global_prop.index.max()[0] +
                               m.global_prop.loc[
-                              (max(commodity.index.get_level_values
-                                   ('support_timeframe').unique()),
-                               'Weight')]['value'] - 1)
+                                  (max(commodity.index.get_level_values
+                                       ('support_timeframe').unique()),
+                                   'Weight')]['value'] - 1)
         process['invcost-factor'] = (process.apply(
-                                     lambda x: invcost_factor(
-                                         x['depreciation'],
-                                         x['wacc'],
-                                         x['discount'],
-                                         x['support_timeframe'],
-                                         x['stf_min']),
-                                     axis=1))
+            lambda x: invcost_factor(
+                x['depreciation'],
+                x['wacc'],
+                x['discount'],
+                x['support_timeframe'],
+                x['stf_min']),
+            axis=1))
 
         # derive overpay-factor from WACC, depreciation and discount untility
         process['overpay-factor'] = (process.apply(
-                                     lambda x: overpay_factor(
-                                         x['depreciation'],
-                                         x['wacc'],
-                                         x['discount'],
-                                         x['support_timeframe'],
-                                         x['stf_min'],
-                                         x['stf_end']),
-                                     axis=1))
+            lambda x: overpay_factor(
+                x['depreciation'],
+                x['wacc'],
+                x['discount'],
+                x['support_timeframe'],
+                x['stf_min'],
+                x['stf_end']),
+            axis=1))
         process.loc[(process['overpay-factor'] < 0) |
                     (process['overpay-factor']
                      .isnull()), 'overpay-factor'] = 0
@@ -389,9 +558,9 @@ def pyomo_model_prep(data, timesteps):
             transmission['stf_min'] = m.global_prop.index.min()[0]
             transmission['stf_end'] = (m.global_prop.index.max()[0] +
                                        m.global_prop.loc[
-                                       (max(commodity.index.get_level_values
-                                            ('support_timeframe').unique()),
-                                        'Weight')]['value'] - 1)
+                                           (max(commodity.index.get_level_values
+                                                ('support_timeframe').unique()),
+                                            'Weight')]['value'] - 1)
             transmission['invcost-factor'] = (
                 transmission.apply(lambda x: invcost_factor(
                     x['depreciation'],
@@ -399,7 +568,7 @@ def pyomo_model_prep(data, timesteps):
                     x['discount'],
                     x['support_timeframe'],
                     x['stf_min']),
-                    axis=1))
+                                   axis=1))
             # derive overpay-factor from WACC, depreciation and
             # discount untility
             transmission['overpay-factor'] = (
@@ -410,11 +579,11 @@ def pyomo_model_prep(data, timesteps):
                     x['support_timeframe'],
                     x['stf_min'],
                     x['stf_end']),
-                    axis=1))
+                                   axis=1))
             # Derive multiplier for all energy based costs
             transmission.loc[(transmission['overpay-factor'] < 0) |
                              (transmission['overpay-factor'].isnull()),
-                             'overpay-factor'] = 0
+            'overpay-factor'] = 0
             transmission['stf_dist'] = (transmission['support_timeframe'].
                                         apply(stf_dist, m=m))
             transmission['discount-factor'] = (
@@ -441,13 +610,13 @@ def pyomo_model_prep(data, timesteps):
             # derive invest factor from WACC, depreciation and
             # discount untility
             storage['discount'] = m.global_prop.xs('Discount rate', level=1) \
-                                   .loc[m.global_prop.index.min()[0]]['value']
+                .loc[m.global_prop.index.min()[0]]['value']
             storage['stf_min'] = m.global_prop.index.min()[0]
             storage['stf_end'] = (m.global_prop.index.max()[0] +
                                   m.global_prop.loc[
-                                  (max(commodity.index.get_level_values
-                                       ('support_timeframe').unique()),
-                                   'Weight')]['value'] - 1)
+                                      (max(commodity.index.get_level_values
+                                           ('support_timeframe').unique()),
+                                       'Weight')]['value'] - 1)
             storage['invcost-factor'] = (
                 storage.apply(
                     lambda x: invcost_factor(
@@ -465,11 +634,11 @@ def pyomo_model_prep(data, timesteps):
                     x['support_timeframe'],
                     x['stf_min'],
                     x['stf_end']),
-                    axis=1))
+                              axis=1))
 
             storage.loc[(storage['overpay-factor'] < 0) |
                         (storage['overpay-factor'].isnull()),
-                        'overpay-factor'] = 0
+            'overpay-factor'] = 0
 
             storage['stf_dist'] = (storage['support_timeframe']
                                    .apply(stf_dist, m=m))

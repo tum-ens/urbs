@@ -28,7 +28,7 @@ def validate_input(data):
                 raise ValueError('Commodities used in a process at a site must'
                                  ' be specified in the commodity input sheet'
                                  '! The tuple (' + str(stf) + ',' + sit + ',' +
-                                 com + ') is not in commodity input sheet.'
+                                 com + ') is in process-commodity input sheet.'
                                  '! The pair (' + sit + ',' + com + ')'
                                  ' is not in commodity input sheet.')
 

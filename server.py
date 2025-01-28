@@ -60,7 +60,7 @@ def run(config):
                                                        plot_periods=plot_periods,
                                                        report_tuples=[],
                                                        report_sites_name={})
-    except Exception:
+    except Exception as e:
         try:
             with open(log_file, 'r') as log_file:
                 log = log_file.read()
@@ -69,9 +69,8 @@ def run(config):
         return {
             'data': {},
             'status': 'Error',
-            'log': log
+            'log': log + "\nError message: " + str(e)
         }
-
 
     costs, cpro, ctra, csto = get_constants(prob)
 
@@ -112,7 +111,7 @@ def run(config):
             'results': results
         },
         'status': result_type,
-        'log': log
+        'log': 'Unkown result'
     }
 
 

@@ -1,7 +1,8 @@
 
 services:
   app:
-    image: ghcr.io/jonastahl/idp-urbs:0.0.4
+    image: ghcr.io/tum-ens/urbs-weburbs:latest
     build: .
     ports:
       - "5000:5000"
+    network_mode: host # only for local config

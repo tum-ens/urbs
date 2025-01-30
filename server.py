@@ -84,10 +84,10 @@ def run(config):
 
     sto = default()
     for ((year, site, storage, commodity), row) in csto.iterrows():
-        sto[site][commodity][storage]['C New'] = row['C New']
-        sto[site][commodity][storage]['C Total'] = row['C Total']
-        sto[site][commodity][storage]['P New'] = row['P New']
-        sto[site][commodity][storage]['P Total'] = row['P Total']
+        sto[site][commodity][storage]['CNew'] = row['C New']
+        sto[site][commodity][storage]['CTotal'] = row['C Total']
+        sto[site][commodity][storage]['PNew'] = row['P New']
+        sto[site][commodity][storage]['PTotal'] = row['P Total']
 
     results = default()
     for (site, com) in get_input(prob, 'demand').columns.values.tolist():
@@ -111,7 +111,7 @@ def run(config):
             'results': results
         },
         'status': result_type,
-        'log': 'Unkown result'
+        'log': log
     }
 
 

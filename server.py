@@ -91,7 +91,7 @@ def run(config):
 
     results = default()
     for (site, com) in get_input(prob, 'demand').columns.values.tolist():
-        data = get_timeseries(prob, date.today().year, "Elec", site, timesteps=None)
+        data = get_timeseries(prob, date.today().year, com, site, timesteps=None)
         results[site][com] = {
             'created': {k: list(v.values()) for k, v in data[0].to_dict().items()},
             'demand': list(data[1].to_dict()['Demand'].values()),

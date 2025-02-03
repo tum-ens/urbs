@@ -1,5 +1,6 @@
 import os
 import threading
+import traceback
 from collections import defaultdict
 from datetime import date
 
@@ -61,6 +62,7 @@ def run(config):
                                                        report_tuples=[],
                                                        report_sites_name={})
     except Exception as e:
+        traceback.print_exc()
         try:
             with open(log_file, 'r') as log_file:
                 log = log_file.read()

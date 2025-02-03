@@ -127,7 +127,7 @@ def read_config(config, year):
     dem.append(pd.concat([pd.concat(demand, axis=1)],
                          keys=[support_timeframe],
                          names=['support_timeframe']))
-    sto.append(pd.concat([pd.concat(c_storage, axis=1)],
+    sto.append(pd.concat([pd.concat(c_storage)],
                          keys=[support_timeframe],
                          names=['support_timeframe']))
 

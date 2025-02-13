@@ -68,7 +68,7 @@ def read_config(config, year):
     c_commodity = []
     c_process = []
     c_commodity_process = []
-    supim = []
+    supim = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
     demand = []
     c_storage = []
     for (site, dataSite) in config['site'].items():
@@ -122,8 +122,8 @@ def read_config(config, year):
                              keys=[support_timeframe],
                              names=['support_timeframe']))
     sup.append(pd.concat([pd.concat(supim, axis=1)],
-                         keys=[support_timeframe],
-                         names=['support_timeframe']))
+                     keys=[support_timeframe],
+                     names=['support_timeframe']))
     dem.append(pd.concat([pd.concat(demand, axis=1)],
                          keys=[support_timeframe],
                          names=['support_timeframe']))

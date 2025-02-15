@@ -92,13 +92,14 @@ def run(config):
         sto[site][commodity][storage]['PTotal'] = row['P Total']
 
     results = default()
-    for (site, com) in get_input(prob, 'demand').columns.values.tolist():
-        data = get_timeseries(prob, date.today().year, com, site, timesteps=None)
-        results[site][com] = {
-            'created': {k: list(v.values()) for k, v in data[0].to_dict().items()},
-            'demand': list(data[1].to_dict()['Demand'].values()),
-            'storage': {k: list(v.values()) for k, v in data[2].to_dict().items()}
-        }
+    for (site, dataSite) in config['site'].items():
+        for (com, _) in dataSite['commodity'].items():
+            data = get_timeseries(prob, date.today().year, com, site, timesteps=None)
+            results[site][com] = {
+                'created': {k: list(v.values()) for k, v in data[0].to_dict().items()},
+                'demand': list(data[1].to_dict()['Demand'].values()),
+                'storage': {k: list(v.values()) for k, v in data[2].to_dict().items()}
+            }
 
     try:
         with open(log_file, 'r') as log_file:

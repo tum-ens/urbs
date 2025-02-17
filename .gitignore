@@ -1,7 +1,9 @@
 *~
 *.pyc
 .idea/*
+.vscode/
 result/*
 results/*
 doc/_build/*
+urbs-env/
 teaching/.ipynb_checkpoints

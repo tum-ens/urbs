@@ -7,6 +7,7 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 
 ## Table of Contents
 
+- [WebUrbs](#weburbs)
 - [Features](#features)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
@@ -22,6 +23,99 @@ urbs is a [linear programming](https://en.wikipedia.org/wiki/Linear_programming)
 - [Example uses](#example-uses)
 - [Contributing](#contributing)
 - [License](#license)
+
+## WebUrbs
+
+[![Build and Push Docker Image](https://github.com/tum-ens/urbs/actions/workflows/docker.yml/badge.svg)](https://github.com/tum-ens/urbs/actions/workflows/docker.yml)
+
+This branch enables the communication to a [WebUrbs](https://github.com/tum-ens/weburbs) server.
+It adds a small server taking a configurations as JSON via REST and starts a simulation.
+The config needs to be sent with a POST request to the `/simulate` endpoint.
+
+The easiest way to start the server is by using the [docker compose](docker-compose.yaml).
+Afterward, the server is available under `http://localhost:5000`.
+If you want to run the server locally you need to start by [installing](#installation) all the needed requirements.
+Then the server can be started using the next command.
+This start the server on the same port as before.
+```bash
+python server.py
+```
+
+Format of the JSON
+```json
+{
+      // Number of timesteps used in the simulation.
+      // All timeseries need to have this number of steps
+    "c_timesteps": number,
+    "global": {
+      "CO2 limit": number,
+      "Cost limit": number
+    },
+    "site": {
+        <Name of site>: {
+            "area": number | "inf",
+            "commodity": { // All the commodotities for this site
+                <Name of commodity>: {
+                    "Type": "SupIm" | "Demand" | "Stock" | "Env" | "Buy" | "Sell",
+                    "price": number,
+                    "max": number, // can be left empty
+                    "maxperhour": number, // can be left empty
+                    "supim": [number, number, ...], // can be left empty
+                    "storage": { // The storage in this site for this commodity, can be left empty
+                        <Name of storage>: {
+                            "inst-cap-c": number,
+                            "cap-lo-c": number,
+                            "cap-up-c": number,
+                            "inst-cap-p": number,
+                            "cap-lo-p": number,
+                            "cap-up-p": number,
+                            "eff-in": number,
+                            "eff-out": number,
+                            "inv-cost-p": number,
+                            "inv-cost-c": number,
+                            "fix-cost-p": number,
+                            "fix-cost-c": number,
+                            "var-cost-p": number,
+                            "var-cost-c": number,
+                            "wacc": number,
+                            "depreciation": number,
+                            "init": number,
+                            "discharge": number,
+                            "ep-ratio": number,
+                        }
+                        // Multiple storage with distinct names posible
+                    }
+                }
+                // Multiple commodities with distinct names possible
+            },
+            "process": {
+                <Name of the process>: {
+                    "inst-cap": number,
+                    "cap-lo": number,
+                    "cap-up": number,
+                    "max-grad": number,
+                    "min-fraction": number,
+                    "inv-cost": number,
+                    "fix-cost": number,
+                    "var-cost": number,
+                    "wacc": number,
+                    "depreciation": number,
+                    "area-per-cap": number,
+                    "commodity": { // Process commodity mapping
+                        <Name of the commodity>: {
+                            "Direction": "In" | "Out",
+                            "ratio": number, // can be left empty
+                            "ratio-min": number, // can be left empty
+                        }
+                        // Multiple mapping with distinct names possible
+                    }
+                }
+                // Multiple processes with distinct names possible
+            }
+        }
+    }
+}
+```
 
 ## Features
 

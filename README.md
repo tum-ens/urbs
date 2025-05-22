@@ -84,6 +84,30 @@ Format of the JSON
                             "ep-ratio": number,
                         }
                         // Multiple storage with distinct names posible
+                    },
+                    "dsm": { // The dsm in this site for this commodity, can be left empty
+                        "delay": number,
+                        "eff": number,
+                        "recov": number,
+                        "cap-max-do": number,
+                        "cap-max-up": number,
+                    },
+                    "transmission": {
+                        <Name of receiving site>: {
+                            "Transmission": "hvac",
+                            "eff": number,
+                            "invcost": number,
+                            "fixcost": number,
+                            "varcost": number,
+                            "instcap": number,
+                            "caplo": number,
+                            "capup": nummber,
+                            "wacc": number,
+                            "depreciation": number,
+                            "reactance": number,
+                            "difflimit": number,
+                            "basevoltage": number,
+                        }
                     }
                 }
                 // Multiple commodities with distinct names possible
@@ -108,10 +132,17 @@ Format of the JSON
                             "ratio-min": number, // can be left empty
                         }
                         // Multiple mapping with distinct names possible
-                    }
+                    },
+                    "timevareff": [number, number, ...] // can be left empty
                 }
                 // Multiple processes with distinct names possible
             }
+        }
+    }
+    "buysellprice": { // The buysellprice in this this commodity name, can be left empty
+        <Name of commodity>: {
+            "buy": [number, number, ...],
+            "sell": [number, number, ...]
         }
     }
 }

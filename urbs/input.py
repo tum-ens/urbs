@@ -2,13 +2,17 @@ import numpy as np
 import os
 import glob
 
-import pandas as pd
 import pyomo.core as pyomo
 from .features.modelhelper import *
 from .identify import *
 
 pd.set_option('future.no_silent_downcasting', True)
 
+def remove_none(d):
+    if isinstance(d, dict):
+        return {k: remove_none(v) for k, v in d.items() if v is not None}
+    else:
+        return d
 
 def dataFrameFromObject(data, index, indcol, columns, additional=None):
     if additional is None:
@@ -34,9 +38,9 @@ def read_config(config, year):
     Returns:
         a dict of up to 12 DataFrames
     """
+    config = remove_none(config)
 
     gl = []
-    sit = []
     com = []
     pro = []
     pro_com = []
@@ -55,27 +59,32 @@ def read_config(config, year):
         del config['global']['Support timeframe']
 
     c_global = dataFrameFromObject(config['global'], ['Property'], [], ['value'])
-    gl.append(pd.concat([c_global],
+    global_prop = pd.concat([c_global],
                         keys=[support_timeframe],
-                        names=['support_timeframe']))
+                        names=['support_timeframe'])
 
     c_site = dataFrameFromObject(config['site'], ['Name'], [], ['area'])
     c_site.replace('inf', np.inf, inplace=True)
-    sit.append(pd.concat([c_site],
+    sit = pd.concat([c_site],
                          keys=[support_timeframe],
-                         names=['support_timeframe']))
+                         names=['support_timeframe'])
 
     c_commodity = []
     c_process = []
     c_commodity_process = []
-    supim = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
+    supim = []
     demand = []
     c_storage = []
+    c_dsm = []
+    c_transmission = []
+    timevareff = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
+    buysellprice = []
     for (site, dataSite) in config['site'].items():
         c_com = dataFrameFromObject(dataSite['commodity'], ['Site', 'Commodity'], ['Type'],
                                     ['price', 'max', 'maxperhour'],
                                     {'Site': site})
         c_com.replace('inf', np.inf, inplace=True)
+        c_com.replace('NaN', np.nan, inplace=True)
         c_commodity.append(c_com)
 
         for (commodity, dataCom) in dataSite['commodity'].items():
@@ -83,6 +92,9 @@ def read_config(config, year):
                 df = pd.DataFrame(dataCom['supim'], columns=[f"{site}.{commodity}"])
                 df.index.name = 't'
                 df.columns = split_columns(df.columns)
+                df = pd.concat([df],
+                          keys=[support_timeframe],
+                          names=['support_timeframe'])
                 supim.append(df)
             if 'demand' in dataCom:
                 df = pd.DataFrame(dataCom['demand'], columns=[f"{site}.{commodity}"])
@@ -101,6 +113,26 @@ def read_config(config, year):
                 c_storage.append(c_stor)
             else:
                 c_storage.append(pd.DataFrame())
+            if 'dsm' in dataCom:
+                c_d = pd.DataFrame([dataCom['dsm']])
+                c_d['Site'] = site
+                c_d['Commodity'] = commodity
+
+                c_d.set_index(['Site', 'Commodity'], inplace=True)
+                c_d.replace('inf', np.inf, inplace=True)
+                c_d = c_d.reorder_levels(['Site', 'Commodity'])
+                c_dsm.append(c_d)
+            else:
+                c_dsm.append(pd.DataFrame())
+            if 'transmission' in dataCom:
+                c_t = dataFrameFromObject(dataCom['transmission'], ['Site Out', 'Commodity', 'Site In'], ['Transmission'],
+                                          ['eff', 'inv-cost', 'fix-cost', 'var-cost', 'inst-cap', 'cap-lo', 'cap-up',
+                                               'wacc', 'depreciation', 'reactance', 'difflimit', 'basevoltage'],
+                                          {'Commodity': commodity, 'Site Out': site })
+                c_t.replace('inf', np.inf, inplace=True)
+                c_t = c_t.reorder_levels(['Site In', 'Site Out', 'Transmission', 'Commodity'])
+                c_transmission.append(c_t)
+
 
         c_pro = dataFrameFromObject(dataSite['process'], ['Site', 'Process'], [],
                                     ['inst-cap', 'cap-lo', 'cap-up', 'max-grad', 'min-fraction', 'inv-cost', 'fix-cost',
@@ -112,51 +144,62 @@ def read_config(config, year):
             c_com_pro = dataFrameFromObject(dataProc['commodity'], ['Process', 'Commodity'], ['Direction'],
                                             ['ratio', 'ratio-min'], {'Process': process})
             c_commodity_process.append(c_com_pro)
-    com.append(pd.concat(c_commodity,
+
+            if 'timevareff' in dataProc:
+                df = pd.DataFrame(dataProc['timevareff'], columns=[f"{site}.{process}"])
+                df.index.name = 't'
+                df.columns = split_columns(df.columns)
+                timevareff.append(df)
+            else:
+                timevareff.append(pd.DataFrame())
+    if 'buysellprice' in config:
+        for (com, dataBuySell) in config['buysellprice'].items():
+            if 'buy' in dataBuySell:
+                df = pd.DataFrame(dataBuySell['buy'], columns=[f"{com} buy"])
+                df.index.name = 't'
+                df.columns = split_columns(df.columns, '.')
+                buysellprice.append(df)
+            if 'sell' in dataBuySell:
+                df = pd.DataFrame(dataBuySell['sell'], columns=[f"{com} sell"])
+                df.index.name = 't'
+                df.columns = split_columns(df.columns, '.')
+                buysellprice.append(df)
+    else:
+        buysellprice.append(pd.DataFrame())
+
+    commodity = pd.concat([pd.concat(c_commodity)],
                          keys=[support_timeframe],
-                         names=['support_timeframe']))
-    pro.append(pd.concat(c_process,
+                         names=['support_timeframe'])
+    process = pd.concat([pd.concat(c_process)],
                          keys=[support_timeframe],
-                         names=['support_timeframe']))
-    pro_com.append(pd.concat([pd.concat(c_commodity_process)],
+                         names=['support_timeframe'])
+    process_commodity = pd.concat([pd.concat(c_commodity_process)],
                              keys=[support_timeframe],
-                             names=['support_timeframe']))
-    sup.append(pd.concat([pd.concat(supim, axis=1)],
-                     keys=[support_timeframe],
-                     names=['support_timeframe']))
-    dem.append(pd.concat([pd.concat(demand, axis=1)],
+                             names=['support_timeframe']).drop_duplicates()
+    supim = pd.concat(supim, axis=1)
+    demand = pd.concat([pd.concat(demand, axis=1)],
                          keys=[support_timeframe],
-                         names=['support_timeframe']))
-    sto.append(pd.concat([pd.concat(c_storage)],
+                         names=['support_timeframe'])
+    storage = pd.concat([pd.concat(c_storage)],
                          keys=[support_timeframe],
-                         names=['support_timeframe']))
+                         names=['support_timeframe'])
 
-    # currently unused configs
-    tra.append(pd.DataFrame())
-    ds.append(pd.DataFrame())
-    bsp.append(pd.DataFrame())
-    ef.append(pd.DataFrame())
-
-    # prepare input data
-    try:
-        global_prop = pd.concat(gl, sort=False)
-        site = pd.concat(sit, sort=False)
-        commodity = pd.concat(com, sort=False)
-        process = pd.concat(pro, sort=False)
-        process_commodity = pd.concat(pro_com, sort=False)
-        demand = pd.concat(dem, sort=False)
-        supim = pd.concat(sup, sort=False)
-        transmission = pd.concat(tra, sort=False)
-        storage = pd.concat(sto, sort=False)
-        dsm = pd.concat(ds, sort=False)
-        buy_sell_price = pd.concat(bsp, sort=False)
-        eff_factor = pd.concat(ef, sort=False)
-    except KeyError:
-        pass
+    transmission = pd.concat([pd.concat(c_transmission)],
+                         keys=[support_timeframe],
+                         names=['support_timeframe'])
+    dsm = pd.concat([pd.concat(c_dsm)],
+                         keys=[support_timeframe],
+                         names=['support_timeframe'])
+    buy_sell_price = pd.concat([pd.concat(buysellprice, axis=1)],
+                         keys=[support_timeframe],
+                         names=['support_timeframe'])
+    eff_factor = pd.concat([pd.concat(timevareff, axis=1)],
+                         keys=[support_timeframe],
+                         names=['support_timeframe'])
 
     data = {
         'global_prop': global_prop,
-        'site': site,
+        'site': sit,
         'commodity': commodity,
         'process': process,
         'process_commodity': process_commodity,
@@ -331,7 +374,8 @@ def read_input(input_files, year):
         'site': site,
         'commodity': commodity,
         'process': process,
-        'process_commodity': process_commodity,
+        # we need to drop duplicates as process_commodity is global... (stupid)
+        'process_commodity': process_commodity[~process_commodity.index.duplicated(keep='first')],
         'demand': demand,
         'supim': supim,
         'transmission': transmission,

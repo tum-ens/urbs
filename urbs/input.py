@@ -65,6 +65,7 @@ def read_config(config, year):
 
     c_site = dataFrameFromObject(config['site'], ['Name'], [], ['area'])
     c_site.replace('inf', np.inf, inplace=True)
+    c_site.replace('NaN', np.nan, inplace=True)
     sit = pd.concat([c_site],
                          keys=[support_timeframe],
                          names=['support_timeframe'])
@@ -72,13 +73,13 @@ def read_config(config, year):
     c_commodity = []
     c_process = []
     c_commodity_process = []
-    supim = []
+    supim = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
     demand = []
     c_storage = []
     c_dsm = []
     c_transmission = []
     timevareff = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
-    buysellprice = []
+    buysellprice = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
     for (site, dataSite) in config['site'].items():
         c_com = dataFrameFromObject(dataSite['commodity'], ['Site', 'Commodity'], ['Type'],
                                     ['price', 'max', 'maxperhour'],
@@ -132,6 +133,8 @@ def read_config(config, year):
                 c_t.replace('inf', np.inf, inplace=True)
                 c_t = c_t.reorder_levels(['Site In', 'Site Out', 'Transmission', 'Commodity'])
                 c_transmission.append(c_t)
+            else:
+                c_transmission.append(pd.DataFrame())
 
 
         c_pro = dataFrameFromObject(dataSite['process'], ['Site', 'Process'], [],

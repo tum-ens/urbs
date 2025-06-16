@@ -1,12 +1,12 @@
 
 services:
   app:
-#    image: ghcr.io/tum-ens/urbs-weburbs:latest
-    image: ghcr.io/tum-ens/urbs-weburbs-gurobi:latest
+    image: ghcr.io/tum-ens/urbs-weburbs:latest
+#    image: ghcr.io/tum-ens/urbs-weburbs-gurobi:latest
     build:
       context: .
-      dockerfile: Dockerfile-gurobi
-    volumes:
-      - ~/gurobi.lic:/opt/gurobi/gurobi.lic:ro
+#      dockerfile: Dockerfile-gurobi
+#    volumes:
+#      - ~/gurobi.lic:/opt/gurobi/gurobi.lic:ro
     ports:
       - "5000:5000"

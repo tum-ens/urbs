@@ -176,9 +176,10 @@ def read_config(config, year):
     process = pd.concat([pd.concat(c_process)],
                          keys=[support_timeframe],
                          names=['support_timeframe'])
-    process_commodity = pd.concat([pd.concat(c_commodity_process)],
+    process_commodity = (pd.concat([pd.concat(c_commodity_process)],
                              keys=[support_timeframe],
-                             names=['support_timeframe']).drop_duplicates()
+                             names=['support_timeframe']))
+    process_commodity = process_commodity[~process_commodity.index.duplicated()]
     supim = pd.concat(supim, axis=1)
     demand = pd.concat([pd.concat(demand, axis=1)],
                          keys=[support_timeframe],

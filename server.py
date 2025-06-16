@@ -41,7 +41,7 @@ def run(config):
     objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
     # Choose Solver (cplex, glpk, gurobi, ...)
-    solver = 'glpk'
+    solver = os.getenv('SOLVER', 'glpk')
 
     # simulation timesteps
     timesteps = range(config['c_timesteps'])

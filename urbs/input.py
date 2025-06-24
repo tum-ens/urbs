@@ -81,7 +81,7 @@ def read_config(config, year):
     timevareff = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
     buysellprice = [pd.DataFrame(index=pd.Index(range(config['c_timesteps']), name='t'))]
 
-    all_commodities = set()
+    buysell_commodities = set()
     for (site, dataSite) in config['site'].items():
         c_com = dataFrameFromObject(dataSite['commodity'], ['Site', 'Commodity'], ['Type'],
                                     ['price', 'max', 'maxperhour'],
@@ -91,7 +91,8 @@ def read_config(config, year):
         c_commodity.append(c_com)
 
         for (commodity, dataCom) in dataSite['commodity'].items():
-            all_commodities.add(commodity)
+            if dataCom['Type'] == 'Sell' or dataCom['Type'] == 'Buy':
+                buysell_commodities.add(commodity)
             if 'supim' in dataCom:
                 df = pd.DataFrame(dataCom['supim'], columns=[f"{site}.{commodity}"])
                 df.index.name = 't'
@@ -158,26 +159,11 @@ def read_config(config, year):
                 timevareff.append(df)
             else:
                 timevareff.append(pd.DataFrame())
-    for com in all_commodities:
+    for com in buysell_commodities:
         if 'buysellprice' in config and com in config['buysellprice']:
-            dataBuySell = config['buysellprice'][com]
-            if 'buy' in dataBuySell:
-                df = pd.DataFrame(dataBuySell['buy'], columns=[f"{com} buy"])
-                df.index.name = 't'
-                df.columns = split_columns(df.columns, '.')
-                buysellprice.append(df)
-            else:
-                df = pd.DataFrame([1] * config['c_timesteps'], columns=[f"{com} buy"])
-            if 'sell' in dataBuySell:
-                df = pd.DataFrame(dataBuySell['sell'], columns=[f"{com} sell"])
-                df.index.name = 't'
-                df.columns = split_columns(df.columns, '.')
-                buysellprice.append(df)
-            else:
-                df = pd.DataFrame([1] * config['c_timesteps'], columns=[f"{com} sell"])
+            buysellprice.append(pd.DataFrame(config['buysellprice'][com], columns=[com]))
         else:
-            buysellprice.append(pd.DataFrame([1] * config['c_timesteps'], columns=[f"{com} buy"]))
-            buysellprice.append(pd.DataFrame([1] * config['c_timesteps'], columns=[f"{com} sell"]))
+            buysellprice.append(pd.DataFrame([1] * config['c_timesteps'], columns=[com]))
         
 
     commodity = pd.concat([pd.concat(c_commodity)],

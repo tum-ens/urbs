@@ -140,10 +140,7 @@ Format of the JSON
         }
     }
     "buysellprice": { // The buysellprice in this this commodity name, can be left empty
-        <Name of commodity>: {
-            "buy": [number, number, ...],
-            "sell": [number, number, ...]
-        }
+        <Name of commodity>: [number, number, ...],
     }
 }
 ```

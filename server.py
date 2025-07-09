@@ -18,7 +18,6 @@ app = Flask(__name__)
 def trigger_simulation():
     config = request.get_json()
     if 'run_config' in config and 'callback' in config['run_config']:
-        print(config['run_config'])
         thread = threading.Thread(target=simulate, args=[config])
         thread.start()
         return "Simulation started"
@@ -50,7 +49,7 @@ def run(config):
     objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
     # Choose Solver (cplex, glpk, gurobi, ...)
-    solver = os.getenv('SOLVER', 'gurobi')
+    solver = os.getenv('SOLVER', 'glpk')
 
     # simulation timesteps
     timesteps = range(config['c_timesteps'])

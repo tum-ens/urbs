@@ -51,28 +51,18 @@ def setup_solver(optim, logfile='solver.log'):
               "'{}'!".format(optim.name))
     return optim
 
-def run_scenario_config(config, Solver, timesteps, scenario, result_dir, dt,
-                 objective, plot_tuples=None,  plot_sites_name=None,
-                 plot_periods=None, report_tuples=None,
-                 report_sites_name=None):
+def run_scenario_config(config, Solver, timesteps, result_dir, dt,
+                 objective, generate_report=None, generate_h5=False):
     """ run an urbs model for given input, time steps and scenario
 
     Args:
         - input_files: filenames of input Excel spreadsheets
         - Solver: the user specified solver
         - timesteps: a list of timesteps, e.g. range(0,8761)
-        - scenario: a scenario function that modifies the input data dict
         - result_dir: directory name for result spreadsheet and plots
         - dt: length of each time step (unit: hours)
         - objective: objective function chosen (either "cost" or "CO2")
-        - plot_tuples: (optional) list of plot tuples (c.f. urbs.result_figures)
-        - plot_sites_name: (optional) dict of names for sites in plot_tuples
-        - plot_periods: (optional) dict of plot periods
-          (c.f. urbs.result_figures)
-        - report_tuples: (optional) list of (sit, com) tuples
-          (c.f. urbs.report)
-        - report_sites_name: (optional) dict of names for sites in
-          report_tuples
+        - report: None generate nothing, "summary" generate xlsx report, "full" generate xlsx report with timeseries
 
     Returns:
         the urbs model instance
@@ -83,9 +73,7 @@ def run_scenario_config(config, Solver, timesteps, scenario, result_dir, dt,
     year = date.today().year
 
     # scenario name, read and modify data for scenario
-    sce = scenario.__name__
     data = read_config(config, year)
-    data = scenario(data)
     validate_input(data)
     validate_dc_objective(data, objective)
 
@@ -95,12 +83,20 @@ def run_scenario_config(config, Solver, timesteps, scenario, result_dir, dt,
     # prob.write(prob_filename, io_options={'symbolic_solver_labels':True})
 
     # refresh time stamp string and create filename for logfile
-    log_filename = os.path.join(result_dir, '{}.log').format(sce)
+    log_filename = os.path.join(result_dir, 'result.log')
 
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
     result = optim.solve(prob, tee=True)
+
+    if generate_report is not None:
+        report(prob,
+               os.path.join(result_dir, 'result.xlsx'),
+               report_tuples=report_tuples(config, year) if generate_report == "full" else [])
+
+    if generate_h5:
+        save(prob, os.path.join(result_dir, 'result.h5'))
 
     return (result.solver.termination_condition, prob)
 

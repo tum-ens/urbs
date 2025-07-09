@@ -1,8 +1,9 @@
 import os
 import threading
 import traceback
+import uuid
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 
 import requests
 from flask import Flask, request
@@ -16,7 +17,8 @@ app = Flask(__name__)
 @app.post('/simulate')
 def trigger_simulation():
     config = request.get_json()
-    if 'callback' in config:
+    if 'run_config' in config and 'callback' in config['run_config']:
+        print(config['run_config'])
         thread = threading.Thread(target=simulate, args=[config])
         thread.start()
         return "Simulation started"
@@ -25,23 +27,30 @@ def trigger_simulation():
 
 
 def simulate(config):
-    requests.post(config['callback'], json=run(config))
-
-
-def scenario(data):
-    return data
-
+    requests.post(config['run_config']['callback'], json=run(config))
 
 def run(config):
-    result_name = 'Run'
-    result_dir = urbs.prepare_result_directory(result_name)
-    log_file = os.path.join(result_dir, scenario.__name__ + '.log')
+    now = datetime.now().strftime('%Y%m%d')
+    result_dir = os.path.join('result', now, str(uuid.uuid4()))
+    generate_report = None
+    generate_h5=False
+    if 'run_config' in config:
+        run_config = config['run_config']
+        if "dir" in run_config:
+            result_dir = os.path.join('result', run_config["dir"])
+        generate_report = run_config["generate_report"] if "generate_report" in run_config else None
+        generate_h5 = run_config["generate_h5"] if "generate_h5" in run_config else None
+
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+
+    log_file = os.path.join(result_dir, 'result.log')
 
     # objective function
     objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
     # Choose Solver (cplex, glpk, gurobi, ...)
-    solver = os.getenv('SOLVER', 'glpk')
+    solver = os.getenv('SOLVER', 'gurobi')
 
     # simulation timesteps
     timesteps = range(config['c_timesteps'])
@@ -54,13 +63,10 @@ def run(config):
 
     # select scenarios to be run - only use base scenario
     try:
-        (result_type, prob) = urbs.run_scenario_config(config, solver, timesteps, scenario,
+        (result_type, prob) = urbs.run_scenario_config(config, solver, timesteps,
                                                        result_dir, dt, objective,
-                                                       plot_tuples=[],
-                                                       plot_sites_name={},
-                                                       plot_periods=plot_periods,
-                                                       report_tuples=[],
-                                                       report_sites_name={})
+                                                       generate_report=generate_report,
+                                                       generate_h5=generate_h5)
     except Exception as e:
         traceback.print_exc()
         try:

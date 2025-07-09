@@ -141,6 +141,10 @@ Format of the JSON
     }
     "buysellprice": { // The buysellprice in this this commodity name, can be left empty
         <Name of commodity>: [number, number, ...],
+    },
+    "run_config": {
+      "callback": URL // reports the result to this URL,
+      "generate_report": "summary" | "full" // generate xlsx files with or without timeseries
     }
 }
 ```

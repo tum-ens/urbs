@@ -3,7 +3,7 @@ import shutil
 import urbs
 
 def run():
-    input_files = 'single_year_example.xlsx'  # for single year file name, for intertemporal folder name
+    input_files = 'simple.xlsx'  # for single year file name, for intertemporal folder name
     input_dir = 'Input'
     input_path = os.path.join(input_dir, input_files)
 

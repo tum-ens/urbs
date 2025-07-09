@@ -24,6 +24,14 @@ def dataFrameFromObject(data, index, indcol, columns, additional=None):
     return df.set_index(index + indcol)
 
 
+def report_tuples(config, year):
+    res = []
+    for (site, dataSite) in config['site'].items():
+        for (commodity, _) in dataSite['commodity'].items():
+            res.append((year, site, commodity))
+    return res
+
+
 def read_config(config, year):
     """Read JSON input config and prepare URBS input dict.
 

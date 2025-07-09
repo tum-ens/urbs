@@ -4,7 +4,7 @@ from .output import get_constants, get_timeseries
 from .util import is_string
 
 
-def report(instance, filename, report_tuples=None, report_sites_name={}):
+def report(instance, filename, report_tuples, report_sites_name={}):
     """Write result summary to a spreadsheet file
 
     Args:
@@ -15,10 +15,6 @@ def report(instance, filename, report_tuples=None, report_sites_name={}):
         - report_sites_name: (optional) dict of names for created timeseries
           sheets
     """
-
-    # default to all demand (sit, com) tuples if none are specified
-    if report_tuples is None:
-        report_tuples = get_input(instance, 'demand').columns
 
     costs, cpro, ctra, csto = get_constants(instance)
 

@@ -88,7 +88,9 @@ def run_scenario_config(config, Solver, timesteps, result_dir, dt,
     # solve model and read results
     optim = SolverFactory(Solver)  # cplex, glpk, gurobi, ...
     optim = setup_solver(optim, logfile=log_filename)
+    time_setup_finished = datetime.now()
     result = optim.solve(prob, tee=True)
+    time_solve_finished = datetime.now()
 
     if generate_report is not None:
         report(prob,
@@ -98,7 +100,7 @@ def run_scenario_config(config, Solver, timesteps, result_dir, dt,
     if generate_h5:
         save(prob, os.path.join(result_dir, 'result.h5'))
 
-    return (result.solver.termination_condition, prob)
+    return (result.solver.termination_condition, prob, time_setup_finished, time_solve_finished)
 
 
 def run_scenario(input_files, Solver, timesteps, scenario, result_dir, dt,

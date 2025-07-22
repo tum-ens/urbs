@@ -29,6 +29,8 @@ def simulate(config):
     requests.post(config['run_config']['callback'], json=run(config))
 
 def run(config):
+    start_time = datetime.now()
+
     now = datetime.now().strftime('%Y%m%d')
     result_dir = os.path.join('result', now, str(uuid.uuid4()))
     generate_report = None
@@ -49,7 +51,7 @@ def run(config):
     objective = 'cost'  # set either 'cost' or 'CO2' as objective
 
     # Choose Solver (cplex, glpk, gurobi, ...)
-    solver = os.getenv('SOLVER', 'glpk')
+    solver = os.getenv('SOLVER', 'gurobi')
 
     # simulation timesteps
     timesteps = range(config['c_timesteps'])
@@ -62,10 +64,11 @@ def run(config):
 
     # select scenarios to be run - only use base scenario
     try:
-        (result_type, prob) = urbs.run_scenario_config(config, solver, timesteps,
-                                                       result_dir, dt, objective,
-                                                       generate_report=generate_report,
-                                                       generate_h5=generate_h5)
+        (result_type, prob, time_setup_finished, time_solve_finished) \
+            = urbs.run_scenario_config(config, solver, timesteps,
+                           result_dir, dt, objective,
+                           generate_report=generate_report,
+                           generate_h5=generate_h5)
     except Exception as e:
         traceback.print_exc()
         try:
@@ -78,6 +81,7 @@ def run(config):
             'status': 'Error',
             'log': log + "\nError message: " + str(e)
         }
+    end_time = datetime.now()
 
     costs, cpro, ctra, csto = get_constants(prob)
 
@@ -111,6 +115,14 @@ def run(config):
             log = log_file.read()
     except (FileNotFoundError, IOError):
         log = "Error reading log file"
+
+    log += (f"\n-Duration-------------------------------------------"
+            f"\nProcess started at: {str(start_time)}"
+            f"\nSimulation started at: {str(time_setup_finished)} - delta: {str(time_setup_finished - start_time)}"
+            f"\nSimulation finished at: {str(time_solve_finished)} - delta: {str(time_solve_finished - time_setup_finished)}"
+            f"\nWriting result files finished at: {str(end_time)} - delta: {str(end_time - time_solve_finished)}"
+            f"\nTotal time needed: {str(end_time - start_time)}\n")
+
     return {
         'data': {
             'costs': costs.to_dict(),

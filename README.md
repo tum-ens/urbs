@@ -70,13 +70,13 @@ You can also use the [GitHub Desktop](https://desktop.github.com/) application i
 2) If you want to install the environment manually, enter the commands below in your terminal:
 
 Windows:
-    `py -3.12 -m venv urbs-env`
-    `urbs-env\Scripts\activate`
+    `py -3.12 -m venv urbs-env`   
+    `urbs-env\Scripts\activate`   
     `python -m pip install -r urbs-env.txt`
 
 Linux/MacOS:
-    `python3.12 -m venv urbs-env`
-    `source urbs-env/bin/activate
+    `python3 -m venv urbs-env`   
+    `source urbs-env/bin/activate`   
     `python -m pip install -r urbs-env.txt`
 
 ### Solver
@@ -130,7 +130,7 @@ and look at the new files `result/mimo-example-.../comparison.xlsx` and `result/
 
 ## Copyright
 
-Copyright (C) 2014-2019  TUM ENS
+Copyright (C) 2014-2026  TUM ENS
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

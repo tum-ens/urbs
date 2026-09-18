@@ -58,17 +58,18 @@ def read_input(input_files, year):
             global_prop = pd.concat([global_prop], keys=[support_timeframe],
                                     names=['support_timeframe'])
             gl.append(global_prop)
-            site = xls.parse('Site').set_index(['Name'])
+            site = xls.parse('Site', dtype={'Name': str}).set_index(['Name'])
             site = pd.concat([site], keys=[support_timeframe],
                              names=['support_timeframe'])
             sit.append(site)
             commodity = (
-                xls.parse('Commodity')
+                xls.parse('Commodity', dtype={'Site': str})
                    .set_index(['Site', 'Commodity', 'Type']))
             commodity = pd.concat([commodity], keys=[support_timeframe],
                                   names=['support_timeframe'])
             com.append(commodity)
-            process = xls.parse('Process').set_index(['Site', 'Process'])
+            process = xls.parse('Process', dtype={'Site': str})\
+                .set_index(['Site', 'Process'])
             process = pd.concat([process], keys=[support_timeframe],
                                 names=['support_timeframe'])
             pro.append(process)
@@ -96,7 +97,7 @@ def read_input(input_files, year):
             # Transmission, Storage, DSM
             if 'Transmission' in xls.sheet_names:
                 transmission = (
-                    xls.parse('Transmission')
+                    xls.parse('Transmission', dtype={'Site In': str, 'Site Out': str})
                     .set_index(['Site In', 'Site Out',
                                 'Transmission', 'Commodity']))
                 transmission = (
@@ -107,7 +108,7 @@ def read_input(input_files, year):
             tra.append(transmission)
             if 'Storage' in xls.sheet_names:
                 storage = (
-                    xls.parse('Storage')
+                    xls.parse('Storage', dtype={'Site': str})
                     .set_index(['Site', 'Storage', 'Commodity']))
                 storage = pd.concat([storage], keys=[support_timeframe],
                                     names=['support_timeframe'])
@@ -115,7 +116,7 @@ def read_input(input_files, year):
                 storage = pd.DataFrame()
             sto.append(storage)
             if 'DSM' in xls.sheet_names:
-                dsm = xls.parse('DSM').set_index(['Site', 'Commodity'])
+                dsm = xls.parse('DSM', dtype={'Site': str}).set_index(['Site', 'Commodity'])
                 dsm = pd.concat([dsm], keys=[support_timeframe],
                                 names=['support_timeframe'])
             else:

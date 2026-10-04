@@ -284,7 +284,13 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
         data = remove_battery(data)
         data = remove_heat_storage(data)
 
-        if not mode['14a']: # only remove mobility flexibility if 14a not activated (otherwise model can be infeasible)
+        if mode['14a_rule']:
+            if mode['14a'] or mode['uhp']:
+                raise ValueError("14a_rule requires 14a = 0 and uhp = 0")
+            pf_hp = data['global_prop'].loc[pd.IndexSlice[:, 'PF_HP'], 'value'].iloc[0]
+            data = p14a_dimming(data, rated_kva=transformer_rating(data), pf_hp=pf_hp)
+            mode['sto'] = False
+        elif not mode['14a']: # only remove mobility flexibility if 14a not activated (otherwise model can be infeasible)
             data = bev_uncontrolled_charging(data)
             mode['sto'] = False
 

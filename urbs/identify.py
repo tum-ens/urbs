@@ -46,6 +46,7 @@ def identify_mode(data):
         'uncoordinated': False,
         'evu_sperre': False,
         '14a': False,
+        '14a_rule': False,
         'uhp': False
         }
 
@@ -97,6 +98,9 @@ def identify_mode(data):
     if data['global_prop'].loc[pd.IndexSlice[:,'14a'],'value'].iloc[0]:
         mode['14a'] = True
 
+    if '14a_rule' in data['global_prop'].index.get_level_values(1) and \
+            data['global_prop'].loc[pd.IndexSlice[:,'14a_rule'],'value'].iloc[0]:
+        mode['14a_rule'] = True
     if data['global_prop'].loc[pd.IndexSlice[:,'uhp'],'value'].iloc[0]:
         mode['uhp'] = True
 

@@ -285,7 +285,7 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
         data = remove_heat_storage(data)
 
         if not mode['14a']: # only remove mobility flexibility if 14a not activated (otherwise model can be infeasible)
-            data = remove_mob_flexibility(data)
+            data = bev_uncontrolled_charging(data)
             mode['sto'] = False
 
     # identify the transformer and the main busbar nodes (transformer has the import process, main busbar the Q_comp)

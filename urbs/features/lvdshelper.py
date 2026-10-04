@@ -33,6 +33,37 @@ def remove_mob_flexibility(data):
 
     return data
 
+def bev_uncontrolled_charging(data):
+    # replace mobility flexibility by uncontrolled charging at full power from arrival
+    dem, eff = data['demand'], data['eff_factor']
+    sto, pro = data['storage'], data['process']
+    n_conv = 0
+    for (site, mname) in [c for c in dem.columns if str(c[1]).startswith('mobility')]:
+        n = mname.replace('mobility', '')
+        cs = f'charging_station{n}'
+        try:
+            cap = float(sto.loc[(slice(None), site, f'mobility_storage{n}', slice(None)), 'inst-cap-c'].iloc[0])
+            pmax = float(pro.loc[(slice(None), site, cs), 'inst-cap'].iloc[0])
+        except Exception:
+            continue
+        d = dem[(site, mname)].to_numpy(dtype=float)
+        a = eff[(site, cs)].to_numpy(dtype=float) if (site, cs) in eff.columns else np.ones_like(d)
+        ch = np.zeros(len(d))
+        soc = cap
+        for t in range(len(d)):
+            soc = max(0.0, soc - d[t])
+            if a[t] > 0 and soc < cap:
+                ch[t] = min(pmax, cap - soc)
+                soc += ch[t]
+        dem[(site, 'electricity')] = dem[(site, 'electricity')].to_numpy(dtype=float) + ch
+        dem[(site, mname)] = 0.0
+        sto.loc[(slice(None), site, f'mobility_storage{n}', slice(None)),
+                ['inst-cap-c', 'cap-up-c', 'inst-cap-p', 'cap-up-p']] = 0
+        pro.loc[(slice(None), site, cs), ['inst-cap', 'cap-up']] = 0
+        n_conv += 1
+    print(f"{n_conv} vehicles converted to uncontrolled charging", flush=True)
+    return data
+
 def create_xls_file_labels(uncoordinated, flexible, mode, data):
     coordination_text = '_uncoordinated' if uncoordinated else '_coordinated'
     flexible_text = '_flexible' if flexible else '_inflexible'

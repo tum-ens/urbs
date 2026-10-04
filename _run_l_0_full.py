@@ -42,6 +42,9 @@ if __name__ == '__main__':
     # Choose Solver (cplex, glpk, gurobi, ...)
     solver = 'gurobi'
 
+    # step1 result of the same run without control, needed for 14a_rule = 1 with flexible = 1
+    p14a_ref = None
+
     # simulation timesteps
     (offset, length) = (0, 8760)  # time step selection
     timesteps = range(offset, offset + length + 1)
@@ -123,7 +126,7 @@ if __name__ == '__main__':
                          noTypicalPeriods=noTypicalPeriods,
                          hoursPerPeriod=hoursPerPeriod,
                          uncoordinated=uncoordinated,
-                         flexible=1,
+                         flexible=flexible,
                          grid_curtailment=1,
                          lp=lp,
                          xls=excel,
@@ -131,7 +134,8 @@ if __name__ == '__main__':
                          clusters=clusters,
                          electrification=electrification,
                          vartariff=vartariff,
-                         parallel=parallel)
+                         parallel=parallel,
+                         p14a_ref=p14a_ref)
 
        # prob, prob_grid_plan, prob_hp_react, cross_scenario_data = urbs.run_lvds_opt(input_path, solver, timesteps,
 

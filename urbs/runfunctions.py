@@ -235,7 +235,8 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
                           hp_ratio=1,
                           pv_ratio=1,
                           vartariff=0,
-                          parallel=0):
+                          parallel=0,
+                          p14a_ref=None):
 
     """ run an urbs model for given input, time steps and scenario
 
@@ -278,6 +279,11 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
     #create labels for created files
     coordination_text, flexible_text, regulation_text, capacity_price_text = create_xls_file_labels(uncoordinated, flexible, mode, data)
 
+    if mode['14a_rule']:
+        if mode['14a']:
+            raise ValueError("14a_rule requires 14a = 0")
+        rated_kva = transformer_rating(data)
+
     # adjustments in case flexibilities are deactivated (Global sheet)
     if not flexible:
         # delete all storages and flexibility
@@ -285,10 +291,10 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
         data = remove_heat_storage(data)
 
         if mode['14a_rule']:
-            if mode['14a'] or mode['uhp']:
-                raise ValueError("14a_rule requires 14a = 0 and uhp = 0")
+            if mode['uhp']:
+                raise ValueError("14a_rule on the inflexible case requires uhp = 0")
             pf_hp = data['global_prop'].loc[pd.IndexSlice[:, 'PF_HP'], 'value'].iloc[0]
-            data = p14a_dimming(data, rated_kva=transformer_rating(data), pf_hp=pf_hp)
+            data = p14a_dimming(data, rated_kva=rated_kva, pf_hp=pf_hp)
             mode['sto'] = False
         elif not mode['14a']: # only remove mobility flexibility if 14a not activated (otherwise model can be infeasible)
             data = bev_uncontrolled_charging(data)
@@ -395,6 +401,14 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
                                                        data['global_prop'].loc[
                                                            pd.IndexSlice[:, 'power_price_kw'], 'value'].iloc[
                                                            0] / kwh_per_peakkw
+
+    if mode['14a_rule'] and flexible:
+        if not uncoordinated or p14a_ref is None:
+            raise ValueError("14a_rule on the flexible case requires uncoordinated = 1 and p14a_ref, "
+                             "the step1 result of the same run without control")
+        pf_hp = data['global_prop'].loc[pd.IndexSlice[:, 'PF_HP'], 'value'].iloc[0]
+        data = p14a_availability(data, rated_kva=rated_kva, ref_h5=p14a_ref, pf_hp=pf_hp)
+        mode['ava'] = True
 
     # data is constructed finally, now to solve the HOODS-Bui (or HOODS-Sys, if coordinated) problem.
     if not uncoordinated: #if HOODS-Sys: just solve the model normally

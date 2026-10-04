@@ -98,6 +98,8 @@ def identify_mode(data):
     if data['global_prop'].loc[pd.IndexSlice[:,'14a'],'value'].iloc[0]:
         mode['14a'] = True
 
+    # 14a_rule = 1: rule-based section 14a control instead of the grid-optimisation based one (requires 14a = 0;
+    # the inflexible case requires uhp = 0, the flexible case needs p14a_ref in run_lvds_opt)
     if '14a_rule' in data['global_prop'].index.get_level_values(1) and \
             data['global_prop'].loc[pd.IndexSlice[:,'14a_rule'],'value'].iloc[0]:
         mode['14a_rule'] = True

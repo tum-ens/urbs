@@ -317,6 +317,221 @@ def p14a_dimming(data, rated_kva, cap_table=None, pv_table=None, grid_id=None,
           f"hours still over the rating: {n_insufficient}", flush=True)
     return data
 
+DEFICIT_PRICE = 1000.0   # EUR/kWh, far above any real heat source
+
+
+def p14a_availability(data, rated_kva, ref_h5, prev_lam=None,
+                      p14a_kw=4.2, threshold=1.0, pf_elc=0.959, pf_hp=0.95, result_prefix='/result/'):
+    # section 14a EnWG control on the flexible case, as setpoints through the availability feature
+
+    pro, sto = data['process'], data['storage']
+    T = len(data['demand'])
+    stf = int(pro.index.get_level_values(0)[0])
+    limit = rated_kva * threshold
+    ts = np.arange(T)
+
+    r = result_prefix
+    with pd.HDFStore(ref_h5, 'r') as store:
+        cap_pro = store[r + 'cap_pro']
+        e_in = store[r + 'e_pro_in'].reset_index()
+        cap_sto = store[r + 'cap_sto_p'] if r + 'cap_sto_p' in store else None
+        e_sto = store[r + 'e_sto_in'].reset_index() if r + 'e_sto_in' in store else None
+    e_in.columns = ['t', 'stf', 'sit', 'pro', 'com', 'val']
+
+    def series(df, mask):
+        return df[mask].groupby('t').val.sum().reindex(ts, fill_value=0.0).to_numpy(dtype=float)
+
+    hp_all = series(e_in, e_in.pro.isin(['heatpump_air', 'heatpump_booster']) & (e_in.com == 'electricity'))
+    load = (series(e_in, e_in.pro == 'import') - hp_all) / pf_elc + hp_all / pf_hp
+    congested = load > limit
+    n_cong = int(congested.sum())
+
+    model_sites = set(data['commodity'].index.get_level_values(1))
+
+    dev = []                      # controllable devices with their first-pass draw
+    deficit_sites = set()
+    mob_sites = set()
+    for (y, sit, prc) in pro.index:
+        if sit not in model_sites:
+            continue
+        try:
+            cap = float(cap_pro.loc[(slice(None), sit, prc)].iloc[0])
+        except Exception:
+            continue
+        if prc == 'heatpump_booster':
+            continue                      # carried with the heat pump below
+        if prc == 'heatpump_air':
+            units = [u for u in ('heatpump_air', 'heatpump_booster')
+                     if (y, sit, u) in pro.index]
+            caps = {}
+            for u in units:
+                try:
+                    caps[u] = float(cap_pro.loc[(slice(None), sit, u)].iloc[0])
+                except Exception:
+                    caps[u] = 0.0
+            cap = sum(caps.values())
+            if cap <= p14a_kw:
+                continue
+            p_min = 0.4 * cap if cap > 11.0 else p14a_kw
+            for _c in ('inst-cap', 'cap-up'):
+                if pro[_c].dtype.kind in 'iu':
+                    pro[_c] = pro[_c].astype(float)
+            for u in units:
+                pro.loc[(y, sit, u), ['inst-cap', 'cap-up']] = caps[u]
+            deficit_sites.add(sit)
+            draw = series(e_in, (e_in.sit == sit) & (e_in.pro.isin(units))
+                          & (e_in.com == 'electricity'))
+            dev.append(dict(cols=[(sit, u) for u in units], kind='hp', caps=[caps[u] for u in units],
+                            cap=cap, p_min=p_min, draw=draw))
+            continue
+        if str(prc).startswith('charging_station'):
+            if cap <= p14a_kw:
+                continue
+            draw = series(e_in, (e_in.sit == sit) & (e_in.pro == prc) & (e_in.com == 'electricity'))
+            dev.append(dict(cols=[(sit, prc)], kind='pro', cap=cap,
+                            p_min=p14a_kw, draw=draw))
+            mob_sites.add((sit, str(prc)[len('charging_station'):]))
+        continue
+
+    if cap_sto is not None and e_sto is not None:
+        e_sto.columns = ['t', 'stf', 'sit', 'sto', 'com', 'val']
+        for (y, sit, stg, com) in cap_sto.index:
+            if stg != 'battery_private' or com != 'electricity':
+                continue
+            if sit not in model_sites:
+                continue
+            cap = float(cap_sto.loc[(y, sit, stg, com)])
+            if cap <= p14a_kw:            # Ziffer 2.4.1.d threshold
+                continue
+            draw = series(e_sto, (e_sto.sit == sit) & (e_sto.sto == stg) & (e_sto.com == com))
+            sto_tbl = data['storage']
+            for _c in ('inst-cap-p', 'cap-up-p'):
+                if _c in sto_tbl.columns and sto_tbl[_c].dtype.kind in 'iu':
+                    sto_tbl[_c] = sto_tbl[_c].astype(float)
+            try:
+                sto_tbl.loc[(slice(None), sit, stg, com), ['inst-cap-p', 'cap-up-p']] = cap
+            except Exception:
+                pass
+            dev.append(dict(cols=[(sit, stg)], kind='sto', cap=cap,
+                            p_min=p14a_kw, draw=draw))
+
+    lam = np.zeros(T)
+    n_insufficient = 0
+    for t in range(T):
+        if not congested[t]:
+            continue
+        over = load[t] - limit
+        seg = []
+        for d_ in dev:
+            span = d_['cap'] - d_['p_min']
+            if span <= 1e-9 or d_['draw'][t] <= d_['p_min']:
+                continue
+            seg.append(((d_['cap'] - d_['draw'][t]) / span, span / (pf_hp if d_['kind'] == 'hp' else pf_elc)))
+        seg.sort(key=lambda x: x[0])
+        if not seg:
+            n_insufficient += 1
+            continue
+        lam[t] = 1.0
+        slope_sum = offset = 0.0
+        cleared = False
+        for k, (bp, sl) in enumerate(seg):
+            nxt = seg[k + 1][0] if k + 1 < len(seg) else 1.0
+            slope_sum += sl
+            offset += sl * bp
+            if slope_sum * nxt - offset >= over - 1e-9:
+                lam[t] = min(1.0, max(bp, (over + offset) / slope_sum))
+                cleared = True
+                break
+        if not cleared:
+            n_insufficient += 1
+
+    if prev_lam is not None:
+        lam = np.maximum(lam, np.asarray(prev_lam, dtype=float))
+
+    idx = (data['eff_factor'].index if not data['eff_factor'].empty
+           else pd.MultiIndex.from_product([[stf], ts], names=['support_timeframe', 't']))
+    spare = np.maximum(0.0, (limit - load) * pf_elc)      # active power headroom
+    room = np.zeros(T)
+    for d_ in dev:
+        room += np.maximum(0.0, d_['cap'] - d_['draw'])
+    frac = np.divide(spare, room, out=np.zeros(T), where=room > 1e-9)
+    frac = np.minimum(frac, 1.0)
+
+    ava_pro, ava_sto = {}, {}
+    for d_ in dev:
+        setpoint = d_['cap'] - lam * (d_['cap'] - d_['p_min'])
+        recovery = d_['draw'] + frac * np.maximum(0.0, d_['cap'] - d_['draw'])
+        allowed = np.where(congested, setpoint, np.minimum(recovery, d_['cap']))
+        tbl = ava_sto if d_['kind'] == 'sto' else ava_pro
+        if d_['kind'] == 'hp':
+            rest = allowed.copy()
+            for col, cap_u in zip(d_['cols'], d_['caps']):
+                take = np.minimum(rest, cap_u)
+                tbl[col] = np.divide(take, cap_u, out=np.zeros(T), where=cap_u > 1e-9)
+                rest = rest - take
+        else:
+            tbl[d_['cols'][0]] = np.clip(allowed / d_['cap'], 0.0, 1.0)
+    for name, tbl in (('availability', ava_pro), ('availability_sto', ava_sto)):
+        if tbl:
+            df = pd.DataFrame(tbl, index=idx)
+            df.columns = pd.MultiIndex.from_tuples(df.columns)
+            old = data.get(name)
+            if old is not None and not old.empty:
+                df = pd.concat([old.drop(columns=df.columns, errors='ignore'), df], axis=1)
+            data[name] = df
+
+    if deficit_sites:
+        com, bsp = data['commodity'], data['buy_sell_price']
+        prc_tbl, pc = data['process'], data['process_commodity']
+        for st in sorted(deficit_sites):
+            com.loc[(stf, st, 'heat_deficit', 'Buy'), ['price', 'max', 'maxperhour']] = (1.0, np.inf, np.inf)
+            row = prc_tbl.loc[(stf, st, 'import')].copy()
+            row['inst-cap'] = 2000.0
+            row['cap-up'] = 2000.0
+            for c in ('inv-cost-fix', 'inv-cost', 'fix-cost', 'var-cost'):
+                if c in row.index:
+                    row[c] = 0.0
+            prc_tbl.loc[(stf, st, 'heat_backup')] = row
+        bsp['heat_deficit'] = DEFICIT_PRICE
+        pc.loc[(stf, 'heat_backup', 'heat_deficit', 'In'), 'ratio'] = 1.0
+        pc.loc[(stf, 'heat_backup', 'common_heat', 'Out'), 'ratio'] = 1.0
+        data['commodity'] = com.sort_index()
+        data['process'] = prc_tbl.sort_index()
+        data['process_commodity'] = pc.sort_index()
+        print(f"P14A rule: last-resort heat source added at {len(deficit_sites)} sites "
+              f"(price {DEFICIT_PRICE:.0f}, quantity reported as unserved heat)", flush=True)
+
+    if mob_sites:
+        com, bsp = data['commodity'], data['buy_sell_price']
+        prc_tbl, pc = data['process'], data['process_commodity']
+        for st, num in sorted(mob_sites):
+            name = f'mobility_backup_{num}'
+            com.loc[(stf, st, 'mobility_deficit', 'Buy'), ['price', 'max', 'maxperhour']] = (1.0, np.inf, np.inf)
+            row = prc_tbl.loc[(stf, st, 'import')].copy()
+            row['inst-cap'] = 2000.0
+            row['cap-up'] = 2000.0
+            for c in ('inv-cost-fix', 'inv-cost', 'fix-cost', 'var-cost'):
+                if c in row.index:
+                    row[c] = 0.0
+            prc_tbl.loc[(stf, st, name)] = row
+            pc.loc[(stf, name, 'mobility_deficit', 'In'), 'ratio'] = 1.0
+            pc.loc[(stf, name, f'mobility{num}', 'Out'), 'ratio'] = 1.0
+        bsp['mobility_deficit'] = DEFICIT_PRICE
+        data['commodity'] = com.sort_index()
+        data['process'] = prc_tbl.sort_index()
+        data['process_commodity'] = pc.sort_index()
+        print(f"P14A rule: last-resort charger added for {len(mob_sites)} charge points",
+              flush=True)
+
+    n_hp = sum(1 for d_ in dev if d_['cols'][0][1] == 'heatpump_air')
+    n_bev = sum(1 for d_ in dev if str(d_['cols'][0][1]).startswith('charging'))
+    n_sto = sum(1 for d_ in dev if d_['kind'] == 'sto')
+    print(f"P14A rule: {n_hp} heat pumps, {n_bev} charge points, {n_sto} batteries | "
+          f"congested {n_cong}/{T} h (rated {rated_kva:.0f} kVA) | "
+          f"hours still over the rating: {n_insufficient}", flush=True)
+    return data
+
+
 def create_xls_file_labels(uncoordinated, flexible, mode, data):
     coordination_text = '_uncoordinated' if uncoordinated else '_coordinated'
     flexible_text = '_flexible' if flexible else '_inflexible'

@@ -287,6 +287,8 @@ def pyomo_model_prep(data, timesteps):
     if m.mode['ava']:
         m.availability_dict = \
             data["availability"].dropna(axis=0, how='all').to_dict()
+        if data.get('availability_sto') is not None and not data['availability_sto'].empty:
+            m.availability_sto_dict = data["availability_sto"].dropna(axis=0, how='all').to_dict()
 
 
     if m.mode['uhp']: # LVDS
@@ -732,6 +734,9 @@ def get_cluster_data(data, cluster):
         cluster_data['availability'] = cluster_data['availability'][[(sit, pro) for (sit, pro) in cluster_data['availability'].columns if sit in cluster]]
     except:
         pass
+    if cluster_data.get('availability_sto') is not None and not cluster_data['availability_sto'].empty:
+        cluster_data['availability_sto'] = cluster_data['availability_sto'][
+            [(sit, sto) for (sit, sto) in cluster_data['availability_sto'].columns if sit in cluster]]
     try:
         cluster_data['uhp'] = cluster_data['uhp'][[(sit, pro) for (sit, pro) in cluster_data['uhp'].columns if sit in cluster]]
     except:

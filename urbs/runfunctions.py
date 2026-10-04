@@ -294,7 +294,8 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
             if mode['uhp']:
                 raise ValueError("14a_rule on the inflexible case requires uhp = 0")
             pf_hp = data['global_prop'].loc[pd.IndexSlice[:, 'PF_HP'], 'value'].iloc[0]
-            data = p14a_dimming(data, rated_kva=rated_kva, pf_hp=pf_hp)
+            cap_table, pv_table = capacities_from_result(p14a_ref) if p14a_ref else (None, None)
+            data = inflex_14a(data, rated_kva=rated_kva, cap_table=cap_table, pv_table=pv_table, pf_hp=pf_hp)
             mode['sto'] = False
         elif not mode['14a']: # only remove mobility flexibility if 14a not activated (otherwise model can be infeasible)
             data = bev_uncontrolled_charging(data)
@@ -407,7 +408,7 @@ def run_lvds_opt(input_files, solver_name, timesteps, scenario, result_dir, dt,
             raise ValueError("14a_rule on the flexible case requires uncoordinated = 1 and p14a_ref, "
                              "the step1 result of the same run without control")
         pf_hp = data['global_prop'].loc[pd.IndexSlice[:, 'PF_HP'], 'value'].iloc[0]
-        data = p14a_availability(data, rated_kva=rated_kva, ref_h5=p14a_ref, pf_hp=pf_hp)
+        data = flex_14a(data, rated_kva=rated_kva, ref_h5=p14a_ref, pf_hp=pf_hp)
         mode['ava'] = True
 
     # data is constructed finally, now to solve the HOODS-Bui (or HOODS-Sys, if coordinated) problem.

@@ -70,6 +70,19 @@ def transformer_rating(data):
     tra = data['transmission']
     return float(tra[tra.index.get_level_values(1) == trafo]['inst-cap'].sum())
 
+def capacities_from_result(ref_h5, result_prefix='/result/'):
+    # heat pump, auxiliary heater and rooftop PV capacities from the result of a run without control
+    cap = pd.read_hdf(ref_h5, result_prefix + 'cap_pro')
+    cap_table, pv_table = {}, {}
+    for (stf, sit, pro), val in cap.items():
+        if pro == 'heatpump_air':
+            cap_table[sit] = (float(val), cap_table.get(sit, (0.0, 0.0))[1])
+        elif pro == 'heatpump_booster':
+            cap_table[sit] = (cap_table.get(sit, (0.0, 0.0))[0], float(val))
+        elif str(pro).startswith('Rooftop'):
+            pv_table[(sit, pro)] = float(val)
+    return cap_table, pv_table
+
 def _heat_to_el(h, cop, cap_hp):
     # electricity drawn to deliver heat h, with the auxiliary heater above the heat pump capacity
     hp_heat = np.minimum(h, cap_hp * cop)
@@ -82,9 +95,9 @@ def _el_to_heat(el, cop, cap_hp):
     return hp_el * cop + np.maximum(el - hp_el, 0.0)
 
 
-def p14a_dimming(data, rated_kva, cap_table=None, pv_table=None, grid_id=None,
+def inflex_14a(data, rated_kva, cap_table=None, pv_table=None,
                  p14a_kw=4.2, threshold=1.0, staged=True, pf_elc=0.959, pf_hp=0.959):
-    # section 14a EnWG control on the inflexible baseline, applied before the optimisation
+    # section 14a EnWG control on the inflexible case, applied to the demand before the optimisation
     dem = data['demand']; eff = data['eff_factor']
     sto = data['storage']; pro = data['process']
 
@@ -141,7 +154,7 @@ def p14a_dimming(data, rated_kva, cap_table=None, pv_table=None, grid_id=None,
         for hc in hcols:
             h += dem[hc].to_numpy(dtype=float)
         if cap_table is not None:
-            cap_hp, cap_bo = cap_table.get((int(grid_id), st), (0.0, 0.0))
+            cap_hp, cap_bo = cap_table.get(st, (0.0, 0.0))
             p_conn = float(cap_hp) + float(cap_bo)
         else:
             p_conn = float(np.max(h / cop)) if h.max() > 0 else 0.0
@@ -176,9 +189,7 @@ def p14a_dimming(data, rated_kva, cap_table=None, pv_table=None, grid_id=None,
             prc_name, com_name, direction = key[-3], key[-2], key[-1]
             if direction == 'In' and str(prc_name).startswith('Rooftop'):
                 feed[str(prc_name)] = com_name
-        for (g, st, prc), cap in pv_table.items():
-            if grid_id is not None and int(g) != int(grid_id):
-                continue
+        for (st, prc), cap in pv_table.items():
             col = (st, feed.get(str(prc), prc))
             if col in sup.columns:
                 pv_out += float(cap) * sup[col].to_numpy(dtype=float)
@@ -320,7 +331,7 @@ def p14a_dimming(data, rated_kva, cap_table=None, pv_table=None, grid_id=None,
 DEFICIT_PRICE = 1000.0   # EUR/kWh, far above any real heat source
 
 
-def p14a_availability(data, rated_kva, ref_h5, prev_lam=None,
+def flex_14a(data, rated_kva, ref_h5, prev_lam=None,
                       p14a_kw=4.2, threshold=1.0, pf_elc=0.959, pf_hp=0.95, result_prefix='/result/'):
     # section 14a EnWG control on the flexible case, as setpoints through the availability feature
 

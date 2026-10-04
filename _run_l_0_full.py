@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # Choose Solver (cplex, glpk, gurobi, ...)
     solver = 'gurobi'
 
-    # step1 result of the same run without control, needed for 14a_rule = 1 with flexible = 1
+    # step1 result of the same case without control, used for 14a_rule = 1 (required if flexible = 1)
     p14a_ref = None
 
     # simulation timesteps

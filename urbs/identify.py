@@ -98,8 +98,9 @@ def identify_mode(data):
     if data['global_prop'].loc[pd.IndexSlice[:,'14a'],'value'].iloc[0]:
         mode['14a'] = True
 
-    # 14a_rule = 1: rule-based section 14a control instead of the grid-optimisation based one (requires 14a = 0;
-    # the inflexible case requires uhp = 0, the flexible case needs p14a_ref in run_lvds_opt)
+    # 14a_rule = 1: rule-based section 14a control instead of the grid-optimisation based one (requires 14a = 0).
+    # p14a_ref is the step1 result of the same case without control: the inflexible case (uhp = 0) reads the
+    # installed capacities from it, the flexible case (uncoordinated = 1) requires it for the setpoints
     if '14a_rule' in data['global_prop'].index.get_level_values(1) and \
             data['global_prop'].loc[pd.IndexSlice[:,'14a_rule'],'value'].iloc[0]:
         mode['14a_rule'] = True

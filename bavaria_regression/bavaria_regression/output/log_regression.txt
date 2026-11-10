@@ -55,6 +55,41 @@ T77 / T71 factor            1.861     1.878     1.838     2.101
 adj R2 simple              0.8502    0.8638    0.8727     0.893
 adj R2 type x E model      0.8448     0.859    0.8664    0.8866
 
+Bavaria: 2064 PLZ, population 12,446,745. All totals smeared per electrification level.
+
+Model comparison, billion EUR: simple model vs type x electrification model
+model       simple    type  diff_%
+case level                        
+A1   25      1.303   1.316   0.998
+     50      3.255   3.210  -1.386
+     100     6.912   6.945   0.484
+A2   25      1.887   1.902   0.801
+     50      4.138   4.076  -1.489
+     100     8.561   8.613   0.604
+B1   25      1.935   1.923  -0.634
+     50      4.824   4.797  -0.558
+     100    10.402  10.514   1.082
+B2   25      4.453   4.502   1.104
+     50      8.290   8.170  -1.448
+     100    15.365  15.407   0.274
+max |diff| at 25%: 1.1%   at 50/100%: 1.5%
+
+Bavaria prediction, simple model
+            smear_factor  total_bn_EUR_unsmeared  total_bn_EUR  EUR_per_inhabitant
+case level                                                                        
+A1   25            1.197                   1.089         1.303              104.67
+     50            1.050                   3.101         3.255              261.55
+     100           1.028                   6.723         6.912              555.31
+B1   25            1.162                   1.666         1.935              155.50
+     50            1.049                   4.598         4.824              387.53
+     100           1.029                  10.112        10.402              835.70
+A2   25            1.127                   1.674         1.887              151.57
+     50            1.044                   3.962         4.138              332.42
+     100           1.028                   8.327         8.561              687.81
+B2   25            1.067                   4.172         4.453              357.78
+     50            1.033                   8.025         8.290              666.00
+     100           1.025                  14.985        15.365             1234.43
+
 ======================================================================
 SCENARIO: flex   postal codes: 56   observations per case: 168
 
@@ -109,3 +144,38 @@ T77 / T71 factor              1.93     1.921     1.833     2.003
 50% -> 100% factor           2.129     2.193     2.051     1.841
 adj R2 simple               0.8384    0.8522     0.865    0.8891
 adj R2 type x E model       0.8347    0.8485    0.8593    0.8827
+
+Bavaria: 2064 PLZ, population 12,446,745. All totals smeared per electrification level.
+
+Model comparison, billion EUR: simple model vs type x electrification model
+model       simple    type  diff_%
+case level                        
+A1   25      1.232   1.291   4.741
+     50      2.922   2.853  -2.365
+     100     6.041   5.944  -1.607
+A2   25      1.781   1.830   2.782
+     50      3.716   3.648  -1.819
+     100     7.454   7.395  -0.789
+B1   25      1.801   1.835   1.874
+     50      4.246   4.187  -1.374
+     100     9.074   9.035  -0.435
+B2   25      4.148   4.222   1.786
+     50      7.475   7.377  -1.307
+     100    13.605  13.535  -0.514
+max |diff| at 25%: 4.7%   at 50/100%: 2.4%
+
+Bavaria prediction, simple model
+            smear_factor  total_bn_EUR_unsmeared  total_bn_EUR  EUR_per_inhabitant
+case level                                                                        
+A1   25            1.193                   1.033         1.232               99.01
+     50            1.058                   2.761         2.922              234.73
+     100           1.028                   5.877         6.041              485.34
+B1   25            1.169                   1.540         1.801              144.68
+     50            1.055                   4.024         4.246              341.10
+     100           1.028                   8.826         9.074              729.06
+A2   25            1.122                   1.587         1.781              143.06
+     50            1.049                   3.541         3.716              298.54
+     100           1.026                   7.263         7.454              598.86
+B2   25            1.068                   3.883         4.148              333.23
+     50            1.035                   7.222         7.475              600.53
+     100           1.023                  13.295        13.605             1093.04

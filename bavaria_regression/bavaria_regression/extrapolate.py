@@ -51,8 +51,12 @@ def load_costs(data_dir, scenario, pop, scale_cable=1.0, scale_trafo=1.0):
         for th in ["100", "60"]:
             d = pd.read_csv(os.path.join(data_dir, f"bavaria_{scenario}_exp_{level}_TH{th}.csv"))
             d["plz"] = d["file"].str.split("_").str[1]
-            d["A"] = d.line_cost_A * scale_cable + d.trafo_cost_AB * scale_trafo
-            d["B"] = d.line_cost_B * scale_cable + d.trafo_cost_AB * scale_trafo
+            if scale_cable == 1.0 and scale_trafo == 1.0:
+                # base case: the totals of the result file, as in bavaria_regression.py
+                d["A"], d["B"] = d.total_cost_A, d.total_cost_B
+            else:
+                d["A"] = d.line_cost_A * scale_cable + d.trafo_cost_AB * scale_trafo
+                d["B"] = d.line_cost_B * scale_cable + d.trafo_cost_AB * scale_trafo
             g = d.groupby("plz")[["A", "B"]].sum()
             for case, (m, cth) in br.CASES.items():
                 if cth == th:

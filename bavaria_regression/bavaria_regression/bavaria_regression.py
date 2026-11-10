@@ -1,5 +1,5 @@
 """
-Bavaria reinforcement cost regression (Sections 3.9.2 and 4.2.1, Tables 4.16 to 4.18).
+Bavaria reinforcement cost regression (Sections 3.9.2 and 4.2.1 to 4.2.3, Tables 4.16 to 4.18 and 4.20).
 
 Model, one fit per scenario and cost case:
     log(cost) = b * (log(pop) - mean log(pop))
@@ -15,7 +15,10 @@ Usage:
 Input files in --data-dir (default: current folder):
     bavaria_{inflex,flex}_exp_{25,50,100}_TH{100,60}.csv   grid-level costs
     plz56_population.csv                                    columns plz, pop_pylovo
-    bavaria_plz_all.csv  (optional, --bavaria)              all Bavarian PLZ for the total check
+    bavaria_plz_all.csv  (optional, --bavaria)              all Bavarian PLZ for the total
+
+Bavaria totals are retransformed from logs with a smearing factor estimated
+separately for each electrification level, as the residual spread differs by level.
 
 Cost cases: A1 = total_cost_A at TH100, B1 = total_cost_B at TH100,
             A2 = total_cost_A at TH60,  B2 = total_cost_B at TH60.
@@ -147,6 +150,7 @@ def bavaria_totals(costs, mu, pop, bav_file):
     B = a.groupby("plz").agg(pop=("pop", "first"), pp=("pop_postcode", "first"), t=("regio7", "min"))
     B["pop"] = B.pp.fillna(B["pop"])
     B = B[B["pop"] > 0]
+    total_pop = B["pop"].sum()
     rows = []
     for case in CASES:
         d = costs[costs.case == case].reset_index(drop=True)
@@ -156,6 +160,9 @@ def bavaria_totals(costs, mu, pop, bav_file):
             X = design(d.plz, d.level, lpop_c, inter)
             r = sm.OLS(y, X).fit()
             for L in LEVELS:
+                # smearing factor per electrification level (Duan 1983, Manning 1998):
+                # mean of exp(residual) over the sample observations at level L
+                smear = float(np.mean(np.exp(r.resid[(d.level == L).values])))
                 Xp = design(pd.Series(B.index, index=B.index), pd.Series(L, index=B.index),
                             np.log(B["pop"]) - mu, inter)
                 # Bavarian PLZ carry their own RegioStaR type, not the sample list
@@ -165,12 +172,24 @@ def bavaria_totals(costs, mu, pop, bav_file):
                     for t in list(TYPES)[1:]:
                         for e in ["E25", "E50"]:
                             Xp[f"T{t}_{e}"] = Xp[f"T{t}"] * Xp[e]
-                tot = np.exp(Xp[X.columns] @ r.params).sum()
-                rows.append((case, L, inter or "simple", tot / 1e9))
-    T = pd.DataFrame(rows, columns=["case", "level", "model", "bn_EUR"])
-    P = T.pivot_table(index=["case", "level"], columns="model", values="bn_EUR")
-    P["diff_%"] = 100 * (P["type"] / P["simple"] - 1)
-    return P.round(3), len(B)
+                raw = np.exp(Xp[X.columns] @ r.params).sum()
+                rows.append((case, L, inter or "simple", raw / 1e9, smear, raw * smear / 1e9))
+    T = pd.DataFrame(rows, columns=["case", "level", "model", "raw_bn", "smear", "bn"])
+
+    # 1) model comparison, both models smeared
+    C = T.pivot_table(index=["case", "level"], columns="model", values="bn")
+    C["diff_%"] = 100 * (C["type"] / C["simple"] - 1)
+    C = C[["simple", "type", "diff_%"]].round(3)
+
+    # 2) Bavaria prediction with the simple model
+    S = T[T.model == "simple"].set_index(["case", "level"])
+    Pr = pd.DataFrame({
+        "smear_factor": S.smear.round(3),
+        "total_bn_EUR_unsmeared": S.raw_bn.round(3),
+        "total_bn_EUR": S.bn.round(3),
+        "EUR_per_inhabitant": (S.bn * 1e9 / total_pop).round(2),
+    })
+    return C, Pr, len(B), total_pop
 
 
 # ---------------------------------------------------------------- report
@@ -232,17 +251,21 @@ def report(scenario, data_dir, pop, mu, bav_file, out_dir):
     der.to_csv(os.path.join(out_dir, f"regression_derived_{scenario}.csv"))
 
     if bav_file:
-        P, nb = bavaria_totals(costs, mu, pop, bav_file)
-        print(f"\nBavaria total, {nb} PLZ, billion EUR: simple model vs type x electrification model")
-        print(P.to_string())
-        print(f"max |diff| at 25%: {P.xs(25, level='level')['diff_%'].abs().max():.1f}%   "
-              f"at 50/100%: {P.drop(25, level='level')['diff_%'].abs().max():.1f}%")
-        P.to_csv(os.path.join(out_dir, f"bavaria_total_{scenario}.csv"))
+        C, Pr, nb, tp = bavaria_totals(costs, mu, pop, bav_file)
+        print(f"\nBavaria: {nb} PLZ, population {tp:,.0f}. All totals smeared per electrification level.")
+        print("\nModel comparison, billion EUR: simple model vs type x electrification model")
+        print(C.to_string())
+        print(f"max |diff| at 25%: {C.xs(25, level='level')['diff_%'].abs().max():.1f}%   "
+              f"at 50/100%: {C.drop(25, level='level')['diff_%'].abs().max():.1f}%")
+        print("\nBavaria prediction, simple model")
+        print(Pr.to_string())
+        C.to_csv(os.path.join(out_dir, f"bavaria_model_comparison_{scenario}.csv"))
+        Pr.to_csv(os.path.join(out_dir, f"bavaria_prediction_{scenario}.csv"))
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--scenario", choices=["flex", "inflex", "both"], default="flex")
+    ap.add_argument("--scenario", choices=["flex", "inflex", "both"], default="both")
     ap.add_argument("--data-dir", default=".")
     ap.add_argument("--pop", default="plz56_population.csv")
     ap.add_argument("--bavaria", default=None, help="bavaria_plz_all.csv for the Bavaria total check")

@@ -1,0 +1,7 @@
+Table 4.22  leave-one-out validation (range over the four cost cases)
+scenario                                           flex                    inflex             
+level                                               50           100          50           100
+Change in Bavaria cost per inhabitant (%)   -3.3 to 2.5  -3.1 to 2.4  -3.3 to 3.4  -3.0 to 3.1
+Median absolute error (EUR per inhabitant)    55 to 112    94 to 168    56 to 109   105 to 175
+Median absolute percentage error (%)           19 to 27     17 to 23     21 to 27     16 to 19
+Error of the sum over left-out areas (%)    -0.6 to 0.4  -1.2 to 0.5  -0.3 to 0.5  -0.5 to 0.8

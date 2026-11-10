@@ -1,0 +1,54 @@
+Bavaria: 2064 postal code areas, 12,446,745 inhabitants
+
+Table 4.20  Bavaria, EUR per inhabitant
+case                A1      B1      A2       B2
+scenario level                                 
+flex     25      99.01  144.68  143.06   333.23
+         50     234.73  341.10  298.53   600.53
+         100    485.34  729.06  598.86  1093.04
+inflex   25     104.67  155.50  151.57   357.78
+         50     261.55  387.53  332.42   666.00
+         100    555.31  835.70  687.80  1234.43
+
+Total, bn EUR
+case               A1      B1     A2      B2
+scenario level                              
+flex     25     1.232   1.801  1.781   4.148
+         50     2.922   4.246  3.716   7.475
+         100    6.041   9.074  7.454  13.605
+inflex   25     1.303   1.935  1.887   4.453
+         50     3.255   4.824  4.138   8.290
+         100    6.912  10.402  8.561  15.365
+
+Table 4.21  EUR per inhabitant by RegioStaR type, 100%
+scenario          flex                            inflex                          
+case                A1      A2       B1       B2      A1      A2       B1       B2
+regiostar_type                                                                    
+71              224.00  281.42   327.87   487.46  275.09  338.89   401.29   558.77
+72              394.22  453.66   561.43   700.37  453.10  520.29   635.35   776.90
+73              365.75  466.09   582.91   884.04  432.10  546.47   668.04   992.05
+74              669.68  858.62  1011.52  1643.36  756.88  956.25  1157.45  1797.58
+75              433.80  527.06   660.83   917.46  497.91  601.52   750.12  1012.60
+76              498.77  629.63   760.15  1177.73  587.52  740.78   893.59  1348.48
+77              702.36  843.53  1030.91  1532.83  771.98  948.86  1155.81  1746.08
+
+Table 4.23  sampled population range 957 to 42,982
+                              n_areas  share_population  cost_min  cost_max
+group                                                                      
+outside overall sample range       82               1.6       1.6       1.7
+below range of own type           129               1.4       2.1       2.2
+above range of own type           103              12.0       9.5       9.8
+outside range of own type         232              13.5      11.7      11.9
+
+Table 4.24  change of the Bavaria cost per inhabitant (%)
+variation     cable +20%       transformer +20%      
+level                50    100              50    100
+scenario case                                        
+flex     A1          2.5   3.1             17.5  16.9
+         A2          6.3   6.4             13.7  13.6
+         B1          8.0   8.7             12.0  11.3
+         B2         13.2  12.5              6.8   7.5
+inflex   A1          2.7   3.3             17.3  16.7
+         A2          6.4   6.6             13.6  13.4
+         B1          8.3   8.9             11.7  11.1
+         B2         13.2  12.5              6.8   7.5

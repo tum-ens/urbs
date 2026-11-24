@@ -24,11 +24,80 @@ def dataFrameFromObject(data, index, indcol, columns, additional=None):
     return df.set_index(index + indcol)
 
 
-def report_tuples(config, year):
+_TIMESERIES_TYPE_CANON = {
+    'demand': 'Demand',
+    'buy': 'Buy',
+    'sell': 'Sell',
+    'env': 'Env',
+    'supim': 'SupIm',
+    'stock': 'Stock',
+}
+_TIMESERIES_TYPE_BY_NUM = {
+    1: 'SupIm',
+    2: 'Demand',
+    3: 'Stock',
+    4: 'Env',
+    5: 'Buy',
+    6: 'Sell',
+}
+
+
+def canonical_commodity_type(raw) -> str:
+    """Normalize a commodity Type from config (name, lowercase, or enum number)."""
+    if raw is None:
+        return ''
+    if isinstance(raw, bool):
+        return ''
+    if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+        return _TIMESERIES_TYPE_BY_NUM.get(int(raw), '')
+    text = str(raw).strip()
+    if not text:
+        return ''
+    if text.isdigit():
+        return _TIMESERIES_TYPE_BY_NUM.get(int(text), '')
+    return _TIMESERIES_TYPE_CANON.get(text.lower(), text)
+
+
+def config_commodity_type(com_cfg: dict | None) -> str:
+    if not com_cfg:
+        return ''
+    raw = com_cfg.get('Type')
+    if raw is None:
+        raw = com_cfg.get('type')
+    return canonical_commodity_type(raw)
+
+
+def normalize_timeseries_types(commodity_types):
+    """Canonicalize selected timeseries commodity types. Default: Demand."""
+    if commodity_types is None:
+        return ['Demand']
+    if isinstance(commodity_types, str):
+        commodity_types = [commodity_types]
+    out = []
+    for item in commodity_types:
+        if isinstance(item, dict):
+            item = item.get('value') or item.get('label')
+        canon = canonical_commodity_type(item)
+        if canon and canon not in out:
+            out.append(canon)
+    return out or ['Demand']
+
+
+def report_tuples(config, year, commodity_types=None):
+    """Return (stf, site, commodity, type) tuples for timeseries sheets.
+
+    Includes every commodity whose Type is in commodity_types (Demand, Buy,
+    Sell, Env, …), regardless of name. Methanol/Hydrogen as Sell are included
+    when Sell is selected. Defaults to Demand.
+    """
+    wanted = set(normalize_timeseries_types(commodity_types))
     res = []
-    for (site, dataSite) in config['site'].items():
-        for (commodity, _) in dataSite['commodity'].items():
-            res.append((year, site, commodity))
+    for site, dataSite in config.get('site', {}).items():
+        for commodity, dataCom in (dataSite.get('commodity') or {}).items():
+            com_type = config_commodity_type(dataCom)
+            if com_type not in wanted:
+                continue
+            res.append((year, site, commodity, com_type))
     return res
 
 

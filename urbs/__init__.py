@@ -12,6 +12,7 @@ commodities.
 
 from .colorcodes import COLORS
 from .model import create_model
+from .iis import compute_iis
 from .input import *
 from .validation import validate_input
 from .output import get_constants, get_timeseries

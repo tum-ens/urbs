@@ -1,20 +1,20 @@
-FROM python:3.12-slim
+FROM gurobi/optimizer:12.0.2
 
-ENV SOLVER=glpk
+ENV SOLVER=gurobi
 
 WORKDIR /app
 
+# Add this line before your pip install commands
+# glpk-utils provides the `glpsol` binary so users can pick GLPK as solver too
+RUN apt-get update && apt-get install -y build-essential glpk-utils libglpk-dev
+
 COPY urbs-env.txt .
-RUN python -m venv urbs-env
 
 RUN python -m venv urbs-env \
     && ./urbs-env/bin/pip install --upgrade pip \
     && ./urbs-env/bin/pip install -r urbs-env.txt \
     && ./urbs-env/bin/pip install flask waitress
 
-
-RUN apt-get update && apt-get install -y \
-    gcc libglpk-dev glpk-utils
 RUN ./urbs-env/bin/pip install glpk
 
 COPY urbs urbs

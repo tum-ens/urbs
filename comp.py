@@ -130,16 +130,16 @@ def compare_scenarios(result_files, output_filename):
             esum = xls.parse('Commodity sums')
 
             # repair broken MultiIndex in the first column
-            esum.reset_index(inplace=True)
+            esum.reset_index(drop=True, inplace=True)
             esum.fillna(method='ffill', inplace=True)
-            esum.set_index(['level_0', 'level_1'], inplace=True)
+            esum.set_index(['Unnamed: 0','Unnamed: 1'], inplace=True)
 
             costs.append(cost)
 
             # extract sites and commodities from scenario
-            sitcom = [value.split('.') for value
+            yrsitcom = [value.split('.') for value
                       in esum.columns.get_level_values(0)]
-            coms = set([com for sit, com in sitcom])
+            coms = set([com for yr, sit, com in yrsitcom])
             com_sums = pd.DataFrame()
             # get site.commodity names
             sit_com = esum.columns.get_level_values(0)

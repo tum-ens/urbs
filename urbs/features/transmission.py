@@ -350,6 +350,10 @@ def res_transmission_capacity_rule(m, stf, sin, sout, tra, com):
 
 # transmission capacity from A to B == transmission capacity from B to A
 def res_transmission_symmetry_rule(m, stf, sin, sout, tra, com):
+    # lines defined in only one direction are allowed and skip the
+    # symmetry requirement
+    if (stf, sout, sin, tra, com) not in m.tra_tuples:
+        return pyomo.Constraint.Skip
     return m.cap_tra[stf, sin, sout, tra, com] == (m.cap_tra
                                                    [stf, sout, sin, tra, com])
 

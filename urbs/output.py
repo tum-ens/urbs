@@ -55,6 +55,69 @@ def get_constants(instance):
     return costs, cpro, ctra, csto
 
 
+def get_transmission_neighbors(instance, stf, com, sites):
+    """Sites connected by transmission links for import/export columns."""
+    import_sources = set()
+    export_destinations = set()
+    sites_set = set(sites)
+    try:
+        df_transmission = get_input(instance, 'transmission')
+        tra = df_transmission.xs(stf, level='support_timeframe')
+        for idx in tra.index:
+            site_in, site_out, commodity = idx[0], idx[1], idx[3]
+            if commodity != com:
+                continue
+            if site_out in sites_set and site_in not in sites_set:
+                import_sources.add(site_in)
+            if site_in in sites_set and site_out not in sites_set:
+                export_destinations.add(site_out)
+    except (KeyError, AttributeError, IndexError):
+        pass
+    return sorted(import_sources), sorted(export_destinations)
+
+
+def _flow_timesteps(instance, timesteps):
+    """Return timesteps that carry process/transmission flows (tm, not storage init)."""
+    timesteps = sorted(timesteps)
+    try:
+        tm = set(get_entity(instance, 'tm').index)
+    except (KeyError, AttributeError):
+        tm = set(timesteps[1:]) if len(timesteps) > 1 else set(timesteps)
+    flow = [t for t in timesteps if t in tm]
+    return flow if flow else sorted(tm)
+
+
+def ensure_neighbor_columns(df, neighbors, timesteps):
+    """Keep configured transmission neighbors as columns even when flow is zero."""
+    df = df.reindex(index=timesteps, fill_value=0)
+    if not neighbors:
+        return df.fillna(0)
+    for neighbor in neighbors:
+        if neighbor not in df.columns:
+            df[neighbor] = 0.0
+    return df[sorted(neighbors)].fillna(0)
+
+
+def _co_market_series(instance, entity_name, stf, com, com_type, sites, timesteps):
+    """Extract e_co_sell / e_co_buy for one commodity as a site-summed series."""
+    zeros = pd.Series(0, index=timesteps)
+    data = get_entity(instance, entity_name)
+    if data is None or getattr(data, 'empty', True):
+        return zeros
+    if getattr(data.index, 'nlevels', 1) < 2:
+        return zeros
+    try:
+        data = data.xs((stf, com, com_type), level=['stf', 'com', 'com_type'])
+        if 'sit' in (data.index.names or []):
+            data = data.unstack(level='sit')
+        else:
+            data = data.unstack()
+        data = data.reindex(columns=sites).fillna(0).sum(axis=1)
+        return data.reindex(timesteps, fill_value=0)
+    except (KeyError, TypeError, ValueError, IndexError):
+        return zeros
+
+
 def get_timeseries(instance, stf, com, sites, timesteps=None):
     """Return DataFrames of all timeseries referring to given commodity
 
@@ -90,6 +153,9 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
         # wrap single site name into list
         sites = [sites]
 
+    # Process and transmission variables are indexed on tm (excludes t=0).
+    flow_timesteps = _flow_timesteps(instance, timesteps)
+
     # DEMAND
     # default to zeros if commodity has no demand, get timeseries
     try:
@@ -106,7 +172,8 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 level=1)[sites].sum(
                     axis=1))
     except KeyError:
-        demand = pd.Series(0, index=timesteps)
+        demand = pd.Series(0, index=flow_timesteps)
+    demand = demand.reindex(flow_timesteps, fill_value=0)
     demand.name = 'Demand'
 
     # STOCK
@@ -114,32 +181,45 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
     try:
         eco = eco.xs((stf, com, 'Stock'), level=['stf', 'com', 'com_type'])
         stock = eco.unstack()[sites].sum(axis=1)
+        stock = stock.reindex(flow_timesteps, fill_value=0)
     except KeyError:
-        stock = pd.Series(0, index=timesteps)
+        stock = pd.Series(0, index=flow_timesteps)
     stock.name = 'Stock'
+
+    # BUY / SELL commodity exchange with the market
+    sell = _co_market_series(
+        instance, 'e_co_sell', stf, com, 'Sell', sites, flow_timesteps
+    )
+    sell.name = 'Sell'
+    buy = _co_market_series(
+        instance, 'e_co_buy', stf, com, 'Buy', sites, flow_timesteps
+    )
+    buy.name = 'Buy'
 
     # PROCESS
     created = get_entity(instance, 'e_pro_out')
     try:
-        created = created.xs((stf, com), level=['stf', 'com']).loc[timesteps]
+        created = created.xs((stf, com), level=['stf', 'com']).loc[flow_timesteps]
         created = created.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         created = created.unstack(level='pro')
         created = drop_all_zero_columns(created)
     except KeyError:
-        created = pd.DataFrame(index=timesteps[1:])
+        created = pd.DataFrame(index=flow_timesteps)
 
     consumed = get_entity(instance, 'e_pro_in')
     try:
-        consumed = consumed.xs((stf, com), level=['stf', 'com']).loc[timesteps]
+        consumed = consumed.xs((stf, com), level=['stf', 'com']).loc[flow_timesteps]
         consumed = consumed.unstack(level='sit')[sites].fillna(0).sum(axis=1)
         consumed = consumed.unstack(level='pro')
         consumed = drop_all_zero_columns(consumed)
     except KeyError:
-        consumed = pd.DataFrame(index=timesteps[1:])
+        consumed = pd.DataFrame(index=flow_timesteps)
 
     # TRANSMISSION
     other_sites = (get_input(instance, 'site')
                    .xs(stf, level='support_timeframe').index.difference(sites))
+    import_sources, export_destinations = get_transmission_neighbors(
+        instance, stf, com, sites)
 
     # if commodity is transportable
     try:
@@ -153,20 +233,26 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 minus_imported = -1 * minus_imported.swaplevel('sit', 'sit_')
                 imported = imported[imported >= 0]
                 imported = pd.concat([imported, minus_imported])
-            imported = imported.loc[timesteps].xs(
+            imported = imported.loc[flow_timesteps].xs(
                 (stf, com), level=['stf', 'com'])
             imported = imported.unstack(level='tra').sum(axis=1)
             imported = imported.unstack(
-                level='sit_')[sites].fillna(0).sum(
+                level='sit_').reindex(columns=sites).fillna(0).sum(
                 axis=1)
             imported = imported.unstack(level='sit')
 
-            internal_import = imported[sites].sum(axis=1)  # ...from sites
+            # A single site never imports from itself, and a one-directional
+            # line means the queried site may be absent from the columns.
+            # reindex tolerates missing columns instead of raising KeyError
+            # (which previously zeroed out all transmission flows).
+            internal_import = imported.reindex(
+                columns=sites).fillna(0).sum(axis=1)  # ...from sites
             if instance.mode['dpf']:
                 imported = imported[[x for x in other_sites if x in imported.keys()]]  # ...to existing other_sites
             else:
-                imported = imported[other_sites]  # ...from other_sites
-            imported = drop_all_zero_columns(imported.fillna(0))
+                imported = imported.reindex(columns=other_sites, fill_value=0)
+            imported = ensure_neighbor_columns(
+                imported.fillna(0), import_sources, flow_timesteps)
 
             exported = get_entity(instance, 'e_tra_in')
             # avoid negative value export for DCPF transmissions
@@ -176,45 +262,55 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
                 minus_exported = -1 * minus_exported.swaplevel('sit', 'sit_')
                 exported = exported[exported >= 0]
                 exported = pd.concat([exported, minus_exported])
-            exported = exported.loc[timesteps].xs(
+            exported = exported.loc[flow_timesteps].xs(
                 (stf, com), level=['stf', 'com'])
             exported = exported.unstack(level='tra').sum(axis=1)
             exported = exported.unstack(
-                level='sit')[sites].fillna(0).sum(
+                level='sit').reindex(columns=sites).fillna(0).sum(
                 axis=1)
             exported = exported.unstack(level='sit_')
 
-            internal_export = exported[sites].sum(
-                axis=1)  # ...to sites (internal)
+            # A single site never exports to itself, and a one-directional
+            # line means the queried site may be absent from the columns.
+            # reindex tolerates missing columns instead of raising KeyError
+            # (which previously zeroed out all transmission flows).
+            internal_export = exported.reindex(
+                columns=sites).fillna(0).sum(axis=1)  # ...to sites (internal)
             if instance.mode['dpf']:
                 exported = exported[[x for x in other_sites if x in exported.keys()]]  # ...to existing other_sites
             else:
-                exported = exported[other_sites]  # ...to other_sites
-            exported = drop_all_zero_columns(exported.fillna(0))
+                exported = exported.reindex(columns=other_sites, fill_value=0)
+            exported = ensure_neighbor_columns(
+                exported.fillna(0), export_destinations, flow_timesteps)
         else:
-            imported = pd.DataFrame(index=timesteps)
-            exported = pd.DataFrame(index=timesteps)
-            internal_export = pd.Series(0, index=timesteps)
-            internal_import = pd.Series(0, index=timesteps)
+            imported = ensure_neighbor_columns(
+                pd.DataFrame(index=flow_timesteps), import_sources, flow_timesteps)
+            exported = ensure_neighbor_columns(
+                pd.DataFrame(index=flow_timesteps), export_destinations, flow_timesteps)
+            internal_export = pd.Series(0, index=flow_timesteps)
+            internal_import = pd.Series(0, index=flow_timesteps)
 
         # to be discussed: increase demand by internal transmission losses
         internal_transmission_losses = internal_export - internal_import
-        demand = demand + internal_transmission_losses
+        demand = demand + internal_transmission_losses.reindex(demand.index, fill_value=0)
     except KeyError:
-        # imported and exported are empty
-        imported = exported = pd.DataFrame(index=timesteps)
+        imported = ensure_neighbor_columns(
+            pd.DataFrame(index=flow_timesteps), import_sources, flow_timesteps)
+        exported = ensure_neighbor_columns(
+            pd.DataFrame(index=flow_timesteps), export_destinations, flow_timesteps)
 
     # STORAGE
     # group storage energies by commodity
     # select all entries with desired commodity co
     stored = get_entities(instance, ['e_sto_con', 'e_sto_in', 'e_sto_out'])
     try:
-        stored = stored.loc[timesteps].xs((stf, com), level=['stf', 'com'])
+        stored = stored.loc[flow_timesteps].xs((stf, com), level=['stf', 'com'])
         stored = stored.groupby(level=['t', 'sit']).sum()
         stored = stored.loc[(slice(None), sites), :].groupby('t').sum()
         stored.columns = ['Level', 'Stored', 'Retrieved']
+        stored = stored.reindex(flow_timesteps, fill_value=0)
     except (KeyError, ValueError):
-        stored = pd.DataFrame(0, index=timesteps,
+        stored = pd.DataFrame(0, index=flow_timesteps,
                               columns=['Level', 'Stored', 'Retrieved'])
 
     # DEMAND SIDE MANAGEMENT (load shifting)
@@ -223,7 +319,7 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
     if dsmup.empty:
         # if no DSM happened, the demand is not modified (delta = 0)
-        delta = pd.Series(0, index=timesteps)
+        delta = pd.Series(0, index=flow_timesteps)
 
     else:
         # DSM happened (dsmup implies that dsmdo must be non-zero, too)
@@ -245,8 +341,9 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
             # derive secondary timeseries
             delta = dsmup - dsmdo
+            delta = delta.reindex(flow_timesteps, fill_value=0)
         except KeyError:
-            delta = pd.Series(0, index=timesteps)
+            delta = pd.Series(0, index=flow_timesteps)
 
     shifted = demand + delta
 
@@ -258,16 +355,18 @@ def get_timeseries(instance, stf, com, sites, timesteps=None):
 
     # JOINS
     created = created.join(stock)  # show stock as created
+    created = created.join(buy)  # purchased Buy commodity
     consumed = consumed.join(shifted.rename('Demand'))
+    consumed = consumed.join(sell)  # sold Sell commodity
 
     # VOLTAGE ANGLE of sites
 
     try:
         voltage_angle = get_entity(instance, 'voltage_angle')
-        voltage_angle = voltage_angle.xs(stf, level=['stf']).loc[timesteps]
+        voltage_angle = voltage_angle.xs(stf, level=['stf']).loc[flow_timesteps]
         voltage_angle = voltage_angle.unstack(level='sit')[sites]
     except (KeyError, AttributeError, TypeError):
-        voltage_angle = pd.DataFrame(index=timesteps)
+        voltage_angle = pd.DataFrame(index=flow_timesteps)
     voltage_angle.name = 'Voltage Angle'
 
     return created, consumed, stored, imported, exported, dsm, voltage_angle
